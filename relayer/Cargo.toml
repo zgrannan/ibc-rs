@@ -51,6 +51,7 @@ dyn-clonable = "0.9.0"
 tonic = "0.4"
 dirs-next = "2.0.0"
 dyn-clone = "1.0.3"
+once_cell = "1.5.2"
 
 [dependencies.tendermint]
 version = "=0.18.0"

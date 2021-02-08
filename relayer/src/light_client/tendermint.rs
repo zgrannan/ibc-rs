@@ -1,5 +1,9 @@
+use std::collections::HashMap;
 use std::convert::TryFrom;
+use std::path::PathBuf;
+use std::sync::Mutex;
 
+use once_cell::sync::Lazy;
 use tendermint_light_client::{
     builder::LightClientBuilder, builder::SupervisorBuilder, light_client, store, supervisor,
     supervisor::Handle, supervisor::Supervisor, types::Height as TMHeight, types::LightBlock,
@@ -12,6 +16,8 @@ use crate::{
     error,
 };
 use ibc::ics24_host::identifier::ChainId;
+
+static SLED_DBS: Lazy<Mutex<HashMap<PathBuf, sled::Db>>> = Lazy::new(|| Mutex::new(HashMap::new()));
 
 pub struct LightClient {
     handle: Box<dyn Handle>,
@@ -84,9 +90,11 @@ fn build_instance(
 
     let store: Box<dyn store::LightStore> = match &config.store {
         StoreConfig::Disk { path } => {
-            let db = sled::open(path).map_err(|e| {
-                error::Kind::LightClientInstance(config.address.to_string()).context(e)
-            })?;
+            let mut dbs = SLED_DBS.lock().unwrap();
+            let db = dbs
+                .entry(path.clone())
+                .or_insert_with(|| sled::open(path).unwrap())
+                .clone();
             Box::new(store::sled::SledStore::new(db))
         }
         StoreConfig::Memory { .. } => Box::new(store::memory::MemoryStore::new()),
