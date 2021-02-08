@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 use std::convert::TryFrom;
+use std::ops::Deref;
 use std::path::PathBuf;
-use std::sync::Mutex;
+use std::sync::{Mutex, MutexGuard};
 
 use once_cell::sync::Lazy;
 use tendermint_light_client::{
@@ -17,7 +18,33 @@ use crate::{
 };
 use ibc::ics24_host::identifier::ChainId;
 
-static SLED_DBS: Lazy<Mutex<HashMap<PathBuf, sled::Db>>> = Lazy::new(|| Mutex::new(HashMap::new()));
+struct SledDbs {
+    named_lock: named_lock::NamedLock,
+    dbs: Mutex<HashMap<PathBuf, sled::Db>>,
+}
+
+struct SledDbsGuard<'a> {
+    named_guard: named_lock::NamedLockGuard<'a>,
+    dbs: MutexGuard<'a, HashMap<PathBuf, sled::Db>>,
+}
+
+impl SledDbs {
+    fn new(name: &str) -> Self {
+        Self {
+            named_lock: named_lock::NamedLock::create(name).unwrap(),
+            dbs: Mutex::new(HashMap::new()),
+        }
+    }
+
+    fn lock(&self) -> SledDbsGuard<'_> {
+        SledDbsGuard {
+            named_guard: self.named_lock.lock().unwrap(),
+            dbs: self.dbs.lock().unwrap(),
+        }
+    }
+}
+
+static SLED_DBS: Lazy<SledDbs> = Lazy::new(|| SledDbs::new("sled_dbs"));
 
 pub struct LightClient {
     handle: Box<dyn Handle>,
@@ -90,8 +117,9 @@ fn build_instance(
 
     let store: Box<dyn store::LightStore> = match &config.store {
         StoreConfig::Disk { path } => {
-            let mut dbs = SLED_DBS.lock().unwrap();
-            let db = dbs
+            let mut guard = SLED_DBS.lock();
+            let db = guard
+                .dbs
                 .entry(path.clone())
                 .or_insert_with(|| sled::open(path).unwrap())
                 .clone();
