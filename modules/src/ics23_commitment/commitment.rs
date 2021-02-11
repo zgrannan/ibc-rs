@@ -90,7 +90,7 @@ impl TryFrom<CommitmentProofBytes> for RawMerkleProof {
     }
 }
 
-#[derive(Clone, PartialEq, Eq, Default)]
+#[derive(Clone, PartialEq, Eq, Default, Hash)]
 pub struct CommitmentPrefix {
     bytes: Vec<u8>,
 }

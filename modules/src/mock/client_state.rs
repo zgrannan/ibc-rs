@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::convert::{TryFrom, TryInto};
 
 use serde::Serialize;
@@ -18,7 +18,7 @@ use crate::Height;
 
 /// A mock of an IBC client record as it is stored in a mock context.
 /// For testing ICS02 handlers mostly, cf. `MockClientContext`.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Hash)]
 pub struct MockClientRecord {
     /// The type of this client.
     pub client_type: ClientType,
@@ -27,13 +27,13 @@ pub struct MockClientRecord {
     pub client_state: Option<AnyClientState>,
 
     /// Mapping of heights to consensus states for this client.
-    pub consensus_states: HashMap<Height, AnyConsensusState>,
+    pub consensus_states: BTreeMap<Height, AnyConsensusState>,
 }
 
 /// A mock of a client state. For an example of a real structure that this mocks, you can see
 /// `ClientState` of ics07_tendermint/client_state.rs.
 // TODO: `MockClientState` should evolve, at the very least needs a `is_frozen` boolean field.
-#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, Serialize)]
+#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, Serialize, Hash)]
 pub struct MockClientState(pub MockHeader);
 
 impl Protobuf<RawMockClientState> for MockClientState {}
@@ -97,7 +97,7 @@ impl From<MockConsensusState> for MockClientState {
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Serialize)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Serialize, Hash)]
 pub struct MockConsensusState(pub MockHeader);
 
 impl Protobuf<RawMockConsensusState> for MockConsensusState {}

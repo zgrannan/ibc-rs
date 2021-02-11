@@ -2,7 +2,7 @@ mod executor;
 use executor::{step, IBCTestExecutor};
 
 const CHAIN_IDS: &[&str] = &["chainA", "chainB"];
-const MAX_CHAIN_HEIGHT: u64 = 7;
+const MAX_CHAIN_HEIGHT: u64 = 3;
 const MAX_CLIENTS_PER_CHAIN: u64 = 1;
 const MAX_CONNECTIONS_PER_CHAIN: u64 = 1;
 
@@ -39,9 +39,48 @@ impl IBC {
         })
     }
 
+    fn connection_open_init_actions(chain_id: &str) -> impl Iterator<Item = step::Action> + '_ {
+        Self::client_ids().flat_map(move |client_id| {
+            Self::client_ids().map(move |counterparty_client_id| {
+                step::Action::ICS03ConnectionOpenInit {
+                    chain_id: chain_id.to_string(),
+                    client_id,
+                    counterparty_client_id,
+                }
+            })
+        })
+    }
+
+    fn connection_open_try_actions(chain_id: &str) -> impl Iterator<Item = step::Action> + '_ {
+        Self::connection_ids()
+            .map(Some)
+            .chain(None)
+            .flat_map(move |previous_connection_id| {
+                Self::client_ids().flat_map(move |client_id| {
+                    Self::heights().flat_map(move |height| {
+                        Self::client_ids().flat_map(move |counterparty_client_id| {
+                            Self::connection_ids().map(move |counterparty_connection_id| {
+                                step::Action::ICS03ConnectionOpenTry {
+                                    chain_id: chain_id.to_string(),
+                                    previous_connection_id,
+                                    client_id,
+                                    client_state: height,
+                                    counterparty_client_id,
+                                    counterparty_connection_id,
+                                }
+                            })
+                        })
+                    })
+                })
+            })
+    }
+
     fn all_actions() -> impl Iterator<Item = step::Action> {
         CHAIN_IDS.into_iter().flat_map(|chain_id| {
-            Self::create_client_actions(chain_id).chain(Self::update_client_actions(chain_id))
+            Self::create_client_actions(chain_id)
+                .chain(Self::update_client_actions(chain_id))
+                .chain(Self::connection_open_init_actions(chain_id))
+                .chain(Self::connection_open_try_actions(chain_id))
         })
     }
 }
@@ -77,25 +116,54 @@ impl stateright::Model for IBC {
     }
 
     fn properties(&self) -> Vec<stateright::Property<Self>> {
-        vec![stateright::Property::sometimes(
-            "reach max height",
-            |_, state: &Self::State| {
-                CHAIN_IDS.into_iter().all(|chain_id| {
-                    use ibc::ics03_connection::context::ConnectionReader;
-                    state
-                        .chain_context(chain_id.to_string())
-                        .host_current_height()
-                        .revision_height
-                        == MAX_CHAIN_HEIGHT
-                });
-                true
-            },
-        )]
+        vec![
+            eventually_all_chains_reach_max_height(),
+            eventually_some_connection_reaches_is_in_try_open_state(),
+        ]
     }
+}
+
+fn eventually_all_chains_reach_max_height() -> stateright::Property<IBC> {
+    use ibc::ics03_connection::context::ConnectionReader;
+    stateright::Property::sometimes(
+        "eventually all chains reach max height",
+        |_, state: &IBCTestExecutor| {
+            // \A chainId \in ChainIds
+            CHAIN_IDS.into_iter().all(|chain_id| {
+                let ctx = state.chain_context(chain_id.to_string());
+                // chains[chainsId].height == MAX_CHAIN_HEIGHT
+                ctx.host_current_height().revision_height == MAX_CHAIN_HEIGHT
+            })
+        },
+    )
+}
+
+fn eventually_some_connection_reaches_is_in_try_open_state() -> stateright::Property<IBC> {
+    use ibc::ics03_connection::context::ConnectionReader;
+    stateright::Property::sometimes(
+        "eventually some connections is in try open state",
+        |_, state: &IBCTestExecutor| {
+            // \E chainId \in ChainIds
+            CHAIN_IDS.into_iter().any(|chain_id| {
+                let ctx = state.chain_context(chain_id.to_string());
+                // \E connectionId \in ConnectionIds
+                IBC::connection_ids().any(|connection_id| {
+                    let connection =
+                        ctx.connection_end(&IBCTestExecutor::connection_id(connection_id));
+                    // connections[connectionId].state == TRY_OPEN
+                    connection.iter().any(|connection| {
+                        connection.state() == &ibc::ics03_connection::connection::State::TryOpen
+                    })
+                })
+            })
+        },
+    )
 }
 
 #[test]
 fn stateright() {
-    // use stateright::Model;
-    // IBC.checker().spawn_bfs().join().assert_properties()
+    use stateright::Checker;
+    use stateright::Model;
+    // requires: IBCTestExecutor implements Hash
+    IBC.checker().spawn_bfs().join().assert_properties()
 }

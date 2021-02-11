@@ -12,7 +12,7 @@ use crate::ics02_client::header::Header;
 use crate::mock::client_state::MockConsensusState;
 use crate::Height;
 
-#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, Serialize)]
+#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, Serialize, Hash)]
 pub struct MockHeader(pub Height);
 
 impl Protobuf<RawMockHeader> for MockHeader {}

@@ -25,16 +25,16 @@ use ibc::mock::header::MockHeader;
 use ibc::mock::host::HostType;
 use ibc::proofs::{ConsensusProof, Proofs};
 use ibc::Height;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::error::Error;
 use std::fmt::{Debug, Display};
 use step::{Action, ActionOutcome, Chain, Step};
 use tendermint::account::Id as AccountId;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash)]
 pub struct IBCTestExecutor {
     // mapping from chain identifier to its context
-    contexts: HashMap<ChainId, MockContext>,
+    contexts: BTreeMap<ChainId, MockContext>,
 }
 
 impl IBCTestExecutor {
@@ -122,7 +122,7 @@ impl IBCTestExecutor {
             .expect("it should be possible to create the client identifier")
     }
 
-    fn connection_id(connection_id: u64) -> ConnectionId {
+    pub fn connection_id(connection_id: u64) -> ConnectionId {
         ConnectionId::new(connection_id)
             .expect("it should be possible to create the connection identifier")
     }

@@ -176,6 +176,16 @@ impl From<AnyHeader> for Any {
     }
 }
 
+impl std::hash::Hash for AnyClientState {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        if let Self::Mock(client_state) = self {
+            client_state.hash(state);
+        } else {
+            unimplemented!()
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 #[serde(tag = "type")]
 pub enum AnyClientState {
@@ -269,6 +279,16 @@ impl ClientState for AnyClientState {
 
     fn wrap_any(self) -> AnyClientState {
         self
+    }
+}
+
+impl std::hash::Hash for AnyConsensusState {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        if let Self::Mock(consensus_state) = self {
+            consensus_state.hash(state);
+        } else {
+            unimplemented!()
+        }
     }
 }
 
