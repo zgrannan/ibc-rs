@@ -213,6 +213,7 @@ fn stateright() {
     // requires: IBCTestExecutor implements Hash
     IBC.checker()
         .threads(dbg!(num_cpus::get()))
+        // .serve("localhost:3000");
         .spawn_dfs()
         .report(&mut std::io::stdout())
         .join()
