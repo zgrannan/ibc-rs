@@ -54,6 +54,9 @@ pub trait ConnectionReader {
     ) -> Option<Version> {
         pick_version(supported_versions, counterparty_candidate_versions)
     }
+
+    /// Returns a natural number, counting how many connections have been created thus far.
+    fn connection_counter(&self) -> u64;
 }
 
 /// A context supplying all the necessary write-only dependencies (i.e., storage writing facility)

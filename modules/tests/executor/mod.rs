@@ -127,7 +127,7 @@ impl IBCTestExecutor {
             .expect("it should be possible to create the connection identifier")
     }
 
-    fn height(height: u64) -> Height {
+    pub fn height(height: u64) -> Height {
         Height::new(Self::revision(), height)
     }
 

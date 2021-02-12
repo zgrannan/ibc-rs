@@ -101,10 +101,10 @@ pub struct MockContext {
     port_capabilities: BTreeMap<PortId, Capability>,
 
     /// Counter for connection identifiers (see `next_connection_id`).
-    connection_ids_counter: u32,
+    connection_ids_counter: u64,
 
     /// Counter for channel identifiers (see `next_channel_id`).
-    channel_ids_counter: u32,
+    channel_ids_counter: u64,
 }
 
 /// Returns a MockContext with bare minimum initialization: no clients, no connections and no channels are
@@ -511,6 +511,10 @@ impl ConnectionReader for MockContext {
     fn host_consensus_state(&self, height: Height) -> Option<AnyConsensusState> {
         let block_ref = self.host_block(height);
         block_ref.cloned().map(Into::into)
+    }
+
+    fn connection_counter(&self) -> u64 {
+        self.connection_ids_counter
     }
 }
 

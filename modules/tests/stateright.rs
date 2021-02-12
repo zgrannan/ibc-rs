@@ -1,8 +1,14 @@
 mod executor;
+
 use executor::{step, IBCTestExecutor};
 
-const CHAIN_IDS: &[&str] = &["chainA", "chainB"];
-const MAX_CHAIN_HEIGHT: u64 = 3;
+use ibc::ics02_client::context::ClientReader;
+use ibc::ics03_connection::connection::State as ConnectionState;
+use ibc::ics03_connection::context::ConnectionReader;
+use ibc::mock::context::MockContext;
+
+const CHAIN_IDS: &[&'static str] = &["chainA", "chainB"];
+const MAX_CHAIN_HEIGHT: u64 = 5;
 const MAX_CLIENTS_PER_CHAIN: u64 = 1;
 const MAX_CONNECTIONS_PER_CHAIN: u64 = 1;
 
@@ -21,16 +27,27 @@ impl IBC {
         0..MAX_CONNECTIONS_PER_CHAIN
     }
 
-    fn create_client_actions(chain_id: &str) -> impl Iterator<Item = step::Action> + '_ {
-        Self::heights().map(move |height| step::Action::ICS02CreateClient {
-            chain_id: chain_id.to_string(),
-            client_state: height,
-            consensus_state: height,
+    fn create_client_actions<'a>(
+        chain_id: &'static str,
+        ctx: &'a MockContext,
+    ) -> impl Iterator<Item = step::Action> + 'a {
+        // \E height \in \Heights
+        Self::heights().filter_map(move |height| {
+            // only create client if the model constant `MAX_CLIENTS_PER_CHAIN`
+            // allows it
+            let allowed = ctx.client_counter() < MAX_CLIENTS_PER_CHAIN;
+            allowed.then(|| step::Action::ICS02CreateClient {
+                chain_id: chain_id.to_string(),
+                client_state: height,
+                consensus_state: height,
+            })
         })
     }
 
-    fn update_client_actions(chain_id: &str) -> impl Iterator<Item = step::Action> + '_ {
+    fn update_client_actions(chain_id: &'static str) -> impl Iterator<Item = step::Action> + '_ {
+        // \E clientId \in \ClientIds
         Self::client_ids().flat_map(move |client_id| {
+            // \E height \in \Heights
             Self::heights().map(move |height| step::Action::ICS02UpdateClient {
                 chain_id: chain_id.to_string(),
                 client_id,
@@ -39,35 +56,56 @@ impl IBC {
         })
     }
 
-    fn connection_open_init_actions(chain_id: &str) -> impl Iterator<Item = step::Action> + '_ {
+    fn connection_open_init_actions<'a>(
+        chain_id: &'static str,
+        ctx: &'a MockContext,
+    ) -> impl Iterator<Item = step::Action> + 'a {
+        // \E clientId \in \ClientIds
         Self::client_ids().flat_map(move |client_id| {
-            Self::client_ids().map(move |counterparty_client_id| {
-                step::Action::ICS03ConnectionOpenInit {
+            // \E counterpartyClientId \in \ClientIds
+            Self::client_ids().filter_map(move |counterparty_client_id| {
+                // only create connection if the model constant
+                // `MaxConnectionsPerChain` allows it
+                let allowed = ctx.connection_counter() < MAX_CONNECTIONS_PER_CHAIN;
+                allowed.then(|| step::Action::ICS03ConnectionOpenInit {
                     chain_id: chain_id.to_string(),
                     client_id,
                     counterparty_client_id,
-                }
+                })
             })
         })
     }
 
-    fn connection_open_try_actions(chain_id: &str) -> impl Iterator<Item = step::Action> + '_ {
+    fn connection_open_try_actions<'a>(
+        chain_id: &'static str,
+        ctx: &'a MockContext,
+    ) -> impl Iterator<Item = step::Action> + 'a {
+        // \E previousConnectionId \in ConnectionIds \union {ConnectionIdNone}
         Self::connection_ids()
             .map(Some)
             .chain(None)
             .flat_map(move |previous_connection_id| {
+                // \E clientId \in ClientIds:
                 Self::client_ids().flat_map(move |client_id| {
+                    // \E height \in Heights:
                     Self::heights().flat_map(move |height| {
+                        // \E counterpartyClientId \in ClientIds:
                         Self::client_ids().flat_map(move |counterparty_client_id| {
-                            Self::connection_ids().map(move |counterparty_connection_id| {
-                                step::Action::ICS03ConnectionOpenTry {
+                            // \E counterpartyConnectionId \in ConnectionIds:
+                            Self::connection_ids().filter_map(move |counterparty_connection_id| {
+                                // only perform action if there was a previous
+                                // connection or if the model constant
+                                // `MAX_CONNECTIONS_PER_CHAIN` allows it
+                                let allowed = previous_connection_id.is_some()
+                                    && ctx.connection_counter() < MAX_CONNECTIONS_PER_CHAIN;
+                                allowed.then(|| step::Action::ICS03ConnectionOpenTry {
                                     chain_id: chain_id.to_string(),
                                     previous_connection_id,
                                     client_id,
                                     client_state: height,
                                     counterparty_client_id,
                                     counterparty_connection_id,
-                                }
+                                })
                             })
                         })
                     })
@@ -75,13 +113,23 @@ impl IBC {
             })
     }
 
-    fn all_actions() -> impl Iterator<Item = step::Action> {
-        CHAIN_IDS.into_iter().flat_map(|chain_id| {
-            Self::create_client_actions(chain_id)
-                .chain(Self::update_client_actions(chain_id))
-                .chain(Self::connection_open_init_actions(chain_id))
-                .chain(Self::connection_open_try_actions(chain_id))
-        })
+    fn allowed_actions(state: &IBCTestExecutor) -> impl Iterator<Item = step::Action> + '_ {
+        // \E chainId \in ChainIds:
+        CHAIN_IDS
+            .into_iter()
+            .filter_map(move |chain_id| {
+                let ctx = state.chain_context(chain_id.to_string());
+                // perform action on chain if the model constant
+                // `MAX_CHAIN_HEIGHT` allows it
+                let allowed = ctx.host_current_height() < IBCTestExecutor::height(MAX_CHAIN_HEIGHT);
+                allowed.then(|| {
+                    Self::create_client_actions(chain_id, ctx)
+                        .chain(Self::update_client_actions(chain_id))
+                        .chain(Self::connection_open_init_actions(chain_id, ctx))
+                        .chain(Self::connection_open_try_actions(chain_id, ctx))
+                })
+            })
+            .flatten()
     }
 }
 
@@ -99,9 +147,9 @@ impl stateright::Model for IBC {
         vec![state]
     }
 
-    fn actions(&self, _state: &Self::State, actions: &mut Vec<Self::Action>) {
-        // in every state, it's always possible to perform all actions
-        actions.extend(Self::all_actions())
+    fn actions(&self, state: &Self::State, actions: &mut Vec<Self::Action>) {
+        // select the set of allowed actions
+        actions.extend(Self::allowed_actions(state))
     }
 
     fn next_state(
@@ -117,16 +165,15 @@ impl stateright::Model for IBC {
 
     fn properties(&self) -> Vec<stateright::Property<Self>> {
         vec![
-            eventually_all_chains_reach_max_height(),
-            eventually_some_connection_reaches_is_in_try_open_state(),
+            all_chains_reach_max_height(),
+            some_connection_reaches_a_try_open_state(),
         ]
     }
 }
 
-fn eventually_all_chains_reach_max_height() -> stateright::Property<IBC> {
-    use ibc::ics03_connection::context::ConnectionReader;
+fn all_chains_reach_max_height() -> stateright::Property<IBC> {
     stateright::Property::sometimes(
-        "eventually all chains reach max height",
+        "all chains reach max height",
         |_, state: &IBCTestExecutor| {
             // \A chainId \in ChainIds
             CHAIN_IDS.into_iter().all(|chain_id| {
@@ -138,10 +185,9 @@ fn eventually_all_chains_reach_max_height() -> stateright::Property<IBC> {
     )
 }
 
-fn eventually_some_connection_reaches_is_in_try_open_state() -> stateright::Property<IBC> {
-    use ibc::ics03_connection::context::ConnectionReader;
+fn some_connection_reaches_a_try_open_state() -> stateright::Property<IBC> {
     stateright::Property::sometimes(
-        "eventually some connections is in try open state",
+        "some connection reaches a try open state",
         |_, state: &IBCTestExecutor| {
             // \E chainId \in ChainIds
             CHAIN_IDS.into_iter().any(|chain_id| {
@@ -151,9 +197,9 @@ fn eventually_some_connection_reaches_is_in_try_open_state() -> stateright::Prop
                     let connection =
                         ctx.connection_end(&IBCTestExecutor::connection_id(connection_id));
                     // connections[connectionId].state == TRY_OPEN
-                    connection.iter().any(|connection| {
-                        connection.state() == &ibc::ics03_connection::connection::State::TryOpen
-                    })
+                    connection
+                        .iter()
+                        .any(|connection| connection.state() == &ConnectionState::TryOpen)
                 })
             })
         },
@@ -165,5 +211,10 @@ fn stateright() {
     use stateright::Checker;
     use stateright::Model;
     // requires: IBCTestExecutor implements Hash
-    IBC.checker().spawn_bfs().join().assert_properties()
+    IBC.checker()
+        .threads(dbg!(num_cpus::get()))
+        .spawn_dfs()
+        .report(&mut std::io::stdout())
+        .join()
+        .assert_properties()
 }
