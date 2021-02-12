@@ -3,7 +3,7 @@ mod executor;
 const TESTS_DIR: &str = "tests/support/model_based/tests";
 
 #[test]
-fn model_based() {
+fn main() {
     let tests = vec![
         "ICS02UpdateOKTest",
         "ICS02HeaderVerificationFailureTest",

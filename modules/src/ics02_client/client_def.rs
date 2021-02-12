@@ -176,6 +176,7 @@ impl From<AnyHeader> for Any {
     }
 }
 
+#[cfg(any(test, feature = "mocks"))]
 impl std::hash::Hash for AnyClientState {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         if let Self::Mock(client_state) = self {
@@ -282,6 +283,7 @@ impl ClientState for AnyClientState {
     }
 }
 
+#[cfg(any(test, feature = "mocks"))]
 impl std::hash::Hash for AnyConsensusState {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         if let Self::Mock(consensus_state) = self {

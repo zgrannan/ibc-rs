@@ -42,10 +42,6 @@ subtle-encoding = "0.5"
 [dependencies.tendermint]
 version = "=0.18.0"
 
-[dependencies.tendermint-rpc]
-version = "=0.18.0"
-features = ["http-client", "websocket-client"]
-
 [dependencies.tendermint-proto]
 version = "=0.18.0"
 
@@ -55,6 +51,17 @@ optional = true
 
 [dev-dependencies]
 tokio = { version = "1.0", features = ["macros"] }
+tendermint-rpc = { version = "=0.18.0", features = ["http-client", "websocket-client"] }
 tendermint-testgen = { version = "=0.18.0" } # Needed for generating (synthetic) light blocks.
 stateright = "0.22.2"
 num_cpus = "1.13.0"
+
+[[test]]
+name = "mbt"
+path = "tests/mbt.rs"
+required-features = ["mocks"]
+
+[[test]]
+name = "stateright"
+path = "tests/stateright.rs"
+required-features = ["mocks"]
