@@ -74,7 +74,7 @@ impl IBCTestExecutor {
             .expect("chain context should have been initialized")
     }
 
-    fn extract_handler_error_kind<K>(ics18_result: Result<(), ICS18Error>) -> K
+    pub fn extract_handler_error_kind<K>(ics18_result: Result<(), ICS18Error>) -> K
     where
         K: Clone + Debug + Display + Into<anomaly::BoxError> + 'static,
     {
@@ -101,23 +101,23 @@ impl IBCTestExecutor {
             .clone()
     }
 
-    fn chain_id(chain_id: String) -> ChainId {
+    pub fn chain_id(chain_id: String) -> ChainId {
         ChainId::new(chain_id, Self::revision())
     }
 
-    fn revision() -> u64 {
+    pub fn revision() -> u64 {
         0
     }
 
-    fn version() -> Version {
+    pub fn version() -> Version {
         Version::default()
     }
 
-    fn versions() -> Vec<Version> {
+    pub fn versions() -> Vec<Version> {
         vec![Self::version()]
     }
 
-    fn client_id(client_id: u64) -> ClientId {
+    pub fn client_id(client_id: u64) -> ClientId {
         ClientId::new(ClientType::Mock, client_id)
             .expect("it should be possible to create the client identifier")
     }
@@ -131,53 +131,53 @@ impl IBCTestExecutor {
         Height::new(Self::revision(), height)
     }
 
-    fn mock_header(height: u64) -> MockHeader {
+    pub fn mock_header(height: u64) -> MockHeader {
         MockHeader(Self::height(height))
     }
 
-    fn header(height: u64) -> AnyHeader {
+    pub fn header(height: u64) -> AnyHeader {
         AnyHeader::Mock(Self::mock_header(height))
     }
 
-    fn client_state(height: u64) -> AnyClientState {
+    pub fn client_state(height: u64) -> AnyClientState {
         AnyClientState::Mock(MockClientState(Self::mock_header(height)))
     }
 
-    fn consensus_state(height: u64) -> AnyConsensusState {
+    pub fn consensus_state(height: u64) -> AnyConsensusState {
         AnyConsensusState::Mock(MockConsensusState(Self::mock_header(height)))
     }
 
-    fn signer() -> AccountId {
+    pub fn signer() -> AccountId {
         AccountId::new([0; 20])
     }
 
-    fn counterparty(client_id: u64, connection_id: Option<u64>) -> Counterparty {
+    pub fn counterparty(client_id: u64, connection_id: Option<u64>) -> Counterparty {
         let client_id = Self::client_id(client_id);
         let connection_id = connection_id.map(|connection_id| Self::connection_id(connection_id));
         let prefix = Self::commitment_prefix();
         Counterparty::new(client_id, connection_id, prefix)
     }
 
-    fn delay_period() -> u64 {
+    pub fn delay_period() -> u64 {
         0
     }
 
-    fn commitment_prefix() -> CommitmentPrefix {
+    pub fn commitment_prefix() -> CommitmentPrefix {
         vec![0].into()
     }
 
-    fn commitment_proof_bytes() -> CommitmentProofBytes {
+    pub fn commitment_proof_bytes() -> CommitmentProofBytes {
         vec![0].into()
     }
 
-    fn consensus_proof(height: u64) -> ConsensusProof {
+    pub fn consensus_proof(height: u64) -> ConsensusProof {
         let consensus_proof = Self::commitment_proof_bytes();
         let consensus_height = Self::height(height);
         ConsensusProof::new(consensus_proof, consensus_height)
             .expect("it should be possible to create the consensus proof")
     }
 
-    fn proofs(height: u64) -> Proofs {
+    pub fn proofs(height: u64) -> Proofs {
         let object_proof = Self::commitment_proof_bytes();
         let client_proof = None;
         let consensus_proof = Some(Self::consensus_proof(height));
@@ -194,7 +194,7 @@ impl IBCTestExecutor {
     }
 
     /// Check that chain heights match the ones in the model.
-    fn check_chain_heights(&self, chains: HashMap<String, Chain>) -> bool {
+    pub fn check_chain_heights(&self, chains: HashMap<String, Chain>) -> bool {
         chains.into_iter().all(|(chain_id, chain)| {
             let ctx = self.chain_context(chain_id);
             ctx.query_latest_height() == Self::height(chain.height)
