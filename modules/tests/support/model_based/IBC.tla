@@ -284,8 +284,8 @@ ConnectionOpenTryAction(chainId) ==
     \E counterpartyClientId \in ClientIds:
     \* select a counterparty connection id
     \E counterpartyConnectionId \in ConnectionIds:
-        \* only perform action if there was a previous connection or if the model
-        \* constant `MaxConnectionsPerChain` allows it
+        \* only perform action if there was a previous connection or if the
+        \* model constant `MaxConnectionsPerChain` allows it
         IF \/ previousConnectionId /= ConnectionIdNone
             \/ chains[chainId].connectionIdCounter < MaxConnectionsPerChain THEN
             ConnectionOpenTry(
@@ -332,7 +332,7 @@ Next ==
             \/ CreateClientAction(chainId)
             \/ UpdateClientAction(chainId)
             \/ ConnectionOpenInitAction(chainId)
-            \* \/ ConnectionOpenTryAction(chainId)
+            \/ ConnectionOpenTryAction(chainId)
             \/ UNCHANGED vars
         ELSE
             \/ UNCHANGED vars
