@@ -162,8 +162,13 @@ impl stateright::Model for IBC {
     ) -> Option<Self::State> {
         let mut next_state = previous_state.clone();
         // simply apply the action and ignore its result
-        let _result = next_state.apply(action);
-        Some(next_state)
+        let result = next_state.apply(action);
+        // only return a new state if the action succeeds
+        if result.is_ok() {
+            Some(next_state)
+        } else {
+            None
+        }
     }
 
     fn properties(&self) -> Vec<stateright::Property<Self>> {
