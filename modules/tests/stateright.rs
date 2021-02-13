@@ -15,14 +15,17 @@ const MAX_CONNECTIONS_PER_CHAIN: u64 = 1;
 struct IBC;
 
 impl IBC {
+    // Heights == 1..MaxChainHeight
     fn heights() -> impl Iterator<Item = u64> {
         1..=MAX_CHAIN_HEIGHT
     }
 
+    // ClientIds == 0..(MaxClientsPerChain - 1)
     fn client_ids() -> impl Iterator<Item = u64> {
         0..MAX_CLIENTS_PER_CHAIN
     }
 
+    // ConnectionIds == 0..(MaxConnectionsPerChain- 1)
     fn connection_ids() -> impl Iterator<Item = u64> {
         0..MAX_CONNECTIONS_PER_CHAIN
     }
@@ -139,9 +142,9 @@ impl stateright::Model for IBC {
 
     fn init_states(&self) -> Vec<Self::State> {
         let mut state = executor::IBCTestExecutor::new();
-        // initialize all chains with height 0
+        // initialize all chains with height 1
         CHAIN_IDS.into_iter().for_each(|chain_id| {
-            let initial_height = 0;
+            let initial_height = 1;
             state.init_chain_context(chain_id.to_string(), initial_height);
         });
         vec![state]
@@ -165,13 +168,13 @@ impl stateright::Model for IBC {
 
     fn properties(&self) -> Vec<stateright::Property<Self>> {
         vec![
-            all_chains_reach_max_height(),
-            some_connection_reaches_a_try_open_state(),
+            all_chains_can_reach_max_height(),
+            some_connection_can_reaches_a_try_open_state(),
         ]
     }
 }
 
-fn all_chains_reach_max_height() -> stateright::Property<IBC> {
+fn all_chains_can_reach_max_height() -> stateright::Property<IBC> {
     stateright::Property::sometimes(
         "all chains reach max height",
         |_, state: &IBCTestExecutor| {
@@ -185,7 +188,7 @@ fn all_chains_reach_max_height() -> stateright::Property<IBC> {
     )
 }
 
-fn some_connection_reaches_a_try_open_state() -> stateright::Property<IBC> {
+fn some_connection_can_reaches_a_try_open_state() -> stateright::Property<IBC> {
     stateright::Property::sometimes(
         "some connection reaches a try open state",
         |_, state: &IBCTestExecutor| {
