@@ -24,7 +24,7 @@ mocks = [ "tendermint-testgen" ]
 # Proto definitions for all IBC-related interfaces, e.g., connections or channels.
 ibc-proto = { version = "0.7.0", path = "../proto" }
 ics23 = "0.6.0"
-anomaly = "0.2.0"
+anomaly = { version = "0.2.0", default-features = false }
 chrono = "0.4"
 thiserror = "1.0.11"
 serde_derive = "1.0.104"
@@ -40,21 +40,31 @@ bech32 = "0.7.2"
 subtle-encoding = "0.5"
 
 [dependencies.tendermint]
-version = "=0.18.0"
+git = "https://github.com/vitorenesduarte/tendermint-rs"
+rev = "29174f580dec1ac3cbb2de9e04329ad8f745ae04"
 
 [dependencies.tendermint-proto]
-version = "=0.18.0"
+git = "https://github.com/vitorenesduarte/tendermint-rs"
+rev = "29174f580dec1ac3cbb2de9e04329ad8f745ae04"
 
 [dependencies.tendermint-testgen]
-version = "=0.18.0"
+git = "https://github.com/vitorenesduarte/tendermint-rs"
+rev = "29174f580dec1ac3cbb2de9e04329ad8f745ae04"
 optional = true
 
 [dev-dependencies]
 tokio = { version = "1.0", features = ["macros"] }
-tendermint-rpc = { version = "=0.18.0", features = ["http-client", "websocket-client"] }
-tendermint-testgen = { version = "=0.18.0" } # Needed for generating (synthetic) light blocks.
 stateright = "0.22.2"
 num_cpus = "1.13.0"
+
+[dev-dependencies.tendermint-testgen]
+git = "https://github.com/vitorenesduarte/tendermint-rs"
+rev = "29174f580dec1ac3cbb2de9e04329ad8f745ae04"
+
+[dev-dependencies.tendermint-rpc]
+git = "https://github.com/vitorenesduarte/tendermint-rs"
+rev = "29174f580dec1ac3cbb2de9e04329ad8f745ae04"
+features = ["http-client", "websocket-client"]
 
 [[test]]
 name = "mbt"

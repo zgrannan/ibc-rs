@@ -44,17 +44,21 @@ subtle-encoding = "0.5"
 dirs-next = "2.0.0"
 
 [dependencies.tendermint-proto]
-version = "=0.18.0"
+git = "https://github.com/vitorenesduarte/tendermint-rs"
+rev = "29174f580dec1ac3cbb2de9e04329ad8f745ae04"
 
 [dependencies.tendermint]
-version = "=0.18.0"
+git = "https://github.com/vitorenesduarte/tendermint-rs"
+rev = "29174f580dec1ac3cbb2de9e04329ad8f745ae04"
 
 [dependencies.tendermint-rpc]
-version = "=0.18.0"
+git = "https://github.com/vitorenesduarte/tendermint-rs"
+rev = "29174f580dec1ac3cbb2de9e04329ad8f745ae04"
 features = ["http-client", "websocket-client"]
 
 [dependencies.tendermint-light-client]
-version = "=0.18.0"
+git = "https://github.com/vitorenesduarte/tendermint-rs"
+rev = "29174f580dec1ac3cbb2de9e04329ad8f745ae04"
 features = ["unstable"]
 
 [dependencies.abscissa_core]
