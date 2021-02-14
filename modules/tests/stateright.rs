@@ -7,7 +7,7 @@ use ibc::ics03_connection::connection::State as ConnectionState;
 use ibc::ics03_connection::context::ConnectionReader;
 use ibc::mock::context::MockContext;
 
-const CHAIN_IDS: &[&'static str] = &["chainA", "chainB"];
+const CHAIN_IDS: &[&'static str] = &["chainA", "chainB", "chainC"];
 const MAX_CHAIN_HEIGHT: u64 = 5;
 const MAX_CLIENTS_PER_CHAIN: u64 = 1;
 const MAX_CONNECTIONS_PER_CHAIN: u64 = 1;
@@ -116,7 +116,7 @@ impl IBC {
             })
     }
 
-    fn allowed_actions(state: &IBCTestExecutor) -> impl Iterator<Item = step::Action> + '_ {
+    fn next_actions(state: &IBCTestExecutor) -> impl Iterator<Item = step::Action> + '_ {
         // \E chainId \in ChainIds:
         CHAIN_IDS
             .into_iter()
@@ -151,8 +151,8 @@ impl stateright::Model for IBC {
     }
 
     fn actions(&self, state: &Self::State, actions: &mut Vec<Self::Action>) {
-        // select the set of allowed actions
-        actions.extend(Self::allowed_actions(state))
+        // compute the set of possible actions
+        actions.extend(Self::next_actions(state))
     }
 
     fn next_state(
