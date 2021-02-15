@@ -12,6 +12,12 @@ const MAX_CHAIN_HEIGHT: u64 = 5;
 const MAX_CLIENTS_PER_CHAIN: u64 = 1;
 const MAX_CONNECTIONS_PER_CHAIN: u64 = 1;
 
+#[derive(Debug, Clone, Hash)]
+struct IBCModelState {
+    executor: IBCTestExecutor,
+    action: step::Action,
+}
+
 struct IBC;
 
 impl IBC {
@@ -137,22 +143,26 @@ impl IBC {
 }
 
 impl stateright::Model for IBC {
-    type State = IBCTestExecutor;
+    type State = IBCModelState;
     type Action = step::Action;
 
     fn init_states(&self) -> Vec<Self::State> {
-        let mut state = executor::IBCTestExecutor::new();
+        let mut executor = executor::IBCTestExecutor::new();
         // initialize all chains with height 1
         CHAIN_IDS.into_iter().for_each(|chain_id| {
             let initial_height = 1;
-            state.init_chain_context(chain_id.to_string(), initial_height);
+            executor.init_chain_context(chain_id.to_string(), initial_height);
         });
+        let state = IBCModelState {
+            executor,
+            action: step::Action::None,
+        };
         vec![state]
     }
 
     fn actions(&self, state: &Self::State, actions: &mut Vec<Self::Action>) {
         // compute the set of possible actions
-        actions.extend(Self::next_actions(state))
+        actions.extend(Self::next_actions(&state.executor))
     }
 
     fn next_state(
@@ -161,14 +171,11 @@ impl stateright::Model for IBC {
         action: Self::Action,
     ) -> Option<Self::State> {
         let mut next_state = previous_state.clone();
-        // simply apply the action and ignore its result
-        let result = next_state.apply(action);
-        // only return a new state if the action succeeds
-        if result.is_ok() {
-            Some(next_state)
-        } else {
-            None
-        }
+        // apply the action and ignore its result
+        let _ = next_state.executor.apply(action.clone());
+        // save action performed
+        next_state.action = action;
+        Some(next_state)
     }
 
     fn properties(&self) -> Vec<stateright::Property<Self>> {
@@ -180,26 +187,23 @@ impl stateright::Model for IBC {
 }
 
 fn all_chains_can_reach_max_height() -> stateright::Property<IBC> {
-    stateright::Property::sometimes(
-        "all chains reach max height",
-        |_, state: &IBCTestExecutor| {
-            // \A chainId \in ChainIds
-            CHAIN_IDS.into_iter().all(|chain_id| {
-                let ctx = state.chain_context(chain_id.to_string());
-                // chains[chainsId].height == MAX_CHAIN_HEIGHT
-                ctx.host_current_height().revision_height == MAX_CHAIN_HEIGHT
-            })
-        },
-    )
+    stateright::Property::sometimes("all chains reach max height", |_, state: &IBCModelState| {
+        // \A chainId \in ChainIds
+        CHAIN_IDS.into_iter().all(|chain_id| {
+            let ctx = state.executor.chain_context(chain_id.to_string());
+            // chains[chainsId].height == MAX_CHAIN_HEIGHT
+            ctx.host_current_height().revision_height == MAX_CHAIN_HEIGHT
+        })
+    })
 }
 
 fn some_connection_can_reaches_a_try_open_state() -> stateright::Property<IBC> {
     stateright::Property::sometimes(
         "some connection reaches a try open state",
-        |_, state: &IBCTestExecutor| {
+        |_, state: &IBCModelState| {
             // \E chainId \in ChainIds
             CHAIN_IDS.into_iter().any(|chain_id| {
-                let ctx = state.chain_context(chain_id.to_string());
+                let ctx = state.executor.chain_context(chain_id.to_string());
                 // \E connectionId \in ConnectionIds
                 IBC::connection_ids().any(|connection_id| {
                     let connection =

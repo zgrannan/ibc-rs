@@ -12,7 +12,7 @@ pub struct Step {
     pub chains: HashMap<String, Chain>,
 }
 
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Hash)]
 #[serde(tag = "type")]
 pub enum Action {
     None,
@@ -82,7 +82,7 @@ where
     Ok(connection_id)
 }
 
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Hash)]
 pub enum ActionOutcome {
     None,
     ICS02CreateOK,
