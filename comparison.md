@@ -294,8 +294,8 @@ _Going back to a previous question:_ can the model of our system be the system i
 
 *__THE QUESTION__:* why does the second source of truth (i.e. the model) have to be `TLA+`? can't the model be written in the same language as the implementation, i.e., in `Rust`?
 - For most users, this will be more attractive as they don't have to learn `TLA+`.
-- And even if they don't want to write the model, they can still check properties about the implementation. 
-- The implementation can also be used to do MBT of other implementations (e.g. in Go, TypeScript, ...)
+- And even if users don't want to write the model, they can still check properties about the `Rust` implementation. 
+- The `Rust` implementation can also be used to do MBT of other implementations (e.g., in `Go`, `TypeScript`, ...)
 
 #### Some numbers
 
