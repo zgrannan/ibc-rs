@@ -1,15 +1,18 @@
+## Model Checking TLA+ vs Model Checking Rust
+
+***
+
 # WARNING
 
-- these ideas reflect my __limited understanding__ of the subject
+- these ideas reflect my __limited experience__ with both
 - I'll make __claims__, probably __wrong__ ones
     - (I might even say we shouldn't be using `TLA+`)
 - nevertheless, my hope is that it can __bootstrap an interesting conversation__
+- I didn't prepare well enough the most important part of this presentation; so please __interrupt me and ask questions__ when I start not making sense
 
-## Model Checking TLA+ vs Model Checking Rust
+***
 
 `"Model Checking X"` means that the model of our system is written in the `X` language.
-
-_Question for later:_ can the model of our system be the system itself?
 
 #### What's a model?
 
@@ -17,11 +20,13 @@ A __model__ specifies:
 - a set of model __constants__
     - e.g. the number of chains and the maximum height they can reach
 - a set of initial __states__
-    - e.g. all chains start at height 1
+    - e.g. chains start at height 1
 - a set of allowed __transitions__ at each state
-    - e.g. a chain can advance its height if it has not reached the maximum height allowed by the model constant
+    - e.g. assume that increasing the height of a chain is a transition; this transition is enabled if the chain has not reached the maximum height allowed by the model constant
 - how to __apply a transition to a state__
-    - e.g. advancing the height of a chain
+    - e.g. effectively increasing the height of a chain (`height++`)
+
+_Question for later:_ can the model of our system be the system itself?
 
 #### Now what?
 
@@ -48,9 +53,9 @@ The typical termination property in __Explict MC__ is _"all states have been exp
 
 `Apalache` cannot do this, and instead terminates once _"all paths with length up to `N` have been explored"_. This is known as bounded MC.
 
-_Observation:_ in `Apalache`, a user has to bound the explored state in two ways, with the above `N` and with the model constants[^redundant]
+_Observation:_ in `Apalache`, a user has to bound the explored state in two ways, with the above `N` and with the model constants[^redundant].
 
-[^redundant]: _Question:_ assume that, given the model constants, the model only has paths of length `3`; if the user supplies `N = 30`, will model checking be as fast as if the user had supplied `N = 3`, or will `Apalache` keep doing redundant work?
+[^redundant]: _Question:_ assume that, given the model constants, the model only has paths of length `3`; if an `Apalache` user supplies `N = 30`, will model checking be as fast as if the user had supplied `N = 3`, or will `Apalache` keep doing redundant work?
 
 #### Code examples
 ##### _a set of model constants_
@@ -84,8 +89,6 @@ fn client_ids() -> impl Iterator<Item = u64> {
     0..MAX_CLIENTS_PER_CHAIN
 }
 ```
-
-##### _other "types"_
 
 - transitions (aka `Actions`)
 
@@ -160,6 +163,8 @@ fn init_states(&self) -> Vec<Self::State> {
     vec![state]
 }
 ```
+
+__Note__: `executor.init_chain_context` is calling the existing Rust implementation, not a model of it. Because of that, in Rust we don't have an `action_outcome`. _This will be important for later_.
 
 ##### _a set of allowed transitions at each state_
 
@@ -274,7 +279,7 @@ fn next_state(
 }
 ```
 
-Note that: TODO
+__Note__: Again, note that in Rust we don't have an `action_outcome`. _This will be important for later_.
 
 #### The value of TLA+
 
@@ -285,11 +290,66 @@ A model of our system written in __TLA+ represents another source of truth__:
 
 _Previous question:_ can the model of our system be the system itself?
 - yes, but it no longer represents another source of truth
-- nonetheless, we can still show interesting things (like safety and liveness)
+- nonetheless, we can still show interesting things (like safety and liveness, which I didn't show here)
 
-_Question:_ why does the second source of truth (i.e. the model) have to be `TLA+`? can't the model also be written in `Rust`?
+*__THE QUESTION__:* why does the second source of truth (i.e. the model) have to be `TLA+`? can't the model also be written in `Rust`?
 - I think so!
 
 
+#### Some numbers
+
+- `TLC`:
+
+```bash
+-----------------------
+2 chains [WITHOUT --workers auto]: 179s
+
+Time	    Diameter  Found        Distinct
+00:02:59    16	      16210701     368425
+
+TPUT: 1946 distinct states/s
+-----------------------
+2 chains [WITH]: 25s
+
+Time	    Diameter  Found        Distinct
+00:00:25    16        16210701     368425
+
+TPUT: 15K  distinct states/s
+-----------------------
+```
+
+> _bad defaults can scare users away_
+
+- `stateright`:
+
+By default, `anomaly`, the crate used for handling errors, comes with a `backtrace` feature enabled. This allows us to have a full stacktrace for errors. If errors occur with high frequency (_and they do when MC_), this creates contention on some lock outside of Rust.
+
+To avoid this, we can disable `backtrace` feature in all crates using `anomaly`:
+
+```git
+-anomaly = "0.2"
++anomaly = { version = "0.2", default-features = false }
+```
 
 
+```bash
+-----------------------
+3 chains [with backtrace]: 2m22s
+
+Done. generated=175616, sec=142
+-----------------------
+3 chains [without backtrace]: 3s
+
+Done. generated=175616, sec=3
+
+TPUT: 58K distinct states/s
+-----------------------
+4 chains [without backtrace]: 3m4s
+
+Done. generated=9834496, sec=182
+
+TPUT: 54K distinct states/s
+-----------------------
+```
+
+> _model checkers can be used to detect performance issues; they can even come with an built-in profiler (e.g. that generates flamegraphs if enabled)_
