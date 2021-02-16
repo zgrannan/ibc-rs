@@ -4,15 +4,15 @@
 
 # WARNING
 
-- these ideas reflect my __limited experience__ with both
+- what follows reflects my __limited experience__ with both
 - I'll make __claims__, probably __wrong__ ones
-    - (I might even say we shouldn't be using `TLA+`)
+    - (I might even say we don't need `TLA+`)
 - nevertheless, my hope is that it can __bootstrap an interesting conversation__
-- I didn't prepare well enough the most important part of this presentation; so please __interrupt me and ask questions__ when I start not making sense
+- I didn't prepare well enough the most important part of this presentation; so please __interrupt me and ask questions__ when I start not making sense 
 
 ***
 
-`"Model Checking X"` means that the model of our system is written in the `X` language.
+By `"Model Checking X"` I mean that the model of our system is written in the `X` language.
 
 #### What's a model?
 
@@ -284,17 +284,18 @@ __Note__: Again, note that in Rust we don't have an `action_outcome`. _This will
 #### The value of TLA+
 
 A model of our system written in __TLA+ represents another source of truth__:
-- if we just have the system, the system should do what the system does
+- if we just have the system, then the system should do what the system does
 - if have both, now there needs to be a consensus on what the truth is
     - just this, by itself, can help uncovering bugs
 
-_Previous question:_ can the model of our system be the system itself?
+_Going back to a previous question:_ can the model of our system be the system itself?
 - yes, but it no longer represents another source of truth
-- nonetheless, we can still show interesting things (like safety and liveness, which I didn't show here)
+- nonetheless, we can still show interesting things (like safety and liveness, which I didn't show here) 
 
-*__THE QUESTION__:* why does the second source of truth (i.e. the model) have to be `TLA+`? can't the model also be written in `Rust`?
-- I think so!
-
+*__THE QUESTION__:* why does the second source of truth (i.e. the model) have to be `TLA+`? can't the model be written in the same language as the implementation, i.e., in `Rust`?
+- For most users, this will be more attractive as they don't have to learn `TLA+`.
+- And even if they don't want to write the model, they can still check properties about the implementation. 
+- The implementation can also be used to do MBT of other implementations (e.g. in Go, TypeScript, ...)
 
 #### Some numbers
 
@@ -314,7 +315,7 @@ TPUT: 1946 distinct states/s
 Time	    Diameter  Found        Distinct
 00:00:25    16        16210701     368425
 
-TPUT: 15K  distinct states/s
+TPUT: 15K  distinct states/s (7x)
 -----------------------
 ```
 
@@ -342,7 +343,7 @@ Done. generated=175616, sec=142
 
 Done. generated=175616, sec=3
 
-TPUT: 58K distinct states/s
+TPUT: 58K distinct states/s (47x)
 -----------------------
 4 chains [without backtrace]: 3m4s
 
