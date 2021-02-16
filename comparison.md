@@ -325,7 +325,7 @@ By default, `anomaly`, the crate used for handling errors, comes with a `backtra
 
 To avoid this, we can disable `backtrace` feature in all crates using `anomaly`:
 
-```git
+```diff
 -anomaly = "0.2"
 +anomaly = { version = "0.2", default-features = false }
 ```
@@ -352,5 +352,7 @@ TPUT: 54K distinct states/s
 ```
 
 > _model checkers can be used to detect performance issues; they can even come with an built-in profiler (e.g. that generates flamegraphs if enabled)_
+
+***
 
 <a name="redundant-footnote">[1]</a>: _Question:_ assume that, given the model constants, the model only has paths of length `3`; if an `Apalache` user supplies `N = 30`, will model checking be as fast as if the user had supplied `N = 3`, or will `Apalache` keep doing redundant work?
