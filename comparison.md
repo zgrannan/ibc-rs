@@ -19,7 +19,7 @@ By `"Model Checking X"` I mean that the model of our system is written in the `X
 A __model__ specifies:
 - a set of model __constants__
     - e.g. the number of chains and the maximum height they can reach
-- a set of initial __states__
+- a set of __initial states__
     - e.g. chains start at height 1
 - a set of allowed __transitions__ at each state
     - e.g. assume that increasing the height of a chain is a transition; this transition is enabled if the chain has not reached the maximum height allowed by the model constant
@@ -53,9 +53,7 @@ The typical termination property in __Explict MC__ is _"all states have been exp
 
 `Apalache` cannot do this, and instead terminates once _"all paths with length up to `N` have been explored"_. This is known as bounded MC.
 
-_Observation:_ in `Apalache`, a user has to bound the explored state in two ways, with the above `N` and with the model constants[^redundant].
-
-[^redundant]: _Question:_ assume that, given the model constants, the model only has paths of length `3`; if an `Apalache` user supplies `N = 30`, will model checking be as fast as if the user had supplied `N = 3`, or will `Apalache` keep doing redundant work?
+_Observation:_ in `Apalache`, a user has to bound the explored state in two ways, with the above `N` and with the model constants<sup>[1](#redundant-footnote)</sup>.
 
 #### Code examples
 ##### _a set of model constants_
@@ -354,3 +352,5 @@ TPUT: 54K distinct states/s
 ```
 
 > _model checkers can be used to detect performance issues; they can even come with an built-in profiler (e.g. that generates flamegraphs if enabled)_
+
+<a name="redundant-footnote">[1]</a>: _Question:_ assume that, given the model constants, the model only has paths of length `3`; if an `Apalache` user supplies `N = 30`, will model checking be as fast as if the user had supplied `N = 3`, or will `Apalache` keep doing redundant work?
