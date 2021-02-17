@@ -295,13 +295,13 @@ _Going back to a previous question:_ can the model of our system be the system i
 - And even if users don't want to write the model, they can still check properties about the `Rust` implementation. 
 - The `Rust` implementation can also be used to do MBT of other implementations (e.g., in `Go`, `TypeScript`, ...)
 
-#### Some numbers
+#### Some (very non-scientific) numbers
 
 - `TLC`:
 
 ```bash
 -----------------------
-2 chains [WITHOUT --workers auto]: 179s
+2 chains [WITHOUT -workers auto]: 179s
 
 Time	    Diameter  Found        Distinct
 00:02:59    16	      16210701     368425
