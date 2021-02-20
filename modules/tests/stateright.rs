@@ -76,9 +76,12 @@ impl IBC {
                 // only create connection if the model constant
                 // `MaxConnectionsPerChain` allows it
                 let allowed = ctx.connection_counter() < MAX_CONNECTIONS_PER_CHAIN;
+                // FIXME
+                let counterparty_chain_id = chain_id.to_string();
                 allowed.then(|| step::Action::ICS03ConnectionOpenInit {
                     chain_id: chain_id.to_string(),
                     client_id,
+                    counterparty_chain_id,
                     counterparty_client_id,
                 })
             })
@@ -107,11 +110,14 @@ impl IBC {
                                 // `MAX_CONNECTIONS_PER_CHAIN` allows it
                                 let allowed = previous_connection_id.is_some()
                                     && ctx.connection_counter() < MAX_CONNECTIONS_PER_CHAIN;
+                                // FIXME
+                                let counterparty_chain_id = chain_id.to_string();
                                 allowed.then(|| step::Action::ICS03ConnectionOpenTry {
                                     chain_id: chain_id.to_string(),
                                     previous_connection_id,
                                     client_id,
                                     client_state: height,
+                                    counterparty_chain_id,
                                     counterparty_client_id,
                                     counterparty_connection_id,
                                 })

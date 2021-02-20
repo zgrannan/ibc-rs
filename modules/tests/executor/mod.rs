@@ -9,16 +9,17 @@ use ibc::ics02_client::msgs::update_client::MsgUpdateAnyClient;
 use ibc::ics02_client::msgs::ClientMsg;
 use ibc::ics03_connection::connection::Counterparty;
 use ibc::ics03_connection::error::Kind as ICS03ErrorKind;
+use ibc::ics03_connection::msgs::conn_open_ack::MsgConnectionOpenAck;
 use ibc::ics03_connection::msgs::conn_open_init::MsgConnectionOpenInit;
 use ibc::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry;
 use ibc::ics03_connection::msgs::ConnectionMsg;
 use ibc::ics03_connection::version::Version;
-use ibc::ics18_relayer::context::ICS18Context;
+use ibc::ics18_relayer::context::Ics18Context;
 use ibc::ics18_relayer::error::{Error as ICS18Error, Kind as ICS18ErrorKind};
 use ibc::ics23_commitment::commitment::{CommitmentPrefix, CommitmentProofBytes};
 use ibc::ics24_host::identifier::{ChainId, ClientId, ConnectionId};
 use ibc::ics26_routing::error::{Error as ICS26Error, Kind as ICS26ErrorKind};
-use ibc::ics26_routing::msgs::ICS26Envelope;
+use ibc::ics26_routing::msgs::Ics26Envelope;
 use ibc::mock::client_state::{MockClientState, MockConsensusState};
 use ibc::mock::context::MockContext;
 use ibc::mock::header::MockHeader;
@@ -48,7 +49,8 @@ impl IBCTestExecutor {
     /// Panic if a context for `chain_id` already exists.
     pub fn init_chain_context(&mut self, chain_id: String, initial_height: u64) {
         let chain_id = Self::chain_id(chain_id);
-        let max_history_size = 1;
+        // never GC blocks
+        let max_history_size = usize::MAX;
         let ctx = MockContext::new(
             chain_id.clone(),
             HostType::Mock,
@@ -124,7 +126,6 @@ impl IBCTestExecutor {
 
     pub fn connection_id(connection_id: u64) -> ConnectionId {
         ConnectionId::new(connection_id)
-            .expect("it should be possible to create the connection identifier")
     }
 
     pub fn height(height: u64) -> Height {
@@ -194,6 +195,11 @@ impl IBCTestExecutor {
     }
 
     /// Check that chain heights match the ones in the model.
+    pub fn validate_chains(&self) -> bool {
+        self.contexts.values().all(|ctx| ctx.validate().is_ok())
+    }
+
+    /// Check that chain heights match the ones in the model.
     pub fn check_chain_heights(&self, chains: HashMap<String, Chain>) -> bool {
         chains.into_iter().all(|(chain_id, chain)| {
             let ctx = self.chain_context(chain_id);
@@ -213,7 +219,7 @@ impl IBCTestExecutor {
                 let ctx = self.chain_context_mut(chain_id);
 
                 // create ICS26 message and deliver it
-                let msg = ICS26Envelope::ICS2Msg(ClientMsg::CreateClient(MsgCreateAnyClient {
+                let msg = Ics26Envelope::Ics2Msg(ClientMsg::CreateClient(MsgCreateAnyClient {
                     client_state: Self::client_state(client_state),
                     consensus_state: Self::consensus_state(consensus_state),
                     signer: Self::signer(),
@@ -229,7 +235,7 @@ impl IBCTestExecutor {
                 let ctx = self.chain_context_mut(chain_id);
 
                 // create ICS26 message and deliver it
-                let msg = ICS26Envelope::ICS2Msg(ClientMsg::UpdateClient(MsgUpdateAnyClient {
+                let msg = Ics26Envelope::Ics2Msg(ClientMsg::UpdateClient(MsgUpdateAnyClient {
                     client_id: Self::client_id(client_id),
                     header: Self::header(header),
                     signer: Self::signer(),
@@ -239,13 +245,14 @@ impl IBCTestExecutor {
             Action::ICS03ConnectionOpenInit {
                 chain_id,
                 client_id,
+                counterparty_chain_id: _,
                 counterparty_client_id,
             } => {
                 // get chain's context
                 let ctx = self.chain_context_mut(chain_id);
 
                 // create ICS26 message and deliver it
-                let msg = ICS26Envelope::ICS3Msg(ConnectionMsg::ConnectionOpenInit(
+                let msg = Ics26Envelope::Ics3Msg(ConnectionMsg::ConnectionOpenInit(
                     MsgConnectionOpenInit {
                         client_id: Self::client_id(client_id),
                         counterparty: Self::counterparty(counterparty_client_id, None),
@@ -261,6 +268,7 @@ impl IBCTestExecutor {
                 previous_connection_id,
                 client_id,
                 client_state,
+                counterparty_chain_id: _,
                 counterparty_client_id,
                 counterparty_connection_id,
             } => {
@@ -268,13 +276,12 @@ impl IBCTestExecutor {
                 let ctx = self.chain_context_mut(chain_id);
 
                 // create ICS26 message and deliver it
-                let msg = ICS26Envelope::ICS3Msg(ConnectionMsg::ConnectionOpenTry(Box::new(
+                let msg = Ics26Envelope::Ics3Msg(ConnectionMsg::ConnectionOpenTry(Box::new(
                     MsgConnectionOpenTry {
                         previous_connection_id: previous_connection_id.map(Self::connection_id),
                         client_id: Self::client_id(client_id),
+                        // TODO: is this ever needed?
                         client_state: None,
-                        // TODO: it should be like this:
-                        // client_state: Some(Self::client_state(client_state)),
                         counterparty: Self::counterparty(
                             counterparty_client_id,
                             Some(counterparty_connection_id),
@@ -282,6 +289,33 @@ impl IBCTestExecutor {
                         counterparty_versions: Self::versions(),
                         proofs: Self::proofs(client_state),
                         delay_period: Self::delay_period(),
+                        signer: Self::signer(),
+                    },
+                )));
+                ctx.deliver(msg)
+            }
+            Action::ICS03ConnectionOpenAck {
+                chain_id,
+                connection_id,
+                client_state,
+                counterparty_chain_id: _,
+                counterparty_connection_id,
+            } => {
+                // get chain's context
+                let ctx = self.chain_context_mut(chain_id);
+
+                // create ICS26 message and deliver it
+                let msg = Ics26Envelope::Ics3Msg(ConnectionMsg::ConnectionOpenAck(Box::new(
+                    MsgConnectionOpenAck {
+                        connection_id: Self::connection_id(connection_id),
+                        // TODO: the following should not be an option
+                        counterparty_connection_id: Some(Self::connection_id(
+                            counterparty_connection_id,
+                        )),
+                        // TODO: is this ever needed?
+                        client_state: None,
+                        proofs: Self::proofs(client_state),
+                        version: Self::version(),
                         signer: Self::signer(),
                     },
                 )));
@@ -308,8 +342,9 @@ impl modelator::TestExecutor<Step> for IBCTestExecutor {
 
     fn next_step(&mut self, step: Step) -> bool {
         let result = self.apply(step.action);
-        // check the expected outcome: client create always succeeds
+        println!("{:?}", result);
         let outcome_matches = match step.action_outcome {
+            ActionOutcome::None => panic!("unexpected action outcome"),
             ActionOutcome::ICS02CreateOK => result.is_ok(),
             ActionOutcome::ICS02UpdateOK => result.is_ok(),
             ActionOutcome::ICS02ClientNotFound => matches!(
@@ -338,9 +373,21 @@ impl modelator::TestExecutor<Step> for IBCTestExecutor {
                 Self::extract_handler_error_kind::<ICS03ErrorKind>(result),
                 ICS03ErrorKind::ConnectionMismatch(_)
             ),
-            action => panic!("unexpected action outcome {:?}", action),
+            ActionOutcome::ICS03MissingClientConsensusState => matches!(
+                Self::extract_handler_error_kind::<ICS03ErrorKind>(result),
+                ICS03ErrorKind::MissingClientConsensusState(_, _)
+            ),
+            ActionOutcome::ICS03InvalidProof => matches!(
+                Self::extract_handler_error_kind::<ICS03ErrorKind>(result),
+                ICS03ErrorKind::InvalidProof
+            ),
+            ActionOutcome::ICS03ConnectionOpenAckOK => result.is_ok(),
+            ActionOutcome::ICS03UninitializedConnection => matches!(
+                Self::extract_handler_error_kind::<ICS03ErrorKind>(result),
+                ICS03ErrorKind::UninitializedConnection(_)
+            ),
         };
-        // also check that chain heights match
-        outcome_matches && self.check_chain_heights(step.chains)
+        // also check the state of chains
+        outcome_matches && self.validate_chains() && self.check_chain_heights(step.chains)
     }
 }

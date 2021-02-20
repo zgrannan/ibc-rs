@@ -36,7 +36,99 @@ ConnectionStates == {
     "Open"
 }
 
-\* data kept per cliennt
+\* set of possible actions
+NoneActions == [
+    type: {"None"}
+] <: {ActionType}
+
+CreateClientActions == [
+    type: {"ICS02CreateClient"},
+    chainId: ChainIds,
+    \* `clientState` contains simply a height
+    clientState: Heights,
+    \* `consensusState` contains simply a height
+    consensusState: Heights
+] <: {ActionType}
+UpdateClientActions == [
+    type: {"ICS02UpdateClient"},
+    chainId: ChainIds,
+    clientId: ClientIds,
+    \* `header` contains simply a height
+    header: Heights
+] <: {ActionType}
+ClientActions ==
+    CreateClientActions \union
+    UpdateClientActions
+
+ConnectionOpenInitActions == [
+    type: {"ICS03ConnectionOpenInit"},
+    chainId: ChainIds,
+    clientId: ClientIds,
+    counterpartyChainId: ChainIds,
+    counterpartyClientId: ClientIds
+] <: {ActionType}
+ConnectionOpenTryActions == [
+    type: {"ICS03ConnectionOpenTry"},
+    chainId: ChainIds,
+    clientId: ClientIds,
+    \* `previousConnectionId` can be none
+    previousConnectionId: ConnectionIds \union {ConnectionIdNone},
+    \* `clientState` contains simply a height
+    clientState: Heights,
+    counterpartyChainId: ChainIds,
+    counterpartyClientId: ClientIds,
+    counterpartyConnectionId: ConnectionIds
+] <: {ActionType}
+ConnectionOpenAckActions == [
+    type: {"ICS03ConnectionOpenAck"},
+    chainId: ChainIds,
+    connectionId: ConnectionIds,
+    \* `clientState` contains simply a height
+    clientState: Heights,
+    counterpartyChainId: ChainIds,
+    counterpartyConnectionId: ConnectionIds
+] <: {ActionType}
+ConnectionActions ==
+    ConnectionOpenInitActions \union
+    ConnectionOpenTryActions \union
+    ConnectionOpenAckActions
+
+Actions ==
+    NoneActions \union
+    ClientActions \union
+    ConnectionActions
+
+\* set of possible action outcomes
+ActionOutcomes == {
+    "None",
+    "ModelError",
+    \* ICS02_CreateClient outcomes:
+    "ICS02CreateOK",
+    \* ICS02_UpdateClient outcomes:
+    "ICS02UpdateOK",
+    "ICS02ClientNotFound",
+    "ICS02HeaderVerificationFailure",
+    \* ICS03_ConnectionOpenInit outcomes:
+    "ICS03ConnectionOpenInitOK",
+    "ICS03MissingClient",
+    \* ICS03_ConnectionOpenTry outcomes:
+    "ICS03ConnectionOpenTryOK",
+    "ICS03InvalidConsensusHeight",
+    "ICS03ConnectionNotFound",
+    "ICS03ConnectionMismatch",
+    "ICS03MissingClientConsensusState",
+    "ICS03InvalidProof",
+    \* ICS03_ConnectionOpenAck outcomes:
+    "ICS03ConnectionOpenAckOK",
+    "ICS03UninitializedConnection"
+}
+\* TODO: the current generation of tests cannot distinguish between a
+\*       "ICS03ConnectionMismatch" generated in conn open try or one generated
+\*       in conn open ack; (there are other cases like "ICS03ConnectionMismatch")
+\*       we can solve this with in a variable 'history', like in the light
+\*       client tests.
+
+\* data kept per client
 Client == [
     heights: SUBSET Heights
 ]
@@ -62,194 +154,167 @@ Chain == [
     clients: Clients,
     clientIdCounter: 0..MaxClientsPerChain,
     connections: Connections,
-    connectionIdCounter: 0..MaxConnectionsPerChain
+    connectionIdCounter: 0..MaxConnectionsPerChain,
+    connectionProofs: SUBSET ConnectionActions
 ]
 \* mapping from chain identifier to its data
 Chains == [
     ChainIds -> Chain
 ]
 
-\* set of possible actions
-NoneActions == [
-    type: {"None"}
-] <: {ActionType}
-CreateClientActions == [
-    type: {"ICS02CreateClient"},
-    chainId: ChainIds,
-    \* client state contains simply a height
-    clientState: Heights,
-    \* consensus state contains simply a height
-    consensusState: Heights
-] <: {ActionType}
-UpdateClientActions == [
-    type: {"ICS02UpdateClient"},
-    chainId: ChainIds,
-    clientId: ClientIds,
-    \* header contains simply a height
-    header: Heights
-] <: {ActionType}
-ConnectionOpenInitActions == [
-    type: {"ICS03ConnectionOpenInit"},
-    chainId: ChainIds,
-    clientId: ClientIds,
-    counterpartyClientId: ClientIds
-] <: {ActionType}
-ConnectionOpenTryActions == [
-    type: {"ICS03ConnectionOpenTry"},
-    chainId: ChainIds,
-    \* `previousConnectionId` can be none
-    previousConnectionId: ConnectionIds \union {ConnectionIdNone},
-    clientId: ClientIds,
-    \* client state contains simply a height
-    clientState: Heights,
-    counterpartyClientId: ClientIds,
-    counterpartyConnectionId: ConnectionIds
-] <: {ActionType}
-Actions ==
-    NoneActions \union
-    CreateClientActions \union
-    UpdateClientActions \union
-    ConnectionOpenInitActions \union
-    ConnectionOpenTryActions
-
-\* set of possible action outcomes
-ActionOutcomes == {
-    "None",
-    "ModelError",
-    \* ICS02_CreateClient outcomes:
-    "ICS02CreateOK",
-    \* ICS02_UpdateClient outcomes:
-    "ICS02UpdateOK",
-    "ICS02ClientNotFound",
-    "ICS02HeaderVerificationFailure",
-    \* ICS03_ConnectionOpenInit outcomes:
-    "ICS03ConnectionOpenInitOK",
-    "ICS03MissingClient",
-    \* ICS03_ConnectionOpenTry outcomes:
-    "ICS03ConnectionOpenTryOK",
-    "ICS03InvalidConsensusHeight",
-    "ICS03ConnectionNotFound",
-    "ICS03ConnectionMismatch"
-}
-
 (***************************** Specification *********************************)
 
 \* update chain height if outcome was ok
-UpdateChainHeight(height, outcome, okOutcome) ==
-    IF outcome = okOutcome THEN height + 1 ELSE height
+UpdateChainHeight(height, result, okOutcome) ==
+    IF result.outcome = okOutcome THEN
+        height + 1
+    ELSE
+        height
+
+\* update connection proofs if outcome was ok
+UpdateConnectionProofs(connectionProofs, result, okOutcome) ==
+    IF result.outcome = okOutcome THEN
+        connectionProofs \union {result.action}
+    ELSE
+        connectionProofs
 
 CreateClient(chainId, height) ==
     LET chain == chains[chainId] IN
-    LET clients == chain.clients IN
-    LET clientIdCounter == chain.clientIdCounter IN
-    LET result == ICS02_CreateClient(clients, clientIdCounter, height) IN
+    LET result == ICS02_CreateClient(chain, chainId, height) IN
     \* update the chain
     LET updatedChain == [chain EXCEPT
-        !.height = UpdateChainHeight(@, result.outcome, "ICS02CreateOK"),
+        !.height = UpdateChainHeight(@, result, "ICS02CreateOK"),
         !.clients = result.clients,
         !.clientIdCounter = result.clientIdCounter
     ] IN
     \* update `chains`, set the `action` and its `actionOutcome`
     /\ chains' = [chains EXCEPT ![chainId] = updatedChain]
-    /\ action' = AsAction([
-        type |-> "ICS02CreateClient",
-        chainId |-> chainId,
-        clientState |-> height,
-        consensusState |-> height])
+    /\ action' = result.action
     /\ actionOutcome' = result.outcome
 
 UpdateClient(chainId, clientId, height) ==
     LET chain == chains[chainId] IN
-    LET clients == chain.clients IN
-    LET result == ICS02_UpdateClient(clients, clientId, height) IN
+    LET result == ICS02_UpdateClient(chain, chainId, clientId, height) IN
     \* update the chain
     LET updatedChain == [chain EXCEPT
-        !.height = UpdateChainHeight(@, result.outcome, "ICS03CreateOK"),
+        !.height = UpdateChainHeight(@, result, "ICS02UpdateOK"),
         !.clients = result.clients
     ] IN
     \* update `chains`, set the `action` and its `actionOutcome`
     /\ chains' = [chains EXCEPT ![chainId] = updatedChain]
-    /\ action' = AsAction([
-        type |-> "ICS02UpdateClient",
-        chainId |-> chainId,
-        clientId |-> clientId,
-        header |-> height])
+    /\ action' = result.action
     /\ actionOutcome' = result.outcome
 
-ConnectionOpenInit(chainId, clientId, counterpartyClientId) ==
+ConnectionOpenInit(
+    chainId,
+    clientId,
+    counterpartyChainId,
+    counterpartyClientId
+) ==
     LET chain == chains[chainId] IN
-    LET clients == chain.clients IN
-    LET connections == chain.connections IN
-    LET connectionIdCounter == chain.connectionIdCounter IN
     LET result == ICS03_ConnectionOpenInit(
-        clients,
-        connections,
-        connectionIdCounter,
+        chain,
+        chainId,
         clientId,
+        counterpartyChainId,
         counterpartyClientId
     ) IN
     \* update the chain
     LET updatedChain == [chain EXCEPT
-        !.height = UpdateChainHeight(@, result.outcome, "ICS03ConnectionOpenInitOK"),
+        !.height = UpdateChainHeight(@, result, "ICS03ConnectionOpenInitOK"),
         !.connections = result.connections,
         !.connectionIdCounter = result.connectionIdCounter
     ] IN
+    \* update the counterparty chain with a proof
+    LET counterpartyChain == chains[counterpartyChainId] IN
+    LET updatedCounterpartyChain == [counterpartyChain EXCEPT
+        !.connectionProofs = UpdateConnectionProofs(@, result, "ICS03ConnectionOpenInitOK")
+    ] IN
     \* update `chains`, set the `action` and its `actionOutcome`
-    /\ chains' = [chains EXCEPT ![chainId] = updatedChain]
-    /\ action' = AsAction([
-        type |-> "ICS03ConnectionOpenInit",
-        chainId |-> chainId,
-        clientId |-> clientId,
-        counterpartyClientId |-> counterpartyClientId])
+    /\ chains' = [chains EXCEPT
+        ![chainId] = updatedChain,
+        ![counterpartyChainId] = updatedCounterpartyChain]
+    /\ action' = result.action
     /\ actionOutcome' = result.outcome
 
 ConnectionOpenTry(
     chainId,
-    previousConnectionId,
     clientId,
+    previousConnectionId,
     height,
+    counterpartyChainId,
     counterpartyClientId,
     counterpartyConnectionId
 ) ==
     LET chain == chains[chainId] IN
-    LET chainHeight == chain.height IN
-    LET clients == chain.clients IN
-    LET connections == chain.connections IN
-    LET connectionIdCounter == chain.connectionIdCounter IN
     LET result == ICS03_ConnectionOpenTry(
-        chainHeight,
-        clients,
-        connections,
-        connectionIdCounter,
-        previousConnectionId,
+        chain,
+        chainId,
         clientId,
+        previousConnectionId,
         height,
+        counterpartyChainId,
         counterpartyClientId,
         counterpartyConnectionId
     ) IN
     \* update the chain
     LET updatedChain == [chain EXCEPT
-        !.height = UpdateChainHeight(@, result.outcome, "ICS03ConnectionOpenTryOK"),
+        !.height = UpdateChainHeight(@, result, "ICS03ConnectionOpenTryOK"),
         !.connections = result.connections,
         !.connectionIdCounter = result.connectionIdCounter
     ] IN
+    \* update the counterparty chain with a proof
+    LET counterpartyChain == chains[counterpartyChainId] IN
+    LET updatedCounterpartyChain == [counterpartyChain EXCEPT
+        !.connectionProofs = UpdateConnectionProofs(@, result, "ICS03ConnectionOpenTryOK")
+    ] IN
     \* update `chains`, set the `action` and its `actionOutcome`
-    /\ chains' = [chains EXCEPT ![chainId] = updatedChain]
-    /\ action' = AsAction([
-        type |-> "ICS03ConnectionOpenTry",
-        chainId |-> chainId,
-        previousConnectionId |-> previousConnectionId,
-        clientId |-> clientId,
-        clientState |-> height,
-        counterpartyClientId |-> counterpartyClientId,
-        counterpartyConnectionId |-> counterpartyConnectionId])
+    /\ chains' = [chains EXCEPT
+        ![chainId] = updatedChain,
+        ![counterpartyChainId] = updatedCounterpartyChain]
+    /\ action' = result.action
+    /\ actionOutcome' = result.outcome
+
+ConnectionOpenAck(
+    chainId,
+    connectionId,
+    height,
+    counterpartyChainId,
+    counterpartyConnectionId
+) ==
+    LET chain == chains[chainId] IN
+    LET result == ICS03_ConnectionOpenAck(
+        chain,
+        chainId,
+        connectionId,
+        height,
+        counterpartyChainId,
+        counterpartyConnectionId
+    ) IN
+    \* update the chain
+    LET updatedChain == [chain EXCEPT
+        !.height = UpdateChainHeight(@, result, "ICS03ConnectionOpenAckOK"),
+        !.connections = result.connections
+    ] IN
+    \* update the counterparty chain with a proof
+    LET counterpartyChain == chains[counterpartyChainId] IN
+    LET updatedCounterpartyChain == [counterpartyChain EXCEPT
+        !.connectionProofs = UpdateConnectionProofs(@, result, "ICS03ConnectionOpenAckOK")
+    ] IN
+    \* update `chains`, set the `action` and its `actionOutcome`
+    /\ chains' = [chains EXCEPT
+        ![chainId] = updatedChain,
+        ![counterpartyChainId] = updatedCounterpartyChain]
+    /\ action' = result.action
     /\ actionOutcome' = result.outcome
 
 CreateClientAction(chainId) ==
     \* select a height for the client to be created at
     \E height \in Heights:
-        \* only create client if the model constant `MaxClientsPerChain` allows it
-        IF chains[chainId].clientIdCounter < MaxClientsPerChain THEN
+        \* only create client if the model constant `MaxClientsPerChain` allows
+        \* it
+        LET allowed == chains[chainId].clientIdCounter < MaxClientsPerChain IN
+        IF allowed THEN
             CreateClient(chainId, height)
         ELSE
             UNCHANGED vars
@@ -264,36 +329,71 @@ UpdateClientAction(chainId) ==
 ConnectionOpenInitAction(chainId) ==
     \* select a client id
     \E clientId \in ClientIds:
+    \* select a counterparty chain id
+    \E counterpartyChainId \in ChainIds:
     \* select a counterparty client id
     \E counterpartyClientId \in ClientIds:
         \* only create connection if the model constant `MaxConnectionsPerChain`
         \* allows it
-        IF chains[chainId].connectionIdCounter < MaxConnectionsPerChain THEN
-            ConnectionOpenInit(chainId, clientId, counterpartyClientId)
+        LET allowed ==
+            chains[chainId].connectionIdCounter < MaxConnectionsPerChain IN
+        IF chainId /= counterpartyChainId /\ allowed THEN
+            ConnectionOpenInit(
+                chainId,
+                clientId,
+                counterpartyChainId,
+                counterpartyClientId
+            )
         ELSE
             UNCHANGED vars
 
 ConnectionOpenTryAction(chainId) ==
-    \* select a previous connection id (which can be none)
-    \E previousConnectionId \in ConnectionIds \union {ConnectionIdNone}:
     \* select a client id
     \E clientId \in ClientIds:
+    \* select a previous connection id (which can be none)
+    \E previousConnectionId \in ConnectionIds \union {ConnectionIdNone}:
     \* select a claimed height for the client
     \E height \in Heights:
+    \* select a counterparty chain id
+    \E counterpartyChainId \in ChainIds:
     \* select a counterparty client id
     \E counterpartyClientId \in ClientIds:
     \* select a counterparty connection id
     \E counterpartyConnectionId \in ConnectionIds:
         \* only perform action if there was a previous connection or if the
-        \* model constant `MaxConnectionsPerChain` allows it
-        IF \/ previousConnectionId /= ConnectionIdNone
-            \/ chains[chainId].connectionIdCounter < MaxConnectionsPerChain THEN
+        \* model constant `MaxConnectionsPerChain` allows that a new connection
+        \* is created
+        LET allowed ==
+            \/ previousConnectionId /= ConnectionIdNone
+            \/ chains[chainId].connectionIdCounter < MaxConnectionsPerChain IN
+        IF chainId /= counterpartyChainId /\ allowed THEN
             ConnectionOpenTry(
                 chainId,
-                previousConnectionId,
                 clientId,
+                previousConnectionId,
                 height,
+                counterpartyChainId,
                 counterpartyClientId,
+                counterpartyConnectionId
+            )
+        ELSE
+            UNCHANGED vars
+
+ConnectionOpenAckAction(chainId) ==
+    \* select a connection id
+    \E connectionId \in ConnectionIds:
+    \* select a claimed height for the client
+    \E height \in Heights:
+    \* select a counterparty chain id
+    \E counterpartyChainId \in ChainIds:
+    \* select a counterparty connection id
+    \E counterpartyConnectionId \in ConnectionIds:
+        IF chainId /= counterpartyChainId THEN
+            ConnectionOpenAck(
+                chainId,
+                connectionId,
+                height,
+                counterpartyChainId,
                 counterpartyConnectionId
             )
         ELSE
@@ -317,7 +417,8 @@ Init ==
         clients |-> [clientId \in ClientIds |-> clientNone],
         clientIdCounter |-> 0,
         connections |-> [connectionId \in ConnectionIds |-> connectionNone],
-        connectionIdCounter |-> 0
+        connectionIdCounter |-> 0,
+        connectionProofs |-> AsSetAction({})
     ] IN
     /\ chains = [chainId \in ChainIds |-> emptyChain]
     /\ action = AsAction([type |-> "None"])
@@ -333,6 +434,7 @@ Next ==
             \/ UpdateClientAction(chainId)
             \/ ConnectionOpenInitAction(chainId)
             \/ ConnectionOpenTryAction(chainId)
+            \/ ConnectionOpenAckAction(chainId)
             \/ UNCHANGED vars
         ELSE
             \/ UNCHANGED vars

@@ -42,6 +42,9 @@ pub enum Action {
         #[serde(alias = "clientId")]
         client_id: u64,
 
+        #[serde(alias = "counterpartyChainId")]
+        counterparty_chain_id: String,
+
         #[serde(alias = "counterpartyClientId")]
         counterparty_client_id: u64,
     },
@@ -59,8 +62,27 @@ pub enum Action {
         #[serde(alias = "clientState")]
         client_state: u64,
 
+        #[serde(alias = "counterpartyChainId")]
+        counterparty_chain_id: String,
+
         #[serde(alias = "counterpartyClientId")]
         counterparty_client_id: u64,
+
+        #[serde(alias = "counterpartyConnectionId")]
+        counterparty_connection_id: u64,
+    },
+    ICS03ConnectionOpenAck {
+        #[serde(alias = "chainId")]
+        chain_id: String,
+
+        #[serde(alias = "connectionId")]
+        connection_id: u64,
+
+        #[serde(alias = "clientState")]
+        client_state: u64,
+
+        #[serde(alias = "counterpartyChainId")]
+        counterparty_chain_id: String,
 
         #[serde(alias = "counterpartyConnectionId")]
         counterparty_connection_id: u64,
@@ -95,6 +117,10 @@ pub enum ActionOutcome {
     ICS03InvalidConsensusHeight,
     ICS03ConnectionNotFound,
     ICS03ConnectionMismatch,
+    ICS03MissingClientConsensusState,
+    ICS03InvalidProof,
+    ICS03ConnectionOpenAckOK,
+    ICS03UninitializedConnection,
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]

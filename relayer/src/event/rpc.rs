@@ -1,31 +1,33 @@
-use std::{
-    collections::HashMap,
-    convert::{TryFrom, TryInto},
-};
+use std::{collections::HashMap, convert::TryFrom};
 
 use anomaly::BoxError;
+use tendermint_rpc::event::{Event as RpcEvent, EventData as RpcEventData};
 use tracing::warn;
 
-use tendermint::block::Height;
-use tendermint_rpc::event::{Event as RpcEvent, EventData as RpcEventData};
-
+use ibc::ics02_client::events::NewBlock;
+use ibc::ics02_client::height::Height;
+use ibc::ics24_host::identifier::ChainId;
 use ibc::{
-    events::{IBCEvent, RawObject},
+    events::{IbcEvent, RawObject},
     ics02_client::events as ClientEvents,
     ics03_connection::events as ConnectionEvents,
     ics04_channel::events as ChannelEvents,
 };
 
-pub fn get_all_events(result: RpcEvent) -> Result<Vec<(Height, IBCEvent)>, String> {
-    let mut vals: Vec<(Height, IBCEvent)> = vec![];
+pub fn get_all_events(
+    chain_id: &ChainId,
+    result: RpcEvent,
+) -> Result<Vec<(Height, IbcEvent)>, String> {
+    let mut vals: Vec<(Height, IbcEvent)> = vec![];
 
     match &result.data {
         RpcEventData::NewBlock { block, .. } => {
-            let block = block.as_ref().ok_or("missing block")?;
-            vals.push((
-                block.header.height,
-                ClientEvents::NewBlock::new(block.header.height).into(),
-            ));
+            let height = Height::new(
+                ChainId::chain_version(chain_id.to_string().as_str()),
+                u64::from(block.as_ref().ok_or("tx.height")?.header.height),
+            );
+
+            vals.push((height, NewBlock::new(height).into()));
         }
 
         RpcEventData::Tx { .. } => {
@@ -33,10 +35,10 @@ pub fn get_all_events(result: RpcEvent) -> Result<Vec<(Height, IBCEvent)>, Strin
             let height_raw = events.get("tx.height").ok_or("tx.height")?[0]
                 .parse::<u64>()
                 .map_err(|e| e.to_string())?;
-
-            let height: Height = height_raw
-                .try_into()
-                .map_err(|_| "height parsing overflow")?;
+            let height = Height::new(
+                ChainId::chain_version(chain_id.to_string().as_str()),
+                height_raw,
+            );
 
             let actions_and_indices = extract_helper(&events)?;
             for action in actions_and_indices {
@@ -57,35 +59,35 @@ pub fn get_all_events(result: RpcEvent) -> Result<Vec<(Height, IBCEvent)>, Strin
     Ok(vals)
 }
 
-pub fn build_event(mut object: RawObject) -> Result<IBCEvent, BoxError> {
+pub fn build_event(mut object: RawObject) -> Result<IbcEvent, BoxError> {
     match object.action.as_str() {
         // Client events
-        "create_client" => Ok(IBCEvent::from(ClientEvents::CreateClient::try_from(
+        "create_client" => Ok(IbcEvent::from(ClientEvents::CreateClient::try_from(
             object,
         )?)),
-        "update_client" => Ok(IBCEvent::from(ClientEvents::UpdateClient::try_from(
+        "update_client" => Ok(IbcEvent::from(ClientEvents::UpdateClient::try_from(
             object,
         )?)),
 
         // Connection events
-        "connection_open_init" => Ok(IBCEvent::from(ConnectionEvents::OpenInit::try_from(
+        "connection_open_init" => Ok(IbcEvent::from(ConnectionEvents::OpenInit::try_from(
             object,
         )?)),
-        "connection_open_try" => Ok(IBCEvent::from(ConnectionEvents::OpenTry::try_from(object)?)),
-        "connection_open_ack" => Ok(IBCEvent::from(ConnectionEvents::OpenAck::try_from(object)?)),
-        "connection_open_confirm" => Ok(IBCEvent::from(ConnectionEvents::OpenConfirm::try_from(
+        "connection_open_try" => Ok(IbcEvent::from(ConnectionEvents::OpenTry::try_from(object)?)),
+        "connection_open_ack" => Ok(IbcEvent::from(ConnectionEvents::OpenAck::try_from(object)?)),
+        "connection_open_confirm" => Ok(IbcEvent::from(ConnectionEvents::OpenConfirm::try_from(
             object,
         )?)),
 
         // Channel events
-        "channel_open_init" => Ok(IBCEvent::from(ChannelEvents::OpenInit::try_from(object)?)),
-        "channel_open_try" => Ok(IBCEvent::from(ChannelEvents::OpenTry::try_from(object)?)),
-        "channel_open_ack" => Ok(IBCEvent::from(ChannelEvents::OpenAck::try_from(object)?)),
-        "channel_open_confirm" => Ok(IBCEvent::from(ChannelEvents::OpenConfirm::try_from(
+        "channel_open_init" => Ok(IbcEvent::from(ChannelEvents::OpenInit::try_from(object)?)),
+        "channel_open_try" => Ok(IbcEvent::from(ChannelEvents::OpenTry::try_from(object)?)),
+        "channel_open_ack" => Ok(IbcEvent::from(ChannelEvents::OpenAck::try_from(object)?)),
+        "channel_open_confirm" => Ok(IbcEvent::from(ChannelEvents::OpenConfirm::try_from(
             object,
         )?)),
-        "channel_close_init" => Ok(IBCEvent::from(ChannelEvents::CloseInit::try_from(object)?)),
-        "channel_close_confirm" => Ok(IBCEvent::from(ChannelEvents::CloseConfirm::try_from(
+        "channel_close_init" => Ok(IbcEvent::from(ChannelEvents::CloseInit::try_from(object)?)),
+        "channel_close_confirm" => Ok(IbcEvent::from(ChannelEvents::CloseConfirm::try_from(
             object,
         )?)),
 
@@ -96,25 +98,32 @@ pub fn build_event(mut object: RawObject) -> Result<IBCEvent, BoxError> {
         // TODO: This need to be sorted out
         "transfer" => {
             object.action = "send_packet".to_string();
-            Ok(IBCEvent::from(ChannelEvents::SendPacket::try_from(object)?))
+            Ok(IbcEvent::from(ChannelEvents::SendPacket::try_from(object)?))
         }
         // Same here
         // TODO: sort this out
         "recv_packet" => {
             object.action = "write_acknowledgement".to_string();
-            Ok(IBCEvent::from(
+            Ok(IbcEvent::from(
                 ChannelEvents::WriteAcknowledgement::try_from(object)?,
             ))
         }
-        "write_acknowledgement" => Ok(IBCEvent::from(
+        "write_acknowledgement" => Ok(IbcEvent::from(
             ChannelEvents::WriteAcknowledgement::try_from(object)?,
         )),
-        "acknowledge_packet" => Ok(IBCEvent::from(ChannelEvents::AcknowledgePacket::try_from(
+        "acknowledge_packet" => Ok(IbcEvent::from(ChannelEvents::AcknowledgePacket::try_from(
             object,
         )?)),
-        "timeout_packet" => Ok(IBCEvent::from(ChannelEvents::TimeoutPacket::try_from(
+        "timeout_packet" => Ok(IbcEvent::from(ChannelEvents::TimeoutPacket::try_from(
             object,
         )?)),
+
+        "timeout_on_close_packet" => {
+            object.action = "timeout_packet".to_string();
+            Ok(IbcEvent::from(
+                ChannelEvents::TimeoutOnClosePacket::try_from(object)?,
+            ))
+        }
 
         _ => Err("Incorrect Event Type".into()),
     }

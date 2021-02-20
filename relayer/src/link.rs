@@ -9,7 +9,7 @@ use ibc::ics04_channel::msgs::chan_close_confirm::MsgChannelCloseConfirm;
 use ibc::ics04_channel::msgs::timeout_on_close::MsgTimeoutOnClose;
 use ibc::{
     downcast,
-    events::{IBCEvent, IBCEventType},
+    events::{IbcEvent, IbcEventType},
     ics03_connection::connection::State as ConnectionState,
     ics04_channel::channel::{QueryPacketEventDataRequest, State as ChannelState},
     ics04_channel::events::{SendPacket, WriteAcknowledgement},
@@ -69,11 +69,11 @@ pub struct RelayPath {
     dst_chain: Box<dyn ChainHandle>,
     subscription: Subscription,
     channel: Channel,
-    all_events: Vec<IBCEvent>,
+    all_events: Vec<IbcEvent>,
     src_height: Height,
     dst_height: Height,
-    dst_msgs_input_events: Vec<IBCEvent>,
-    src_msgs_input_events: Vec<IBCEvent>,
+    dst_msgs_input_events: Vec<IbcEvent>,
+    src_msgs_input_events: Vec<IbcEvent>,
     packet_msgs: Vec<Any>,
     timeout_msgs: Vec<Any>,
 }
@@ -165,21 +165,21 @@ impl RelayPath {
 
     fn build_msg_from_event(
         &self,
-        event: &IBCEvent,
+        event: &IbcEvent,
     ) -> Result<(Option<Any>, Option<Any>), LinkError> {
         match event {
-            IBCEvent::CloseInitChannel(close_init_ev) => {
+            IbcEvent::CloseInitChannel(close_init_ev) => {
                 info!("{} => event {}", self.src_chain.id(), close_init_ev);
                 Ok((
                     Some(self.build_chan_close_confirm_from_close_init_event(&close_init_ev)?),
                     None,
                 ))
             }
-            IBCEvent::SendPacket(send_packet_ev) => {
+            IbcEvent::SendPacket(send_packet_ev) => {
                 info!("{} => event {}", self.src_chain.id(), send_packet_ev);
                 Ok(self.build_recv_or_timeout_from_send_packet_event(&send_packet_ev)?)
             }
-            IBCEvent::WriteAcknowledgement(write_ack_ev) => {
+            IbcEvent::WriteAcknowledgement(write_ack_ev) => {
                 info!("{} => event {}", self.src_chain.id(), write_ack_ev);
                 Ok((Some(self.build_ack_from_recv_event(&write_ack_ev)?), None))
             }
@@ -192,14 +192,9 @@ impl RelayPath {
         event: &CloseInit,
     ) -> Result<Any, LinkError> {
         // TODO - change event types to return ICS height
-        let event_height = Height::new(
-            ChainId::chain_version(self.src_chain.id().to_string().as_str()),
-            u64::from(*event.height()),
-        );
-
         let proofs = self
             .src_chain()
-            .build_channel_proofs(self.src_port_id(), self.src_channel_id(), event_height)
+            .build_channel_proofs(self.src_port_id(), self.src_channel_id(), *event.height())
             .map_err(|e| ChannelError::Failed(format!("failed to build channel proofs: {}", e)))?;
 
         // Get signer
@@ -222,7 +217,7 @@ impl RelayPath {
         Ok(new_msg.to_any::<RawMsgChannelCloseConfirm>())
     }
 
-    fn handle_packet_event(&mut self, event: &IBCEvent) -> Result<(), LinkError> {
+    fn handle_packet_event(&mut self, event: &IbcEvent) -> Result<(), LinkError> {
         let (dst_msg, timeout) = self.build_msg_from_event(event)?;
 
         if let Some(msg) = dst_msg {
@@ -240,24 +235,24 @@ impl RelayPath {
 
     // Determines if the events received are relevant and should be processed.
     // Only events for a port/channel matching one of the channel ends should be processed.
-    fn collect_events(&mut self, events: &[IBCEvent]) {
+    fn collect_events(&mut self, events: &[IbcEvent]) {
         for event in events.iter() {
             match event {
-                IBCEvent::SendPacket(send_packet_ev) => {
+                IbcEvent::SendPacket(send_packet_ev) => {
                     if self.src_channel_id() == &send_packet_ev.packet.source_channel
                         && self.src_port_id() == &send_packet_ev.packet.source_port
                     {
                         self.all_events.push(event.clone());
                     }
                 }
-                IBCEvent::WriteAcknowledgement(write_ack_ev) => {
+                IbcEvent::WriteAcknowledgement(write_ack_ev) => {
                     if self.channel.src_channel_id() == &write_ack_ev.packet.destination_channel
                         && self.channel.src_port_id() == &write_ack_ev.packet.destination_port
                     {
                         self.all_events.push(event.clone());
                     }
                 }
-                IBCEvent::CloseInitChannel(chan_close_ev) => {
+                IbcEvent::CloseInitChannel(chan_close_ev) => {
                     if Some(self.channel.src_channel_id()) == chan_close_ev.channel_id().as_ref()
                         && self.channel.src_port_id() == chan_close_ev.port_id()
                     {
@@ -265,7 +260,12 @@ impl RelayPath {
                     }
                 }
                 _ => {}
-            };
+            }
+        }
+
+        if !self.all_events.is_empty() {
+            // All events are at the same height
+            self.src_height = *self.all_events[0].height();
         }
     }
 
@@ -277,12 +277,8 @@ impl RelayPath {
         if self.all_events.is_empty() {
             return Ok(());
         }
-        // TODO add ICS height to IBC event
         // All events are at the same height
-        let event_height = Height::new(
-            ChainId::chain_version(self.src_chain.id().to_string().as_str()),
-            u64::from(*self.all_events[0].height()),
-        );
+        let event_height = self.all_events[0].height();
 
         // Check if a consensus state at event_height + 1 exists on destination chain already
         // and update src_height
@@ -295,7 +291,7 @@ impl RelayPath {
             )
             .is_ok()
         {
-            self.src_height = event_height;
+            self.src_height = *event_height;
             return Ok(());
         }
 
@@ -316,9 +312,9 @@ impl RelayPath {
             self.src_height = new_height;
             self.all_events
                 .iter_mut()
-                .for_each(|ev| ev.set_height(&new_height));
+                .for_each(|ev| ev.set_height(new_height));
         } else {
-            self.src_height = event_height;
+            self.src_height = *event_height;
         }
 
         Ok(())
@@ -372,7 +368,7 @@ impl RelayPath {
         Ok(())
     }
 
-    fn send_update_client_and_msgs(&mut self) -> Result<(Vec<IBCEvent>, Vec<IBCEvent>), LinkError> {
+    fn send_update_client_and_msgs(&mut self) -> Result<(Vec<IbcEvent>, Vec<IbcEvent>), LinkError> {
         let mut src_tx_events = vec![];
         let mut dst_tx_events = vec![];
 
@@ -406,7 +402,7 @@ impl RelayPath {
             let ev = dst_tx_events
                 .clone()
                 .into_iter()
-                .find(|event| matches!(event, IBCEvent::ChainError(_)));
+                .find(|event| matches!(event, IbcEvent::ChainError(_)));
 
             if let Some(_e) = ev {
                 self.all_events
@@ -431,7 +427,7 @@ impl RelayPath {
             let ev = src_tx_events
                 .clone()
                 .into_iter()
-                .find(|event| matches!(event, IBCEvent::ChainError(_)));
+                .find(|event| matches!(event, IbcEvent::ChainError(_)));
 
             if let Some(_e) = ev {
                 self.all_events
@@ -488,7 +484,7 @@ impl RelayPath {
         }
 
         self.all_events = self.src_chain.query_txs(QueryPacketEventDataRequest {
-            event_id: IBCEventType::SendPacket,
+            event_id: IbcEventType::SendPacket,
             source_port_id: self.src_port_id().clone(),
             source_channel_id: self.src_channel_id().clone(),
             destination_port_id: self.dst_port_id().clone(),
@@ -499,7 +495,7 @@ impl RelayPath {
 
         let mut packet_sequences = vec![];
         for event in self.all_events.iter() {
-            let send_event = downcast!(event => IBCEvent::SendPacket)
+            let send_event = downcast!(event => IbcEvent::SendPacket)
                 .ok_or_else(|| LinkError::Failed("unexpected query tx response".into()))?;
             packet_sequences.push(send_event.packet.sequence);
         }
@@ -560,7 +556,7 @@ impl RelayPath {
         self.all_events = self
             .src_chain
             .query_txs(QueryPacketEventDataRequest {
-                event_id: IBCEventType::WriteAck,
+                event_id: IbcEventType::WriteAck,
                 source_port_id: self.dst_port_id().clone(),
                 source_channel_id: self.dst_channel_id().clone(),
                 destination_port_id: self.src_port_id().clone(),
@@ -572,7 +568,7 @@ impl RelayPath {
 
         let mut packet_sequences = vec![];
         for event in self.all_events.iter() {
-            let write_ack_event = downcast!(event => IBCEvent::WriteAcknowledgement)
+            let write_ack_event = downcast!(event => IbcEvent::WriteAcknowledgement)
                 .ok_or_else(|| LinkError::Failed("unexpected query tx response".into()))?;
             packet_sequences.push(write_ack_event.packet.sequence);
         }
@@ -590,7 +586,7 @@ impl RelayPath {
             .map_err(|e| LinkError::QueryError(self.dst_chain.id(), e))?;
 
         for event in self.all_events.iter_mut() {
-            event.set_height(&self.src_height);
+            event.set_height(self.src_height);
         }
 
         for event in self.all_events.clone() {
@@ -609,7 +605,7 @@ impl RelayPath {
             .map_err(|e| LinkError::QueryError(self.dst_chain.id(), e))?;
 
         for event in self.all_events.iter_mut() {
-            event.set_height(&self.src_height);
+            event.set_height(self.src_height);
         }
         for event in self.all_events.clone() {
             self.handle_packet_event(&event)?;
@@ -655,11 +651,7 @@ impl RelayPath {
         Ok(msg.to_any::<RawMsgRecvPacket>())
     }
 
-    fn build_ack_packet(
-        &self,
-        event: &WriteAcknowledgement,
-        height: Height,
-    ) -> Result<Any, LinkError> {
+    fn build_ack_from_recv_event(&self, event: &WriteAcknowledgement) -> Result<Any, LinkError> {
         // Get signer
         let signer = self.dst_chain.get_signer().map_err(|e| {
             LinkError::Failed(format!(
@@ -677,7 +669,7 @@ impl RelayPath {
                 &packet.destination_port,
                 &packet.destination_channel,
                 packet.sequence,
-                height,
+                event.height,
             )
             .map_err(|e| LinkError::PacketProofsConstructor(self.src_chain.id(), e))?;
 
@@ -787,12 +779,10 @@ impl RelayPath {
         event: &SendPacket,
     ) -> Result<(Option<Any>, Option<Any>), LinkError> {
         let packet = event.packet.clone();
-
-        // TODO - change event types to return ICS height
-        let event_height = Height::new(
-            ChainId::chain_version(self.src_chain.id().to_string().as_str()),
-            u64::from(event.height),
-        );
+        let dst_height = self
+            .dst_chain
+            .query_latest_height()
+            .map_err(|e| LinkError::QueryError(self.dst_chain.id(), e))?;
 
         let dst_channel = self
             .dst_chain
@@ -804,8 +794,7 @@ impl RelayPath {
                 None,
                 Some(self.build_timeout_on_close_packet(&event.packet, self.dst_height)?),
             ))
-        } else if packet.timeout_height != Height::zero() && packet.timeout_height < self.dst_height
-        {
+        } else if packet.timeout_height != Height::zero() && packet.timeout_height < dst_height {
             Ok((
                 None,
                 Some(self.build_timeout_packet(&event.packet, self.dst_height)?),
@@ -814,20 +803,10 @@ impl RelayPath {
         //     TODO - add query to get the current chain time
         } else {
             Ok((
-                Some(self.build_recv_packet(&event.packet, event_height)?),
+                Some(self.build_recv_packet(&event.packet, event.height)?),
                 None,
             ))
         }
-    }
-
-    fn build_ack_from_recv_event(&self, event: &WriteAcknowledgement) -> Result<Any, LinkError> {
-        // TODO - change event types to return ICS height
-        let event_height = Height::new(
-            ChainId::chain_version(self.src_chain.id().to_string().as_str()),
-            u64::from(event.height),
-        );
-
-        self.build_ack_packet(&event, event_height)
     }
 }
 
@@ -984,14 +963,14 @@ impl Link {
         Link::new(channel)
     }
 
-    pub fn build_and_send_recv_packet_messages(&mut self) -> Result<Vec<IBCEvent>, LinkError> {
+    pub fn build_and_send_recv_packet_messages(&mut self) -> Result<Vec<IbcEvent>, LinkError> {
         self.a_to_b.build_recv_packet_and_timeout_msgs()?;
         let (mut dst_res, mut src_res) = self.a_to_b.send_update_client_and_msgs()?;
         dst_res.append(&mut src_res);
         Ok(dst_res)
     }
 
-    pub fn build_and_send_ack_packet_messages(&mut self) -> Result<Vec<IBCEvent>, LinkError> {
+    pub fn build_and_send_ack_packet_messages(&mut self) -> Result<Vec<IbcEvent>, LinkError> {
         self.a_to_b.build_packet_ack_msgs()?;
         let (mut dst_res, mut src_res) = self.a_to_b.send_update_client_and_msgs()?;
         dst_res.append(&mut src_res);
