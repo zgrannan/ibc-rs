@@ -39,15 +39,16 @@ Now we need a __model checker__ (MC). A model checker:
 
 #### Examples of model checkers
 
-|        |  Explicit MC   |            Symbolic MC           |
-|:------:|:--------------:|:--------------------------------:|
-| `TLA+` |    [`TLC`]     |           [`Apalache`]           |
-| `Rust` | [`stateright`] |    (something using [`KLEE`]?)   |
+|        |  Explicit MC   |                    Symbolic MC                  |
+|:------:|:--------------:|:-----------------------------------------------:|
+| `TLA+` |    [`TLC`]     |                   [`Apalache`]                  |
+| `Rust` | [`stateright`] |    (something using [`KLEE`] or [`haybale`]?)   |
 
 [`TLC`]: https://github.com/tlaplus/tlaplus/
 [`Apalache`]: https://apalache.informal.systems/
 [`stateright`]: https://www.stateright.rs/
 [`KLEE`]: https://klee.github.io/
+[`haybale`]: https://github.com/PLSysSec/haybale
 
 The typical termination property in __Explict MC__ is _"all states have been explored"_.
 
