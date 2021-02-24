@@ -1,5 +1,6 @@
 use send_packet::SendPacketResult;
 
+pub mod recv_packet;
 pub mod send_packet;
 
 #[derive(Clone, Debug, PartialEq)]

@@ -104,6 +104,9 @@ pub struct MockContext {
 
     /// Constant-size commitments to packets data fields
     packet_commitment: HashMap<(PortId, ChannelId, Sequence), String>,
+
+    /// Packet receipt data  
+    packet_receipt: HashMap<(PortId, ChannelId, Sequence), String>,
 }
 
 /// Returns a MockContext with bare minimum initialization: no clients, no connections and no channels are
@@ -173,6 +176,7 @@ impl MockContext {
             next_sequence_ack: Default::default(),
             port_capabilities: Default::default(),
             packet_commitment: Default::default(),
+            packet_receipt: Default::default(),
             connection_ids_counter: 0,
             channel_ids_counter: 0,
         }
@@ -404,7 +408,10 @@ impl ChannelReader for MockContext {
     fn get_next_sequence_send(&self, port_channel_id: &(PortId, ChannelId)) -> Option<Sequence> {
         self.next_sequence_send.get(port_channel_id).cloned()
     }
-
+    
+    fn get_next_sequence_recv(&self, port_channel_id: &(PortId, ChannelId)) -> Option<&u64> {
+        self.next_sequence_recv.get(port_channel_id)
+    }
     fn hash(&self, input: String) -> String {
         let mut sha256 = Sha256::new();
         sha256.input_str(&input);
@@ -413,6 +420,10 @@ impl ChannelReader for MockContext {
 
     fn channel_counter(&self) -> u64 {
         self.channel_ids_counter
+    }
+
+    fn get_packet_receipt(&mut self, key: &(PortId, ChannelId, Sequence)) -> Option<String> {
+        self.packet_receipt.get(key)
     }
 }
 
@@ -480,6 +491,16 @@ impl ChannelKeeper for MockContext {
         self.packet_commitment
             .insert(key, ChannelReader::hash(self, input));
         Ok(())
+    }
+
+    fn store_packet_receipt(
+        &mut self,
+        key: &(PortId, ChannelId, Sequence),
+        timeout_timestamp: u64,
+        timeout_height: Height,
+        data: Vec<u8>,
+    ) -> Result<(), Ics4Error> {
+        todo!()
     }
 }
 

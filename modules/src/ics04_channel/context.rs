@@ -37,6 +37,8 @@ pub trait ChannelReader {
 
     fn get_next_sequence_send(&self, port_channel_id: &(PortId, ChannelId)) -> Option<Sequence>;
 
+    fn get_next_sequence_recv(&self, port_channel_id: &(PortId, ChannelId)) -> Option<&u64>;
+    
     /// A hashing function for packet commitments  
     fn hash(&self, value: String) -> String;
 
@@ -44,6 +46,8 @@ pub trait ChannelReader {
     /// The value of this counter should increase only via method
     /// `ChannelKeeper::increase_channel_counter`.
     fn channel_counter(&self) -> u64;
+
+    fn get_packet_receipt(&mut self, key: &(PortId, ChannelId, Sequence)) -> Option<String>;
 }
 
 /// A context supplying all the necessary write-only dependencies (i.e., storage writing facility)
@@ -106,6 +110,14 @@ pub trait ChannelKeeper {
         key: (PortId, ChannelId, Sequence),
         timestamp: u64,
         heigh: Height,
+        data: Vec<u8>,
+    ) -> Result<(), Error>;
+
+    fn store_packet_receipt(
+        &mut self,
+        key: &(PortId, ChannelId, Sequence),
+        timeout_timestamp: u64,
+        timeout_height: Height,
         data: Vec<u8>,
     ) -> Result<(), Error>;
 
