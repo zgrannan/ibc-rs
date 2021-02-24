@@ -120,6 +120,12 @@ pub enum Kind {
     #[error("Missing sequence number for send packets")]
     MissingNextSendSeq,
 
+    #[error("Missing sequence number for receving packets")]
+    MissingNextRecvSeq,
+
+    #[error("Packet with the sequence number {0} has been already received")]
+    PacketReceived(u64),
+
     #[error("Invalid packet sequence {0} ≠ next send sequence {1}")]
     InvalidPacketSequence(Sequence, Sequence),
 

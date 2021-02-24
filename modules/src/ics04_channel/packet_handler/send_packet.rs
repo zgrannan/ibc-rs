@@ -1,6 +1,5 @@
 use crate::events::IbcEvent;
 use crate::handler::{HandlerOutput, HandlerResult};
-use std::cmp::Ordering;
 
 use super::{PacketResult, PacketType};
 use crate::ics02_client::state::ClientState;
@@ -9,6 +8,7 @@ use crate::ics04_channel::channel::State;
 use crate::ics04_channel::events::SendPacket;
 use crate::ics04_channel::packet::Sequence;
 use crate::ics04_channel::{context::ChannelReader, error::Error, error::Kind, packet::Packet};
+use std::cmp::Ordering;
 
 pub fn send_packet(ctx: &dyn ChannelReader, packet: Packet) -> HandlerResult<PacketResult, Error> {
     let mut output = HandlerOutput::builder();

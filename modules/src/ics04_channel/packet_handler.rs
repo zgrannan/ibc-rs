@@ -5,6 +5,7 @@ use crate::{
     ics24_host::identifier::{ChannelId, PortId},
 };
 
+pub mod recv_packet;
 pub mod send_packet;
 
 #[derive(Clone, Debug, PartialEq)]
