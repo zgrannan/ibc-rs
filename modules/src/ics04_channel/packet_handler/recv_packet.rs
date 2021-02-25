@@ -20,20 +20,20 @@ pub fn recv_packet(
     let mut output = HandlerOutput::builder();
 
     let packet = msg.packet.clone();
-    let channel_end = ctx
+    let dest_channel_end = ctx
         .channel_end(&(packet.destination_port.clone(), packet.destination_channel.clone()))
         .ok_or_else(|| {
             Kind::ChannelNotFound(packet.destination_port.clone(), packet.destination_channel.clone())
         })?;
 
-    if !channel_end.state_matches(&State::Open) {
-        return Err(Kind::InvalidChannelState(packet.source_channel, channel_end.state).into());
+    if !dest_channel_end.state_matches(&State::Open) {
+        return Err(Kind::InvalidChannelState(packet.source_channel, dest_channel_end.state).into());
     }
     let _channel_cap = ctx.authenticated_capability(&packet.destination_port)?;
 
     let counterparty = Counterparty::new(packet.source_port.clone(), Some(packet.source_channel.clone()));
 
-    if !channel_end.counterparty_matches(&counterparty) {
+    if !dest_channel_end.counterparty_matches(&counterparty) {
         return Err(Kind::InvalidPacketCounterparty(
             packet.source_port.clone(),
             packet.source_channel,
@@ -42,11 +42,11 @@ pub fn recv_packet(
     }
 
     let connection_end = ctx
-        .connection_end(&channel_end.connection_hops()[0])
-        .ok_or_else(|| Kind::MissingConnection(channel_end.connection_hops()[0].clone()))?;
+        .connection_end(&dest_channel_end.connection_hops()[0])
+        .ok_or_else(|| Kind::MissingConnection(dest_channel_end.connection_hops()[0].clone()))?;
 
     if !connection_end.state_matches(&ConnectionState::Open) {
-        return Err(Kind::ConnectionNotOpen(channel_end.connection_hops()[0].clone()).into());
+        return Err(Kind::ConnectionNotOpen(dest_channel_end.connection_hops()[0].clone()).into());
     }
 
     let client_id = connection_end.client_id().clone();
@@ -88,7 +88,7 @@ pub fn recv_packet(
     output.log("success: packet send ");
     let result;
 
-    if channel_end.order_matches(&Order::Ordered) {
+    if dest_channel_end.order_matches(&Order::Ordered) {
         let next_seq_recv = ctx
             .get_next_sequence_recv(&(packet.source_port.clone(), packet.source_channel.clone()))
             .ok_or(Kind::MissingNextRecvSeq)?;
@@ -198,6 +198,8 @@ mod tests {
 
         let height = Height::default().revision_height+1;
 
+        let h = Height::new(0,Height::default().revision_height+1);
+
         let raw_msg = get_dummy_raw_msg_recv_packet(height);
         let msg = <MsgRecvPacket as TryFrom<RawMsgRecvPacket>>
                     ::try_from(raw_msg).unwrap();
@@ -217,7 +219,7 @@ mod tests {
             timeout_timestamp: 0,
         };
 
-        // let channel_end = ChannelEnd::new(
+        // let dest_channel_end = ChannelEnd::new(
         //     State::TryOpen,
         //     Order::default(),
         //     Counterparty::new(PortId::default(), Some(ChannelId::default())),
@@ -225,8 +227,8 @@ mod tests {
         //     "ics20".to_string(),
         // );
 
-        let channel_end = ChannelEnd::new(
-            State::TryOpen,
+        let dest_channel_end = ChannelEnd::new(
+            State::Open,
             Order::default(),
             Counterparty::new(packet.source_port.clone(), Some(packet.source_channel.clone())),
             vec![ConnectionId::default()],
@@ -258,7 +260,7 @@ mod tests {
                 ctx: context.clone().with_channel(
                     PortId::default(),
                     ChannelId::default(),
-                    channel_end.clone(),
+                    dest_channel_end.clone(),
                 ),
                 packet: packet.clone(),
                 want_pass: false,
@@ -267,10 +269,10 @@ mod tests {
                 name: "Good parameters".to_string(),
                 ctx: context
                     .clone()
-                    .with_client(&ClientId::default(), Height::default())
+                    .with_client(&ClientId::default(), h)
                     .with_connection(ConnectionId::default(), connection_end.clone())
                     .with_port_capability(packet.destination_port.clone())
-                    .with_channel(packet.destination_port.clone(), packet.destination_channel.clone(), channel_end.clone())
+                    .with_channel(packet.destination_port.clone(), packet.destination_channel.clone(), dest_channel_end.clone())
                     .with_send_sequence(packet.destination_port.clone(), packet.destination_channel.clone(), 1),
                 packet,
                 want_pass: true,
@@ -281,7 +283,7 @@ mod tests {
                     .with_client(&ClientId::default(), Height::default())
                     .with_connection(ConnectionId::default(), connection_end)
                     .with_port_capability(PortId::default())
-                    .with_channel(PortId::default(), ChannelId::default(), channel_end)
+                    .with_channel(PortId::default(), ChannelId::default(), dest_channel_end)
                     .with_send_sequence(PortId::default(), ChannelId::default(), 1),
                 packet: packet_untimed,
                 want_pass: false,
