@@ -422,7 +422,7 @@ impl ChannelReader for MockContext {
         self.channel_ids_counter
     }
 
-    fn get_packet_receipt(&mut self, key: &(PortId, ChannelId, Sequence)) -> Option<String> {
+    fn get_packet_receipt(&self, key: &(PortId, ChannelId, Sequence)) -> Option<&String> {
         self.packet_receipt.get(key)
     }
 }
@@ -496,11 +496,10 @@ impl ChannelKeeper for MockContext {
     fn store_packet_receipt(
         &mut self,
         key: &(PortId, ChannelId, Sequence),
-        timeout_timestamp: u64,
-        timeout_height: Height,
-        data: Vec<u8>,
+        receipt: String,
     ) -> Result<(), Ics4Error> {
-        todo!()
+        self.packet_receipt.insert(key.clone(), receipt);
+        Ok(())
     }
 }
 

@@ -47,7 +47,7 @@ pub trait ChannelReader {
     /// `ChannelKeeper::increase_channel_counter`.
     fn channel_counter(&self) -> u64;
 
-    fn get_packet_receipt(&mut self, key: &(PortId, ChannelId, Sequence)) -> Option<String>;
+    fn get_packet_receipt(&self, key: &(PortId, ChannelId, Sequence)) -> Option<&String>;
 }
 
 /// A context supplying all the necessary write-only dependencies (i.e., storage writing facility)
@@ -116,9 +116,7 @@ pub trait ChannelKeeper {
     fn store_packet_receipt(
         &mut self,
         key: &(PortId, ChannelId, Sequence),
-        timeout_timestamp: u64,
-        timeout_height: Height,
-        data: Vec<u8>,
+        receipt: String,
     ) -> Result<(), Error>;
 
     fn store_connection_channels(
