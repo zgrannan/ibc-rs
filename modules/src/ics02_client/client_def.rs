@@ -91,6 +91,20 @@ pub trait ClientDef: Clone {
         expected_channel_end: &ChannelEnd,
     ) -> Result<(), Box<dyn std::error::Error>>;
 
+    /// Verify a `proof` that a channel state matches that of the input `channel_end`.
+    #[allow(clippy::too_many_arguments)]
+    fn verify_packet_data(
+        &self,
+        client_state: &Self::ClientState,
+        height: Height,
+        prefix: &CommitmentPrefix,
+        proof: &CommitmentProofBytes,
+        port_id: &PortId,
+        channel_id: &ChannelId,
+        seq: &Sequence,
+        data: Vec<u8>,
+    ) -> Result<(), Box<dyn std::error::Error>>;
+
     /// Verify the client state for this chain that it is stored on the counterparty chain.
     #[allow(clippy::too_many_arguments)]
     fn verify_client_full_state(

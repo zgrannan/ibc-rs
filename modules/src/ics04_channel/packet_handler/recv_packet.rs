@@ -3,19 +3,24 @@ use std::cmp::Ordering;
 use crate::events::IbcEvent;
 use crate::handler::{HandlerOutput, HandlerResult};
 
-use super::PacketResult;
+use super::{PacketResult, PacketType};
 use crate::ics02_client::state::ClientState;
 use crate::ics03_connection::connection::State as ConnectionState;
 
 use crate::ics04_channel::channel::Counterparty;
 use crate::ics04_channel::channel::{Order, State};
 use crate::ics04_channel::events::SendPacket;
+use crate::ics04_channel::msgs::recv_packet::MsgRecvPacket;
 use crate::ics04_channel::packet::Sequence;
 use crate::ics04_channel::{context::ChannelReader, error::Error, error::Kind, packet::Packet};
 
-pub fn send_packet(ctx: &dyn ChannelReader, packet: Packet) -> HandlerResult<PacketResult, Error> {
+pub fn recv_packet(
+    ctx: &dyn ChannelReader,
+    msg: MsgRecvPacket,
+) -> HandlerResult<PacketResult, Error> {
     let mut output = HandlerOutput::builder();
 
+    let packet = msg.packet;
     let channel_end = ctx
         .channel_end(&(packet.source_port.clone(), packet.source_channel.clone()))
         .ok_or_else(|| {
@@ -94,7 +99,7 @@ pub fn send_packet(ctx: &dyn ChannelReader, packet: Packet) -> HandlerResult<Pac
     //   ))
 
     output.log("success: packet send ");
-    let mut result;
+    let result;
 
     if channel_end.order_matches(&Order::Ordered) {
         let next_seq_recv = ctx
@@ -113,7 +118,8 @@ pub fn send_packet(ctx: &dyn ChannelReader, packet: Packet) -> HandlerResult<Pac
             channel_id: packet.source_channel.clone(),
             seq: packet.sequence.clone(),
             seq_number: Sequence::from(*next_seq_recv + 1),
-            None,
+            receipt: None,
+            action: PacketType::Recv,
             data: packet.clone().data,
             timeout_height: packet.timeout_height,
             timeout_timestamp: packet.timeout_timestamp,
@@ -126,7 +132,7 @@ pub fn send_packet(ctx: &dyn ChannelReader, packet: Packet) -> HandlerResult<Pac
         ));
 
         match packet_rec {
-            Some(r) => {
+            Some(_r) => {
                 return Err(Kind::PacketReceived(<u64 as From<Sequence>>::from(
                     packet.sequence.clone(),
                 ))
@@ -139,6 +145,7 @@ pub fn send_packet(ctx: &dyn ChannelReader, packet: Packet) -> HandlerResult<Pac
                     seq: packet.sequence.clone(),
                     seq_number: Sequence::from(1),
                     receipt: Some("1".to_string()),
+                    action: PacketType::Recv,
                     data: packet.clone().data,
                     timeout_height: packet.timeout_height,
                     timeout_timestamp: packet.timeout_timestamp,
