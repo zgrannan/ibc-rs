@@ -97,12 +97,11 @@ pub trait ClientDef: Clone {
         &self,
         client_state: &Self::ClientState,
         height: Height,
-        prefix: &CommitmentPrefix,
         proof: &CommitmentProofBytes,
         port_id: &PortId,
         channel_id: &ChannelId,
         seq: &Sequence,
-        data: Vec<u8>,
+        commitment: String,
     ) -> Result<(), Box<dyn std::error::Error>>;
 
     /// Verify the client state for this chain that it is stored on the counterparty chain.
@@ -624,6 +623,54 @@ impl ClientDef for AnyClient {
                     client_id,
                     proof,
                     client_state_on_counterparty,
+                )
+            }
+        }
+    }
+
+    fn verify_packet_data(
+        &self,
+        client_state: &Self::ClientState,
+        height: Height,
+        proof: &CommitmentProofBytes,
+        port_id: &PortId,
+        channel_id: &ChannelId,
+        seq: &Sequence,
+        commitment: String
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        match self {
+            Self::Tendermint(client) => {
+                let client_state = downcast!(
+                    client_state => AnyClientState::Tendermint
+                )
+                .ok_or_else(|| Kind::ClientArgsTypeMismatch(ClientType::Tendermint))?;
+
+                client.verify_packet_data(
+                    client_state,
+                    height,
+                    proof,
+                    port_id,
+                    channel_id,
+                    seq,
+                    commitment
+                )
+            }
+
+            #[cfg(any(test, feature = "mocks"))]
+            Self::Mock(client) => {
+                let client_state = downcast!(
+                    client_state => AnyClientState::Mock
+                )
+                .ok_or_else(|| Kind::ClientArgsTypeMismatch(ClientType::Mock))?;
+
+                client.verify_packet_data(
+                    client_state,
+                    height,
+                    proof,
+                    port_id,
+                    channel_id,
+                    seq,
+                    commitment
                 )
             }
         }

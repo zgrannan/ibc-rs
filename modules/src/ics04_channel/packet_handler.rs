@@ -7,6 +7,7 @@ use crate::{
 
 pub mod recv_packet;
 pub mod send_packet;
+pub mod verify;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum PacketType {

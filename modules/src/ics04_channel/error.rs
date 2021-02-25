@@ -117,6 +117,9 @@ pub enum Kind {
     #[error("the client is frozen")]
     VerifiedFrozenClient,
 
+    #[error("The verification of packet {0} failed ")]
+    PacketVerificationFailed(Sequence),
+
     #[error("Missing sequence number for send packets")]
     MissingNextSendSeq,
 
