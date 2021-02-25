@@ -114,6 +114,12 @@ pub enum Kind {
     #[error("No consensus state associated with the host chain")]
     MissingHostConsensusState,
 
+    #[error("the client is frozen")]
+    VerifiedFrozenClient,
+
+    #[error("The verification of packet {0} failed ")]
+    PacketVerificationFailed(Sequence),
+
     #[error("Missing sequence number for send packets")]
     MissingNextSendSeq,
 

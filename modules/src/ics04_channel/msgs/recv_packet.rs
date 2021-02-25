@@ -30,6 +30,9 @@ impl MsgRecvPacket {
             signer,
         })
     }
+    pub fn proofs(&self) -> &Proofs {
+        &self.proofs
+    }
 }
 
 impl Msg for MsgRecvPacket {
@@ -94,7 +97,7 @@ impl From<MsgRecvPacket> for RawMsgRecvPacket {
 }
 
 #[cfg(test)]
-mod test_util {
+pub mod test_util {
     use ibc_proto::ibc::core::channel::v1::MsgRecvPacket as RawMsgRecvPacket;
     use ibc_proto::ibc::core::client::v1::Height as RawHeight;
 

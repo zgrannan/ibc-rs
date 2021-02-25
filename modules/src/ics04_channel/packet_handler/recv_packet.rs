@@ -1,18 +1,17 @@
 use std::cmp::Ordering;
 
-use crate::events::IbcEvent;
+use crate::{events::IbcEvent, ics04_channel::events::ReceivePacket};
 use crate::handler::{HandlerOutput, HandlerResult};
 
-use super::{PacketResult, PacketType};
+use super::{verify::verify_proofs, PacketResult, PacketType};
 use crate::ics02_client::state::ClientState;
 use crate::ics03_connection::connection::State as ConnectionState;
 
 use crate::ics04_channel::channel::Counterparty;
 use crate::ics04_channel::channel::{Order, State};
-use crate::ics04_channel::events::SendPacket;
 use crate::ics04_channel::msgs::recv_packet::MsgRecvPacket;
 use crate::ics04_channel::packet::Sequence;
-use crate::ics04_channel::{context::ChannelReader, error::Error, error::Kind, packet::Packet};
+use crate::ics04_channel::{context::ChannelReader, error::Error, error::Kind};
 
 pub fn recv_packet(
     ctx: &dyn ChannelReader,
@@ -20,25 +19,19 @@ pub fn recv_packet(
 ) -> HandlerResult<PacketResult, Error> {
     let mut output = HandlerOutput::builder();
 
-    let packet = msg.packet;
+    let packet = msg.packet.clone();
     let channel_end = ctx
-        .channel_end(&(packet.source_port.clone(), packet.source_channel.clone()))
+        .channel_end(&(packet.destination_port.clone(), packet.destination_channel.clone()))
         .ok_or_else(|| {
-            Kind::ChannelNotFound(packet.source_port.clone(), packet.source_channel.clone())
-                .context(packet.source_channel.clone().to_string())
+            Kind::ChannelNotFound(packet.destination_port.clone(), packet.destination_channel.clone())
         })?;
 
     if !channel_end.state_matches(&State::Open) {
         return Err(Kind::InvalidChannelState(packet.source_channel, channel_end.state).into());
     }
-    let _channel_cap = ctx.authenticated_capability(&packet.source_port)?;
+    let _channel_cap = ctx.authenticated_capability(&packet.destination_port)?;
 
-    let channel_id = match channel_end.counterparty().channel_id() {
-        Some(c) => Some(c.clone()),
-        None => None,
-    };
-
-    let counterparty = Counterparty::new(channel_end.counterparty().port_id().clone(), channel_id);
+    let counterparty = Counterparty::new(packet.source_port.clone(), Some(packet.source_channel.clone()));
 
     if !channel_end.counterparty_matches(&counterparty) {
         return Err(Kind::InvalidPacketCounterparty(
@@ -88,15 +81,9 @@ pub fn recv_packet(
         return Err(Kind::LowPacketTimestamp.into());
     }
 
-    //TODO: verify packet data
-    // abortTransactionUnless(connection.verifyPacketData(
-    //     proofHeight,
-    //     proof,
-    //     packet.sourcePort,
-    //     packet.sourceChannel,
-    //     packet.sequence,
-    //     concat(packet.data, packet.timeoutHeight, packet.timeoutTimestamp)
-    //   ))
+    verify_proofs(ctx, &packet, client_id, &msg.proofs().clone())?;
+
+    //map_or_else(|| Kind::PacketVerificationFailed(packet.sequence.clone()))?;
 
     output.log("success: packet send ");
     let result;
@@ -154,10 +141,188 @@ pub fn recv_packet(
         }
     }
 
-    output.emit(IbcEvent::SendPacket(SendPacket {
+    output.emit(IbcEvent::ReceivePacket(ReceivePacket {
         height: packet_height,
         packet,
     }));
 
     Ok(output.with_result(result))
+}
+
+
+
+#[cfg(test)]
+mod tests {
+
+    use std::convert::TryFrom;
+
+    use crate::ics02_client::height::Height;
+    use crate::ics03_connection::connection::ConnectionEnd;
+    use crate::ics03_connection::connection::Counterparty as ConnectionCounterparty;
+    use crate::ics03_connection::connection::State as ConnectionState;
+    use crate::ics03_connection::version::get_compatible_versions;
+    use crate::ics04_channel::channel::{ChannelEnd, Counterparty, Order, State};
+    use crate::ics04_channel::msgs::recv_packet::MsgRecvPacket;
+    use crate::ics04_channel::msgs::recv_packet::test_util::get_dummy_raw_msg_recv_packet;
+    use ibc_proto::ibc::core::channel::v1::MsgRecvPacket as RawMsgRecvPacket;
+    use crate::ics04_channel::packet_handler::recv_packet::recv_packet;
+    use crate::ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId};
+    use crate::mock::context::MockContext;
+    use crate::{
+        events::IbcEvent,
+        ics04_channel::packet::{Packet, Sequence},
+    };
+
+
+    #[test]
+    fn recv_packet_processing() {
+        struct Test {
+            name: String,
+            ctx: MockContext,
+            packet: Packet,
+            want_pass: bool,
+        }
+
+        let context = MockContext::default();
+
+        // let packet = Packet {
+        //     sequence: <Sequence as From<u64>>::from(1),
+        //     source_port: PortId::default(),
+        //     source_channel: ChannelId::default(),
+        //     destination_port: PortId::default(),
+        //     destination_channel: ChannelId::default(),
+        //     data: vec![0],
+        //     timeout_height: Height::default(),
+        //     timeout_timestamp: 6,
+        // };
+
+        let height = Height::default().revision_height+1;
+
+        let raw_msg = get_dummy_raw_msg_recv_packet(height);
+        let msg = <MsgRecvPacket as TryFrom<RawMsgRecvPacket>>
+                    ::try_from(raw_msg).unwrap();
+                    //map_err(|e| Kind::InvalidPacket.context(e).into()).into_ok();
+                    //unwrap_or_else(return Error::Kind::InvalidPacket.context(e).into());
+                    //map_err(|e| Kind::InvalidPacket.context(e).into());
+        let packet = msg.packet.clone();
+
+        let packet_untimed = Packet {
+            sequence: <Sequence as From<u64>>::from(1),
+            source_port: PortId::default(),
+            source_channel: ChannelId::default(),
+            destination_port: PortId::default(),
+            destination_channel: ChannelId::default(),
+            data: vec![],
+            timeout_height: Height::default(),
+            timeout_timestamp: 0,
+        };
+
+        // let channel_end = ChannelEnd::new(
+        //     State::TryOpen,
+        //     Order::default(),
+        //     Counterparty::new(PortId::default(), Some(ChannelId::default())),
+        //     vec![ConnectionId::default()],
+        //     "ics20".to_string(),
+        // );
+
+        let channel_end = ChannelEnd::new(
+            State::TryOpen,
+            Order::default(),
+            Counterparty::new(packet.source_port.clone(), Some(packet.source_channel.clone())),
+            vec![ConnectionId::default()],
+            "ics20".to_string(),
+        );
+
+        let connection_end = ConnectionEnd::new(
+            ConnectionState::Open,
+            ClientId::default(),
+            ConnectionCounterparty::new(
+                ClientId::default(),
+                Some(ConnectionId::default()),
+                Default::default(),
+            ),
+            get_compatible_versions(),
+            0,
+        );
+
+        let tests: Vec<Test> = vec![
+            Test {
+                name: "Processing fails because no channel exists in the context".to_string(),
+                ctx: context.clone(),
+                packet: packet.clone(),
+                want_pass: false,
+            },
+            Test {
+                name: "Processing fails because the port does not have a capability associated"
+                    .to_string(),
+                ctx: context.clone().with_channel(
+                    PortId::default(),
+                    ChannelId::default(),
+                    channel_end.clone(),
+                ),
+                packet: packet.clone(),
+                want_pass: false,
+            },
+            Test {
+                name: "Good parameters".to_string(),
+                ctx: context
+                    .clone()
+                    .with_client(&ClientId::default(), Height::default())
+                    .with_connection(ConnectionId::default(), connection_end.clone())
+                    .with_port_capability(packet.destination_port.clone())
+                    .with_channel(packet.destination_port.clone(), packet.destination_channel.clone(), channel_end.clone())
+                    .with_send_sequence(packet.destination_port.clone(), packet.destination_channel.clone(), 1),
+                packet,
+                want_pass: true,
+            },
+            Test {
+                name: "Zero timeout".to_string(),
+                ctx: context
+                    .with_client(&ClientId::default(), Height::default())
+                    .with_connection(ConnectionId::default(), connection_end)
+                    .with_port_capability(PortId::default())
+                    .with_channel(PortId::default(), ChannelId::default(), channel_end)
+                    .with_send_sequence(PortId::default(), ChannelId::default(), 1),
+                packet: packet_untimed,
+                want_pass: false,
+            },
+        ]
+        .into_iter()
+        .collect();
+
+        for test in tests {
+            let res = recv_packet(&test.ctx, msg.clone());
+            // Additionally check the events and the output objects in the result.
+            match res {
+                Ok(proto_output) => {
+                    assert_eq!(
+                        test.want_pass,
+                        true,
+                        "recv_packet: test passed but was supposed to fail for test: {}, \nparams {:?} {:?}",
+                        test.name,
+                        test.packet.clone(),
+                        test.ctx.clone()
+                    );
+                    assert_ne!(proto_output.events.is_empty(), true); // Some events must exist.
+
+                    // TODO: The object in the output is a PacketResult what can we check on it?
+
+                    for e in proto_output.events.iter() {
+                        assert!(matches!(e, &IbcEvent::ReceivePacket(_)));
+                    }
+                }
+                Err(e) => {
+                    assert_eq!(
+                        test.want_pass,
+                        false,
+                        "send_packet: did not pass test: {}, \nparams {:?} {:?} error: {:?}",
+                        test.name,
+                        test.packet.clone(),
+                        test.ctx.clone(),
+                        e,
+                    );
+                }
+            }
+        }
+    }
 }

@@ -53,11 +53,11 @@ fn subscribe(
     rt: Arc<TokioRuntime>,
 ) -> Result<(EventMonitor, channel::Receiver<EventBatch>), BoxError> {
     let (mut event_monitor, rx) = EventMonitor::new(chain_config.id, chain_config.rpc_addr, rt)
-        .map_err(|e| format!("couldn't initialize event monitor: {}", e))?;
+        .(|e| format!("couldn't initialize event monitor: {}", e))?;
 
     event_monitor
         .subscribe()
-        .map_err(|e| format!("couldn't initialize subscriptions: {}", e))?;
+        .(|e| format!("couldn't initialize subscriptions: {}", e))?;
 
     Ok((event_monitor, rx))
 }
