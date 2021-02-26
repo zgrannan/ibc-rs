@@ -1,4 +1,4 @@
-use super::packet::Sequence;
+use super::{context::ChannelReader, msgs::PacketMsg, packet::Sequence};
 //use crate::ics04_channel::msgs::PacketMsg;
 use crate::{
     ics02_client::height::Height,
@@ -28,4 +28,17 @@ pub struct PacketResult {
     pub timeout_height: Height,
     pub timeout_timestamp: u64,
     pub data: Vec<u8>,
+}
+
+
+/// General entry point for processing any type of message related to the ICS4 channel open
+/// handshake protocol.
+pub fn packet_dispatch<Ctx>(ctx: &Ctx, msg: PacketMsg) -> Result<HandlerOutput<PacketResult>, Error>
+where
+    Ctx: ChannelReader,
+{
+    match msg {
+        PacketMsg::RecvPacket(msg) => recv_packet::process(ctx, msg),
+        _ => todo!(),
+    }
 }

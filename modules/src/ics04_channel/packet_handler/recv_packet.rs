@@ -13,7 +13,7 @@ use crate::ics04_channel::msgs::recv_packet::MsgRecvPacket;
 use crate::ics04_channel::packet::Sequence;
 use crate::ics04_channel::{context::ChannelReader, error::Error, error::Kind};
 
-pub fn recv_packet(
+pub fn process(
     ctx: &dyn ChannelReader,
     msg: MsgRecvPacket,
 ) -> HandlerResult<PacketResult, Error> {
@@ -73,7 +73,7 @@ pub fn recv_packet(
         .client_consensus_state(&client_id, latest_height)
         .ok_or_else(|| Kind::MissingClientConsensusState(client_id.clone(), latest_height))?;
 
-    let latest_timestamp = consensus_state.latest_timestamp();
+    let latest_timestamp = consensus_state.timestamp()?;
 
     let packet_timestamp = packet.timeout_timestamp;
     if !packet.timeout_timestamp == 0 && packet_timestamp.cmp(&latest_timestamp).eq(&Ordering::Less)
@@ -165,7 +165,7 @@ mod tests {
     use crate::ics04_channel::msgs::recv_packet::MsgRecvPacket;
     use crate::ics04_channel::msgs::recv_packet::test_util::get_dummy_raw_msg_recv_packet;
     use ibc_proto::ibc::core::channel::v1::MsgRecvPacket as RawMsgRecvPacket;
-    use crate::ics04_channel::packet_handler::recv_packet::recv_packet;
+    use crate::ics04_channel::packet_handler::recv_packet::process;
     use crate::ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId};
     use crate::mock::context::MockContext;
     use crate::{
@@ -293,7 +293,7 @@ mod tests {
         .collect();
 
         for test in tests {
-            let res = recv_packet(&test.ctx, msg.clone());
+            let res = process(&test.ctx, msg.clone());
             // Additionally check the events and the output objects in the result.
             match res {
                 Ok(proto_output) => {
