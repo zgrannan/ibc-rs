@@ -4,6 +4,7 @@ use tendermint_proto::Protobuf;
 use crate::events::IbcEvent;
 use crate::handler::HandlerOutput;
 use crate::ics02_client::handler::dispatch as ics2_msg_dispatcher;
+use crate::ics04_channel::packet_handler::packet_dispatch as ics04_packet_msg_dispatcher;
 use crate::ics02_client::msgs::create_client;
 use crate::ics02_client::msgs::update_client;
 use crate::ics02_client::msgs::ClientMsg;
