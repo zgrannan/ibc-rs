@@ -17,3 +17,16 @@ pub enum PacketType {
 pub enum PacketResult {
     Send(SendPacketResult),
 }
+
+
+/// General entry point for processing any type of message related to the ICS4 channel open
+/// handshake protocol.
+pub fn packet_dispatch<Ctx>(ctx: &Ctx, msg: PacketMsg) -> Result<HandlerOutput<PacketResult>, Error>
+where
+    Ctx: ChannelReader,
+{
+    match msg {
+        PacketMsg::RecvPacket(msg) => recv_packet::process(ctx, msg),
+        _ => todo!(),
+    }
+}

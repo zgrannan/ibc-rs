@@ -30,7 +30,7 @@ use crate::application::ics20_fungible_token_transfer::msgs::transfer;
 use crate::ics26_routing::context::Ics26Context;
 use crate::ics26_routing::error::{Error, Kind};
 use crate::ics26_routing::msgs::Ics26Envelope;
-use crate::ics26_routing::msgs::Ics26Envelope::{Ics20Msg, Ics2Msg, Ics3Msg, Ics4Msg};
+use crate::ics26_routing::msgs::Ics26Envelope::{Ics20Msg, Ics2Msg, Ics3Msg, Ics4PacketMsg, Ics4Msg};
 
 /// Mimics the DeliverTx ABCI interface, but a slightly lower level. No need for authentication
 /// info or signature checks here.
@@ -197,6 +197,20 @@ where
         Ics20Msg(msg) => {
             let handler_output =
                 ics20_msg_dispatcher(ctx, msg).map_err(|e| Kind::HandlerRaisedError.context(e))?;
+
+            // Apply any results to the host chain store.
+            ctx.store_packet_result(handler_output.result)
+                .map_err(|e| Kind::KeeperRaisedError.context(e))?;
+
+            HandlerOutput::builder()
+                .with_log(handler_output.log)
+                .with_events(handler_output.events)
+                .with_result(())
+        }
+
+        Ics4PacketMsg(msg) =>{
+            let handler_output =
+                ics04_packet_msg_dispatcher(ctx, msg).map_err(|e| Kind::HandlerRaisedError.context(e))?;
 
             // Apply any results to the host chain store.
             ctx.store_packet_result(handler_output.result)

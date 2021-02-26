@@ -35,7 +35,7 @@ pub fn verify_proofs(
         "{:?},{:?},{:?}",
         packet.timeout_timestamp, packet.timeout_height, packet.data
     );
-    let commitment = ctx.hashing(input);
+    let commitment = ctx.hash(input);
     // Verify the proof for the channel state against the expected channel end.
     // A counterparty channel id of None in not possible, and is checked by validate_basic in msg.
     Ok(client_def
