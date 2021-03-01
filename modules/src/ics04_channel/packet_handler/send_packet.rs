@@ -1,5 +1,4 @@
 use std::cmp::Ordering;
-
 use crate::events::IbcEvent;
 use crate::handler::{HandlerOutput, HandlerResult};
 use crate::ics02_client::state::ClientState;

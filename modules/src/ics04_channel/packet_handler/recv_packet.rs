@@ -3,6 +3,7 @@ use std::cmp::Ordering;
 use crate::{handler::{HandlerOutput, HandlerResult}, ics24_host::identifier::{ChannelId, PortId}};
 use crate::{events::IbcEvent, ics04_channel::events::ReceivePacket};
 
+
 use super::{verify::verify_proofs, PacketResult};
 use crate::ics02_client::state::ClientState;
 use crate::ics03_connection::connection::State as ConnectionState;
@@ -216,7 +217,6 @@ mod tests {
             timeout_height: Height::default(),
             timeout_timestamp: 0,
         };
-
 
 
         let dest_channel_end = ChannelEnd::new(

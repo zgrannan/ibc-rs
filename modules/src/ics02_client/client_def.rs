@@ -5,7 +5,6 @@ use prost_types::Any;
 use serde::Serialize;
 use tendermint_proto::Protobuf;
 
-use crate::{ics02_client::client_type::ClientType, ics04_channel::packet::Sequence};
 use crate::ics02_client::error::{Error, Kind};
 use crate::ics02_client::header::Header;
 use crate::ics02_client::state::{ClientState, ConsensusState};
@@ -19,6 +18,7 @@ use crate::ics23_commitment::commitment::{CommitmentPrefix, CommitmentProofBytes
 use crate::ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId};
 use crate::Height;
 use crate::downcast;
+use crate::{ics02_client::client_type::ClientType, ics04_channel::packet::Sequence};
 
 #[cfg(any(test, feature = "mocks"))]
 use crate::mock::{

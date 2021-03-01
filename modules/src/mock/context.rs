@@ -3,10 +3,8 @@
 use std::cmp::min;
 use std::collections::HashMap;
 use std::error::Error;
-use std::str::FromStr;
 
 use prost_types::Any;
-use tendermint::account::Id;
 
 use crypto::{digest::Digest, sha2::Sha256};
 
