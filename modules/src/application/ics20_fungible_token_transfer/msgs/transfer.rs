@@ -84,3 +84,50 @@ impl From<MsgTransfer> for RawMsgTransfer {
         }
     }
 }
+
+#[cfg(test)]
+pub mod test_util {
+
+    use ibc_proto::ibc::applications::transfer::v1::MsgTransfer as RawMsgTransfer;
+    use ibc_proto::ibc::core::client::v1::Height as RawHeight;
+    use tendermint::account::Id as AccountId;
+    use crate::{Height, ics24_host::identifier::{ChannelId, PortId}};
+    
+    use super::MsgTransfer;
+
+    
+
+    // /// Returns a dummy `RawMsgTransfer`, for testing only! 
+    pub fn get_dummy_msg_transfer(height: u64) -> MsgTransfer {
+
+        let id = AccountId::new([1,2,1,1,1,1,1,1,1,1,1,1,1,0,1,0,1,0,1,1]);
+
+        MsgTransfer {
+            source_port: PortId::default(),
+            source_channel: ChannelId::default(),
+            token: None,
+            sender: id,
+            receiver:id,
+            timeout_timestamp: 0,
+            timeout_height: Height {
+                revision_number: 0,
+                revision_height: height,
+            },
+        }
+    }
+    // Returns a dummy `RawMsgTransfer`, for testing only! 
+    pub fn get_dummy_raw_msg_transfer(height: u64) -> RawMsgTransfer {
+        RawMsgTransfer {
+            source_port: PortId::default().to_string(),
+            source_channel: ChannelId::default().to_string(),
+            token: Default::default(),
+            sender: Default::default(),
+            receiver: Default::default(),
+            timeout_height: Some(RawHeight {
+                revision_number: 0,
+                revision_height: height,
+            }),
+            timeout_timestamp: 0,
+        }
+    }
+}

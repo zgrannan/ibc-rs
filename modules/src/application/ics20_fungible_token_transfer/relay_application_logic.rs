@@ -3,7 +3,7 @@
 pub mod send_transfer;
 
 use super::error::{Error, Kind};
-use super::msgs::transfer::MsgTransfer;
+use crate::application::ics20_fungible_token_transfer::msgs::transfer::MsgTransfer;
 use super::relay_application_logic;
 use crate::handler::HandlerOutput;
 use crate::{ics04_channel::packet_handler::PacketResult, ics26_routing::context::Ics26Context};

@@ -495,7 +495,7 @@ impl ChannelKeeper for MockContext {
 
     fn store_packet_receipt(
         &mut self,
-        key: &(PortId, ChannelId, Sequence),
+        key: (PortId, ChannelId, Sequence),
         receipt: String,
     ) -> Result<(), Ics4Error> {
         self.packet_receipt.insert(key.clone(), receipt);

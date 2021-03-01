@@ -99,9 +99,12 @@ impl From<MsgRecvPacket> for RawMsgRecvPacket {
 #[cfg(test)]
 pub mod test_util {
     use ibc_proto::ibc::core::channel::v1::MsgRecvPacket as RawMsgRecvPacket;
+
     use ibc_proto::ibc::core::client::v1::Height as RawHeight;
 
-    use crate::ics04_channel::packet::test_utils::{get_dummy_packet, get_dummy_raw_packet};
+    use crate::ics04_channel::packet::test_utils::get_dummy_raw_packet;
+    use crate::ics04_channel::packet::test_utils::get_dummy_raw_default_packet;
+
     use crate::test_utils::{get_dummy_bech32_account, get_dummy_proof};
 
     /// Returns a dummy `RawMsgRecvPacket`, for testing only! The `height` parametrizes both the
@@ -117,9 +120,10 @@ pub mod test_util {
             signer: get_dummy_bech32_account(),
         }
     }
-    pub fn get_dummy_msg_recv_packet(height: u64) -> RawMsgRecvPacket {
+
+    pub fn get_dummy_raw_default_msg_recv_packet(height: u64) -> RawMsgRecvPacket {
         RawMsgRecvPacket {
-            packet: Some(get_dummy_packet(height)),
+            packet: Some(get_dummy_raw_default_packet(height)),
             proof_commitment: get_dummy_proof(),
             proof_height: Some(RawHeight {
                 revision_number: 0,
@@ -138,6 +142,7 @@ mod test {
 
     use crate::ics04_channel::error::Error;
     use crate::ics04_channel::msgs::recv_packet::test_util::get_dummy_raw_msg_recv_packet;
+
     use crate::ics04_channel::msgs::recv_packet::MsgRecvPacket;
 
     #[test]

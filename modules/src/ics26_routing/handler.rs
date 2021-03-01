@@ -244,6 +244,8 @@ mod tests {
         conn_open_try::{test_util::get_dummy_raw_msg_conn_open_try, MsgConnectionOpenTry},
         ConnectionMsg,
     };
+    //use crate::application::ics20_fungible_token_transfer::msgs::transfer::MsgTransfer;
+
     use crate::ics04_channel::msgs::{
         chan_close_confirm::{
             test_util::get_dummy_raw_msg_chan_close_confirm, MsgChannelCloseConfirm,
@@ -253,6 +255,8 @@ mod tests {
         chan_open_init::{test_util::get_dummy_raw_msg_chan_open_init, MsgChannelOpenInit},
         chan_open_try::{test_util::get_dummy_raw_msg_chan_open_try, MsgChannelOpenTry},
         ChannelMsg,
+        recv_packet::{test_util::get_dummy_raw_default_msg_recv_packet, MsgRecvPacket},
+        PacketMsg,
     };
     use crate::ics24_host::identifier::ConnectionId;
     use crate::ics26_routing::handler::dispatch;
@@ -261,6 +265,7 @@ mod tests {
     use crate::mock::context::MockContext;
     use crate::mock::header::MockHeader;
     use crate::test_utils::get_dummy_account_id;
+    use crate::application::ics20_fungible_token_transfer::msgs::transfer::test_util::get_dummy_msg_transfer;
     use crate::Height;
 
     #[test]
@@ -336,6 +341,10 @@ mod tests {
         let msg_chan_close_confirm =
             MsgChannelCloseConfirm::try_from(get_dummy_raw_msg_chan_close_confirm(client_height))
                 .unwrap();
+        
+        let msg_transfer = get_dummy_msg_transfer(34);
+
+        let msg_recv_packet = MsgRecvPacket::try_from(get_dummy_raw_default_msg_recv_packet(34)).unwrap();
 
         // First, create a client..
         let res = dispatch(
@@ -433,6 +442,17 @@ mod tests {
             Test {
                 name: "Channel open ack succeeds".to_string(),
                 msg: Ics26Envelope::Ics4Msg(ChannelMsg::ChannelOpenAck(msg_chan_ack)),
+                want_pass: true,
+            },
+            //ICS20-04-send packet
+            Test {
+                name: "Packet send".to_string(),
+                msg: Ics26Envelope::Ics20Msg(msg_transfer),
+                want_pass: true,
+            },
+            Test {
+                name: "Receive packet".to_string(),
+                msg: Ics26Envelope::Ics4PacketMsg(PacketMsg::RecvPacket(msg_recv_packet)),
                 want_pass: true,
             },
             Test {

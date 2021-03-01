@@ -168,7 +168,7 @@ mod tests {
     use crate::ics03_connection::connection::State as ConnectionState;
     use crate::ics03_connection::version::get_compatible_versions;
     use crate::ics04_channel::channel::{ChannelEnd, Counterparty, Order, State};
-    use crate::ics04_channel::msgs::recv_packet::test_util::get_dummy_raw_msg_recv_packet;
+    use crate::ics04_channel::msgs::recv_packet::test_util::get_dummy_raw_default_msg_recv_packet;
     use crate::ics04_channel::msgs::recv_packet::MsgRecvPacket;
     use crate::ics04_channel::packet_handler::recv_packet::process;
     use crate::ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId};
@@ -205,8 +205,13 @@ mod tests {
 
         let h = Height::new(0, Height::default().revision_height + 1);
 
-        let raw_msg = get_dummy_raw_msg_recv_packet(height);
+        //let raw_msg = get_dummy_raw_msg_recv_packet(height);
+        let raw_msg = get_dummy_raw_default_msg_recv_packet(height);
+        
         let msg = <MsgRecvPacket as TryFrom<RawMsgRecvPacket>>::try_from(raw_msg).unwrap();
+        
+        //let msg:MsgRecvPacket = raw_msg.into();
+
         //map_err(|e| Kind::InvalidPacket.context(e).into()).into_ok();
         //unwrap_or_else(return Error::Kind::InvalidPacket.context(e).into());
         //map_err(|e| Kind::InvalidPacket.context(e).into());
