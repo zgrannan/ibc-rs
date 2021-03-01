@@ -6,7 +6,8 @@ use ibc_proto::ibc::core::channel::v1::Packet as RawPacket;
 
 use crate::ics04_channel::error::Kind;
 
-use crate::ics24_host::identifier::{ChannelId, PortId};
+use crate::ics24_host::identifier::PortId;
+use crate::ics24_host::identifier::ChannelId;
 
 use crate::Height;
 
@@ -88,7 +89,7 @@ impl Default for Packet {
             source_channel: Default::default(),
             destination_port: Default::default(),
             destination_channel: Default::default(),
-            data: vec![],
+            data: vec![0],
             timeout_height: Default::default(),
             timeout_timestamp: 0,
         }
@@ -147,6 +148,8 @@ impl From<Packet> for RawPacket {
 pub mod test_utils {
     use ibc_proto::ibc::core::channel::v1::Packet as RawPacket;
     use ibc_proto::ibc::core::client::v1::Height as RawHeight;
+    use crate::ics24_host::identifier::PortId;
+    use crate::ics24_host::identifier::ChannelId;
 
     /// Returns a dummy `RawPacket`, for testing only!
     pub fn get_dummy_raw_packet(timeout_height: u64) -> RawPacket {
@@ -165,13 +168,15 @@ pub mod test_utils {
         }
     }
 
-    pub fn get_dummy_packet(timeout_height: u64) -> RawPacket {
-        Packet {
-            sequence:<Sequence as From<u64>>::from(0),
-            source_port: PortId::default(),
-            source_channel: ChannelId::default(),
-            destination_port: PortId::new(1),
-            destination_channel: ChannelID(1),
+
+    pub fn get_dummy_raw_default_packet(timeout_height: u64) -> RawPacket {
+        RawPacket {
+            sequence: 0,
+            source_port: PortId::default().to_string(),
+            source_channel: ChannelId::default().to_string(),
+            destination_port: PortId::default().to_string(),
+           // destination_channel: ChannelId::new(1).to_string(),
+            destination_channel: ChannelId::default().to_string(),
             data: vec![0],
             timeout_height: Some(RawHeight {
                 revision_number: 0,
@@ -180,7 +185,6 @@ pub mod test_utils {
             timeout_timestamp: 0,
         }
     }
-
 }
 
 #[cfg(test)]
