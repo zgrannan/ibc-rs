@@ -38,7 +38,7 @@ pub trait ChannelReader {
     fn get_next_sequence_send(&self, port_channel_id: &(PortId, ChannelId)) -> Option<Sequence>;
 
     fn get_next_sequence_recv(&self, port_channel_id: &(PortId, ChannelId)) -> Option<&u64>;
-    
+
     /// A hashing function for packet commitments  
     fn hash(&self, value: String) -> String;
 

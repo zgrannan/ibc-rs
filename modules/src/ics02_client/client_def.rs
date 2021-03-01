@@ -5,7 +5,6 @@ use prost_types::Any;
 use serde::Serialize;
 use tendermint_proto::Protobuf;
 
-
 use crate::{ics02_client::client_type::ClientType, ics04_channel::packet::Sequence};
 use crate::ics02_client::error::{Error, Kind};
 use crate::ics02_client::header::Header;
@@ -19,6 +18,7 @@ use crate::ics07_tendermint::header::Header as TendermintHeader;
 use crate::ics23_commitment::commitment::{CommitmentPrefix, CommitmentProofBytes, CommitmentRoot};
 use crate::ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId};
 use crate::Height;
+use crate::downcast;
 
 #[cfg(any(test, feature = "mocks"))]
 use crate::mock::{
@@ -635,7 +635,7 @@ impl ClientDef for AnyClient {
         port_id: &PortId,
         channel_id: &ChannelId,
         seq: &Sequence,
-        commitment: String
+        commitment: String,
     ) -> Result<(), Box<dyn std::error::Error>> {
         match self {
             Self::Tendermint(client) => {
@@ -651,7 +651,7 @@ impl ClientDef for AnyClient {
                     port_id,
                     channel_id,
                     seq,
-                    commitment
+                    commitment,
                 )
             }
 
@@ -669,7 +669,7 @@ impl ClientDef for AnyClient {
                     port_id,
                     channel_id,
                     seq,
-                    commitment
+                    commitment,
                 )
             }
         }

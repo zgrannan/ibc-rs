@@ -1,8 +1,9 @@
 use send_packet::SendPacketResult;
-use anomaly::Error;
 
-use super::{context::ChannelReader, msgs::PacketMsg, packet::Sequence};
-use crate::{handler::HandlerOutput, ics02_client::height::Height, ics24_host::identifier::{ChannelId, PortId}};
+use crate::ics04_channel::error::Error;
+
+use super::{context::ChannelReader, msgs::PacketMsg};
+use crate::handler::HandlerOutput;
 
 pub mod recv_packet;
 pub mod send_packet;
@@ -21,7 +22,6 @@ pub enum PacketType {
 pub enum PacketResult {
     Send(SendPacketResult),
 }
-
 
 /// General entry point for processing any type of message related to the ICS4 channel open
 /// handshake protocol.

@@ -6,6 +6,7 @@ use ibc_proto::ibc::core::channel::v1::Packet as RawPacket;
 
 use crate::ics04_channel::error::Kind;
 use crate::ics24_host::identifier::{ChannelId, PortId};
+
 use crate::Height;
 
 /// Enumeration of proof carrying ICS4 message, helper for relayer.
@@ -166,6 +167,23 @@ pub mod test_utils {
             timeout_timestamp: 0,
         }
     }
+
+    pub fn get_dummy_packet(timeout_height: u64) -> RawPacket {
+        Packet {
+            sequence:<Sequence as From<u64>>::from(0),
+            source_port: PortId::default(),
+            source_channel: ChannelId::default(),
+            destination_port: PortId::new(1),
+            destination_channel: ChannelID(1),
+            data: vec![0],
+            timeout_height: Some(RawHeight {
+                revision_number: 0,
+                revision_height: timeout_height,
+            }),
+            timeout_timestamp: 0,
+        }
+    }
+
 }
 
 #[cfg(test)]
