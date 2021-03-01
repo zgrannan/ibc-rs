@@ -159,23 +159,6 @@ pub mod test_utils {
     pub fn get_dummy_raw_packet(timeout_height: u64) -> RawPacket {
         RawPacket {
             sequence: 0,
-            source_port: "sourceportid".to_string(),
-            source_channel: "srchannelid".to_string(),
-            destination_port: "destinationport".to_string(),
-            destination_channel: "dstchannelid".to_string(),
-            data: vec![],
-            timeout_height: Some(RawHeight {
-                revision_number: 0,
-                revision_height: timeout_height,
-            }),
-            timeout_timestamp: 0,
-        }
-    }
-
-
-    pub fn get_dummy_raw_default_packet(timeout_height: u64) -> RawPacket {
-        RawPacket {
-            sequence: 0,
             source_port: PortId::default().to_string(),
             source_channel: ChannelId::default().to_string(),
             destination_port: PortId::default().to_string(),

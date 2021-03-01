@@ -90,9 +90,7 @@ pub mod test_util {
 
     use ibc_proto::ibc::applications::transfer::v1::MsgTransfer as RawMsgTransfer;
     use ibc_proto::ibc::core::client::v1::Height as RawHeight;
-    use tendermint::account::Id as AccountId;
-    use crate::{Height, ics24_host::identifier::{ChannelId, PortId}};
-    
+    use crate::{Height, ics24_host::identifier::{ChannelId, PortId}, test_utils::get_dummy_account_id};
     use super::MsgTransfer;
 
     
@@ -100,7 +98,7 @@ pub mod test_util {
     // /// Returns a dummy `RawMsgTransfer`, for testing only! 
     pub fn get_dummy_msg_transfer(height: u64) -> MsgTransfer {
 
-        let id = AccountId::new([1,2,1,1,1,1,1,1,1,1,1,1,1,0,1,0,1,0,1,1]);
+        let id = get_dummy_account_id();
 
         MsgTransfer {
             source_port: PortId::default(),

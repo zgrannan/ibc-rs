@@ -119,9 +119,9 @@ pub fn send_packet(ctx: &dyn ChannelReader, packet: Packet) -> HandlerResult<Pac
         channel_id: packet.source_channel.clone(),
         seq: packet.sequence,
         seq_number: next_seq_send.increment(),
-        data: packet.clone().data,
         timeout_height: packet.timeout_height,
         timeout_timestamp: packet.timeout_timestamp,
+        data: packet.clone().data,
     });
 
     output.emit(IbcEvent::SendPacket(SendPacket {

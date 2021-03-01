@@ -1,9 +1,9 @@
 use std::cmp::Ordering;
 
-use crate::handler::{HandlerOutput, HandlerResult};
+use crate::{handler::{HandlerOutput, HandlerResult}, ics24_host::identifier::{ChannelId, PortId}};
 use crate::{events::IbcEvent, ics04_channel::events::ReceivePacket};
 
-use super::{verify::verify_proofs, PacketResult, PacketType};
+use super::{verify::verify_proofs, PacketResult};
 use crate::ics02_client::state::ClientState;
 use crate::ics03_connection::connection::State as ConnectionState;
 
@@ -12,6 +12,15 @@ use crate::ics04_channel::channel::{Order, State};
 use crate::ics04_channel::msgs::recv_packet::MsgRecvPacket;
 use crate::ics04_channel::packet::Sequence;
 use crate::ics04_channel::{context::ChannelReader, error::Error, error::Kind};
+#[derive(Clone, Debug)]
+pub struct RecvPacketResult {
+    pub port_id: PortId,
+    pub channel_id: ChannelId,
+    pub seq: Sequence,
+    pub seq_number: Sequence,
+    pub receipt: Option<String>
+}
+
 
 pub fn process(ctx: &dyn ChannelReader, msg: MsgRecvPacket) -> HandlerResult<PacketResult, Error> {
     let mut output = HandlerOutput::builder();
@@ -81,7 +90,9 @@ pub fn process(ctx: &dyn ChannelReader, msg: MsgRecvPacket) -> HandlerResult<Pac
         .client_consensus_state(&client_id, latest_height)
         .ok_or_else(|| Kind::MissingClientConsensusState(client_id.clone(), latest_height))?;
 
-    let latest_timestamp = consensus_state.timestamp()?;
+    let latest_timestamp = consensus_state.timestamp()
+        .map_err(Kind::ErrorInvalidConsensusState)?;
+    
 
     let packet_timestamp = packet.timeout_timestamp;
     if !packet.timeout_timestamp == 0 && packet_timestamp.cmp(&latest_timestamp).eq(&Ordering::Less)
@@ -101,24 +112,17 @@ pub fn process(ctx: &dyn ChannelReader, msg: MsgRecvPacket) -> HandlerResult<Pac
             .get_next_sequence_recv(&(packet.source_port.clone(), packet.source_channel.clone()))
             .ok_or(Kind::MissingNextRecvSeq)?;
 
-        if !packet.sequence.eq(&Sequence::from(*next_seq_recv)) {
-            return Err(Kind::InvalidPacketSequence(
-                packet.sequence,
-                Sequence::from(*next_seq_recv),
-            )
-            .into());
+        if !packet.sequence.eq(&next_seq_recv) {
+            return Err(Kind::InvalidPacketSequence(packet.sequence, next_seq_recv).into());
         }
-        result = PacketResult {
+        
+        result = PacketResult::Recv(RecvPacketResult {
             port_id: packet.source_port.clone(),
             channel_id: packet.source_channel.clone(),
             seq: packet.sequence.clone(),
-            seq_number: Sequence::from(*next_seq_recv + 1),
+            seq_number: next_seq_recv.increment(),
             receipt: None,
-            action: PacketType::Recv,
-            data: packet.clone().data,
-            timeout_height: packet.timeout_height,
-            timeout_timestamp: packet.timeout_timestamp,
-        };
+        });
     } else {
         let packet_rec = ctx.get_packet_receipt(&(
             packet.source_port.clone(),
@@ -134,17 +138,13 @@ pub fn process(ctx: &dyn ChannelReader, msg: MsgRecvPacket) -> HandlerResult<Pac
                 .into())
             }
             None => {
-                result = PacketResult {
+                result = PacketResult::Recv(RecvPacketResult {
                     port_id: packet.source_port.clone(),
                     channel_id: packet.source_channel.clone(),
                     seq: packet.sequence.clone(),
-                    seq_number: Sequence::from(1),
+                    seq_number: 1.into(),
                     receipt: Some("1".to_string()),
-                    action: PacketType::Recv,
-                    data: packet.clone().data,
-                    timeout_height: packet.timeout_height,
-                    timeout_timestamp: packet.timeout_timestamp,
-                };
+                });
             }
         }
     }
@@ -168,7 +168,7 @@ mod tests {
     use crate::ics03_connection::connection::State as ConnectionState;
     use crate::ics03_connection::version::get_compatible_versions;
     use crate::ics04_channel::channel::{ChannelEnd, Counterparty, Order, State};
-    use crate::ics04_channel::msgs::recv_packet::test_util::get_dummy_raw_default_msg_recv_packet;
+    use crate::ics04_channel::msgs::recv_packet::test_util::get_dummy_raw_msg_recv_packet;
     use crate::ics04_channel::msgs::recv_packet::MsgRecvPacket;
     use crate::ics04_channel::packet_handler::recv_packet::process;
     use crate::ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId};
@@ -190,23 +190,12 @@ mod tests {
 
         let context = MockContext::default();
 
-        // let packet = Packet {
-        //     sequence: <Sequence as From<u64>>::from(1),
-        //     source_port: PortId::default(),
-        //     source_channel: ChannelId::default(),
-        //     destination_port: PortId::default(),
-        //     destination_channel: ChannelId::default(),
-        //     data: vec![0],
-        //     timeout_height: Height::default(),
-        //     timeout_timestamp: 6,
-        // };
-
         let height = Height::default().revision_height + 1;
 
         let h = Height::new(0, Height::default().revision_height + 1);
 
         //let raw_msg = get_dummy_raw_msg_recv_packet(height);
-        let raw_msg = get_dummy_raw_default_msg_recv_packet(height);
+        let raw_msg = get_dummy_raw_msg_recv_packet(height);
         
         let msg = <MsgRecvPacket as TryFrom<RawMsgRecvPacket>>::try_from(raw_msg).unwrap();
         
@@ -228,13 +217,7 @@ mod tests {
             timeout_timestamp: 0,
         };
 
-        // let dest_channel_end = ChannelEnd::new(
-        //     State::TryOpen,
-        //     Order::default(),
-        //     Counterparty::new(PortId::default(), Some(ChannelId::default())),
-        //     vec![ConnectionId::default()],
-        //     "ics20".to_string(),
-        // );
+
 
         let dest_channel_end = ChannelEnd::new(
             State::Open,
@@ -292,7 +275,7 @@ mod tests {
                     .with_send_sequence(
                         packet.destination_port.clone(),
                         packet.destination_channel.clone(),
-                        1,
+                        1.into(),
                     ),
                 packet,
                 want_pass: true,
@@ -304,7 +287,7 @@ mod tests {
                     .with_connection(ConnectionId::default(), connection_end)
                     .with_port_capability(PortId::default())
                     .with_channel(PortId::default(), ChannelId::default(), dest_channel_end)
-                    .with_send_sequence(PortId::default(), ChannelId::default(), 1),
+                    .with_send_sequence(PortId::default(), ChannelId::default(), 1.into()),
                 packet: packet_untimed,
                 want_pass: false,
             },

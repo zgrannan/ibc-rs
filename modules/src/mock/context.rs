@@ -8,8 +8,7 @@ use std::str::FromStr;
 use prost_types::Any;
 use tendermint::account::Id;
 
-use crypto::digest::Digest;
-use crypto::sha2::Sha256;
+use crypto::{digest::Digest, sha2::Sha256};
 
 use crate::ics02_client::context::{ClientKeeper, ClientReader};
 use crate::ics02_client::error::Error as Ics2Error;
@@ -409,8 +408,8 @@ impl ChannelReader for MockContext {
         self.next_sequence_send.get(port_channel_id).cloned()
     }
 
-    fn get_next_sequence_recv(&self, port_channel_id: &(PortId, ChannelId)) -> Option<&u64> {
-        self.next_sequence_recv.get(port_channel_id)
+    fn get_next_sequence_recv(&self, port_channel_id: &(PortId, ChannelId)) -> Option<Sequence> {
+        self.next_sequence_recv.get(port_channel_id).cloned()
     }
     fn hash(&self, input: String) -> String {
         let mut sha256 = Sha256::new();

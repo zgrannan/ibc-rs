@@ -255,7 +255,7 @@ mod tests {
         chan_open_init::{test_util::get_dummy_raw_msg_chan_open_init, MsgChannelOpenInit},
         chan_open_try::{test_util::get_dummy_raw_msg_chan_open_try, MsgChannelOpenTry},
         ChannelMsg,
-        recv_packet::{test_util::get_dummy_raw_default_msg_recv_packet, MsgRecvPacket},
+        recv_packet::{test_util::get_dummy_raw_msg_recv_packet, MsgRecvPacket},
         PacketMsg,
     };
     use crate::ics24_host::identifier::ConnectionId;
@@ -344,7 +344,7 @@ mod tests {
         
         let msg_transfer = get_dummy_msg_transfer(34);
 
-        let msg_recv_packet = MsgRecvPacket::try_from(get_dummy_raw_default_msg_recv_packet(34)).unwrap();
+        let msg_recv_packet = MsgRecvPacket::try_from(get_dummy_raw_msg_recv_packet(34)).unwrap();
 
         // First, create a client..
         let res = dispatch(

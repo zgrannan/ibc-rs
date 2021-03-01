@@ -37,7 +37,7 @@ pub trait ChannelReader {
 
     fn get_next_sequence_send(&self, port_channel_id: &(PortId, ChannelId)) -> Option<Sequence>;
 
-    fn get_next_sequence_recv(&self, port_channel_id: &(PortId, ChannelId)) -> Option<&u64>;
+    fn get_next_sequence_recv(&self, port_channel_id: &(PortId, ChannelId)) -> Option<Sequence>;
 
     /// A hashing function for packet commitments  
     fn hash(&self, value: String) -> String;
@@ -100,41 +100,26 @@ pub trait ChannelKeeper {
                     res.timeout_height,
                     res.data,)?;
                 }
-    // fn store_packet_result(&mut self, result: PacketResult) -> Result<(), Error> {
-    //     if result.action.eq(&PacketType::Send) {
-    //         self.store_next_sequence_send(
-    //             (result.port_id.clone(), result.channel_id.clone()),
-    //             From::<Sequence>::from(result.seq_number),
-    //         )?;
-
-    //         self.store_packet_commitment(
-    //             (
-    //                 result.port_id.clone(),
-    //                 result.channel_id.clone(),
-    //                 result.seq,
-    //             ),
-    //             result.timeout_timestamp,
-    //             result.timeout_height,
-    //             result.data,
-    //         )?;
-    //     } else if result.action.eq(&PacketType::Recv) {
-    //         if result.receipt.is_none() {
-    //             //Unorderd channel: store a receipt that does not contain any data, since the packet has not yet been processed,
-    //             // it's just a single store key set to an empty string to indicate that the packet has been received
-    //             self.store_next_sequence_recv(
-    //                 (result.port_id.clone(), result.channel_id.clone()),
-    //                 From::<Sequence>::from(result.seq_number),
-    //             )?;
-    //         } else {
-    //             self.store_packet_receipt(
-    //                 (
-    //                     result.port_id.clone(),
-    //                     result.channel_id.clone(),
-    //                     result.seq.clone(),
-    //                 ),
-    //                 "".to_string(),
-    //             )?;
-    //         }
+            PacketResult::Recv(res) => {
+                if res.receipt.is_none() {
+                                //Ordered cchannel
+                            self.store_next_sequence_recv(
+                                    (res.port_id.clone(), res.channel_id.clone()),
+                                    From::<Sequence>::from(res.seq_number),
+                                )?;
+                            } else {
+                                //Unorderd channel: store a receipt that does not contain any data, since the packet has not yet been processed,
+                                // it's just a single store key set to an empty string to indicate that the packet has been received
+                                self.store_packet_receipt(
+                                    (
+                                        res.port_id.clone(),
+                                        res.channel_id.clone(),
+                                        res.seq.clone(),
+                                    ),
+                                    "".to_string(),
+                                )?;
+                            }
+            }
         }
         Ok(())
     }
