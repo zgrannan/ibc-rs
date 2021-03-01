@@ -195,7 +195,6 @@ mod tests {
 
         let h = Height::new(0, Height::default().revision_height + 1);
 
-        //let raw_msg = get_dummy_raw_msg_recv_packet(height);
         let raw_msg = get_dummy_raw_msg_recv_packet(height);
         
         let msg = <MsgRecvPacket as TryFrom<RawMsgRecvPacket>>::try_from(raw_msg).unwrap();
