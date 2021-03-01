@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 
-use crate::{events::IbcEvent, ics04_channel::events::ReceivePacket};
 use crate::handler::{HandlerOutput, HandlerResult};
+use crate::{events::IbcEvent, ics04_channel::events::ReceivePacket};
 
 use super::{verify::verify_proofs, PacketResult, PacketType};
 use crate::ics02_client::state::ClientState;
@@ -13,25 +13,33 @@ use crate::ics04_channel::msgs::recv_packet::MsgRecvPacket;
 use crate::ics04_channel::packet::Sequence;
 use crate::ics04_channel::{context::ChannelReader, error::Error, error::Kind};
 
-pub fn process(
-    ctx: &dyn ChannelReader,
-    msg: MsgRecvPacket,
-) -> HandlerResult<PacketResult, Error> {
+pub fn process(ctx: &dyn ChannelReader, msg: MsgRecvPacket) -> HandlerResult<PacketResult, Error> {
     let mut output = HandlerOutput::builder();
 
     let packet = msg.packet.clone();
     let dest_channel_end = ctx
-        .channel_end(&(packet.destination_port.clone(), packet.destination_channel.clone()))
+        .channel_end(&(
+            packet.destination_port.clone(),
+            packet.destination_channel.clone(),
+        ))
         .ok_or_else(|| {
-            Kind::ChannelNotFound(packet.destination_port.clone(), packet.destination_channel.clone())
+            Kind::ChannelNotFound(
+                packet.destination_port.clone(),
+                packet.destination_channel.clone(),
+            )
         })?;
 
     if !dest_channel_end.state_matches(&State::Open) {
-        return Err(Kind::InvalidChannelState(packet.source_channel, dest_channel_end.state).into());
+        return Err(
+            Kind::InvalidChannelState(packet.source_channel, dest_channel_end.state).into(),
+        );
     }
     let _channel_cap = ctx.authenticated_capability(&packet.destination_port)?;
 
-    let counterparty = Counterparty::new(packet.source_port.clone(), Some(packet.source_channel.clone()));
+    let counterparty = Counterparty::new(
+        packet.source_port.clone(),
+        Some(packet.source_channel.clone()),
+    );
 
     if !dest_channel_end.counterparty_matches(&counterparty) {
         return Err(Kind::InvalidPacketCounterparty(
@@ -149,8 +157,6 @@ pub fn process(
     Ok(output.with_result(result))
 }
 
-
-
 #[cfg(test)]
 mod tests {
 
@@ -162,9 +168,8 @@ mod tests {
     use crate::ics03_connection::connection::State as ConnectionState;
     use crate::ics03_connection::version::get_compatible_versions;
     use crate::ics04_channel::channel::{ChannelEnd, Counterparty, Order, State};
-    use crate::ics04_channel::msgs::recv_packet::MsgRecvPacket;
     use crate::ics04_channel::msgs::recv_packet::test_util::get_dummy_raw_msg_recv_packet;
-    use ibc_proto::ibc::core::channel::v1::MsgRecvPacket as RawMsgRecvPacket;
+    use crate::ics04_channel::msgs::recv_packet::MsgRecvPacket;
     use crate::ics04_channel::packet_handler::recv_packet::process;
     use crate::ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId};
     use crate::mock::context::MockContext;
@@ -172,7 +177,7 @@ mod tests {
         events::IbcEvent,
         ics04_channel::packet::{Packet, Sequence},
     };
-
+    use ibc_proto::ibc::core::channel::v1::MsgRecvPacket as RawMsgRecvPacket;
 
     #[test]
     fn recv_packet_processing() {
@@ -196,16 +201,15 @@ mod tests {
         //     timeout_timestamp: 6,
         // };
 
-        let height = Height::default().revision_height+1;
+        let height = Height::default().revision_height + 1;
 
-        let h = Height::new(0,Height::default().revision_height+1);
+        let h = Height::new(0, Height::default().revision_height + 1);
 
         let raw_msg = get_dummy_raw_msg_recv_packet(height);
-        let msg = <MsgRecvPacket as TryFrom<RawMsgRecvPacket>>
-                    ::try_from(raw_msg).unwrap();
-                    //map_err(|e| Kind::InvalidPacket.context(e).into()).into_ok();
-                    //unwrap_or_else(return Error::Kind::InvalidPacket.context(e).into());
-                    //map_err(|e| Kind::InvalidPacket.context(e).into());
+        let msg = <MsgRecvPacket as TryFrom<RawMsgRecvPacket>>::try_from(raw_msg).unwrap();
+        //map_err(|e| Kind::InvalidPacket.context(e).into()).into_ok();
+        //unwrap_or_else(return Error::Kind::InvalidPacket.context(e).into());
+        //map_err(|e| Kind::InvalidPacket.context(e).into());
         let packet = msg.packet.clone();
 
         let packet_untimed = Packet {
@@ -230,7 +234,10 @@ mod tests {
         let dest_channel_end = ChannelEnd::new(
             State::Open,
             Order::default(),
-            Counterparty::new(packet.source_port.clone(), Some(packet.source_channel.clone())),
+            Counterparty::new(
+                packet.source_port.clone(),
+                Some(packet.source_channel.clone()),
+            ),
             vec![ConnectionId::default()],
             "ics20".to_string(),
         );
@@ -272,8 +279,16 @@ mod tests {
                     .with_client(&ClientId::default(), h)
                     .with_connection(ConnectionId::default(), connection_end.clone())
                     .with_port_capability(packet.destination_port.clone())
-                    .with_channel(packet.destination_port.clone(), packet.destination_channel.clone(), dest_channel_end.clone())
-                    .with_send_sequence(packet.destination_port.clone(), packet.destination_channel.clone(), 1),
+                    .with_channel(
+                        packet.destination_port.clone(),
+                        packet.destination_channel.clone(),
+                        dest_channel_end.clone(),
+                    )
+                    .with_send_sequence(
+                        packet.destination_port.clone(),
+                        packet.destination_channel.clone(),
+                        1,
+                    ),
                 packet,
                 want_pass: true,
             },

@@ -4,7 +4,6 @@ use tendermint_proto::Protobuf;
 use crate::events::IbcEvent;
 use crate::handler::HandlerOutput;
 use crate::ics02_client::handler::dispatch as ics2_msg_dispatcher;
-use crate::ics04_channel::packet_handler::packet_dispatch as ics04_packet_msg_dispatcher;
 use crate::ics02_client::msgs::create_client;
 use crate::ics02_client::msgs::update_client;
 use crate::ics02_client::msgs::ClientMsg;
@@ -13,6 +12,7 @@ use crate::ics03_connection::msgs::conn_open_confirm;
 use crate::ics03_connection::msgs::conn_open_init;
 use crate::ics03_connection::msgs::conn_open_try;
 use crate::ics03_connection::msgs::ConnectionMsg;
+use crate::ics04_channel::packet_handler::packet_dispatch as ics04_packet_msg_dispatcher;
 
 use crate::ics04_channel::msgs::chan_close_confirm;
 use crate::ics04_channel::msgs::chan_close_init;
@@ -31,7 +31,9 @@ use crate::application::ics20_fungible_token_transfer::msgs::transfer;
 use crate::ics26_routing::context::Ics26Context;
 use crate::ics26_routing::error::{Error, Kind};
 use crate::ics26_routing::msgs::Ics26Envelope;
-use crate::ics26_routing::msgs::Ics26Envelope::{Ics20Msg, Ics2Msg, Ics3Msg, Ics4PacketMsg, Ics4Msg};
+use crate::ics26_routing::msgs::Ics26Envelope::{
+    Ics20Msg, Ics2Msg, Ics3Msg, Ics4Msg, Ics4PacketMsg,
+};
 
 /// Mimics the DeliverTx ABCI interface, but a slightly lower level. No need for authentication
 /// info or signature checks here.
@@ -209,9 +211,9 @@ where
                 .with_result(())
         }
 
-        Ics4PacketMsg(msg) =>{
-            let handler_output =
-                ics04_packet_msg_dispatcher(ctx, msg).map_err(|e| Kind::HandlerRaisedError.context(e))?;
+        Ics4PacketMsg(msg) => {
+            let handler_output = ics04_packet_msg_dispatcher(ctx, msg)
+                .map_err(|e| Kind::HandlerRaisedError.context(e))?;
 
             // Apply any results to the host chain store.
             ctx.store_packet_result(handler_output.result)
@@ -222,7 +224,6 @@ where
                 .with_events(handler_output.events)
                 .with_result(())
         }
-        _ => todo!(),
     };
 
     Ok(output)

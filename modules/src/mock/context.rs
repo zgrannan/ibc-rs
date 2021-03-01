@@ -403,7 +403,7 @@ impl ChannelReader for MockContext {
     fn get_next_sequence_send(&self, port_channel_id: &(PortId, ChannelId)) -> Option<&u64> {
         self.next_sequence_send.get(port_channel_id)
     }
-    
+
     fn get_next_sequence_recv(&self, port_channel_id: &(PortId, ChannelId)) -> Option<&u64> {
         self.next_sequence_recv.get(port_channel_id)
     }
