@@ -1,4 +1,4 @@
-mod executor;
+mod runner;
 
 #[tokio::test]
 async fn mbt() {
@@ -33,15 +33,15 @@ async fn all_tests() -> Result<(), Box<dyn std::error::Error>> {
     for test in tests {
         println!("> running {}", test);
 
-        // create modelator options
+        // modelator options
         let options = modelator::Options::new("tests/support/model_based/IBCTests.tla")
             .tlc()
             .test(test)
             .workers(modelator::Workers::Auto);
 
-        // generate traces (which will be a single one since we have)
-        let executor = executor::IBCTestExecutor::new();
-        modelator::test(options, executor).await?;
+        // run the test
+        let runner = runner::IBCTestRunner::new();
+        modelator::test(options, runner).await?;
     }
 
     Ok(())
