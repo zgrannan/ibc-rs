@@ -52,7 +52,7 @@ optional = true
 tokio = { version = "1.0", features = ["macros"] }
 tendermint-rpc = { version = "=0.18.1", features = ["http-client", "websocket-client"] }
 tendermint-testgen = { version = "=0.18.1" } # Needed for generating (synthetic) light blocks.
-modelator = { git = "https://github.com/informalsystems/modelator", rev = "ed9b555e747e6ad21e0690ff672319466a1e6034" }
+modelator = { git = "https://github.com/informalsystems/modelator", rev = "bd73b76e25ecb669a8a8035f15e441e9dea61b88" }
 
 [[test]]
 name = "mbt"

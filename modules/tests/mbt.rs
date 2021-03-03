@@ -41,7 +41,7 @@ async fn all_tests() -> Result<(), Box<dyn std::error::Error>> {
 
         // run the test
         let runner = runner::IBCTestRunner::new();
-        modelator::test(options, runner).await?;
+        modelator::run(options, runner).await?;
     }
 
     Ok(())
