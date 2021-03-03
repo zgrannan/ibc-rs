@@ -1,9 +1,15 @@
 mod executor;
 
-const TESTS_DIR: &str = "tests/support/model_based/tests";
+#[tokio::test]
+async fn mbt() {
+    // we should be able to just return the `Result` once the following
+    // issue is fixed: https://github.com/rust-lang/rust/issues/43301
+    if let Err(e) = all_tests().await {
+        panic!("{}", e);
+    }
+}
 
-#[test]
-fn mbt() {
+async fn all_tests() -> Result<(), Box<dyn std::error::Error>> {
     let tests = vec![
         "ICS02CreateOKTest",
         "ICS02UpdateOKTest",
@@ -25,13 +31,18 @@ fn mbt() {
     ];
 
     for test in tests {
-        let test = format!("{}/{}.json", TESTS_DIR, test);
         println!("> running {}", test);
+
+        // create modelator options
+        let options = modelator::Options::new("tests/support/model_based/IBCTests.tla")
+            .tlc()
+            .test(test)
+            .workers(modelator::Workers::Auto);
+
+        // generate traces (which will be a single one since we have)
         let executor = executor::IBCTestExecutor::new();
-        // we should be able to just return the `Result` once the following
-        // issue is fixed: https://github.com/rust-lang/rust/issues/43301
-        if let Err(e) = executor::modelator::test(&test, executor) {
-            panic!("{}", e);
-        }
+        modelator::test(options, executor).await?;
     }
+
+    Ok(())
 }
