@@ -10,6 +10,11 @@ async fn mbt() {
 }
 
 async fn all_tests() -> Result<(), Box<dyn std::error::Error>> {
+    // init tracing subscriber
+    tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .init();
+
     let tests = vec![
         "ICS02CreateOKTest",
         "ICS02UpdateOKTest",
