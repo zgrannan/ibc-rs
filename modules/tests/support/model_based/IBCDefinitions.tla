@@ -1,6 +1,6 @@
 --------------------------- MODULE IBCDefinitions -----------------------------
 
-EXTENDS Integers, FiniteSets
+EXTENDS Integers, FiniteSets, TLC
 
 (********************** TYPE ANNOTATIONS FOR APALACHE ************************)
 \* operator for type annotations
@@ -27,6 +27,11 @@ AsSetInt(S) == S <: {Int}
 Max(S) == CHOOSE x \in S: \A y \in S: y <= x
 (*****************************************************************************)
 
+<<<<<<< HEAD
+=======
+\* if a chain identifier is not set then it is "-1"
+ChainIdNone == "-1"
+>>>>>>> master
 \* if a client identifier is not set then it is -1
 ClientIdNone == -1
 \* if a connection identifier is not set then it is -1

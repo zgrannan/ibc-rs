@@ -1,6 +1,10 @@
 --------------------------------- MODULE IBC ----------------------------------
 
+<<<<<<< HEAD
 EXTENDS Integers, FiniteSets, ICS02, ICS03
+=======
+EXTENDS ICS02, ICS03
+>>>>>>> master
 
 \* ids of existing chains
 CONSTANT ChainIds
@@ -30,7 +34,11 @@ ClientIds == 0..(MaxClientsPerChain - 1)
 ConnectionIds == 0..(MaxConnectionsPerChain- 1)
 \* set of possible connection states
 ConnectionStates == {
+<<<<<<< HEAD
     "Uninit",
+=======
+    "Uninitialized",
+>>>>>>> master
     "Init",
     "TryOpen",
     "Open"
@@ -88,10 +96,27 @@ ConnectionOpenAckActions == [
     counterpartyChainId: ChainIds,
     counterpartyConnectionId: ConnectionIds
 ] <: {ActionType}
+<<<<<<< HEAD
 ConnectionActions ==
     ConnectionOpenInitActions \union
     ConnectionOpenTryActions \union
     ConnectionOpenAckActions
+=======
+ConnectionOpenConfirmActions == [
+    type: {"ICS03ConnectionOpenConfirm"},
+    chainId: ChainIds,
+    connectionId: ConnectionIds,
+    \* `clientState` contains simply a height
+    clientState: Heights,
+    counterpartyChainId: ChainIds,
+    counterpartyConnectionId: ConnectionIds
+] <: {ActionType}
+ConnectionActions ==
+    ConnectionOpenInitActions \union
+    ConnectionOpenTryActions \union
+    ConnectionOpenAckActions \union
+    ConnectionOpenConfirmActions
+>>>>>>> master
 
 Actions ==
     NoneActions \union
@@ -120,11 +145,22 @@ ActionOutcomes == {
     "ICS03InvalidProof",
     \* ICS03_ConnectionOpenAck outcomes:
     "ICS03ConnectionOpenAckOK",
+<<<<<<< HEAD
     "ICS03UninitializedConnection"
 }
 \* TODO: the current generation of tests cannot distinguish between a
 \*       "ICS03ConnectionMismatch" generated in conn open try or one generated
 \*       in conn open ack; (there are other cases like "ICS03ConnectionMismatch")
+=======
+    "ICS03UninitializedConnection",
+    \* ICS03_ConnectionOpenConfirm outcomes:
+    "ICS03ConnectionOpenConfirmOK"
+}
+\* TODO: the current generation of tests cannot distinguish between a
+\*       "ICS03ConnectionMismatch" generated in conn open try, one generated
+\*       in conn open ack, or one genereted in conn open confirm;
+\*       (there are other cases like "ICS03InvalidProof")
+>>>>>>> master
 \*       we can solve this with in a variable 'history', like in the light
 \*       client tests.
 
@@ -139,9 +175,18 @@ Clients == [
 \* data kept per connection
 Connection == [
     state: ConnectionStates,
+<<<<<<< HEAD
     clientId: ClientIds \union {ClientIdNone},
     counterpartyClientId: ClientIds \union {ClientIdNone},
     connectionId: ConnectionIds \union {ConnectionIdNone},
+=======
+    \* `chainId` is not strictly necessary but it's kept for consistency
+    chainId: ChainIds \union {ChainIdNone},
+    clientId: ClientIds \union {ClientIdNone},
+    connectionId: ConnectionIds \union {ConnectionIdNone},
+    counterpartyChainId: ChainIds \union {ChainIdNone},
+    counterpartyClientId: ClientIds \union {ClientIdNone},
+>>>>>>> master
     counterpartyConnectionId: ConnectionIds \union {ConnectionIdNone}
 ]
 \* mapping from connection identifier to its data
@@ -170,6 +215,7 @@ UpdateChainHeight(height, result, okOutcome) ==
         height + 1
     ELSE
         height
+<<<<<<< HEAD
 
 \* update connection proofs if outcome was ok
 UpdateConnectionProofs(connectionProofs, result, okOutcome) ==
@@ -178,6 +224,16 @@ UpdateConnectionProofs(connectionProofs, result, okOutcome) ==
     ELSE
         connectionProofs
 
+=======
+
+\* update connection proofs if outcome was ok
+UpdateConnectionProofs(connectionProofs, result, okOutcome) ==
+    IF result.outcome = okOutcome THEN
+        connectionProofs \union {result.action}
+    ELSE
+        connectionProofs
+
+>>>>>>> master
 CreateClient(chainId, height) ==
     LET chain == chains[chainId] IN
     LET result == ICS02_CreateClient(chain, chainId, height) IN
@@ -308,6 +364,37 @@ ConnectionOpenAck(
     /\ action' = result.action
     /\ actionOutcome' = result.outcome
 
+<<<<<<< HEAD
+=======
+ConnectionOpenConfirm(
+    chainId,
+    connectionId,
+    height,
+    counterpartyChainId,
+    counterpartyConnectionId
+) ==
+    LET chain == chains[chainId] IN
+    LET result == ICS03_ConnectionOpenConfirm(
+        chain,
+        chainId,
+        connectionId,
+        height,
+        counterpartyChainId,
+        counterpartyConnectionId
+    ) IN
+    \* update the chain
+    LET updatedChain == [chain EXCEPT
+        !.height = UpdateChainHeight(@, result, "ICS03ConnectionOpenConfirmOK"),
+        !.connections = result.connections
+    ] IN
+    \* no need to update the counterparty chain with a proof (as in the other
+    \* connection open handlers)
+    \* update `chains`, set the `action` and its `actionOutcome`
+    /\ chains' = [chains EXCEPT ![chainId] = updatedChain]
+    /\ action' = result.action
+    /\ actionOutcome' = result.outcome
+
+>>>>>>> master
 CreateClientAction(chainId) ==
     \* select a height for the client to be created at
     \E height \in Heights:
@@ -398,6 +485,29 @@ ConnectionOpenAckAction(chainId) ==
             )
         ELSE
             UNCHANGED vars
+<<<<<<< HEAD
+=======
+
+ConnectionOpenConfirmAction(chainId) ==
+    \* select a connection id
+    \E connectionId \in ConnectionIds:
+    \* select a claimed height for the client
+    \E height \in Heights:
+    \* select a counterparty chain id
+    \E counterpartyChainId \in ChainIds:
+    \* select a counterparty connection id
+    \E counterpartyConnectionId \in ConnectionIds:
+        IF chainId /= counterpartyChainId THEN
+            ConnectionOpenConfirm(
+                chainId,
+                connectionId,
+                height,
+                counterpartyChainId,
+                counterpartyConnectionId
+            )
+        ELSE
+            UNCHANGED vars
+>>>>>>> master
 
 Init ==
     \* create a client and a connection with none values
@@ -405,10 +515,19 @@ Init ==
         heights |-> AsSetInt({})
     ] IN
     LET connectionNone == [
+<<<<<<< HEAD
         state |-> "Uninit",
         clientId |-> ClientIdNone,
         counterpartyClientId |-> ClientIdNone,
         connectionId |-> ConnectionIdNone,
+=======
+        state |-> "Uninitialized",
+        chainId |-> ChainIdNone,
+        clientId |-> ClientIdNone,
+        connectionId |-> ConnectionIdNone,
+        counterpartyChainId |-> ChainIdNone,
+        counterpartyClientId |-> ClientIdNone,
+>>>>>>> master
         counterpartyConnectionId |-> ConnectionIdNone
     ] IN
     \* create an empty chain
@@ -435,6 +554,10 @@ Next ==
             \/ ConnectionOpenInitAction(chainId)
             \/ ConnectionOpenTryAction(chainId)
             \/ ConnectionOpenAckAction(chainId)
+<<<<<<< HEAD
+=======
+            \/ ConnectionOpenConfirmAction(chainId)
+>>>>>>> master
             \/ UNCHANGED vars
         ELSE
             \/ UNCHANGED vars
