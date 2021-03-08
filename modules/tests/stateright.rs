@@ -1,6 +1,6 @@
-mod executor;
+mod runner;
 
-use executor::{step, IBCTestExecutor};
+use runner::{step, IBCTestRunner};
 
 use ibc::ics02_client::context::ClientReader;
 use ibc::ics03_connection::connection::State as ConnectionState;
@@ -14,7 +14,7 @@ const MAX_CONNECTIONS_PER_CHAIN: u64 = 1;
 
 #[derive(Debug, Clone, Hash)]
 struct IBCModelState {
-    executor: IBCTestExecutor,
+    runner: IBCTestRunner,
     action: step::Action,
 }
 
@@ -128,7 +128,7 @@ impl IBC {
             })
     }
 
-    fn next_actions(state: &IBCTestExecutor) -> impl Iterator<Item = step::Action> + '_ {
+    fn next_actions(state: &IBCTestRunner) -> impl Iterator<Item = step::Action> + '_ {
         // \E chainId \in ChainIds:
         CHAIN_IDS
             .into_iter()
@@ -136,7 +136,7 @@ impl IBC {
                 let ctx = state.chain_context(chain_id.to_string());
                 // perform action on chain if the model constant
                 // `MAX_CHAIN_HEIGHT` allows it
-                let allowed = ctx.host_current_height() < IBCTestExecutor::height(MAX_CHAIN_HEIGHT);
+                let allowed = ctx.host_current_height() < IBCTestRunner::height(MAX_CHAIN_HEIGHT);
                 allowed.then(|| {
                     Self::create_client_actions(chain_id, ctx)
                         .chain(Self::update_client_actions(chain_id))
@@ -153,14 +153,14 @@ impl stateright::Model for IBC {
     type Action = step::Action;
 
     fn init_states(&self) -> Vec<Self::State> {
-        let mut executor = executor::IBCTestExecutor::new();
+        let mut runner = IBCTestRunner::new();
         // initialize all chains with height 1
         CHAIN_IDS.into_iter().for_each(|chain_id| {
             let initial_height = 1;
-            executor.init_chain_context(chain_id.to_string(), initial_height);
+            runner.init_chain_context(chain_id.to_string(), initial_height);
         });
         let state = IBCModelState {
-            executor,
+            runner,
             action: step::Action::None,
         };
         vec![state]
@@ -168,7 +168,7 @@ impl stateright::Model for IBC {
 
     fn actions(&self, state: &Self::State, actions: &mut Vec<Self::Action>) {
         // compute the set of possible actions
-        actions.extend(Self::next_actions(&state.executor))
+        actions.extend(Self::next_actions(&state.runner))
     }
 
     fn next_state(
@@ -178,7 +178,7 @@ impl stateright::Model for IBC {
     ) -> Option<Self::State> {
         let mut next_state = previous_state.clone();
         // apply the action and ignore its result
-        let _ = next_state.executor.apply(action.clone());
+        let _ = next_state.runner.apply(action.clone());
         // save action performed
         next_state.action = action;
         Some(next_state)
@@ -196,7 +196,7 @@ fn all_chains_can_reach_max_height() -> stateright::Property<IBC> {
     stateright::Property::sometimes("all chains reach max height", |_, state: &IBCModelState| {
         // \A chainId \in ChainIds
         CHAIN_IDS.into_iter().all(|chain_id| {
-            let ctx = state.executor.chain_context(chain_id.to_string());
+            let ctx = state.runner.chain_context(chain_id.to_string());
             // chains[chainsId].height == MAX_CHAIN_HEIGHT
             ctx.host_current_height().revision_height == MAX_CHAIN_HEIGHT
         })
@@ -209,11 +209,11 @@ fn some_connection_can_reaches_a_try_open_state() -> stateright::Property<IBC> {
         |_, state: &IBCModelState| {
             // \E chainId \in ChainIds
             CHAIN_IDS.into_iter().any(|chain_id| {
-                let ctx = state.executor.chain_context(chain_id.to_string());
+                let ctx = state.runner.chain_context(chain_id.to_string());
                 // \E connectionId \in ConnectionIds
                 IBC::connection_ids().any(|connection_id| {
                     let connection =
-                        ctx.connection_end(&IBCTestExecutor::connection_id(connection_id));
+                        ctx.connection_end(&IBCTestRunner::connection_id(connection_id));
                     // connections[connectionId].state == TRY_OPEN
                     connection
                         .iter()
@@ -228,7 +228,7 @@ fn some_connection_can_reaches_a_try_open_state() -> stateright::Property<IBC> {
 fn stateright() {
     use stateright::Checker;
     use stateright::Model;
-    // requires: IBCTestExecutor implements Hash
+    // requires: IBCTestRunner implements Hash
     IBC.checker()
         .threads(dbg!(num_cpus::get()))
         // .serve("localhost:3000");
