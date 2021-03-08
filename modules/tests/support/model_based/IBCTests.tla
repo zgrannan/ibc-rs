@@ -44,12 +44,9 @@ ICS03ConnectionOpenAckOKTest ==
 ICS03UninitializedConnectionTest ==
     /\ actionOutcome = "ICS03UninitializedConnection"
 
-<<<<<<< HEAD
-=======
 ICS03ConnectionOpenConfirmOKTest ==
     /\ actionOutcome = "ICS03ConnectionOpenConfirmOK"
 
->>>>>>> master
 \* ICS02CreateClient tests
 ICS02CreateOKTestNeg == ~ICS02CreateOKTest
 
@@ -74,10 +71,7 @@ ICS03InvalidProofTestNeg == ~ICS03InvalidProofTest
 ICS03ConnectionOpenAckOKTestNeg == ~ICS03ConnectionOpenAckOKTest
 ICS03UninitializedConnectionTestNeg == ~ICS03UninitializedConnectionTest
 
-<<<<<<< HEAD
-=======
 \* ICS03ConnectionOpenConfirm tests
 ICS03ConnectionOpenConfirmOKTestNeg == ~ICS03ConnectionOpenConfirmOKTest
 
->>>>>>> master
 ===============================================================================
