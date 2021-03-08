@@ -40,7 +40,7 @@ pub struct IBCTestRunner {
     contexts: BTreeMap<ChainId, MockContext>,
 }
 
-impl IBCTestRunner{
+impl IBCTestRunner {
     pub fn new() -> Self {
         Self {
             contexts: Default::default(),
