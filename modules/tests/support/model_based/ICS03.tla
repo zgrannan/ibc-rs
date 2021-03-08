@@ -1,10 +1,6 @@
 ------------------------------ MODULE ICS03 -----------------------------------
 
-<<<<<<< HEAD
-EXTENDS Integers, FiniteSets, IBCDefinitions, ICS02
-=======
 EXTENDS ICS02
->>>>>>> master
 
 \* retrieves `connectionId`'s data
 ICS03_GetConnection(connections, connectionId) ==
@@ -12,11 +8,7 @@ ICS03_GetConnection(connections, connectionId) ==
 
 \* check if `connectionId` exists
 ICS03_ConnectionExists(connections, connectionId) ==
-<<<<<<< HEAD
-    ICS03_GetConnection(connections, connectionId).state /= "Uninit"
-=======
     ICS03_GetConnection(connections, connectionId).state /= "Uninitialized"
->>>>>>> master
 
 \* update `connectionId`'s data
 ICS03_SetConnection(connections, connectionId, connection) ==
@@ -61,18 +53,12 @@ ICS03_ConnectionOpenInit(
             \* if it doesn't, create it
             LET connection == [
                 state |-> "Init",
-<<<<<<< HEAD
-                clientId |-> clientId,
-                counterpartyClientId |-> counterpartyClientId,
-                connectionId |-> chain.connectionIdCounter,
-=======
                 chainId |-> chainId,
                 clientId |-> clientId,
                 \* generate a new connection identifier
                 connectionId |-> chain.connectionIdCounter,
                 counterpartyChainId |-> counterpartyChainId,
                 counterpartyClientId |-> counterpartyClientId,
->>>>>>> master
                 counterpartyConnectionId |-> ConnectionIdNone
             ] IN
             \* return result with updated state
@@ -223,17 +209,11 @@ ICS03_ConnectionOpenTry(
                         \* verification passed; create connection
                         LET connection == [
                             state |-> "TryOpen",
-<<<<<<< HEAD
-                            clientId |-> clientId,
-                            \* generate a new connection identifier
-                            connectionId |-> chain.connectionIdCounter,
-=======
                             chainId |-> chainId,
                             clientId |-> clientId,
                             \* generate a new connection identifier
                             connectionId |-> chain.connectionIdCounter,
                             counterpartyChainId |-> counterpartyChainId,
->>>>>>> master
                             counterpartyClientId |-> counterpartyClientId,
                             counterpartyConnectionId |-> counterpartyConnectionId
                         ] IN
@@ -297,13 +277,9 @@ ICS03_ConnectionOpenAck(
             LET connection == ICS03_GetConnection(connections, connectionId) IN
             LET validConnection ==
                 /\ connection.state \in {"Init", "TryOpen"} 
-<<<<<<< HEAD
-                /\ connection.counterpartyConnectionId = counterpartyConnectionId IN
-=======
                 \* TODO: the implementation is not checking the following;
                 \*       should it?
                 /\ connection.counterpartyChainId = counterpartyChainId IN
->>>>>>> master
             IF ~validConnection THEN
                 \* if the existing connection does not match, then set an
                 \* error outcome
@@ -333,10 +309,7 @@ ICS03_ConnectionOpenAck(
                             /\ proof.clientId = connection.counterpartyClientId
                             /\ proof.counterpartyChainId = connection.chainId
                             /\ proof.counterpartyClientId = connection.clientId
-<<<<<<< HEAD
-=======
                             /\ proof.counterpartyConnectionId = connectionId
->>>>>>> master
                     } IN
                     LET proofExists == Cardinality(openTryProofs) > 0 IN
                     IF ~proofExists THEN
@@ -364,8 +337,6 @@ ICS03_ConnectionOpenAck(
                             outcome |-> "ICS03ConnectionOpenAckOK"
                         ]
 
-<<<<<<< HEAD
-=======
 ICS03_ConnectionOpenConfirm(
     chain,
     chainId,
@@ -456,5 +427,4 @@ ICS03_ConnectionOpenConfirm(
                         outcome |-> "ICS03ConnectionOpenConfirmOK"
                     ]
 
->>>>>>> master
 ===============================================================================

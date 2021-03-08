@@ -91,14 +91,14 @@ pub struct MockContext {
     /// Counter for connection identifiers (see `increase_connection_counter`).
     connection_ids_counter: u64,
 
-    /// All the channels in the store. TODO Make new key PortId X ChanneId
-    channels: BTreeMap<(PortId, ChannelId), ChannelEnd>,
+    /// Association between conection ids and channel ids.
+    connection_channels: BTreeMap<ConnectionId, Vec<(PortId, ChannelId)>>,
 
     /// Counter for channel identifiers (see `increase_channel_counter`).
     channel_ids_counter: u64,
 
-    /// Association between conection ids and channel ids.
-    connection_channels: BTreeMap<ConnectionId, Vec<(PortId, ChannelId)>>,
+    /// All the channels in the store. TODO Make new key PortId X ChanneId
+    channels: BTreeMap<(PortId, ChannelId), ChannelEnd>,
 
     /// Tracks the sequence number for the next packet to be sent.
     next_sequence_send: BTreeMap<(PortId, ChannelId), Sequence>,

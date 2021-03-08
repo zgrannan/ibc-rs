@@ -24,7 +24,7 @@
 ### IMPROVEMENTS
 
 - [ibc]
-  - Fix overflow bug in ICS03 client consensus height verification method ([#685])
+  - Follow Rust guidelines naming conventions ([#689])
 
 - [ibc-relayer]
   - [nothing yet]
