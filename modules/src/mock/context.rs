@@ -91,7 +91,7 @@ pub struct MockContext {
     /// Counter for connection identifiers (see `increase_connection_counter`).
     connection_ids_counter: u64,
 
-    /// Association between conection ids and channel ids.
+    /// Association between connection ids and channel ids.
     connection_channels: BTreeMap<ConnectionId, Vec<(PortId, ChannelId)>>,
 
     /// Counter for channel identifiers (see `increase_channel_counter`).
