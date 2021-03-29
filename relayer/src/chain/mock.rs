@@ -320,7 +320,9 @@ impl Chain for MockChain {
         &self,
         _request: QueryConsensusStatesRequest,
     ) -> Result<Vec<AnyConsensusStateWithHeight>, Error> {
-        unimplemented!()
+        self.context.query_consensus_states();
+        Ok(vec![])
+        //unimplemented!()
     }
 }
 

@@ -557,9 +557,12 @@ pub fn extract_client_id(event: &IbcEvent) -> Result<&ClientId, ForeignClientErr
 mod test {
     use std::str::FromStr;
 
-    use ibc::events::IbcEvent;
-    use ibc::ics24_host::identifier::ClientId;
-    use ibc::Height;
+    use ibc::{
+        events::IbcEvent,
+        ics02_client::events::{Attributes, UpdateClient},
+    };
+    use ibc::{ics02_client::client_type::ClientType, Height};
+    use ibc::{ics07_tendermint::client_def::TendermintClient, ics24_host::identifier::ClientId};
 
     use crate::chain::mock::test_utils::get_basic_chain_config;
     use crate::chain::mock::MockChain;
@@ -817,6 +820,89 @@ mod test {
                 b_height_start, b_height_current,
                 "after client update, chain b did not advance"
             );
+        }
+    }
+
+    /// Tests for `ForeignClient::detect_misbehaviour_and_send_evidence( ? )`.
+    #[test]
+    fn foreign_client_detect_misbehaviour_and_send_evidence() {
+        let a_cfg = get_basic_chain_config("chain_a");
+        let b_cfg = get_basic_chain_config("chain_b");
+        let mut a_client_id = ClientId::from_str("client_on_a_forb").unwrap();
+        let mut _b_client_id = ClientId::from_str("client_on_b_fora").unwrap();
+
+        let (a_chain, _) = ChainRuntime::<MockChain>::spawn(a_cfg).unwrap();
+        let (b_chain, _) = ChainRuntime::<MockChain>::spawn(b_cfg).unwrap();
+
+        // Instantiate the foreign clients on the two chains.
+        let client_on_a_res = ForeignClient::new(a_chain.clone(), b_chain.clone());
+        assert!(
+            client_on_a_res.is_ok(),
+            "Client creation (on chain a) failed with error: {:?}",
+            client_on_a_res
+        );
+        let client_on_a = client_on_a_res.unwrap();
+
+        //The chain advances.
+        // thread::sleep(Duration::from_millis(10000));
+
+        let client_on_b_res = ForeignClient::new(b_chain.clone(), a_chain.clone());
+        assert!(
+            client_on_b_res.is_ok(),
+            "Client creation (on chain a) failed with error: {:?}",
+            client_on_b_res
+        );
+        let client_on_b = client_on_b_res.unwrap();
+
+        let mut b_height_start = b_chain.query_latest_height().unwrap();
+        let mut a_height_start = a_chain.query_latest_height().unwrap();
+
+        // let num_iterations = 5;
+
+        // // Update each client
+        // for _i in 1..num_iterations {
+        let res = client_on_a.update();
+        assert!(res.is_ok(), "Client update for chain a failed {:?}", res);
+
+        // Basic check that the height of the chain advanced
+        let a_height_current = a_chain.query_latest_height().unwrap();
+        a_height_start = a_height_start.increment();
+        assert_eq!(
+            a_height_start, a_height_current,
+            "after client update, chain a did not advance"
+        );
+
+        let res = client_on_b.update();
+        assert!(res.is_ok(), "Client update for chain b failed {:?}", res);
+
+        // Basic check that the height of the chain advanced
+        let b_height_current = b_chain.query_latest_height().unwrap();
+        b_height_start = b_height_start.increment();
+        assert_eq!(
+            b_height_start, b_height_current,
+            "after client update, chain b did not advance"
+        );
+        // }
+
+        let atribs = Attributes {
+            height: a_height_current,
+            client_id: a_client_id,
+            client_type: ClientType::Tendermint,
+            consensus_height: b_height_current,
+        };
+
+        let upd = UpdateClient {
+            common: atribs,
+            header: None,
+        };
+        let result = client_on_a.detect_misbehaviour_and_send_evidence(Some(upd));
+
+        match result {
+            Ok(e) => match e {
+                None => println!(" Done \n"),
+                e => println!(" UnDone \n"),
+            },
+            Err(e) => println!("error: {:?}", e),
         }
     }
 }

@@ -1,6 +1,7 @@
 use prost_types::Any;
 
 use crate::events::IbcEvent;
+use crate::ics02_client::client_consensus::AnyConsensusState;
 use crate::ics02_client::client_state::AnyClientState;
 use crate::ics02_client::header::AnyHeader;
 
@@ -24,6 +25,8 @@ pub trait Ics18Context {
 
     /// Returns the most advanced header of this chain.
     fn query_latest_header(&self) -> Option<AnyHeader>;
+
+    fn query_consensus_states(&self) -> Option<AnyConsensusState>;
 
     /// Interface that the relayer uses to submit a datagram to this chain.
     /// One can think of this as wrapping around the `/broadcast_tx_commit` ABCI endpoint.

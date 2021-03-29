@@ -643,6 +643,10 @@ impl Ics18Context for MockContext {
         block_ref.cloned().map(Into::into)
     }
 
+    fn query_consensus_states(&self) -> Option<AnyConsensusState> {
+        return None;
+    }
+
     fn send(&mut self, msgs: Vec<Any>) -> Result<Vec<IbcEvent>, Ics18Error> {
         // Forward call to Ics26 delivery method.
         let events =
