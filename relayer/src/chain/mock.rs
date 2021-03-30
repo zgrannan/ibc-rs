@@ -1,4 +1,4 @@
-use std::ops::Add;
+use std::{ops::Add, str::FromStr};
 use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
@@ -8,7 +8,7 @@ use prost_types::Any;
 use tendermint_testgen::light_block::TMLightBlock;
 use tokio::runtime::Runtime;
 
-use ibc::downcast;
+use ibc::{downcast, ics02_client::{client_type::ClientType, events::{Attributes, UpdateClient}, header::AnyHeader}};
 use ibc::events::IbcEvent;
 use ibc::ics02_client::client_consensus::AnyConsensusStateWithHeight;
 use ibc::ics02_client::client_state::AnyClientState;
@@ -226,8 +226,34 @@ impl Chain for MockChain {
         unimplemented!()
     }
 
-    fn query_txs(&self, _request: QueryTxRequest) -> Result<Vec<IbcEvent>, Error> {
-        unimplemented!()
+    fn query_txs(&self, request: QueryTxRequest) -> Result<Vec<IbcEvent>, Error> {
+        // TODO - to be replaced with query for update client event
+        match request{
+            QueryTxRequest::Client(request) => {
+            
+                //TODO what's the  diff between consensus height and client  state  height
+                let block = self.context.host_block(request.consensus_height);
+
+                if block.is_none() {
+                    return Ok(vec![]);
+                }
+                let header: AnyHeader = block.unwrap().clone().into();
+
+
+            let atribs = Attributes{
+                client_id: request.client_id.clone(),
+                client_type: ClientType::Mock,
+                consensus_height: request.consensus_height,
+                height: request.height.clone(),
+            };
+
+            let events = vec![UpdateClient{common: atribs, header: Some(header)}.into()];
+            Ok(events)
+        }
+        _ => {Ok(vec![])}
+    }
+        
+        //unimplemented!()
     }
 
     fn proven_client_state(
@@ -318,10 +344,31 @@ impl Chain for MockChain {
 
     fn query_consensus_states(
         &self,
-        _request: QueryConsensusStatesRequest,
+        request: QueryConsensusStatesRequest,
     ) -> Result<Vec<AnyConsensusStateWithHeight>, Error> {
-        self.context.query_consensus_states();
-        Ok(vec![])
+        let client_id = ClientId::from_str(&request.client_id.clone())
+                                        .map_err(|e|Kind::QueryConsensusStatesFailure)?;
+
+        let res = self.context.query_consensus_states(&client_id);
+        
+     
+        match res {
+            None => { 
+                println!("No consensus state \n");
+                Ok(vec![])
+            }
+            Some(record) => {
+                println!("Consensus states found \n");
+                let mut result = vec![];
+                for (key, value) in record {
+                    println!("{} ", key);
+                    //TODO sort result
+                    result.push(AnyConsensusStateWithHeight{height: key, consensus_state:value});
+                }
+                Ok(result)
+
+            }
+        }
         //unimplemented!()
     }
 }

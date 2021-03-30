@@ -267,7 +267,7 @@ impl MockContext {
 
     /// Accessor for a block of the local (host) chain from this context.
     /// Returns `None` if the block at the requested height does not exist.
-    fn host_block(&self, target_height: Height) -> Option<&HostBlock> {
+    pub fn host_block(&self, target_height: Height) -> Option<&HostBlock> {
         let target = target_height.revision_height as usize;
         let latest = self.latest_height.revision_height as usize;
 
@@ -643,8 +643,19 @@ impl Ics18Context for MockContext {
         block_ref.cloned().map(Into::into)
     }
 
-    fn query_consensus_states(&self) -> Option<AnyConsensusState> {
-        return None;
+    fn query_consensus_states(&self,client_id: &ClientId) -> Option<HashMap<Height,AnyConsensusState>> {
+
+        // let height = match ClientReader::client_state(self,client_id) {
+        //     None => Height::default(),
+        //     Some(s) => s.latest_height()
+        // };
+
+        match self.clients.get(client_id) {
+            Some(client_record) => Some(client_record.consensus_states.clone()),
+            None => None,
+        }
+
+       // ClientReader::consensus_state(self, client_id, height)
     }
 
     fn send(&mut self, msgs: Vec<Any>) -> Result<Vec<IbcEvent>, Ics18Error> {

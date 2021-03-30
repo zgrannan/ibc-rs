@@ -467,11 +467,13 @@ impl ForeignClient {
             }
 
             // get the previous update client event
-            if let Some(new_update) = self.update_client_event(consensus_state_heights[i + 1])? {
-                update_event = new_update;
-                continue;
+            if (i+1)<consensus_state_heights.len() {
+                if let Some(new_update) = self.update_client_event(consensus_state_heights[i + 1])? {
+                    update_event = new_update;
+                    continue;
+                }
+                break;
             }
-            break;
         }
 
         Ok(first_misbehaviour)
@@ -887,7 +889,7 @@ mod test {
         let atribs = Attributes {
             height: a_height_current,
             client_id: a_client_id,
-            client_type: ClientType::Tendermint,
+            client_type: ClientType::Mock,
             consensus_height: b_height_current,
         };
 

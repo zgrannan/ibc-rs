@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use prost_types::Any;
 
 use crate::events::IbcEvent;
@@ -26,7 +28,7 @@ pub trait Ics18Context {
     /// Returns the most advanced header of this chain.
     fn query_latest_header(&self) -> Option<AnyHeader>;
 
-    fn query_consensus_states(&self) -> Option<AnyConsensusState>;
+    fn query_consensus_states(&self, client_id: &ClientId) -> Option<HashMap<Height,AnyConsensusState>>;
 
     /// Interface that the relayer uses to submit a datagram to this chain.
     /// One can think of this as wrapping around the `/broadcast_tx_commit` ABCI endpoint.

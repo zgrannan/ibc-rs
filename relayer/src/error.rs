@@ -68,6 +68,10 @@ pub enum Kind {
     #[error("Failed to create client state")]
     BuildClientStateFailure,
 
+      /// Unable to query for consensus states
+      #[error("Failed to retrieve the consensus states")]
+      QueryConsensusStatesFailure,
+
     /// Create client failure
     #[error("Failed to create client {0}")]
     CreateClient(String),
