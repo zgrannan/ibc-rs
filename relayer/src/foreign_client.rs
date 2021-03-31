@@ -467,8 +467,10 @@ impl ForeignClient {
             }
 
             // get the previous update client event
-            if (i+1)<consensus_state_heights.len() {
-                if let Some(new_update) = self.update_client_event(consensus_state_heights[i + 1])? {
+            if (i + 1) < consensus_state_heights.len() {
+                if let Some(new_update) =
+                    self.update_client_event(consensus_state_heights[i + 1])?
+                {
                     update_event = new_update;
                     continue;
                 }
@@ -561,7 +563,11 @@ mod test {
 
     use ibc::{
         events::IbcEvent,
-        ics02_client::events::{Attributes, UpdateClient},
+        ics02_client::{
+            events::{Attributes, UpdateClient},
+            header::AnyHeader,
+        },
+        mock::header::MockHeader,
     };
     use ibc::{ics02_client::client_type::ClientType, Height};
     use ibc::{ics07_tendermint::client_def::TendermintClient, ics24_host::identifier::ClientId};
@@ -859,32 +865,34 @@ mod test {
         let mut b_height_start = b_chain.query_latest_height().unwrap();
         let mut a_height_start = a_chain.query_latest_height().unwrap();
 
-        // let num_iterations = 5;
+        let mut a_height_current = Height::default();
+        let mut b_height_current = Height::default();
+        let num_iterations = 2;
 
-        // // Update each client
-        // for _i in 1..num_iterations {
-        let res = client_on_a.update();
-        assert!(res.is_ok(), "Client update for chain a failed {:?}", res);
+        // Update each client
+        for _i in 1..num_iterations {
+            let res = client_on_a.update();
+            assert!(res.is_ok(), "Client update for chain a failed {:?}", res);
 
-        // Basic check that the height of the chain advanced
-        let a_height_current = a_chain.query_latest_height().unwrap();
-        a_height_start = a_height_start.increment();
-        assert_eq!(
-            a_height_start, a_height_current,
-            "after client update, chain a did not advance"
-        );
+            // Basic check that the height of the chain advanced
+            a_height_current = a_chain.query_latest_height().unwrap();
+            a_height_start = a_height_start.increment();
+            assert_eq!(
+                a_height_start, a_height_current,
+                "after client update, chain a did not advance"
+            );
 
-        let res = client_on_b.update();
-        assert!(res.is_ok(), "Client update for chain b failed {:?}", res);
+            let res = client_on_b.update();
+            assert!(res.is_ok(), "Client update for chain b failed {:?}", res);
 
-        // Basic check that the height of the chain advanced
-        let b_height_current = b_chain.query_latest_height().unwrap();
-        b_height_start = b_height_start.increment();
-        assert_eq!(
-            b_height_start, b_height_current,
-            "after client update, chain b did not advance"
-        );
-        // }
+            // Basic check that the height of the chain advanced
+            b_height_current = b_chain.query_latest_height().unwrap();
+            b_height_start = b_height_start.increment();
+            assert_eq!(
+                b_height_start, b_height_current,
+                "after client update, chain b did not advance"
+            );
+        }
 
         let atribs = Attributes {
             height: a_height_current,
@@ -893,16 +901,110 @@ mod test {
             consensus_height: b_height_current,
         };
 
+        let h = MockHeader {
+            height: Height::new(40, 20),
+            timestamp: 1,
+        };
+
+        let header_one = AnyHeader::Mock(h);
+
         let upd = UpdateClient {
             common: atribs,
-            header: None,
+            // header: None,
+            header: Some(header_one),
         };
+
         let result = client_on_a.detect_misbehaviour_and_send_evidence(Some(upd));
 
         match result {
             Ok(e) => match e {
-                None => println!(" Done \n"),
-                e => println!(" UnDone \n"),
+                None => println!(" No misbehavior event created  \n"),
+                e => println!(" Misbehavior detected \n"),
+            },
+            Err(e) => println!("error: {:?}", e),
+        }
+    }
+
+    /// Tests for `ForeignClient::detect_misbehaviour_and_send_evidence( ? )`.
+    #[test]
+    fn second_foreign_client_detect_misbehaviour_and_send_evidence() {
+        let a_cfg = get_basic_chain_config("chain_a");
+        let b_cfg = get_basic_chain_config("chain_b");
+        let mut a_client_id = ClientId::from_str("client_on_a_forb").unwrap();
+        let mut _b_client_id = ClientId::from_str("client_on_b_fora").unwrap();
+
+        let (a_chain, _) = ChainRuntime::<MockChain>::spawn(a_cfg).unwrap();
+        let (b_chain, _) = ChainRuntime::<MockChain>::spawn(b_cfg).unwrap();
+
+        // Instantiate the foreign clients on the two chains.
+        let client_on_a_res = ForeignClient::new(a_chain.clone(), b_chain.clone());
+        assert!(
+            client_on_a_res.is_ok(),
+            "Client creation (on chain a) failed with error: {:?}",
+            client_on_a_res
+        );
+        let client_on_a = client_on_a_res.unwrap();
+
+        //The chain advances.
+        // thread::sleep(Duration::from_millis(10000));
+
+        let client_on_b_res = ForeignClient::new(b_chain.clone(), a_chain.clone());
+        assert!(
+            client_on_b_res.is_ok(),
+            "Client creation (on chain a) failed with error: {:?}",
+            client_on_b_res
+        );
+        let client_on_b = client_on_b_res.unwrap();
+
+        let mut b_height_start = b_chain.query_latest_height().unwrap();
+        let mut a_height_start = a_chain.query_latest_height().unwrap();
+
+        let mut a_height_current = Height::default();
+        let mut b_height_current = Height::default();
+        let num_iterations = 2;
+
+        // Update each client
+        for _i in 1..num_iterations {
+            let res = client_on_a.update();
+            assert!(res.is_ok(), "Client update for chain a failed {:?}", res);
+
+            // Basic check that the height of the chain advanced
+            a_height_current = a_chain.query_latest_height().unwrap();
+            a_height_start = a_height_start.increment();
+            assert_eq!(
+                a_height_start, a_height_current,
+                "after client update, chain a did not advance"
+            );
+
+            let res = client_on_b.update();
+            assert!(res.is_ok(), "Client update for chain b failed {:?}", res);
+
+            // Basic check that the height of the chain advanced
+            b_height_current = b_chain.query_latest_height().unwrap();
+            b_height_start = b_height_start.increment();
+            assert_eq!(
+                b_height_start, b_height_current,
+                "after client update, chain b did not advance"
+            );
+        }
+
+        let atribs = Attributes {
+            height: a_height_current,
+            client_id: a_client_id,
+            client_type: ClientType::Mock,
+            consensus_height: b_height_current,
+        };
+
+        let _upd = UpdateClient {
+            common: atribs,
+            header: None,
+        };
+        let result = client_on_a.detect_misbehaviour_and_send_evidence(None);
+
+        match result {
+            Ok(e) => match e {
+                None => println!(" No misbehavior event created  \n"),
+                e => println!(" Misbehavior detected \n"),
             },
             Err(e) => println!("error: {:?}", e),
         }
