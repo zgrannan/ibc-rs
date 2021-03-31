@@ -8,6 +8,8 @@ use crate::chain::mock::MockChain;
 use crate::chain::Chain;
 use crate::error::Error;
 
+use super::SecurityParams;
+
 /// A light client serving a mock chain.
 pub struct LightClient {
     chain_id: ChainId,
@@ -27,7 +29,12 @@ impl LightClient {
 }
 
 impl super::LightClient<MockChain> for LightClient {
-    fn verify(&mut self, _trusted: Height, target: Height) -> Result<TMLightBlock, Error> {
+    fn verify(
+        &mut self,
+        _trusted: Height,
+        target: Height,
+        params: SecurityParams,
+    ) -> Result<TMLightBlock, Error> {
         Ok(self.light_block(target))
     }
 
