@@ -6,6 +6,9 @@ use tendermint_proto::Protobuf;
 
 use crate::ics02_client::error::{Error, Kind};
 use crate::ics07_tendermint::misbehaviour::Misbehaviour as TmMisbehaviour;
+#[cfg(any(test, feature = "mocks"))]
+use crate::mock::misbehaviour::Misbehaviour as MockMisbehaviour;
+
 use crate::ics24_host::identifier::ClientId;
 use crate::Height;
 
@@ -31,33 +34,33 @@ pub trait Misbehaviour: Clone + std::fmt::Debug + Send + Sync {
 #[allow(clippy::large_enum_variant)]
 pub enum AnyMisbehaviour {
     Tendermint(TmMisbehaviour),
-    //#[cfg(any(test, feature = "mocks"))]
-    //Mock(MockMisbehaviour),
+    #[cfg(any(test, feature = "mocks"))]
+    Mock(MockMisbehaviour),
 }
 
 impl Misbehaviour for AnyMisbehaviour {
     fn client_id(&self) -> &ClientId {
         match self {
-            Self::Tendermint(misbehaviour) => misbehaviour.client_id()
+            Self::Tendermint(misbehaviour) => misbehaviour.client_id(),
 
-            // #[cfg(any(test, feature = "mocks"))]
-            // Self::Mock(misbehaviour) => misbehaviour.client_id(),
+            #[cfg(any(test, feature = "mocks"))]
+            Self::Mock(misbehaviour) => misbehaviour.client_id(),
         }
     }
 
     fn height(&self) -> Height {
         match self {
             Self::Tendermint(misbehaviour) => misbehaviour.height(),
-            // #[cfg(any(test, feature = "mocks"))]
-            // Self::Mock(misbehaviour) => misbehaviour.height(),
+            #[cfg(any(test, feature = "mocks"))]
+            Self::Mock(misbehaviour) => misbehaviour.height(),
         }
     }
 
     fn time(&self) -> DateTime<Utc> {
         match self {
             Self::Tendermint(misbehaviour) => misbehaviour.time(),
-            // #[cfg(any(test, feature = "mocks"))]
-            // Self::Mock(misbehaviour) => misbehaviour.height(),
+            #[cfg(any(test, feature = "mocks"))]
+            Self::Mock(misbehaviour) => misbehaviour.time(),
         }
     }
 
@@ -78,11 +81,12 @@ impl TryFrom<Any> for AnyMisbehaviour {
                     .map_err(|e| Kind::InvalidRawMisbehaviour.context(e))?,
             )),
 
-            // #[cfg(any(test, feature = "mocks"))]
-            // MOCK_MISBEHAVIOUR_TYPE_URL => Ok(AnyMisbehaviour::Mock(
-            //     MockMisbehaviour::decode_vec(&raw.value)
-            //         .map_err(|e| Kind::InvalidRawMisbehaviour.context(e))?,
-            // )),
+            #[cfg(any(test, feature = "mocks"))]
+            MOCK_MISBEHAVIOUR_TYPE_URL => Ok(AnyMisbehaviour::Mock(
+                MockMisbehaviour::default()
+                //decode_vec(&raw.value)
+                 //   .map_err(|e| Kind::InvalidRawMisbehaviour.context(e))?,
+            )),
             _ => Err(Kind::UnknownMisbehaviourType(raw.type_url).into()),
         }
     }
@@ -95,11 +99,12 @@ impl From<AnyMisbehaviour> for Any {
                 type_url: TENDERMINT_MISBEHAVIOR_TYPE_URL.to_string(),
                 value: misbehaviour.encode_vec().unwrap(),
             },
-            // #[cfg(any(test, feature = "mocks"))]
-            // AnyMisbehaviour::Mock(misbehaviour) => Any {
-            //     type_url: MOCK_MISBEHAVIOUR_TYPE_URL.to_string(),
-            //     value: misbehaviour.encode_vec().unwrap(),
-            // },
+            #[cfg(any(test, feature = "mocks"))]
+            AnyMisbehaviour::Mock(_misbehaviour) => Any {
+                type_url: MOCK_MISBEHAVIOUR_TYPE_URL.to_string(),
+                value: vec![],
+                //value: misbehaviour.encode_vec().unwrap(),
+            },
         }
     }
 }

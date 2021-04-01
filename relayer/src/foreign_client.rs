@@ -559,16 +559,12 @@ pub fn extract_client_id(event: &IbcEvent) -> Result<&ClientId, ForeignClientErr
 /// instances of chains built using `MockChain`.
 #[cfg(test)]
 mod test {
-    use std::str::FromStr;
+    use std::{ops::Sub, str::FromStr, time::Duration};
 
-    use ibc::{
-        events::IbcEvent,
-        ics02_client::{
+    use ibc::{events::IbcEvent, ics02_client::{
             events::{Attributes, UpdateClient},
             header::AnyHeader,
-        },
-        mock::header::MockHeader,
-    };
+        }, ics07_tendermint::header::Header, mock::{header::MockHeader, host::HostBlock}};
     use ibc::{ics02_client::client_type::ClientType, Height};
     use ibc::{ics07_tendermint::client_def::TendermintClient, ics24_host::identifier::ClientId};
 
@@ -862,12 +858,15 @@ mod test {
         );
         let client_on_b = client_on_b_res.unwrap();
 
+
         let mut b_height_start = b_chain.query_latest_height().unwrap();
         let mut a_height_start = a_chain.query_latest_height().unwrap();
 
+    
+
         let mut a_height_current = Height::default();
         let mut b_height_current = Height::default();
-        let num_iterations = 2;
+        let num_iterations = 3;
 
         // Update each client
         for _i in 1..num_iterations {
@@ -894,24 +893,54 @@ mod test {
             );
         }
 
+        // let atribs = Attributes {
+        //     height: a_height_current,
+        //     client_id: a_client_id,
+        //     client_type: ClientType::Mock,
+        //     consensus_height: b_height_current,
+        // };
+
+        // let h = MockHeader {
+        //     height: Height::new(40, 20),
+        //     timestamp: 1,
+        // };
+
+        // let header_one = AnyHeader::Mock(h);
+
         let atribs = Attributes {
-            height: a_height_current,
-            client_id: a_client_id,
-            client_type: ClientType::Mock,
-            consensus_height: b_height_current,
+                height: a_height_current,
+                client_id: a_client_id,
+                client_type: ClientType::Mock,
+                consensus_height: b_height_current,
+            };
+    
+            // let h = MockHeader {
+            //     height: Height::new(40, 20),
+            //     timestamp: 1,
+            // };
+    
+            // let header_one = AnyHeader::Mock(h);
+
+         
+        let mut block = HostBlock::generate_tm_block(a_chain.id(), 40);
+
+        let rhs  = Duration::new(20, 0);
+        let t =  block.signed_header.header.time.sub(rhs); 
+        block.signed_header.header.time = t;
+
+       
+        let header =  Header {
+            signed_header: block.signed_header.clone(), // contains the commitment root
+            validator_set: block.validators.clone(), // the validator set that signed Header
+            trusted_height: Height::default(), // the height of a trusted header seen by client less than or equal to Header
+            trusted_validator_set: block.validators, // the last trusted validator set at trusted height
         };
 
-        let h = MockHeader {
-            height: Height::new(40, 20),
-            timestamp: 1,
-        };
-
-        let header_one = AnyHeader::Mock(h);
 
         let upd = UpdateClient {
             common: atribs,
             // header: None,
-            header: Some(header_one),
+            header: Some(AnyHeader::Tendermint(header)),
         };
 
         let result = client_on_a.detect_misbehaviour_and_send_evidence(Some(upd));
@@ -961,7 +990,7 @@ mod test {
 
         let mut a_height_current = Height::default();
         let mut b_height_current = Height::default();
-        let num_iterations = 2;
+        let num_iterations = 3;
 
         // Update each client
         for _i in 1..num_iterations {

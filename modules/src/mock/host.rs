@@ -50,7 +50,7 @@ impl HostBlock {
         match chain_type {
             HostType::Mock => HostBlock::Mock(MockHeader {
                 height: Height::new(chain_id.version(), height),
-                timestamp: 1,
+                timestamp: 100,
             }),
             HostType::SyntheticTendermint => {
                 HostBlock::SyntheticTendermint(Box::new(Self::generate_tm_block(chain_id, height)))
