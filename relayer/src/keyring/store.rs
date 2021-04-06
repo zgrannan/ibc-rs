@@ -319,3 +319,94 @@ fn get_test_backend_folder(chain_config: &ChainConfig) -> Result<PathBuf, Error>
         )),
     }
 }
+
+#[cfg(test)]
+mod test_util {
+    use hdpath::StandardHDPath;
+    use serde_json::Value;
+    use std::{convert::TryFrom, fs::File, io::Read};
+
+    use crate::keyring::errors::{Error, Kind};
+
+    use bech32::{ToBase32, Variant};
+    use bip39::{Language, Mnemonic, Seed};
+    use bitcoin::{
+        network::constants::Network,
+        secp256k1::Secp256k1,
+        util::bip32::{DerivationPath, ExtendedPrivKey, ExtendedPubKey},
+    };
+    use ripemd160::Ripemd160;
+    use sha2::{Digest, Sha256};
+
+    #[test]
+    fn key_list() -> Result<(), Error> {
+        let mut file = File::open("/Users/c/Documents/GitHub/ibc-rs/testkey.json")
+            .map_err(|_| Kind::KeyStoreOperation.context("cannot open key file"))?;
+        let mut file_contents = String::new();
+        file.read_to_string(&mut file_contents)
+            .map_err(|_| Kind::KeyStoreOperation.context("cannot ready key file"))?;
+        println!("{}", file_contents);
+
+        let key_json: Value =
+            serde_json::from_str(&file_contents).map_err(|e| Kind::InvalidKey.context(e))?;
+
+        let _mnemonic: String = "".to_string();
+        let mnemonic_value = key_json.get("mnemonic");
+
+        match mnemonic_value {
+            Some(m) => {
+                let mmnemonic = m.as_str();
+                match mmnemonic {
+                    Some(v) => {
+                        let mnemonic = Mnemonic::from_phrase(v, Language::English)
+                            .map_err(|e| Kind::InvalidMnemonic.context(e))?;
+
+                        let seed = Seed::new(&mnemonic, "");
+                        let hd_path = StandardHDPath::try_from("m/44'/118'/0'/0/0").unwrap();
+
+                        let private_key =
+                            ExtendedPrivKey::new_master(Network::Bitcoin, seed.as_bytes())
+                                .and_then(|k| {
+                                    k.derive_priv(&Secp256k1::new(), &DerivationPath::from(hd_path))
+                                })
+                                .map_err(|e| Kind::PrivateKey.context(e))?;
+
+                        // Get Public Key from Private Key
+                        let public_key =
+                            ExtendedPubKey::from_private(&Secp256k1::new(), &private_key);
+
+                        // Get address from the Public Key
+                        //let address = get_address(public_key);
+
+                        let mut hasher = Sha256::new();
+                        hasher.update(public_key.public_key.to_bytes().as_slice());
+
+                        // Read hash digest over the public key bytes & consume hasher
+                        let pk_hash = hasher.finalize();
+
+                        // Plug the hash result into the next crypto hash function.
+                        let mut rip_hasher = Ripemd160::new();
+                        rip_hasher.update(pk_hash);
+                        let rip_result = rip_hasher.finalize();
+
+                        let address = rip_result.to_vec();
+
+                        // Get Bech32 account
+                        let account = bech32::encode("ibc-0", address.to_base32(), Variant::Bech32)
+                            .map_err(|e| Kind::Bech32Account.context(e))?;
+
+                        println!("account {}", account);
+                    }
+                    None => {
+                        println!("invalid key file, cannot find mnemonic");
+                    }
+                }
+            }
+            None => {
+                println!("invalid key file, cannot find mnemonic");
+            }
+        }
+
+        Ok(())
+    }
+}
