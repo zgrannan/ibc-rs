@@ -340,7 +340,7 @@ mod test_util {
 
     #[test]
     fn key_list() -> Result<(), Error> {
-        let mut file = File::open("/Users/c/Documents/GitHub/ibc-rs/testkey.json")
+        let mut file = File::open("/Users/c/Documents/GitHub/ibc-rs/alice_key.json")
             .map_err(|_| Kind::KeyStoreOperation.context("cannot open key file"))?;
         let mut file_contents = String::new();
         file.read_to_string(&mut file_contents)
@@ -353,6 +353,7 @@ mod test_util {
         let _mnemonic: String = "".to_string();
         let mnemonic_value = key_json.get("mnemonic");
 
+        println!("mnemonic_value {:?}", mnemonic_value);
         match mnemonic_value {
             Some(m) => {
                 let mmnemonic = m.as_str();
@@ -375,6 +376,7 @@ mod test_util {
                         let public_key =
                             ExtendedPubKey::from_private(&Secp256k1::new(), &private_key);
 
+                        println!("public_key {:?}", public_key);
                         // Get address from the Public Key
                         //let address = get_address(public_key);
 
@@ -391,6 +393,7 @@ mod test_util {
 
                         let address = rip_result.to_vec();
 
+                        println!("address {:?}", address);
                         // Get Bech32 account
                         let account = bech32::encode("ibc-0", address.to_base32(), Variant::Bech32)
                             .map_err(|e| Kind::Bech32Account.context(e))?;
