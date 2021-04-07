@@ -32,7 +32,7 @@ impl CompileCmd {
         Self::output_version(&self.sdk, tmp.as_ref(), "COSMOS_SDK_COMMIT");
         Self::output_version(&self.ibc, tmp.as_ref(), "COSMOS_IBC_COMMIT");
         Self::compile_sdk_protos(&self.sdk, tmp.as_ref());
-        Self::compile_ibc_protos(&self.ibc, &self.sdk, tmp.as_ref());
+        // Self::compile_ibc_protos(&self.ibc, &self.sdk, tmp.as_ref());
         Self::copy_generated_files(tmp.as_ref(), &self.out);
     }
 
@@ -127,6 +127,7 @@ impl CompileCmd {
             format!("{}/proto/cosmos/base", sdk_dir.display()),
             format!("{}/proto/cosmos/staking", sdk_dir.display()),
             format!("{}/proto/cosmos/upgrade", sdk_dir.display()),
+            format!("{}/proto/ibc", sdk_dir.display()),
         ];
 
         let proto_includes_paths = [
