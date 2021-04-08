@@ -7,6 +7,7 @@ use crate::ics02_client::client_state::AnyClientState;
 use crate::ics02_client::client_type::ClientType;
 use crate::ics02_client::error::Error;
 use crate::ics02_client::handler::ClientResult::{self, Create, Update, Upgrade};
+use crate::ics02_client::header::AnyHeader;
 use crate::ics24_host::identifier::ClientId;
 use crate::Height;
 
@@ -34,6 +35,7 @@ pub trait ClientKeeper {
                     client_id,
                     res.client_state.latest_height(),
                     res.consensus_state,
+                    None,
                 )?;
                 self.increase_client_counter();
                 Ok(())
@@ -44,6 +46,7 @@ pub trait ClientKeeper {
                     res.client_id.clone(),
                     res.client_state.latest_height(),
                     res.consensus_state,
+                    Some(res.header),
                 )?;
                 Ok(())
             }
@@ -73,6 +76,7 @@ pub trait ClientKeeper {
         client_id: ClientId,
         height: Height,
         consensus_state: AnyConsensusState,
+        header: Option<AnyHeader>,
     ) -> Result<(), Error>;
 
     /// Called upon client creation.

@@ -333,6 +333,17 @@ impl ForeignClient {
         target_height: Height,
         trusted_height: Height,
     ) -> Result<Vec<Any>, ForeignClientError> {
+        // Get the latest client state on destination.
+        let _client_state1 = self
+            .dst_chain()
+            .query_client_state(&self.id, Height::default())
+            .map_err(|e| {
+                ForeignClientError::ClientUpdate(format!(
+                    "failed querying client state on dst chain {} with error: {}",
+                    self.id, e
+                ))
+            })?;
+
         // Wait for source chain to reach `target_height`
         while self.src_chain().query_latest_height().map_err(|e| {
             ForeignClientError::ClientUpdate(format!(
@@ -727,6 +738,7 @@ mod test {
     use crate::chain::mock::test_utils::get_basic_chain_config;
     use crate::chain::mock::MockChain;
     use crate::chain::runtime::ChainRuntime;
+    use crate::connection::{Connection, ConnectionSide};
     use crate::foreign_client::ForeignClient;
 
     /// Basic test for the `build_create_client_and_send` method.
@@ -981,5 +993,48 @@ mod test {
                 "after client update, chain b did not advance"
             );
         }
+    }
+
+    #[test]
+    fn client_misbehaviour() {
+        let a_cfg = get_basic_chain_config("chain_a");
+        let b_cfg = get_basic_chain_config("chain_b");
+
+        let (a_chain, _) = ChainRuntime::<MockChain>::spawn(a_cfg).unwrap();
+        let (b_chain, _) = ChainRuntime::<MockChain>::spawn(b_cfg).unwrap();
+
+        let b_height_start = b_chain.query_latest_height().unwrap();
+        let a_height_start = a_chain.query_latest_height().unwrap();
+
+        println!("a {}, b {}", b_height_start, a_height_start);
+
+        // Instantiate the foreign clients on the two chains.
+        let client_on_a = ForeignClient::new(a_chain.clone(), b_chain.clone()).unwrap();
+        let client_on_b = ForeignClient::new(b_chain.clone(), a_chain.clone()).unwrap();
+
+        let states = client_on_b.consensus_state_heights().unwrap();
+        println!("states before {:?}", states);
+
+        // TODO - figure out a better way to create some transactions on chain A so we have some blocks
+        // Send a number of conn init messages
+        let conn = Connection {
+            delay_period: 0,
+            b_side: ConnectionSide::new(a_chain, client_on_a.id, Default::default()),
+            a_side: ConnectionSide::new(b_chain, client_on_b.id.clone(), Default::default()),
+        };
+        for _i in 1..10 {
+            let _ev = conn.build_conn_init_and_send().unwrap();
+        }
+
+        // TODO - figure out a way to get good heights for update
+        let _res = client_on_b
+            .build_update_client_and_send(Height::new(0, 23), Height::new(0, 21))
+            .unwrap();
+        let states = client_on_b.consensus_state_heights().unwrap();
+        println!("states {:?}", states);
+
+        let _res2 = client_on_b
+            .detect_misbehaviour_and_send_evidence(None)
+            .unwrap();
     }
 }

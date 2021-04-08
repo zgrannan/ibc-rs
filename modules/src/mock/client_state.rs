@@ -12,6 +12,7 @@ use crate::ics02_client::client_state::{AnyClientState, ClientState};
 use crate::ics02_client::client_type::ClientType;
 use crate::ics02_client::error::Error;
 use crate::ics02_client::error::Kind as ClientKind;
+use crate::ics02_client::header::AnyHeader;
 use crate::ics23_commitment::commitment::CommitmentRoot;
 use crate::ics24_host::identifier::ChainId;
 use crate::mock::header::MockHeader;
@@ -28,7 +29,7 @@ pub struct MockClientRecord {
     pub client_state: Option<AnyClientState>,
 
     /// Mapping of heights to consensus states for this client.
-    pub consensus_states: HashMap<Height, AnyConsensusState>,
+    pub consensus_states: HashMap<Height, (AnyConsensusState, Option<AnyHeader>)>,
 }
 
 /// A mock of a client state. For an example of a real structure that this mocks, you can see

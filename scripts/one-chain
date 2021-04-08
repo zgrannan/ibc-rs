@@ -41,10 +41,14 @@ if [ -z "$7" ]; then
 fi
 
 if [ -z "$8" ]; then
+  missing "[WGRPC_PORT]"
+fi
+
+if [ -z "$9" ]; then
   missing "[SAMOLEANS]"
 fi
 
-if [ "$#" -gt 8 ]; then
+if [ "$#" -gt 9 ]; then
   echo "Incorrect number of parameters."
   usage
 fi
@@ -56,9 +60,10 @@ RPC_PORT=$4
 P2P_PORT=$5
 PROF_PORT=$6
 GRPC_PORT=$7
-SAMOLEANS=$8
+WGRPC_PORT=$8
+SAMOLEANS=$9
 
-echo "Creating $BINARY instance: home=$CHAIN_DIR | chain-id=$CHAIN_ID | p2p=:$P2P_PORT | rpc=:$RPC_PORT | profiling=:$PROF_PORT | grpc=:$GRPC_PORT | samoleans=:$SAMOLEANS"
+echo "Creating $BINARY instance: home=$CHAIN_DIR | chain-id=$CHAIN_ID | p2p=:$P2P_PORT | rpc=:$RPC_PORT | profiling=:$PROF_PORT | grpc=:$GRPC_PORT | wgrpc=:$WGRPC_PORT | samoleans=:$SAMOLEANS"
 
 # Add dir for chain, exit if error
 if ! mkdir -p $CHAIN_DIR/$CHAIN_ID 2>/dev/null; then
@@ -118,6 +123,7 @@ else
   sed -i '' 's#"tcp://127.0.0.1:26657"#"tcp://0.0.0.0:'"$RPC_PORT"'"#g' $CHAIN_DIR/$CHAIN_ID/config/config.toml
   sed -i '' 's#"tcp://0.0.0.0:26656"#"tcp://0.0.0.0:'"$P2P_PORT"'"#g' $CHAIN_DIR/$CHAIN_ID/config/config.toml
   sed -i '' 's#"localhost:6060"#"localhost:'"$PROF_PORT"'"#g' $CHAIN_DIR/$CHAIN_ID/config/config.toml
+  sed -i '' 's#"0.0.0.0:9091"#"0.0.0.0:'"$WRPC_PORT"'"#g' $CHAIN_DIR/$CHAIN_ID/config/app.toml
   sed -i '' 's/timeout_commit = "5s"/timeout_commit = "1s"/g' $CHAIN_DIR/$CHAIN_ID/config/config.toml
   sed -i '' 's/timeout_propose = "3s"/timeout_propose = "1s"/g' $CHAIN_DIR/$CHAIN_ID/config/config.toml
   sed -i '' 's/index_all_keys = false/index_all_keys = true/g' $CHAIN_DIR/$CHAIN_ID/config/config.toml

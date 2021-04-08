@@ -44,6 +44,8 @@ use crate::error::{Error, Kind};
 use crate::event::monitor::EventBatch;
 use crate::keyring::store::{KeyEntry, KeyRing};
 use crate::light_client::{mock::LightClient as MockLightClient, LightClient};
+use ibc::ics02_client::client_type::ClientType;
+use ibc::ics02_client::events::{Attributes, UpdateClient};
 
 /// The representation of a mocked chain as the relayer sees it.
 /// The relayer runtime and the light client will engage with the MockChain to query/send tx; the
@@ -117,7 +119,7 @@ impl Chain for MockChain {
     }
 
     fn query_commitment_prefix(&self) -> Result<CommitmentPrefix, Error> {
-        unimplemented!()
+        Ok(CommitmentPrefix::from("ibc".as_bytes().to_vec()))
     }
 
     fn query_latest_height(&self) -> Result<Height, Error> {
@@ -228,8 +230,26 @@ impl Chain for MockChain {
         unimplemented!()
     }
 
-    fn query_txs(&self, _request: QueryTxRequest) -> Result<Vec<IbcEvent>, Error> {
-        unimplemented!()
+    fn query_txs(&self, request: QueryTxRequest) -> Result<Vec<IbcEvent>, Error> {
+        let req = downcast!(request => QueryTxRequest::Client).unwrap();
+        let (_consensus_state, header) = self.context.clients[&req.client_id]
+            .consensus_states
+            .get(&req.consensus_height)
+            .unwrap();
+
+        if header.is_none() {
+            return Ok(vec![]);
+        }
+        let event = IbcEvent::UpdateClient(UpdateClient {
+            common: Attributes {
+                height: Height::zero(), // TODO
+                client_id: req.client_id.clone(),
+                client_type: ClientType::Mock,
+                consensus_height: req.consensus_height,
+            },
+            header: header.clone(),
+        });
+        Ok(vec![event])
     }
 
     fn proven_client_state(

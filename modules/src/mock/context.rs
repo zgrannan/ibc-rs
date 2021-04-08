@@ -61,7 +61,7 @@ pub struct MockContext {
     history: Vec<HostBlock>,
 
     /// The set of all clients, indexed by their id.
-    clients: HashMap<ClientId, MockClientRecord>,
+    pub clients: HashMap<ClientId, MockClientRecord>,
 
     /// Counter for the client identifiers, necessary for `increase_client_counter` and the
     /// `client_counter` methods.
@@ -204,11 +204,12 @@ impl MockContext {
         let cs_height = consensus_state_height.unwrap_or(client_state_height);
 
         let client_type = client_type.unwrap_or(ClientType::Mock);
-        let (client_state, consensus_state) = match client_type {
+        let (client_state, consensus_state, header) = match client_type {
             // If it's a mock client, create the corresponding mock states.
             ClientType::Mock => (
                 Some(MockClientState(MockHeader::new(client_state_height)).into()),
                 MockConsensusState(MockHeader::new(cs_height)).into(),
+                Some(AnyHeader::Mock(MockHeader::new(client_state_height))),
             ),
             // If it's a Tendermint client, we need TM states.
             ClientType::Tendermint => {
@@ -216,15 +217,18 @@ impl MockContext {
                     self.host_chain_id.clone(),
                     cs_height.revision_height,
                 );
+                let header = AnyHeader::Tendermint(light_block.clone().into());
                 let consensus_state = AnyConsensusState::from(light_block.clone());
                 let client_state =
                     get_dummy_tendermint_client_state(light_block.signed_header.header);
 
                 // Return the tuple.
-                (Some(client_state), consensus_state)
+                (Some(client_state), consensus_state, Some(header))
             }
         };
-        let consensus_states = vec![(cs_height, consensus_state)].into_iter().collect();
+        let consensus_states = vec![(cs_height, (consensus_state, header))]
+            .into_iter()
+            .collect();
 
         let client_record = MockClientRecord {
             client_type,
@@ -423,7 +427,7 @@ impl MockContext {
         self.clients[client_id]
             .consensus_states
             .iter()
-            .map(|(k, v)| AnyConsensusStateWithHeight {
+            .map(|(k, (v, _h))| AnyConsensusStateWithHeight {
                 height: *k,
                 consensus_state: v.clone(),
             })
@@ -707,7 +711,7 @@ impl ClientReader for MockContext {
     fn consensus_state(&self, client_id: &ClientId, height: Height) -> Option<AnyConsensusState> {
         match self.clients.get(client_id) {
             Some(client_record) => match client_record.consensus_states.get(&height) {
-                Some(consensus_state) => Option::from(consensus_state.clone()),
+                Some((consensus_state, _header)) => Option::from(consensus_state.clone()),
                 None => None,
             },
             None => None,
@@ -755,6 +759,7 @@ impl ClientKeeper for MockContext {
         client_id: ClientId,
         height: Height,
         consensus_state: AnyConsensusState,
+        header: Option<AnyHeader>,
     ) -> Result<(), Ics02Error> {
         let client_record = self.clients.entry(client_id).or_insert(MockClientRecord {
             client_type: ClientType::Mock,
@@ -764,7 +769,7 @@ impl ClientKeeper for MockContext {
 
         client_record
             .consensus_states
-            .insert(height, consensus_state);
+            .insert(height, (consensus_state, header));
         Ok(())
     }
 
