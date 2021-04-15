@@ -71,6 +71,9 @@ pub enum Kind {
     #[error("invalid raw misbehaviour")]
     InvalidRawMisbehaviour,
 
+    #[error("upgrade verification failed")]
+    UpgradeVerificationFailure,
+
     #[error("invalid height result")]
     InvalidHeightResult,
 
@@ -91,6 +94,9 @@ pub enum Kind {
         state_type: ClientType,
         consensus_type: ClientType,
     },
+
+    #[error("upgraded client height {0} must be at greater than current client height {1}")]
+    LowUgradeHeight(Height, Height),
 }
 
 impl Kind {

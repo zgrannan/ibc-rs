@@ -12,6 +12,8 @@ use crate::mock::client_state::{MockClientState, MockConsensusState};
 use crate::mock::header::MockHeader;
 use crate::Height;
 
+use ibc_proto::ibc::core::commitment::v1::MerkleProof;
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MockClient;
 
@@ -146,5 +148,16 @@ impl ClientDef for MockClient {
         _seq: &Sequence,
     ) -> Result<(), Box<dyn std::error::Error>> {
         Ok(())
+    }
+
+    fn verify_upgrade_and_update_state(
+        &self,
+        client_state: &Self::ClientState,
+        consensus_state: &Self::ConsensusState,
+        _proofproof_upgrade_client: MerkleProof,
+        _proof_upgrade_consensus_state: MerkleProof,
+    ) -> Result<(Self::ClientState, Self::ConsensusState), Box<dyn std::error::Error>> {
+        //TODO
+        Ok((client_state.clone(), consensus_state.clone()))
     }
 }

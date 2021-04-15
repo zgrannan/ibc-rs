@@ -12,6 +12,8 @@ use crate::ics24_host::identifier::ConnectionId;
 use crate::ics24_host::identifier::{ChannelId, ClientId, PortId};
 use crate::Height;
 
+use ibc_proto::ibc::core::commitment::v1::MerkleProof;
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TendermintClient;
 
@@ -138,6 +140,16 @@ impl ClientDef for TendermintClient {
         _channel_id: &ChannelId,
         _seq: &Sequence,
     ) -> Result<(), Box<dyn std::error::Error>> {
+        todo!()
+    }
+
+    fn verify_upgrade_and_update_state(
+        &self,
+        _client_state: &Self::ClientState,
+        _consensus_state: &Self::ConsensusState,
+        _proofproof_upgrade_client: MerkleProof,
+        _proof_upgrade_consensus_state: MerkleProof,
+    ) -> Result<(Self::ClientState, Self::ConsensusState), Box<dyn std::error::Error>> {
         todo!()
     }
 }
