@@ -577,6 +577,442 @@ pub mod msg_client {
         }
     }
 }
+#[doc = r" Generated server implementations."]
+pub mod msg_server {
+    #![allow(unused_variables, dead_code, missing_docs)]
+    use tonic::codegen::*;
+    #[doc = "Generated trait containing gRPC methods that should be implemented for use with MsgServer."]
+    #[async_trait]
+    pub trait Msg: Send + Sync + 'static {
+        #[doc = " ChannelOpenInit defines a rpc handler method for MsgChannelOpenInit."]
+        async fn channel_open_init(
+            &self,
+            request: tonic::Request<super::MsgChannelOpenInit>,
+        ) -> Result<tonic::Response<super::MsgChannelOpenInitResponse>, tonic::Status>;
+        #[doc = " ChannelOpenTry defines a rpc handler method for MsgChannelOpenTry."]
+        async fn channel_open_try(
+            &self,
+            request: tonic::Request<super::MsgChannelOpenTry>,
+        ) -> Result<tonic::Response<super::MsgChannelOpenTryResponse>, tonic::Status>;
+        #[doc = " ChannelOpenAck defines a rpc handler method for MsgChannelOpenAck."]
+        async fn channel_open_ack(
+            &self,
+            request: tonic::Request<super::MsgChannelOpenAck>,
+        ) -> Result<tonic::Response<super::MsgChannelOpenAckResponse>, tonic::Status>;
+        #[doc = " ChannelOpenConfirm defines a rpc handler method for MsgChannelOpenConfirm."]
+        async fn channel_open_confirm(
+            &self,
+            request: tonic::Request<super::MsgChannelOpenConfirm>,
+        ) -> Result<tonic::Response<super::MsgChannelOpenConfirmResponse>, tonic::Status>;
+        #[doc = " ChannelCloseInit defines a rpc handler method for MsgChannelCloseInit."]
+        async fn channel_close_init(
+            &self,
+            request: tonic::Request<super::MsgChannelCloseInit>,
+        ) -> Result<tonic::Response<super::MsgChannelCloseInitResponse>, tonic::Status>;
+        #[doc = " ChannelCloseConfirm defines a rpc handler method for MsgChannelCloseConfirm."]
+        async fn channel_close_confirm(
+            &self,
+            request: tonic::Request<super::MsgChannelCloseConfirm>,
+        ) -> Result<tonic::Response<super::MsgChannelCloseConfirmResponse>, tonic::Status>;
+        #[doc = " RecvPacket defines a rpc handler method for MsgRecvPacket."]
+        async fn recv_packet(
+            &self,
+            request: tonic::Request<super::MsgRecvPacket>,
+        ) -> Result<tonic::Response<super::MsgRecvPacketResponse>, tonic::Status>;
+        #[doc = " Timeout defines a rpc handler method for MsgTimeout."]
+        async fn timeout(
+            &self,
+            request: tonic::Request<super::MsgTimeout>,
+        ) -> Result<tonic::Response<super::MsgTimeoutResponse>, tonic::Status>;
+        #[doc = " TimeoutOnClose defines a rpc handler method for MsgTimeoutOnClose."]
+        async fn timeout_on_close(
+            &self,
+            request: tonic::Request<super::MsgTimeoutOnClose>,
+        ) -> Result<tonic::Response<super::MsgTimeoutOnCloseResponse>, tonic::Status>;
+        #[doc = " Acknowledgement defines a rpc handler method for MsgAcknowledgement."]
+        async fn acknowledgement(
+            &self,
+            request: tonic::Request<super::MsgAcknowledgement>,
+        ) -> Result<tonic::Response<super::MsgAcknowledgementResponse>, tonic::Status>;
+    }
+    #[doc = " Msg defines the ibc/channel Msg service."]
+    #[derive(Debug)]
+    pub struct MsgServer<T: Msg> {
+        inner: _Inner<T>,
+    }
+    struct _Inner<T>(Arc<T>, Option<tonic::Interceptor>);
+    impl<T: Msg> MsgServer<T> {
+        pub fn new(inner: T) -> Self {
+            let inner = Arc::new(inner);
+            let inner = _Inner(inner, None);
+            Self { inner }
+        }
+        pub fn with_interceptor(inner: T, interceptor: impl Into<tonic::Interceptor>) -> Self {
+            let inner = Arc::new(inner);
+            let inner = _Inner(inner, Some(interceptor.into()));
+            Self { inner }
+        }
+    }
+    impl<T, B> Service<http::Request<B>> for MsgServer<T>
+    where
+        T: Msg,
+        B: HttpBody + Send + Sync + 'static,
+        B::Error: Into<StdError> + Send + 'static,
+    {
+        type Response = http::Response<tonic::body::BoxBody>;
+        type Error = Never;
+        type Future = BoxFuture<Self::Response, Self::Error>;
+        fn poll_ready(&mut self, _cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
+            Poll::Ready(Ok(()))
+        }
+        fn call(&mut self, req: http::Request<B>) -> Self::Future {
+            let inner = self.inner.clone();
+            match req.uri().path() {
+                "/ibc.core.channel.v1.Msg/ChannelOpenInit" => {
+                    #[allow(non_camel_case_types)]
+                    struct ChannelOpenInitSvc<T: Msg>(pub Arc<T>);
+                    impl<T: Msg> tonic::server::UnaryService<super::MsgChannelOpenInit> for ChannelOpenInitSvc<T> {
+                        type Response = super::MsgChannelOpenInitResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::MsgChannelOpenInit>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move { (*inner).channel_open_init(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let interceptor = inner.1.clone();
+                        let inner = inner.0;
+                        let method = ChannelOpenInitSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = if let Some(interceptor) = interceptor {
+                            tonic::server::Grpc::with_interceptor(codec, interceptor)
+                        } else {
+                            tonic::server::Grpc::new(codec)
+                        };
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/ibc.core.channel.v1.Msg/ChannelOpenTry" => {
+                    #[allow(non_camel_case_types)]
+                    struct ChannelOpenTrySvc<T: Msg>(pub Arc<T>);
+                    impl<T: Msg> tonic::server::UnaryService<super::MsgChannelOpenTry> for ChannelOpenTrySvc<T> {
+                        type Response = super::MsgChannelOpenTryResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::MsgChannelOpenTry>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move { (*inner).channel_open_try(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let interceptor = inner.1.clone();
+                        let inner = inner.0;
+                        let method = ChannelOpenTrySvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = if let Some(interceptor) = interceptor {
+                            tonic::server::Grpc::with_interceptor(codec, interceptor)
+                        } else {
+                            tonic::server::Grpc::new(codec)
+                        };
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/ibc.core.channel.v1.Msg/ChannelOpenAck" => {
+                    #[allow(non_camel_case_types)]
+                    struct ChannelOpenAckSvc<T: Msg>(pub Arc<T>);
+                    impl<T: Msg> tonic::server::UnaryService<super::MsgChannelOpenAck> for ChannelOpenAckSvc<T> {
+                        type Response = super::MsgChannelOpenAckResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::MsgChannelOpenAck>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move { (*inner).channel_open_ack(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let interceptor = inner.1.clone();
+                        let inner = inner.0;
+                        let method = ChannelOpenAckSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = if let Some(interceptor) = interceptor {
+                            tonic::server::Grpc::with_interceptor(codec, interceptor)
+                        } else {
+                            tonic::server::Grpc::new(codec)
+                        };
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/ibc.core.channel.v1.Msg/ChannelOpenConfirm" => {
+                    #[allow(non_camel_case_types)]
+                    struct ChannelOpenConfirmSvc<T: Msg>(pub Arc<T>);
+                    impl<T: Msg> tonic::server::UnaryService<super::MsgChannelOpenConfirm>
+                        for ChannelOpenConfirmSvc<T>
+                    {
+                        type Response = super::MsgChannelOpenConfirmResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::MsgChannelOpenConfirm>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move { (*inner).channel_open_confirm(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let interceptor = inner.1.clone();
+                        let inner = inner.0;
+                        let method = ChannelOpenConfirmSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = if let Some(interceptor) = interceptor {
+                            tonic::server::Grpc::with_interceptor(codec, interceptor)
+                        } else {
+                            tonic::server::Grpc::new(codec)
+                        };
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/ibc.core.channel.v1.Msg/ChannelCloseInit" => {
+                    #[allow(non_camel_case_types)]
+                    struct ChannelCloseInitSvc<T: Msg>(pub Arc<T>);
+                    impl<T: Msg> tonic::server::UnaryService<super::MsgChannelCloseInit> for ChannelCloseInitSvc<T> {
+                        type Response = super::MsgChannelCloseInitResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::MsgChannelCloseInit>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move { (*inner).channel_close_init(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let interceptor = inner.1.clone();
+                        let inner = inner.0;
+                        let method = ChannelCloseInitSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = if let Some(interceptor) = interceptor {
+                            tonic::server::Grpc::with_interceptor(codec, interceptor)
+                        } else {
+                            tonic::server::Grpc::new(codec)
+                        };
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/ibc.core.channel.v1.Msg/ChannelCloseConfirm" => {
+                    #[allow(non_camel_case_types)]
+                    struct ChannelCloseConfirmSvc<T: Msg>(pub Arc<T>);
+                    impl<T: Msg> tonic::server::UnaryService<super::MsgChannelCloseConfirm>
+                        for ChannelCloseConfirmSvc<T>
+                    {
+                        type Response = super::MsgChannelCloseConfirmResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::MsgChannelCloseConfirm>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move { (*inner).channel_close_confirm(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let interceptor = inner.1.clone();
+                        let inner = inner.0;
+                        let method = ChannelCloseConfirmSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = if let Some(interceptor) = interceptor {
+                            tonic::server::Grpc::with_interceptor(codec, interceptor)
+                        } else {
+                            tonic::server::Grpc::new(codec)
+                        };
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/ibc.core.channel.v1.Msg/RecvPacket" => {
+                    #[allow(non_camel_case_types)]
+                    struct RecvPacketSvc<T: Msg>(pub Arc<T>);
+                    impl<T: Msg> tonic::server::UnaryService<super::MsgRecvPacket> for RecvPacketSvc<T> {
+                        type Response = super::MsgRecvPacketResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::MsgRecvPacket>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move { (*inner).recv_packet(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let interceptor = inner.1.clone();
+                        let inner = inner.0;
+                        let method = RecvPacketSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = if let Some(interceptor) = interceptor {
+                            tonic::server::Grpc::with_interceptor(codec, interceptor)
+                        } else {
+                            tonic::server::Grpc::new(codec)
+                        };
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/ibc.core.channel.v1.Msg/Timeout" => {
+                    #[allow(non_camel_case_types)]
+                    struct TimeoutSvc<T: Msg>(pub Arc<T>);
+                    impl<T: Msg> tonic::server::UnaryService<super::MsgTimeout> for TimeoutSvc<T> {
+                        type Response = super::MsgTimeoutResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::MsgTimeout>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move { (*inner).timeout(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let interceptor = inner.1.clone();
+                        let inner = inner.0;
+                        let method = TimeoutSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = if let Some(interceptor) = interceptor {
+                            tonic::server::Grpc::with_interceptor(codec, interceptor)
+                        } else {
+                            tonic::server::Grpc::new(codec)
+                        };
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/ibc.core.channel.v1.Msg/TimeoutOnClose" => {
+                    #[allow(non_camel_case_types)]
+                    struct TimeoutOnCloseSvc<T: Msg>(pub Arc<T>);
+                    impl<T: Msg> tonic::server::UnaryService<super::MsgTimeoutOnClose> for TimeoutOnCloseSvc<T> {
+                        type Response = super::MsgTimeoutOnCloseResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::MsgTimeoutOnClose>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move { (*inner).timeout_on_close(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let interceptor = inner.1.clone();
+                        let inner = inner.0;
+                        let method = TimeoutOnCloseSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = if let Some(interceptor) = interceptor {
+                            tonic::server::Grpc::with_interceptor(codec, interceptor)
+                        } else {
+                            tonic::server::Grpc::new(codec)
+                        };
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/ibc.core.channel.v1.Msg/Acknowledgement" => {
+                    #[allow(non_camel_case_types)]
+                    struct AcknowledgementSvc<T: Msg>(pub Arc<T>);
+                    impl<T: Msg> tonic::server::UnaryService<super::MsgAcknowledgement> for AcknowledgementSvc<T> {
+                        type Response = super::MsgAcknowledgementResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::MsgAcknowledgement>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move { (*inner).acknowledgement(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let interceptor = inner.1.clone();
+                        let inner = inner.0;
+                        let method = AcknowledgementSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = if let Some(interceptor) = interceptor {
+                            tonic::server::Grpc::with_interceptor(codec, interceptor)
+                        } else {
+                            tonic::server::Grpc::new(codec)
+                        };
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                _ => Box::pin(async move {
+                    Ok(http::Response::builder()
+                        .status(200)
+                        .header("grpc-status", "12")
+                        .header("content-type", "application/grpc")
+                        .body(tonic::body::BoxBody::empty())
+                        .unwrap())
+                }),
+            }
+        }
+    }
+    impl<T: Msg> Clone for MsgServer<T> {
+        fn clone(&self) -> Self {
+            let inner = self.inner.clone();
+            Self { inner }
+        }
+    }
+    impl<T: Msg> Clone for _Inner<T> {
+        fn clone(&self) -> Self {
+            Self(self.0.clone(), self.1.clone())
+        }
+    }
+    impl<T: std::fmt::Debug> std::fmt::Debug for _Inner<T> {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            write!(f, "{:?}", self.0)
+        }
+    }
+    impl<T: Msg> tonic::transport::NamedService for MsgServer<T> {
+        const NAME: &'static str = "ibc.core.channel.v1.Msg";
+    }
+}
 /// QueryChannelRequest is the request type for the Query/Channel RPC method
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryChannelRequest {
@@ -1212,5 +1648,582 @@ pub mod query_client {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             write!(f, "QueryClient {{ ... }}")
         }
+    }
+}
+#[doc = r" Generated server implementations."]
+pub mod query_server {
+    #![allow(unused_variables, dead_code, missing_docs)]
+    use tonic::codegen::*;
+    #[doc = "Generated trait containing gRPC methods that should be implemented for use with QueryServer."]
+    #[async_trait]
+    pub trait Query: Send + Sync + 'static {
+        #[doc = " Channel queries an IBC Channel."]
+        async fn channel(
+            &self,
+            request: tonic::Request<super::QueryChannelRequest>,
+        ) -> Result<tonic::Response<super::QueryChannelResponse>, tonic::Status>;
+        #[doc = " Channels queries all the IBC channels of a chain."]
+        async fn channels(
+            &self,
+            request: tonic::Request<super::QueryChannelsRequest>,
+        ) -> Result<tonic::Response<super::QueryChannelsResponse>, tonic::Status>;
+        #[doc = " ConnectionChannels queries all the channels associated with a connection"]
+        #[doc = " end."]
+        async fn connection_channels(
+            &self,
+            request: tonic::Request<super::QueryConnectionChannelsRequest>,
+        ) -> Result<tonic::Response<super::QueryConnectionChannelsResponse>, tonic::Status>;
+        #[doc = " ChannelClientState queries for the client state for the channel associated"]
+        #[doc = " with the provided channel identifiers."]
+        async fn channel_client_state(
+            &self,
+            request: tonic::Request<super::QueryChannelClientStateRequest>,
+        ) -> Result<tonic::Response<super::QueryChannelClientStateResponse>, tonic::Status>;
+        #[doc = " ChannelConsensusState queries for the consensus state for the channel"]
+        #[doc = " associated with the provided channel identifiers."]
+        async fn channel_consensus_state(
+            &self,
+            request: tonic::Request<super::QueryChannelConsensusStateRequest>,
+        ) -> Result<tonic::Response<super::QueryChannelConsensusStateResponse>, tonic::Status>;
+        #[doc = " PacketCommitment queries a stored packet commitment hash."]
+        async fn packet_commitment(
+            &self,
+            request: tonic::Request<super::QueryPacketCommitmentRequest>,
+        ) -> Result<tonic::Response<super::QueryPacketCommitmentResponse>, tonic::Status>;
+        #[doc = " PacketCommitments returns all the packet commitments hashes associated"]
+        #[doc = " with a channel."]
+        async fn packet_commitments(
+            &self,
+            request: tonic::Request<super::QueryPacketCommitmentsRequest>,
+        ) -> Result<tonic::Response<super::QueryPacketCommitmentsResponse>, tonic::Status>;
+        #[doc = " PacketReceipt queries if a given packet sequence has been received on the queried chain"]
+        async fn packet_receipt(
+            &self,
+            request: tonic::Request<super::QueryPacketReceiptRequest>,
+        ) -> Result<tonic::Response<super::QueryPacketReceiptResponse>, tonic::Status>;
+        #[doc = " PacketAcknowledgement queries a stored packet acknowledgement hash."]
+        async fn packet_acknowledgement(
+            &self,
+            request: tonic::Request<super::QueryPacketAcknowledgementRequest>,
+        ) -> Result<tonic::Response<super::QueryPacketAcknowledgementResponse>, tonic::Status>;
+        #[doc = " PacketAcknowledgements returns all the packet acknowledgements associated"]
+        #[doc = " with a channel."]
+        async fn packet_acknowledgements(
+            &self,
+            request: tonic::Request<super::QueryPacketAcknowledgementsRequest>,
+        ) -> Result<tonic::Response<super::QueryPacketAcknowledgementsResponse>, tonic::Status>;
+        #[doc = " UnreceivedPackets returns all the unreceived IBC packets associated with a"]
+        #[doc = " channel and sequences."]
+        async fn unreceived_packets(
+            &self,
+            request: tonic::Request<super::QueryUnreceivedPacketsRequest>,
+        ) -> Result<tonic::Response<super::QueryUnreceivedPacketsResponse>, tonic::Status>;
+        #[doc = " UnreceivedAcks returns all the unreceived IBC acknowledgements associated with a"]
+        #[doc = " channel and sequences."]
+        async fn unreceived_acks(
+            &self,
+            request: tonic::Request<super::QueryUnreceivedAcksRequest>,
+        ) -> Result<tonic::Response<super::QueryUnreceivedAcksResponse>, tonic::Status>;
+        #[doc = " NextSequenceReceive returns the next receive sequence for a given channel."]
+        async fn next_sequence_receive(
+            &self,
+            request: tonic::Request<super::QueryNextSequenceReceiveRequest>,
+        ) -> Result<tonic::Response<super::QueryNextSequenceReceiveResponse>, tonic::Status>;
+    }
+    #[doc = " Query provides defines the gRPC querier service"]
+    #[derive(Debug)]
+    pub struct QueryServer<T: Query> {
+        inner: _Inner<T>,
+    }
+    struct _Inner<T>(Arc<T>, Option<tonic::Interceptor>);
+    impl<T: Query> QueryServer<T> {
+        pub fn new(inner: T) -> Self {
+            let inner = Arc::new(inner);
+            let inner = _Inner(inner, None);
+            Self { inner }
+        }
+        pub fn with_interceptor(inner: T, interceptor: impl Into<tonic::Interceptor>) -> Self {
+            let inner = Arc::new(inner);
+            let inner = _Inner(inner, Some(interceptor.into()));
+            Self { inner }
+        }
+    }
+    impl<T, B> Service<http::Request<B>> for QueryServer<T>
+    where
+        T: Query,
+        B: HttpBody + Send + Sync + 'static,
+        B::Error: Into<StdError> + Send + 'static,
+    {
+        type Response = http::Response<tonic::body::BoxBody>;
+        type Error = Never;
+        type Future = BoxFuture<Self::Response, Self::Error>;
+        fn poll_ready(&mut self, _cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
+            Poll::Ready(Ok(()))
+        }
+        fn call(&mut self, req: http::Request<B>) -> Self::Future {
+            let inner = self.inner.clone();
+            match req.uri().path() {
+                "/ibc.core.channel.v1.Query/Channel" => {
+                    #[allow(non_camel_case_types)]
+                    struct ChannelSvc<T: Query>(pub Arc<T>);
+                    impl<T: Query> tonic::server::UnaryService<super::QueryChannelRequest> for ChannelSvc<T> {
+                        type Response = super::QueryChannelResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::QueryChannelRequest>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move { (*inner).channel(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let interceptor = inner.1.clone();
+                        let inner = inner.0;
+                        let method = ChannelSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = if let Some(interceptor) = interceptor {
+                            tonic::server::Grpc::with_interceptor(codec, interceptor)
+                        } else {
+                            tonic::server::Grpc::new(codec)
+                        };
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/ibc.core.channel.v1.Query/Channels" => {
+                    #[allow(non_camel_case_types)]
+                    struct ChannelsSvc<T: Query>(pub Arc<T>);
+                    impl<T: Query> tonic::server::UnaryService<super::QueryChannelsRequest> for ChannelsSvc<T> {
+                        type Response = super::QueryChannelsResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::QueryChannelsRequest>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move { (*inner).channels(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let interceptor = inner.1.clone();
+                        let inner = inner.0;
+                        let method = ChannelsSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = if let Some(interceptor) = interceptor {
+                            tonic::server::Grpc::with_interceptor(codec, interceptor)
+                        } else {
+                            tonic::server::Grpc::new(codec)
+                        };
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/ibc.core.channel.v1.Query/ConnectionChannels" => {
+                    #[allow(non_camel_case_types)]
+                    struct ConnectionChannelsSvc<T: Query>(pub Arc<T>);
+                    impl<T: Query>
+                        tonic::server::UnaryService<super::QueryConnectionChannelsRequest>
+                        for ConnectionChannelsSvc<T>
+                    {
+                        type Response = super::QueryConnectionChannelsResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::QueryConnectionChannelsRequest>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move { (*inner).connection_channels(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let interceptor = inner.1.clone();
+                        let inner = inner.0;
+                        let method = ConnectionChannelsSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = if let Some(interceptor) = interceptor {
+                            tonic::server::Grpc::with_interceptor(codec, interceptor)
+                        } else {
+                            tonic::server::Grpc::new(codec)
+                        };
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/ibc.core.channel.v1.Query/ChannelClientState" => {
+                    #[allow(non_camel_case_types)]
+                    struct ChannelClientStateSvc<T: Query>(pub Arc<T>);
+                    impl<T: Query>
+                        tonic::server::UnaryService<super::QueryChannelClientStateRequest>
+                        for ChannelClientStateSvc<T>
+                    {
+                        type Response = super::QueryChannelClientStateResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::QueryChannelClientStateRequest>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move { (*inner).channel_client_state(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let interceptor = inner.1.clone();
+                        let inner = inner.0;
+                        let method = ChannelClientStateSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = if let Some(interceptor) = interceptor {
+                            tonic::server::Grpc::with_interceptor(codec, interceptor)
+                        } else {
+                            tonic::server::Grpc::new(codec)
+                        };
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/ibc.core.channel.v1.Query/ChannelConsensusState" => {
+                    #[allow(non_camel_case_types)]
+                    struct ChannelConsensusStateSvc<T: Query>(pub Arc<T>);
+                    impl<T: Query>
+                        tonic::server::UnaryService<super::QueryChannelConsensusStateRequest>
+                        for ChannelConsensusStateSvc<T>
+                    {
+                        type Response = super::QueryChannelConsensusStateResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::QueryChannelConsensusStateRequest>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut =
+                                async move { (*inner).channel_consensus_state(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let interceptor = inner.1.clone();
+                        let inner = inner.0;
+                        let method = ChannelConsensusStateSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = if let Some(interceptor) = interceptor {
+                            tonic::server::Grpc::with_interceptor(codec, interceptor)
+                        } else {
+                            tonic::server::Grpc::new(codec)
+                        };
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/ibc.core.channel.v1.Query/PacketCommitment" => {
+                    #[allow(non_camel_case_types)]
+                    struct PacketCommitmentSvc<T: Query>(pub Arc<T>);
+                    impl<T: Query> tonic::server::UnaryService<super::QueryPacketCommitmentRequest>
+                        for PacketCommitmentSvc<T>
+                    {
+                        type Response = super::QueryPacketCommitmentResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::QueryPacketCommitmentRequest>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move { (*inner).packet_commitment(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let interceptor = inner.1.clone();
+                        let inner = inner.0;
+                        let method = PacketCommitmentSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = if let Some(interceptor) = interceptor {
+                            tonic::server::Grpc::with_interceptor(codec, interceptor)
+                        } else {
+                            tonic::server::Grpc::new(codec)
+                        };
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/ibc.core.channel.v1.Query/PacketCommitments" => {
+                    #[allow(non_camel_case_types)]
+                    struct PacketCommitmentsSvc<T: Query>(pub Arc<T>);
+                    impl<T: Query> tonic::server::UnaryService<super::QueryPacketCommitmentsRequest>
+                        for PacketCommitmentsSvc<T>
+                    {
+                        type Response = super::QueryPacketCommitmentsResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::QueryPacketCommitmentsRequest>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move { (*inner).packet_commitments(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let interceptor = inner.1.clone();
+                        let inner = inner.0;
+                        let method = PacketCommitmentsSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = if let Some(interceptor) = interceptor {
+                            tonic::server::Grpc::with_interceptor(codec, interceptor)
+                        } else {
+                            tonic::server::Grpc::new(codec)
+                        };
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/ibc.core.channel.v1.Query/PacketReceipt" => {
+                    #[allow(non_camel_case_types)]
+                    struct PacketReceiptSvc<T: Query>(pub Arc<T>);
+                    impl<T: Query> tonic::server::UnaryService<super::QueryPacketReceiptRequest>
+                        for PacketReceiptSvc<T>
+                    {
+                        type Response = super::QueryPacketReceiptResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::QueryPacketReceiptRequest>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move { (*inner).packet_receipt(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let interceptor = inner.1.clone();
+                        let inner = inner.0;
+                        let method = PacketReceiptSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = if let Some(interceptor) = interceptor {
+                            tonic::server::Grpc::with_interceptor(codec, interceptor)
+                        } else {
+                            tonic::server::Grpc::new(codec)
+                        };
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/ibc.core.channel.v1.Query/PacketAcknowledgement" => {
+                    #[allow(non_camel_case_types)]
+                    struct PacketAcknowledgementSvc<T: Query>(pub Arc<T>);
+                    impl<T: Query>
+                        tonic::server::UnaryService<super::QueryPacketAcknowledgementRequest>
+                        for PacketAcknowledgementSvc<T>
+                    {
+                        type Response = super::QueryPacketAcknowledgementResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::QueryPacketAcknowledgementRequest>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move { (*inner).packet_acknowledgement(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let interceptor = inner.1.clone();
+                        let inner = inner.0;
+                        let method = PacketAcknowledgementSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = if let Some(interceptor) = interceptor {
+                            tonic::server::Grpc::with_interceptor(codec, interceptor)
+                        } else {
+                            tonic::server::Grpc::new(codec)
+                        };
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/ibc.core.channel.v1.Query/PacketAcknowledgements" => {
+                    #[allow(non_camel_case_types)]
+                    struct PacketAcknowledgementsSvc<T: Query>(pub Arc<T>);
+                    impl<T: Query>
+                        tonic::server::UnaryService<super::QueryPacketAcknowledgementsRequest>
+                        for PacketAcknowledgementsSvc<T>
+                    {
+                        type Response = super::QueryPacketAcknowledgementsResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::QueryPacketAcknowledgementsRequest>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut =
+                                async move { (*inner).packet_acknowledgements(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let interceptor = inner.1.clone();
+                        let inner = inner.0;
+                        let method = PacketAcknowledgementsSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = if let Some(interceptor) = interceptor {
+                            tonic::server::Grpc::with_interceptor(codec, interceptor)
+                        } else {
+                            tonic::server::Grpc::new(codec)
+                        };
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/ibc.core.channel.v1.Query/UnreceivedPackets" => {
+                    #[allow(non_camel_case_types)]
+                    struct UnreceivedPacketsSvc<T: Query>(pub Arc<T>);
+                    impl<T: Query> tonic::server::UnaryService<super::QueryUnreceivedPacketsRequest>
+                        for UnreceivedPacketsSvc<T>
+                    {
+                        type Response = super::QueryUnreceivedPacketsResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::QueryUnreceivedPacketsRequest>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move { (*inner).unreceived_packets(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let interceptor = inner.1.clone();
+                        let inner = inner.0;
+                        let method = UnreceivedPacketsSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = if let Some(interceptor) = interceptor {
+                            tonic::server::Grpc::with_interceptor(codec, interceptor)
+                        } else {
+                            tonic::server::Grpc::new(codec)
+                        };
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/ibc.core.channel.v1.Query/UnreceivedAcks" => {
+                    #[allow(non_camel_case_types)]
+                    struct UnreceivedAcksSvc<T: Query>(pub Arc<T>);
+                    impl<T: Query> tonic::server::UnaryService<super::QueryUnreceivedAcksRequest>
+                        for UnreceivedAcksSvc<T>
+                    {
+                        type Response = super::QueryUnreceivedAcksResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::QueryUnreceivedAcksRequest>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move { (*inner).unreceived_acks(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let interceptor = inner.1.clone();
+                        let inner = inner.0;
+                        let method = UnreceivedAcksSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = if let Some(interceptor) = interceptor {
+                            tonic::server::Grpc::with_interceptor(codec, interceptor)
+                        } else {
+                            tonic::server::Grpc::new(codec)
+                        };
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/ibc.core.channel.v1.Query/NextSequenceReceive" => {
+                    #[allow(non_camel_case_types)]
+                    struct NextSequenceReceiveSvc<T: Query>(pub Arc<T>);
+                    impl<T: Query>
+                        tonic::server::UnaryService<super::QueryNextSequenceReceiveRequest>
+                        for NextSequenceReceiveSvc<T>
+                    {
+                        type Response = super::QueryNextSequenceReceiveResponse;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::QueryNextSequenceReceiveRequest>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move { (*inner).next_sequence_receive(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let interceptor = inner.1.clone();
+                        let inner = inner.0;
+                        let method = NextSequenceReceiveSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = if let Some(interceptor) = interceptor {
+                            tonic::server::Grpc::with_interceptor(codec, interceptor)
+                        } else {
+                            tonic::server::Grpc::new(codec)
+                        };
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                _ => Box::pin(async move {
+                    Ok(http::Response::builder()
+                        .status(200)
+                        .header("grpc-status", "12")
+                        .header("content-type", "application/grpc")
+                        .body(tonic::body::BoxBody::empty())
+                        .unwrap())
+                }),
+            }
+        }
+    }
+    impl<T: Query> Clone for QueryServer<T> {
+        fn clone(&self) -> Self {
+            let inner = self.inner.clone();
+            Self { inner }
+        }
+    }
+    impl<T: Query> Clone for _Inner<T> {
+        fn clone(&self) -> Self {
+            Self(self.0.clone(), self.1.clone())
+        }
+    }
+    impl<T: std::fmt::Debug> std::fmt::Debug for _Inner<T> {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            write!(f, "{:?}", self.0)
+        }
+    }
+    impl<T: Query> tonic::transport::NamedService for QueryServer<T> {
+        const NAME: &'static str = "ibc.core.channel.v1.Query";
     }
 }
