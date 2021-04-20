@@ -1,9 +1,14 @@
 ---------------------------- MODULE MC_TwoChains ----------------------------
 
+\* @type: () => Int;
 MaxHeight == 4
+\* @type: () => Int;
 NrClientsChainA == 2
+\* @type: () => Int;
 NrClientsChainB == 2
+\* @type: () => Set(Str);
 ClientIDsChainA == {"B1", "B2"}
+\* @type: () => Set(Str);
 ClientIDsChainB == {"A1", "A2"}
 
 VARIABLES 

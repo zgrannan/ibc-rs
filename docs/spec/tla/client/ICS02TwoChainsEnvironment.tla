@@ -63,11 +63,13 @@ ChainB == INSTANCE Chain
                chainStore <- chainBstore,
                incomingDatagrams <- datagramsChainB
                
+\* @type: (Str) => CHAINSTORE;
 GetChainByID(chainID) ==
     IF chainID = "chainA"
     THEN chainAstore
     ELSE chainBstore 
     
+\* @type: (Str) => Int;
 GetNrClientsByID(chainID) ==
     IF chainID = "chainA"
     THEN NrClientsChainA

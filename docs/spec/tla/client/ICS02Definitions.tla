@@ -43,12 +43,14 @@ SetHeights(h1, h2) == {h \in 1..10 : h1 <= h /\ h <= h2}
 (****************************** ClientStates *******************************
     A client state is a set of heights 
  ***************************************************************************)
+\* @type: (Set(Str), Int) => Set(CLIENTSTATE);
 ClientStates(ClientIDs, maxHeight) ==
     [
         clientID : ClientIDs,
         heights : SUBSET(1..maxHeight)
     ] 
     
+\* @type: () => CLIENTSTATE;
 NullClientState ==
     [
         clientID |-> nullClientID,
@@ -66,6 +68,7 @@ NullClientState ==
       Stores the heights of the client for the counterparty chain.
       
  ***************************************************************************)
+\* @type: (Int, Set(Str), Int) => Set(CHAINSTORE);
 ChainStores(NrClients, ClientIDs, maxHeight) ==    
     [
         height : 1..maxHeight,
@@ -74,18 +77,21 @@ ChainStores(NrClients, ClientIDs, maxHeight) ==
 
 (******************************** Datagrams ********************************)
 \* Set of datagrams
+\* @type: (Set(Str), Int) => Set(DATAGRAM);
 Datagrams(ClientIDs, maxHeight) ==
     [type : {"CreateClient"}, clientID : ClientIDs, height : 1..maxHeight]
     \union
     [type : {"ClientUpdate"}, clientID : ClientIDs, height : 1..maxHeight]   
 
 \* Set of client datagrams for a specific set ClientIDs of client IDs.
+\* @type: (Set(Str), Set(Int)) => Set(DATAGRAM);
 ClientDatagrams(ClientIDs, Heights) ==
     [type : {"CreateClient"}, clientID : ClientIDs, height : Heights]
     \union
     [type : {"ClientUpdate"}, clientID : ClientIDs, height : Heights]   
 
 \* Null datagram    
+\* @type: () => DATAGRAM;
 NullDatagram == 
     [type |-> "null"] 
 
@@ -95,6 +101,7 @@ NullDatagram ==
 \* Initial value of the chain store for ICS02: 
 \*      - height is initialized to 1
 \*      - the counterparty clients are uninitialized
+\* @type: (Int, Set(Str)) => CHAINSTORE;
 ICS02InitChainStore(NrClients, ClientIDs) == 
     [
         height |-> 1,
@@ -106,6 +113,7 @@ ICS02InitChainStore(NrClients, ClientIDs) ==
  ***************************************************************************)
 
 \* get the ID of chainID's counterparty chain    
+\* @type: (Str) => Str;
 GetCounterpartyChainID(chainID) ==
     IF chainID = "chainA" THEN "chainB" ELSE "chainA"
      

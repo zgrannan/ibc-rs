@@ -1,7 +1,10 @@
 --------------------------- MODULE MC_SingleChain ---------------------------
 
+\* @type: () => Int;
 MaxHeight == 4
+\* @type: () => Int;
 NrClientsChainA == 2
+\* @type: () => Set(Str);
 ClientIDsChainA == {"B1", "B2"}
 
 VARIABLES 
