@@ -64,8 +64,6 @@ ClientDatagrams(srcChainID, dstChainID, relayer) ==
     LET srcClientHeight == GetMaxCounterpartyClientHeight(dstChain) IN
     LET srcClientID == GetClientID(srcChainID) IN
 
-    LET emptySetDatagrams == {} IN
-
     \* check if the relayer chain height for srcChainID should be updated
     LET srcRelayerChainHeight == 
         IF relayer[srcChainID] < srcChainHeight
@@ -93,7 +91,7 @@ ClientDatagrams(srcChainID, dstChainID, relayer) ==
                    height |-> srcChainHeight,
                    clientID |-> srcClientID
                  ]}
-            ELSE emptySetDatagrams IN                   
+            ELSE {} IN                   
                     
     [datagrams|-> dstDatagrams, relayerUpdate |-> updatedRelayer]    
    
@@ -114,8 +112,6 @@ ConnectionDatagrams(srcChainID, dstChainID) ==
 
     LET srcHeight == srcChain.height IN
     LET srcClientHeight == GetMaxCounterpartyClientHeight(srcChain) IN
-    
-    LET emptySetDatagrams == {} IN
 
     LET dstDatagrams ==
         IF dstConnectionEnd.state = "UNINIT" /\ srcConnectionEnd.state = "UNINIT" THEN 
@@ -158,7 +154,7 @@ ConnectionDatagrams(srcChainID, dstChainID) ==
                 connectionID |-> dstConnectionEnd.connectionID, \* "connBtoA" (if srcChainID = "chainA", dstChainID = "chainB")
                 proofHeight |-> srcHeight
             ]} 
-        ELSE emptySetDatagrams IN
+        ELSE {} IN
 
     dstDatagrams
                 
@@ -181,8 +177,6 @@ ChannelDatagrams(srcChainID, dstChainID) ==
     LET dstChannelID == GetChannelID(dstChainID) IN
 
     LET srcHeight == srcChain.height IN
-    
-    LET emptySetDatagrams == {} IN
 
     LET dstDatagrams ==
         IF dstChannelEnd.state = "UNINIT" /\ srcChannelEnd.state = "UNINIT" THEN 
@@ -240,7 +234,7 @@ ChannelDatagrams(srcChainID, dstChainID) ==
                 proofHeight |-> srcHeight
             ]}
            
-        ELSE emptySetDatagrams IN
+        ELSE {} IN
 
     dstDatagrams
 

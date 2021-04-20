@@ -85,6 +85,7 @@ EXTENDS Integers, FiniteSets, Sequences
         clientID: Str, 
         counterpartyClientID: Str, 
         connectionID: Str, 
+        desiredConnectionID: Str,
         counterpartyConnectionID: Str, 
         versions: Set(Int), 
         portID: Str, 
@@ -133,7 +134,9 @@ ConnectionStates == {"UNINIT", "INIT", "TRYOPEN", "OPEN"}
 ChannelStates == {"UNINIT", "INIT", "TRYOPEN", "OPEN", "CLOSED"}
 ChannelOrder == {"ORDERED", "UNORDERED"} 
 
+\* @type: (Set(Int)) => Int;
 Max(S) == CHOOSE x \in S: \A y \in S: y <= x 
+\* @type: (Set(Int)) => Int;
 Min(S) == CHOOSE x \in S: \A y \in S: y >= x 
 
 (******************************* ChannelEnds *******************************
@@ -170,6 +173,7 @@ Min(S) == CHOOSE x \in S: \A y \in S: y >= x
       
     Note: we omit channel versions and connection hops.
  ***************************************************************************)   
+\* @type: (Str, Int) => Set(CHAN);
 ChannelEnds(channelOrdering, maxPacketSeq) ==
     IF channelOrdering = "UNORDERED"
     THEN \* set of unordered channels
@@ -197,6 +201,7 @@ ChannelEnds(channelOrdering, maxPacketSeq) ==
     
 (******* PacketCommitments, PacketReceipts, PacketAcknowledgements *********)
 \* Set of packet commitments
+\* @type: (Set(Int), Int) => Set(PACKETCOMM);
 PacketCommitments(Heights, maxPacketSeq) ==
     [
         portID : PortIDs,
@@ -206,6 +211,7 @@ PacketCommitments(Heights, maxPacketSeq) ==
     ] 
     
 \* Set of packet receipts
+\* @type: (Int) => Set(PACKETREC);
 PacketReceipts(maxPacketSeq) ==
     [
         portID : PortIDs,
@@ -214,6 +220,7 @@ PacketReceipts(maxPacketSeq) ==
     ] 
     
 \* Set of packet acknowledgements    
+\* @type: (Int) => Set(PACKETACK);
 PacketAcknowledgements(maxPacketSeq) ==
     [
         portID : PortIDs,
@@ -249,6 +256,7 @@ PacketAcknowledgements(maxPacketSeq) ==
     - channelEnd : a channel end record 
       Stores data about the channel associated with this connection end.  
  ***************************************************************************)
+\* @type: (Str, Int, Set(Int)) => Set(CONN);
 ConnectionEnds(channelOrdering, maxPacketSeq, Versions) ==
     [
         state : ConnectionStates,
@@ -262,6 +270,7 @@ ConnectionEnds(channelOrdering, maxPacketSeq, Versions) ==
     
 (********************************* Packets *********************************)
 \* Set of packets
+\* @type: (Set(Int), Int) => Set(PACKET);
 Packets(Heights, maxPacketSeq) ==
     [
         sequence : 1..maxPacketSeq,
@@ -303,6 +312,7 @@ Packets(Heights, maxPacketSeq) ==
         
     A chain store is the combination of the provable and private stores.
  ***************************************************************************)
+\* @type: (Set(Int), Str, Int, Set(Int)) => Set(CHAINSTORE);
 ChainStores(Heights, channelOrdering, maxPacketSeq, Versions) ==    
     [
         height : Heights,
@@ -316,6 +326,7 @@ ChainStores(Heights, channelOrdering, maxPacketSeq, Versions) ==
 
 (******************************** Datagrams ********************************)
 \* Set of datagrams
+\* @type: (Set(Int), Int, Set(Int)) => Set(DATAGRAM);
 Datagrams(Heights, maxPacketSeq, Versions) ==
     [
         type : {"ClientCreate"}, 
@@ -399,6 +410,7 @@ NullDatagram ==
     
 (**************************** PacketLogEntries *****************************)
 \* Set of packet log entries
+\* @type: (Set(Int), Int) => Set(LOGENTRY);
 PacketLogEntries(Heights, maxPacketSeq) == 
     [
         type : {"PacketSent"},
@@ -480,6 +492,7 @@ InitOrderedChannelEnd ==
 \*      - clientID, counterpartyClientID are uninitialized  
 \*      - versions is an arbitrary (non-empty) subset of the set {1, .., maxVersion}   
 \*      - channelEnd is initialized based on channelOrdering      
+\* @type: (Set(Int), Str) => Set(CONN);
 InitConnectionEnds(Versions, channelOrdering) ==
     IF channelOrdering = "ORDERED"
     THEN [
@@ -507,6 +520,7 @@ InitConnectionEnds(Versions, channelOrdering) ==
 \*      - the connection end is initialized to InitConnectionEnd 
 \*      - the packet committments, receipts, acknowledgements, and 
 \*        packets to acknowledge are empty  
+\* @type: (Set(Int), Str) => Set(CHAINSTORE);
 InitChainStore(Versions, channelOrdering) == 
     [
         height : {1},
@@ -536,17 +550,20 @@ InitHistory ==
  Client helper operators
  ***************************************************************************)
 
-\* get the ID of chainID's counterparty chain    
+\* get the ID of chainID's counterparty chain 
+\* @type: (Str) => Str;   
 GetCounterpartyChainID(chainID) ==
     \* IF chainID = "chainA" THEN AsID("chainB") ELSE AsID("chainA")    
     IF chainID = "chainA" THEN "chainB" ELSE "chainA"
  
 \* get the client ID of the client for chainID 
+\* @type: (Str) => Str;   
 GetClientID(chainID) ==
     \* IF chainID = "chainA" THEN AsID("clA") ELSE AsID("clB")
     IF chainID = "chainA" THEN "clA" ELSE "clB"
         
 \* get the client ID of the client for chainID's counterparty chain           
+\* @type: (Str) => Str;   
 GetCounterpartyClientID(chainID) ==
     \* IF chainID = "chainA" THEN AsID("clB") ELSE AsID("clA")
     IF chainID = "chainA" THEN "clB" ELSE "clA"
@@ -583,6 +600,7 @@ IsCounterpartyClientHeightOnChain(chain, h) ==
  ***************************************************************************)
 
 \* get the connection ID of the connection end at chainID
+\* @type: (Str) => Str;   
 GetConnectionID(chainID) ==
     IF chainID = "chainA"
     THEN "connAtoB"
@@ -591,6 +609,7 @@ GetConnectionID(chainID) ==
          ELSE nullConnectionID
 
 \* get the connection ID of the connection end at chainID's counterparty chain
+\* @type: (Str) => Str;   
 GetCounterpartyConnectionID(chainID) ==
     IF chainID = "chainA"
     THEN "connBtoA"
@@ -604,6 +623,7 @@ GetConnectionEnd(chain) ==
     chain.connectionEnd
     
 \* pick the minimal version from a set of versions
+\* @type: (Set(Int)) => Set(Int);
 PickVersion(versions) == 
     IF versions /= {}
     THEN LET minVersion == Min(versions) IN
@@ -636,6 +656,7 @@ IsConnectionOpen(chain) ==
  ***************************************************************************)
 
 \* get the channel ID of the channel end at the connection end of chainID
+\* @type: (Str) => Str;   
 GetChannelID(chainID) ==
     IF chainID = "chainA"
     THEN "chanAtoB"
@@ -644,6 +665,7 @@ GetChannelID(chainID) ==
          ELSE nullChannelID
          
 \* get the channel ID of the channel end at chainID's counterparty chain
+\* @type: (Str) => Str;   
 GetCounterpartyChannelID(chainID) ==
     IF chainID = "chainA"
     THEN "chanBtoA"
@@ -652,6 +674,7 @@ GetCounterpartyChannelID(chainID) ==
          ELSE nullChannelID
          
 \* get the port ID at chainID
+\* @type: (Str) => Str;   
 GetPortID(chainID) ==
     IF chainID = "chainA"
     THEN "portA"
@@ -660,6 +683,7 @@ GetPortID(chainID) ==
          ELSE nullPortID
    
 \* get the port ID at chainID's counterparty chain
+\* @type: (Str) => Str;   
 GetCounterpartyPortID(chainID) ==
     IF chainID = "chainA"
     THEN "portB"

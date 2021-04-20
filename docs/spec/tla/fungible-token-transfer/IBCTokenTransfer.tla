@@ -247,6 +247,8 @@ Spec == Init /\ [][Next]_vars /\ Fairness
  ***************************************************************************)     
 
 RECURSIVE Sum(_)
+UNROLL_TIMES_Sum == 10
+UNROLL_DEFAULT_Sum == 0
 
 \* sum of elements in a set
 Sum(S) ==

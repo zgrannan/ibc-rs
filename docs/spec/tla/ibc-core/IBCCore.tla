@@ -262,6 +262,7 @@ GetChainByID(chainID) ==
         
 \* returns true if there is a "ClientUpdate" datagram
 \* in the incoming datagrams for chainID           
+\* @type: (Str, Int) => Bool;
 IsClientUpdateInIncomingDatagrams(chainID, h) ==
     LET clID == GetCounterpartyClientID(chainID) IN
     IF chainID = "chainA"
@@ -272,6 +273,7 @@ IsClientUpdateInIncomingDatagrams(chainID, h) ==
    
 \* returns true if there is a "ClientUpdate" datagram
 \* in the outgoing datagrams for chainID             
+\* @type: (Str, Int) => Bool;
 IsClientUpdateInOutgoingDatagrams(chainID, h) ==
     LET clID == GetCounterpartyClientID(chainID) IN
     [type |-> "ClientUpdate", clientID |-> clID, height |-> h] 
@@ -279,6 +281,7 @@ IsClientUpdateInOutgoingDatagrams(chainID, h) ==
             
 \* returns true if there is a "ConnOpenInit" datagram 
 \* in outgoing datagrams for chainID
+\* @type: (Str) => Bool;
 IsConnOpenInitInOutgoingDatagrams(chainID) ==
     LET clID == GetClientID(chainID) IN
     LET counterpartyClID == GetCounterpartyClientID(chainID) IN 
@@ -293,6 +296,7 @@ IsConnOpenInitInOutgoingDatagrams(chainID) ==
             
 \* returns true if there is a "ChanOpenInit" datagram  
 \* in outgoing datagrams for chainID
+\* @type: (Str) => Bool;
 IsChanOpenInitInOutgoingDatagrams(chainID) ==
     LET chanID == GetChannelID(chainID) IN
     LET counterpartyChanID == GetCounterpartyChannelID(chainID) IN
@@ -302,6 +306,7 @@ IsChanOpenInitInOutgoingDatagrams(chainID) ==
 
 \* returns true if there is a "ChanCloseInit" datagram  
 \* in outgoing datagrams for chainID
+\* @type: (Str) => Bool;
 IsChanCloseInitInOutgoingDatagrams(chainID) ==
     LET chanID == GetChannelID(chainID) IN
     [type |-> "ChanCloseInit", 
@@ -319,13 +324,13 @@ IsChanCloseInitInOutgoingDatagrams(chainID) ==
 \* the connection never goes to UNINIT         
 ConnectionInitInv ==
     /\ historyChainA.connInit => ~IsConnectionUninit(chainAstore)
-    /\ historyChainB.connInit => ~IsConnectionUninit(GetChainByID("chainB"))
+    /\ historyChainB.connInit => ~IsConnectionUninit(chainBstore)
 
 \* once connTryOpen is set to TRUE in the history variable, 
 \* the connection never goes to UNINIT         
 ConnectionTryOpenInv ==
     /\ historyChainA.connTryOpen => ~IsConnectionUninit(chainAstore)
-    /\ historyChainB.connTryOpen => ~IsConnectionUninit(GetChainByID("chainB"))
+    /\ historyChainB.connTryOpen => ~IsConnectionUninit(chainBstore)
 
 \* once connOpen is set to TRUE in the history variable, 
 \* the connection never goes to UNINIT, INIT, or TRYOPEN         
@@ -333,9 +338,9 @@ ConnectionOpenInv ==
     /\ historyChainA.connOpen => (/\ ~IsConnectionUninit(chainAstore)
                                   /\ ~IsConnectionInit(chainAstore)
                                   /\ ~IsConnectionTryOpen(chainAstore))
-    /\ historyChainB.connOpen => (/\ ~IsConnectionUninit(GetChainByID("chainB"))
-                                  /\ ~IsConnectionInit(GetChainByID("chainB"))
-                                  /\ ~IsConnectionTryOpen(GetChainByID("chainB")))
+    /\ historyChainB.connOpen => (/\ ~IsConnectionUninit(chainBstore)
+                                  /\ ~IsConnectionInit(chainBstore)
+                                  /\ ~IsConnectionTryOpen(chainBstore))
                                   
 (***************************************************************************
  Invariants: channel datagrams

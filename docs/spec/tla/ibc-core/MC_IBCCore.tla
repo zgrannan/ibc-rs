@@ -1,16 +1,30 @@
 ----------------------------- MODULE MC_IBCCore -----------------------------
 
+EXTENDS IBCCoreDefinitions
+
+\* @type: () => Int;
 MaxHeight == 2
+\* @type: () => Int;
 MaxVersion == 2
+\* @type: () => Int;
 MaxPacketSeq == 1
+\* @type: () => Bool;
 ClientDatagramsRelayer1 == TRUE
+\* @type: () => Bool;
 ClientDatagramsRelayer2 == FALSE
+\* @type: () => Bool;
 ConnectionDatagramsRelayer1 == TRUE
+\* @type: () => Bool;
 ConnectionDatagramsRelayer2 == FALSE
+\* @type: () => Bool;
 ChannelDatagramsRelayer1 == TRUE
+\* @type: () => Bool;
 ChannelDatagramsRelayer2 == FALSE
+\* @type: () => Bool;
 PacketDatagramsRelayer1 == TRUE
+\* @type: () => Bool;
 PacketDatagramsRelayer2 == FALSE
+\* @type: () => Str;
 ChannelOrdering == "UNORDERED"
 
 VARIABLES 
@@ -41,7 +55,7 @@ VARIABLES
     \* @type: HISTORY;
     historyChainA, \* history variables for ChainA
     \* @type: HISTORY;
-    historyChainB, \* history variables for ChainB
+    historyChainB, \* history variables for ChainB 
     \* @type: Seq(LOGENTRY);
     packetLog, \* packet log 
     \* @type: Int;
