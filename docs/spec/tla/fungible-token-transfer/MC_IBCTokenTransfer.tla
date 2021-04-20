@@ -1,9 +1,14 @@
 ------------------------- MODULE MC_IBCTokenTransfer ------------------------
 
+\* @type: () => Int;
 MaxHeight == 5
+\* @type: () => Int;
 MaxPacketSeq == 5
+\* @type: () => Int;
 MaxBalance == 5
+\* @type: () => Str;
 NativeDenominationChainA == "atom"
+\* @type: () => Str;
 NativeDenominationChainB == "eth"
 
 VARIABLES 

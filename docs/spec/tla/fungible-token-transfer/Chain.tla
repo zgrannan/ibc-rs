@@ -40,6 +40,7 @@ Heights == 1..MaxHeight \* set of possible heights of the chains in the system
  ***************************************************************************)
 \* Create a packet: Abstract away from timestamp. 
 \* Assume timeoutHeight is MaxHeight
+\* @type: (PACKETDATA) => PACKET;
 CreatePacket(packetData) ==
     LET channelEnd == chainStore.channelEnd IN
     [

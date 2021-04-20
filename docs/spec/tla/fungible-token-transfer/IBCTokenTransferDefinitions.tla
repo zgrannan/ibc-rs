@@ -163,7 +163,7 @@ Max(S) == CHOOSE x \in S: \A y \in S: y <= x
     - version -- a string
       The version is "ics20-1" for fungible token transfer
  ***************************************************************************)       
-    
+\* @type: () => Set(CHAN);
 ChannelEnds ==
     [
         state : ChannelStates,
@@ -287,6 +287,7 @@ ChainStores(Heights, maxPacketSeq, maxBalance, NativeDenominations) ==
     
 (******************************** Datagrams ********************************)
 \* Set of datagrams
+\* @type: (Set(Int), Int, Int, Set(Str)) => Set(DATAGRAM);
 Datagrams(Heights, maxPacketSeq, maxBalance, NativeDenominations) ==
     [type : {"PacketRecv"}, 
      packet : Packets(Heights, maxPacketSeq, maxBalance, 
@@ -305,6 +306,7 @@ NullDatagram ==
     
 (**************************** PacketLogEntries *****************************)
 \* Set of packet log entries
+\* @type: (Set(Int), Int, Int, Set(Str)) => Set(LOGENTRY);
 PacketLogEntries(Heights, maxPacketSeq, maxBalance, NativeDenominations) == 
     [
         type : {"PacketSent"},
@@ -337,6 +339,7 @@ PacketLogEntries(Heights, maxPacketSeq, maxBalance, NativeDenominations) ==
  ***************************************************************************)
 
 \* get the ID of chainID's counterparty chain    
+\* @type: (Str) => Str;
 GetCounterpartyChainID(chainID) ==
     IF chainID = "chainA" THEN "chainB" ELSE "chainA"
       
@@ -348,6 +351,7 @@ GetMaxCounterpartyClientHeight(chain) ==
     ELSE nullHeight
 
 \* get the channel ID of the channel end at chainID
+\* @type: (Str) => Str;
 GetChannelID(chainID) ==
     IF chainID = "chainA"
     THEN "chanAtoB"
@@ -356,6 +360,7 @@ GetChannelID(chainID) ==
          ELSE nullChannelID
          
 \* get the channel ID of the channel end at chainID's counterparty chain
+\* @type: (Str) => Str;
 GetCounterpartyChannelID(chainID) ==
     IF chainID = "chainA"
     THEN "chanBtoA"
@@ -364,6 +369,7 @@ GetCounterpartyChannelID(chainID) ==
          ELSE nullChannelID
      
 \* get the port ID at chainID
+\* @type: (Str) => Str;
 GetPortID(chainID) ==
     IF chainID = "chainA"
     THEN "portA"
@@ -372,6 +378,7 @@ GetPortID(chainID) ==
          ELSE nullPortID
    
 \* get the port ID at chainID's counterparty chain
+\* @type: (Str) => Str;
 GetCounterpartyPortID(chainID) ==
     IF chainID = "chainA"
     THEN "portB"
@@ -391,6 +398,7 @@ GetLatestHeight(chain) ==
 \*      - state is "OPEN" (we assume channel handshake has successfully finished)
 \*      - order is "UNORDERED" (requirement of ICS20)
 \*      - channelID, counterpartyChannelID 
+\* @type: (Str) => CHAN;
 InitUnorderedChannelEnd(ChainID) ==
     [
         state |-> "OPEN",
@@ -408,6 +416,7 @@ InitUnorderedChannelEnd(ChainID) ==
 \*      - the channelEnd is initialized to InitUnorderedChannelEnd
 \*      - the packet committments, receipts, acknowledgements, and packets  
 \*        to acknowledge are empty
+\* @type: (Str) => CHAINSTORE;
 ICS20InitChainStore(ChainID) == 
     [
         height |-> 1,

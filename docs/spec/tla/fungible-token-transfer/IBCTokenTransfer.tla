@@ -80,6 +80,7 @@ ChainB == INSTANCE Chain
  ***************************************************************************)
 
 \* get chain store by ID
+\* @type: (Str) => CHAINSTORE; 
 GetChainByID(chainID) ==
     IF chainID = "chainA"
     THEN chainAstore
@@ -251,6 +252,7 @@ UNROLL_TIMES_Sum == 10
 UNROLL_DEFAULT_Sum == 0
 
 \* sum of elements in a set
+\* @type: (Set(Int)) => Int; 
 Sum(S) ==
   IF S = {}
   THEN 0
@@ -258,6 +260,7 @@ Sum(S) ==
     x + Sum(S \ {x})
     
 \* get the native denomination based on chainID
+\* @type: (Str) => Str;
 GetNativeDenomination(chainID) ==
     IF chainID = "chainA"
     THEN NativeDenominationChainA
@@ -275,6 +278,7 @@ EscrowAccountsDomain ==
             chainID \in ChainIDs}    
 
 \* set of all denominations
+\* @type: (Set(Seq(Str)));
 Denominations ==
     {<<NativeDenominationChainA>>, <<NativeDenominationChainB>>}
     \union
@@ -323,6 +327,7 @@ GetAmountsInFlight(chainID, nativeDenom) ==
     {d.amount : d \in inFlightDataOfDenomination}
     
 \* compute sum over accounts that have chainID's native denomination
+\* @type: (Str) => Int;
 SumOverLocalAccounts(chainID) ==
     \* get the native denomination of chainID
     LET nativeDenomination == GetNativeDenomination(chainID) IN
@@ -350,6 +355,7 @@ SumOverEscrowAccounts(chainID) ==
     Sum(escrowAccountAmounts)
 
 \* compute the sum over the amounts of packets in flight
+\* @type: (Str) => Int; 
 SumOverPacketsInFlight(chainID) ==
     \* get the native denomination of chainID
     LET nativeDenomination == GetNativeDenomination(chainID) IN
@@ -361,6 +367,7 @@ SumOverPacketsInFlight(chainID) ==
     Sum(amountsInFlight)
 
 \* compute the sum over the amounts in bank accounts for prefixed denomination
+\* @type: (Str) => Int; 
 SumOverBankAccountsWithPrefixedDenoms(chainID) ==
     \* get the native denomination of chainID
     LET nativeDenomination == GetNativeDenomination(chainID) IN

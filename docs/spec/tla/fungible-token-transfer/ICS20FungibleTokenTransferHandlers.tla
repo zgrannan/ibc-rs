@@ -11,7 +11,7 @@ EXTENDS Integers, FiniteSets, Sequences, Bank, IBCTokenTransferDefinitions
 \*      - accounts is the map of bank accounts
 \*      - escrowAccounts is the map of escrow accounts
 \*      - sender, receiver are chain IDs (used as addresses)
-\* @type: (ACCOUNT -> Int, ACCOUNT -> Int, Seq(Str), Int, Str, Str) => [denomination: Seq(Str), amount: Int, sender: Str, receiver: Str];
+\* @type: (ACCOUNT -> Int, ACCOUNT -> Int, Seq(Str), Int, Str, Str) => PACKETDATA;
 CreateOutgoingPacketData(accounts, escrowAccounts, denomination, amount, sender, receiver) ==
     \* sending chain is source if the denomination is of length 1  
     \* or if the denomination is not prefixed by the sender's port and channel ID  
@@ -182,6 +182,9 @@ RefundTokens(accounts, escrowAccounts, packet, maxBalance) ==
               ]
     
 \* acknowledge an ICS20 packet
+(* @type: (ACCOUNT -> Int, ACCOUNT -> Int, PACKET, Bool, Int) => 
+            [accounts: ACCOUNT -> Int, escrowAccounts: ACCOUNT -> Int];
+*)
 OnPaketAck(accounts, escrowAccounts, packet, ack, maxBalance) ==
     IF ~ack
     THEN RefundTokens(accounts, escrowAccounts, packet, maxBalance)
@@ -191,6 +194,9 @@ OnPaketAck(accounts, escrowAccounts, packet, ack, maxBalance) ==
          ]
 
 \* timeout an ICS20 packet
+(* @type: (ACCOUNT -> Int, ACCOUNT -> Int, PACKET, Int) => 
+            [accounts: ACCOUNT -> Int, escrowAccounts: ACCOUNT -> Int];
+*)
 OnTimeoutPacket(accounts, escrowAccounts, packet, maxBalance) ==
     RefundTokens(accounts, escrowAccounts, packet, maxBalance) 
 
