@@ -1,8 +1,12 @@
 -------------------------- MODULE MC_IBCPacketDelay -------------------------
 
+\* @type: () => Int;
 MaxHeight == 3
+\* @type: () => Str;
 ChannelOrdering == "UNORDERED"
+\* @type: () => Int;
 MaxPacketSeq == 1
+\* @type: () => Int;
 MaxDelay == 1
 
 VARIABLES 

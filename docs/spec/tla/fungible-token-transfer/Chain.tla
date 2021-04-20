@@ -89,7 +89,7 @@ TokenTransferUpdate(chainID, packetDatagram, log) ==
  ***************************************************************************)       
 \* Advance the height of the chain until MaxHeight is reached
 AdvanceChain ==
-    /\ chainStore.height + 1 \in Heights
+    /\ chainStore.height < MaxHeight
     /\ chainStore' = [chainStore EXCEPT !.height = chainStore.height + 1]
     /\ UNCHANGED <<incomingPacketDatagrams, appPacketSeq, packetLog>>
     /\ UNCHANGED <<accounts, escrowAccounts>>
