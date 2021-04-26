@@ -79,3 +79,53 @@ pub fn process(
     output.emit(IbcEvent::UpgradeClient(event_attributes.into()));
     Ok(output.with_result(result))
 }
+
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr;
+
+    // use crate::events::IbcEvent;
+    // use crate::handler::HandlerOutput;
+    // use crate::ics02_client::client_state::AnyClientState;
+    use crate::ics02_client::error::Kind;
+    use crate::ics02_client::handler::dispatch;
+    //use crate::ics02_client::handler::ClientResult::Upgrade;
+    //use crate::ics02_client::header::Header;
+    use crate::ics02_client::msgs::upgrade_client::MsgUpgradeAnyClient;
+    use crate::ics02_client::msgs::ClientMsg;
+    use crate::ics24_host::identifier::ClientId;
+    use crate::mock::client_state::{MockClientState, MockConsensusState};
+    use crate::mock::context::MockContext;
+    use crate::mock::header::MockHeader;
+    use crate::test_utils::get_dummy_account_id;
+    use crate::Height;
+
+#[test]
+fn test_upgrade_nonexisting_client() {
+    let client_id = ClientId::from_str("mockclient1").unwrap();
+    let signer = get_dummy_account_id();
+
+    let ctx = MockContext::default().with_client(&client_id, Height::new(0, 42));
+
+    let msg = MsgUpgradeAnyClient {
+        client_id: ClientId::from_str("nonexistingclient").unwrap(),
+        client_state: MockClientState(MockHeader::new(Height::new(0, 46))).into(),
+        consensus_state: MockConsensusState(MockHeader::new(Height::new(0, 46))).into(),
+        signer,
+    };
+
+    let output = dispatch(&ctx, ClientMsg::UpgradeClient(msg.clone()));
+
+    match output {
+        Ok(_) => {
+            panic!("unexpected success (expected error)");
+        }
+        Err(err) => {
+            assert_eq!(err.kind(), &Kind::ClientNotFound(msg.client_id));
+        }
+    }
+}
+
+}
+
+
