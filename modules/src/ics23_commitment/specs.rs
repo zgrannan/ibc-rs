@@ -1,6 +1,11 @@
+use std::convert::TryFrom;
+
 use ics23::ProofSpec;
+use serde::{Serialize, Serializer};
 
 use ibc_proto::ics23::ProofSpec as ProtoProofSpec;
+
+use crate::ics23_commitment::error::Error;
 
 /// An array of proof specifications.
 ///
@@ -9,6 +14,7 @@ use ibc_proto::ics23::ProofSpec as ProtoProofSpec;
 /// Additionally, this type also aids in the conversion from `ProofSpec` types from crate `ics23`
 /// into proof specifications as represented in the `ibc_proto` type; see the
 /// `From` trait(s) below.
+#[derive(Clone, Debug, PartialEq)]
 pub struct ProofSpecs {
     specs: Vec<ProofSpec>,
 }
@@ -42,5 +48,27 @@ impl From<ProofSpecs> for Vec<ProtoProofSpec> {
             raw_specs.push(decoded);
         }
         raw_specs
+    }
+}
+
+impl TryFrom<Vec<ProtoProofSpec>> for ProofSpecs {
+    type Error = Error;
+
+    fn try_from(_proto_value: Vec<ProtoProofSpec>) -> Result<Self, Self::Error> {
+        todo!()
+    }
+}
+
+impl Eq for ProofSpecs {}
+
+impl Serialize for ProofSpecs {
+    fn serialize<S>(
+        &self,
+        _serializer: S,
+    ) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+    where
+        S: Serializer,
+    {
+        todo!()
     }
 }

@@ -27,7 +27,7 @@ pub struct ClientState {
     pub max_clock_drift: Duration,
     pub frozen_height: Height,
     pub latest_height: Height,
-    // pub proof_specs: ::std::vec::Vec<super::super::super::super::ics23::ProofSpec>,
+    pub proof_specs: ProofSpecs,
     pub upgrade_path: Vec<String>,
     pub allow_update: AllowUpdate,
 }
@@ -50,6 +50,7 @@ impl ClientState {
         max_clock_drift: Duration,
         latest_height: Height,
         frozen_height: Height,
+        proof_specs: ProofSpecs,
         upgrade_path: Vec<String>,
         allow_update: AllowUpdate,
     ) -> Result<ClientState, Error> {
@@ -91,6 +92,7 @@ impl ClientState {
             max_clock_drift,
             frozen_height,
             latest_height,
+            proof_specs,
             upgrade_path,
             allow_update,
         })
@@ -190,6 +192,10 @@ impl TryFrom<RawClientState> for ClientState {
                 .ok_or_else(|| Kind::InvalidRawClientState.context("missing frozen height"))?
                 .try_into()
                 .map_err(|_| Kind::InvalidRawHeight)?,
+            proof_specs: raw
+                .proof_specs
+                .try_into()
+                .map_err(|e| Kind::InvalidRawClientState.context(e))?,
             upgrade_path: raw.upgrade_path,
             allow_update: AllowUpdate {
                 after_expiry: raw.allow_update_after_expiry,
@@ -228,6 +234,7 @@ mod tests {
     use tendermint_rpc::endpoint::abci_query::AbciQuery;
 
     use crate::ics07_tendermint::client_state::{AllowUpdate, ClientState};
+    use crate::ics23_commitment::specs::ProofSpecs;
     use crate::ics24_host::identifier::ChainId;
     use crate::test::test_serialization_roundtrip;
     use crate::Height;
@@ -258,6 +265,7 @@ mod tests {
             max_clock_drift: Duration,
             latest_height: Height,
             frozen_height: Height,
+            proof_specs: ProofSpecs,
             upgrade_path: Vec<String>,
             allow_update: AllowUpdate,
         }
@@ -274,6 +282,7 @@ mod tests {
             max_clock_drift: Duration::new(3, 0),
             latest_height: Height::new(0, 10),
             frozen_height: Height::default(),
+            proof_specs: ProofSpecs::cosmos(),
             upgrade_path: vec!["".to_string()],
             allow_update: AllowUpdate {
                 after_expiry: false,
@@ -341,6 +350,7 @@ mod tests {
                 p.max_clock_drift,
                 p.latest_height,
                 p.frozen_height,
+                p.proof_specs,
                 p.upgrade_path,
                 p.allow_update,
             );
@@ -366,6 +376,7 @@ pub mod test_util {
     use crate::ics02_client::client_state::AnyClientState;
     use crate::ics02_client::height::Height;
     use crate::ics07_tendermint::client_state::{AllowUpdate, ClientState};
+    use crate::ics23_commitment::specs::ProofSpecs;
     use crate::ics24_host::identifier::ChainId;
 
     pub fn get_dummy_tendermint_client_state(tm_header: Header) -> AnyClientState {
@@ -381,6 +392,7 @@ pub mod test_util {
                     u64::from(tm_header.height),
                 ),
                 Height::zero(),
+                ProofSpecs::cosmos(),
                 vec!["".to_string()],
                 AllowUpdate {
                     after_expiry: false,

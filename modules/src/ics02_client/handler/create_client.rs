@@ -78,6 +78,7 @@ mod tests {
     use crate::mock::header::MockHeader;
     use crate::test_utils::get_dummy_account_id;
     use crate::Height;
+    use crate::ics23_commitment::specs::ProofSpecs;
 
     #[test]
     fn test_create_client_ok() {
@@ -237,6 +238,7 @@ mod tests {
                 after_misbehaviour: false,
             },
             upgrade_path: vec!["".to_string()],
+            proof_specs: ProofSpecs::cosmos(),
         });
 
         let msg = MsgCreateAnyClient::new(

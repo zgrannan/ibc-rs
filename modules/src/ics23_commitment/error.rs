@@ -8,4 +8,7 @@ pub enum Error {
 
     #[error("failed to decode commitment proof")]
     CommitmentProofDecodingFailed(DecodeError),
+
+    #[error("failed to decode commitment proof")]
+    InvalidProofSpecs(),
 }

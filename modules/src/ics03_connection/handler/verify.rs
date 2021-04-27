@@ -74,6 +74,7 @@ pub fn verify_connection_proof(
     }
 
     // The client must have the consensus state for the height where this proof was created.
+    // TODO(Adi): This verification may be redundant.
     if ctx
         .client_consensus_state(connection_end.client_id(), proof_height)
         .is_none()

@@ -44,6 +44,7 @@ use crate::error::{Error, Kind};
 use crate::event::monitor::EventBatch;
 use crate::keyring::{KeyEntry, KeyRing};
 use crate::light_client::{mock::LightClient as MockLightClient, LightClient};
+use ibc::ics23_commitment::specs::ProofSpecs;
 
 /// The representation of a mocked chain as the relayer sees it.
 /// The relayer runtime and the light client will engage with the MockChain to query/send tx; the
@@ -290,6 +291,7 @@ impl Chain for MockChain {
             Duration::from_millis(3000),
             height,
             Height::zero(),
+            ProofSpecs::cosmos(),
             vec!["upgrade/upgradedClient".to_string()],
             AllowUpdate {
                 after_expiry: false,

@@ -67,8 +67,8 @@ impl MsgConnectionOpenTry {
         &self.proofs
     }
 
-    /// Getter for accessing the `consensus_height` field from this message. Returns the special
-    /// value `0` if this field is not set.
+    /// Getter for accessing the `consensus_height` field from this message.
+    /// Returns the special `Height::zero()` if this field is not set.
     pub fn consensus_height(&self) -> Height {
         match self.proofs.consensus_proof() {
             None => Height::zero(),
