@@ -63,6 +63,7 @@ impl ClientDef for MockClient {
     fn verify_connection_state(
         &self,
         _client_state: &Self::ClientState,
+        _consensus_state: &Self::ConsensusState,
         _height: Height,
         _prefix: &CommitmentPrefix,
         _proof: &CommitmentProofBytes,

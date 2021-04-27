@@ -74,17 +74,11 @@ pub fn verify_connection_proof(
     }
 
     // The client must have the consensus state for the height where this proof was created.
-    // TODO(Adi): This verification may be redundant.
-    if ctx
+    let consensus_state = ctx
         .client_consensus_state(connection_end.client_id(), proof_height)
-        .is_none()
-    {
-        return Err(Kind::MissingClientConsensusState(
-            proof_height,
-            connection_end.client_id().clone(),
-        )
-        .into());
-    }
+        .ok_or_else(|| {
+            Kind::MissingClientConsensusState(proof_height, connection_end.client_id().clone())
+        })?;
 
     let client_def = AnyClient::from_client_type(client_state.client_type());
 
@@ -94,6 +88,7 @@ pub fn verify_connection_proof(
     Ok(client_def
         .verify_connection_state(
             &client_state,
+            &consensus_state,
             proof_height,
             connection_end.counterparty().prefix(),
             proof,

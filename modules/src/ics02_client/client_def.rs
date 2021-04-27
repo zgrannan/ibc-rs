@@ -47,9 +47,11 @@ pub trait ClientDef: Clone {
     ) -> Result<(), Box<dyn std::error::Error>>;
 
     /// Verify a `proof` that a connection state matches that of the input `connection_end`.
+    #[allow(clippy::too_many_arguments)]
     fn verify_connection_state(
         &self,
         client_state: &Self::ClientState,
+        consensus_state: &Self::ConsensusState,
         height: Height,
         prefix: &CommitmentPrefix,
         proof: &CommitmentProofBytes,
@@ -252,6 +254,7 @@ impl ClientDef for AnyClient {
     fn verify_connection_state(
         &self,
         client_state: &AnyClientState,
+        consensus_state: &AnyConsensusState,
         height: Height,
         prefix: &CommitmentPrefix,
         proof: &CommitmentProofBytes,
@@ -262,9 +265,13 @@ impl ClientDef for AnyClient {
             Self::Tendermint(client) => {
                 let client_state = downcast!(client_state => AnyClientState::Tendermint)
                     .ok_or_else(|| Kind::ClientArgsTypeMismatch(ClientType::Tendermint))?;
+                let consensus_state =
+                    downcast!(consensus_state => AnyConsensusState::Tendermint)
+                        .ok_or_else(|| Kind::ClientArgsTypeMismatch(ClientType::Tendermint))?;
 
                 client.verify_connection_state(
                     client_state,
+                    consensus_state,
                     height,
                     prefix,
                     proof,
@@ -277,9 +284,12 @@ impl ClientDef for AnyClient {
             Self::Mock(client) => {
                 let client_state = downcast!(client_state => AnyClientState::Mock)
                     .ok_or_else(|| Kind::ClientArgsTypeMismatch(ClientType::Mock))?;
+                let consensus_state = downcast!(consensus_state => AnyConsensusState::Mock)
+                    .ok_or_else(|| Kind::ClientArgsTypeMismatch(ClientType::Mock))?;
 
                 client.verify_connection_state(
                     client_state,
+                    consensus_state,
                     height,
                     prefix,
                     proof,

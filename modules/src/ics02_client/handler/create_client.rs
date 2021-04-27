@@ -72,13 +72,13 @@ mod tests {
     use crate::ics02_client::msgs::ClientMsg;
     use crate::ics07_tendermint::client_state::{AllowUpdate, ClientState};
     use crate::ics07_tendermint::header::test_util::get_dummy_tendermint_header;
+    use crate::ics23_commitment::specs::ProofSpecs;
     use crate::ics24_host::identifier::ClientId;
     use crate::mock::client_state::{MockClientState, MockConsensusState};
     use crate::mock::context::MockContext;
     use crate::mock::header::MockHeader;
     use crate::test_utils::get_dummy_account_id;
     use crate::Height;
-    use crate::ics23_commitment::specs::ProofSpecs;
 
     #[test]
     fn test_create_client_ok() {
