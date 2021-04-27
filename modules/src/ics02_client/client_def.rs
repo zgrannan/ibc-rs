@@ -55,7 +55,7 @@ pub trait ClientDef: Clone {
         height: Height,
         prefix: &CommitmentPrefix,
         proof: &CommitmentProofBytes,
-        connection_id: Option<&ConnectionId>,
+        connection_id: &ConnectionId,
         expected_connection_end: &ConnectionEnd,
     ) -> Result<(), Box<dyn std::error::Error>>;
 
@@ -258,7 +258,7 @@ impl ClientDef for AnyClient {
         height: Height,
         prefix: &CommitmentPrefix,
         proof: &CommitmentProofBytes,
-        connection_id: Option<&ConnectionId>,
+        connection_id: &ConnectionId,
         expected_connection_end: &ConnectionEnd,
     ) -> Result<(), Box<dyn std::error::Error>> {
         match self {

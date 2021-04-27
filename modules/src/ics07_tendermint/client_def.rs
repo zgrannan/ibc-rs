@@ -12,6 +12,7 @@ use crate::ics07_tendermint::header::Header;
 use crate::ics23_commitment::commitment::{CommitmentPrefix, CommitmentProofBytes, CommitmentRoot};
 use crate::ics24_host::identifier::ConnectionId;
 use crate::ics24_host::identifier::{ChannelId, ClientId, PortId};
+use crate::ics24_host::Path;
 use crate::Height;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -62,9 +63,10 @@ impl ClientDef for TendermintClient {
         _height: Height,
         _prefix: &CommitmentPrefix,
         _proof: &CommitmentProofBytes,
-        _connection_id: Option<&ConnectionId>,
+        connection_id: &ConnectionId,
         _expected_connection_end: &ConnectionEnd,
     ) -> Result<(), Box<dyn std::error::Error>> {
+        let _path_bytes = Path::Connections(connection_id.clone()).into_bytes();
         todo!()
     }
 

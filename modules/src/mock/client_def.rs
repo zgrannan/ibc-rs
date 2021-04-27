@@ -67,7 +67,7 @@ impl ClientDef for MockClient {
         _height: Height,
         _prefix: &CommitmentPrefix,
         _proof: &CommitmentProofBytes,
-        _connection_id: Option<&ConnectionId>,
+        _connection_id: &ConnectionId,
         _expected_connection_end: &ConnectionEnd,
     ) -> Result<(), Box<dyn std::error::Error>> {
         Ok(())

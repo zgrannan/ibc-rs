@@ -74,6 +74,9 @@ pub enum Kind {
     #[error("the client id does not match any client state: {0}")]
     MissingClient(ClientId),
 
+    #[error("proof verification failure: no connection id was set for the the counterparty")]
+    MissingCounterpartyConnectionId,
+
     #[error("client proof must be present")]
     NullClientProof,
 

@@ -63,6 +63,11 @@ pub fn verify_connection_proof(
     proof_height: Height,
     proof: &CommitmentProofBytes,
 ) -> Result<(), Error> {
+    let counterparty = connection_end.counterparty();
+    let counterparty_connection_id = counterparty
+        .connection_id()
+        .ok_or(Kind::MissingCounterpartyConnectionId)?;
+
     // Fetch the client state (IBC client on the local/host chain).
     let client_state = ctx
         .client_state(connection_end.client_id())
@@ -90,9 +95,9 @@ pub fn verify_connection_proof(
             &client_state,
             &consensus_state,
             proof_height,
-            connection_end.counterparty().prefix(),
+            counterparty.prefix(),
             proof,
-            connection_end.counterparty().connection_id(),
+            counterparty_connection_id,
             expected_conn,
         )
         .map_err(|_| Kind::InvalidProof)?)
