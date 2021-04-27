@@ -82,7 +82,7 @@ pub fn process(
 
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
+    use std::{convert::TryFrom, str::FromStr};
 
     // use crate::events::IbcEvent;
     // use crate::handler::HandlerOutput;
@@ -99,6 +99,10 @@ mod tests {
     use crate::mock::header::MockHeader;
     use crate::test_utils::get_dummy_account_id;
     use crate::Height;
+    //use ibc_proto::ibc::core::commitment::v1::MerkleProof;
+    //use crate::ics23_commitment::commitment::CommitmentProofBytes;
+    use ibc_proto::ibc::core::client::v1::MsgUpgradeClient as RawMsgUpgradeClient;
+
 
 #[test]
 fn test_upgrade_nonexisting_client() {
@@ -107,12 +111,35 @@ fn test_upgrade_nonexisting_client() {
 
     let ctx = MockContext::default().with_client(&client_id, Height::new(0, 42));
 
-    let msg = MsgUpgradeAnyClient {
-        client_id: ClientId::from_str("nonexistingclient").unwrap(),
-        client_state: MockClientState(MockHeader::new(Height::new(0, 46))).into(),
-        consensus_state: MockConsensusState(MockHeader::new(Height::new(0, 46))).into(),
-        signer,
+
+    let buf: Vec<u8>= Vec::new(); 
+    let buf2: Vec<u8>= Vec::new(); 
+    // prost::Message::encode(&proof, &mut buf).unwrap();
+    // MerkleProof::try_from(buf.into());
+
+    let raw_msg =  RawMsgUpgradeClient {
+        client_id: ClientId::from_str("nonexistingclient").unwrap().to_string(),
+        client_state: None,
+        consensus_state: None,
+        proof_upgrade_client: buf.into(),
+        proof_upgrade_consensus_state: buf2.into(),
+        signer: signer.to_string(),
     };
+
+    let mut msg: MsgUpgradeAnyClient =  MsgUpgradeAnyClient::try_from(raw_msg.clone()).unwrap();
+    msg.client_id = ClientId::from_str("nonexistingclient").unwrap();
+    msg.client_state = MockClientState(MockHeader::new(Height::new(0, 46))).into();
+    msg.consensus_state = MockConsensusState(MockHeader::new(Height::new(0, 46))).into();
+    msg.signer = signer;
+
+    // let msg = MsgUpgradeAnyClient {
+    //     client_id: ClientId::from_str("nonexistingclient").unwrap(),
+    //     client_state: MockClientState(MockHeader::new(Height::new(0, 46))).into(),
+    //     consensus_state: MockConsensusState(MockHeader::new(Height::new(0, 46))).into(),
+    //     proof_upgrade_client: MerkleProof::try_from(buf), 
+    //     proof_upgrade_consensus_state: (),
+    //     signer,
+    // };
 
     let output = dispatch(&ctx, ClientMsg::UpgradeClient(msg.clone()));
 
