@@ -84,75 +84,141 @@ pub fn process(
 mod tests {
     use std::{convert::TryFrom, str::FromStr};
 
-    // use crate::events::IbcEvent;
-    // use crate::handler::HandlerOutput;
-    // use crate::ics02_client::client_state::AnyClientState;
+    use crate::events::IbcEvent;
+    use crate::handler::HandlerOutput;
     use crate::ics02_client::error::Kind;
     use crate::ics02_client::handler::dispatch;
-    //use crate::ics02_client::handler::ClientResult::Upgrade;
-    //use crate::ics02_client::header::Header;
+    use crate::ics02_client::handler::ClientResult::Upgrade;
     use crate::ics02_client::msgs::upgrade_client::MsgUpgradeAnyClient;
     use crate::ics02_client::msgs::ClientMsg;
+    use crate::ics23_commitment::commitment::CommitmentProofBytes;
     use crate::ics24_host::identifier::ClientId;
     use crate::mock::client_state::{MockClientState, MockConsensusState};
     use crate::mock::context::MockContext;
     use crate::mock::header::MockHeader;
     use crate::test_utils::get_dummy_account_id;
     use crate::Height;
-    //use ibc_proto::ibc::core::commitment::v1::MerkleProof;
-    //use crate::ics23_commitment::commitment::CommitmentProofBytes;
-    use ibc_proto::ibc::core::client::v1::MsgUpgradeClient as RawMsgUpgradeClient;
+    use ibc_proto::ibc::core::commitment::v1::MerkleProof;
 
+    #[test]
+    fn test_update_client_ok() {
+        let client_id = ClientId::default();
+        let signer = get_dummy_account_id();
 
-#[test]
-fn test_upgrade_nonexisting_client() {
-    let client_id = ClientId::from_str("mockclient1").unwrap();
-    let signer = get_dummy_account_id();
+        let ctx = MockContext::default().with_client(&client_id, Height::new(0, 42));
 
-    let ctx = MockContext::default().with_client(&client_id, Height::new(0, 42));
+        let buf: Vec<u8> = Vec::new();
+        let buf2: Vec<u8> = Vec::new();
 
+        let c_bytes = CommitmentProofBytes::from(buf);
+        let cs_bytes = CommitmentProofBytes::from(buf2);
 
-    let buf: Vec<u8>= Vec::new(); 
-    let buf2: Vec<u8>= Vec::new(); 
-    // prost::Message::encode(&proof, &mut buf).unwrap();
-    // MerkleProof::try_from(buf.into());
+        let msg = MsgUpgradeAnyClient {
+            client_id: client_id.clone(),
+            client_state: MockClientState(MockHeader::new(Height::new(1, 26))).into(),
+            consensus_state: MockConsensusState(MockHeader::new(Height::new(1, 26))).into(),
+            proof_upgrade_client: MerkleProof::try_from(c_bytes).unwrap(),
+            proof_upgrade_consensus_state: MerkleProof::try_from(cs_bytes).unwrap(),
+            signer,
+        };
 
-    let raw_msg =  RawMsgUpgradeClient {
-        client_id: ClientId::from_str("nonexistingclient").unwrap().to_string(),
-        client_state: None,
-        consensus_state: None,
-        proof_upgrade_client: buf.into(),
-        proof_upgrade_consensus_state: buf2.into(),
-        signer: signer.to_string(),
-    };
+        let output = dispatch(&ctx, ClientMsg::UpgradeClient(msg.clone()));
 
-    let mut msg: MsgUpgradeAnyClient =  MsgUpgradeAnyClient::try_from(raw_msg.clone()).unwrap();
-    msg.client_id = ClientId::from_str("nonexistingclient").unwrap();
-    msg.client_state = MockClientState(MockHeader::new(Height::new(0, 46))).into();
-    msg.consensus_state = MockConsensusState(MockHeader::new(Height::new(0, 46))).into();
-    msg.signer = signer;
-
-    // let msg = MsgUpgradeAnyClient {
-    //     client_id: ClientId::from_str("nonexistingclient").unwrap(),
-    //     client_state: MockClientState(MockHeader::new(Height::new(0, 46))).into(),
-    //     consensus_state: MockConsensusState(MockHeader::new(Height::new(0, 46))).into(),
-    //     proof_upgrade_client: MerkleProof::try_from(buf), 
-    //     proof_upgrade_consensus_state: (),
-    //     signer,
-    // };
-
-    let output = dispatch(&ctx, ClientMsg::UpgradeClient(msg.clone()));
-
-    match output {
-        Ok(_) => {
-            panic!("unexpected success (expected error)");
+        match output {
+            Ok(HandlerOutput {
+                result,
+                mut events,
+                log,
+            }) => {
+                assert_eq!(events.len(), 1);
+                let event = events.pop().unwrap();
+                assert!(
+                    matches!(event, IbcEvent::UpgradeClient(e) if e.client_id() == &msg.client_id)
+                );
+                assert!(log.is_empty());
+                // Check the result
+                match result {
+                    Upgrade(upg_res) => {
+                        assert_eq!(upg_res.client_id, client_id);
+                        assert_eq!(upg_res.client_state, msg.client_state)
+                    }
+                    _ => panic!("upgrade handler result has incorrect type"),
+                }
+            }
+            Err(err) => {
+                panic!("unexpected error: {}", err);
+            }
         }
-        Err(err) => {
-            assert_eq!(err.kind(), &Kind::ClientNotFound(msg.client_id));
+    }
+
+    #[test]
+    fn test_upgrade_nonexisting_client() {
+        let client_id = ClientId::from_str("mockclient1").unwrap();
+        let signer = get_dummy_account_id();
+
+        let ctx = MockContext::default().with_client(&client_id, Height::new(0, 42));
+
+        let buf: Vec<u8> = Vec::new();
+        let buf2: Vec<u8> = Vec::new();
+
+        let c_bytes = CommitmentProofBytes::from(buf);
+        let cs_bytes = CommitmentProofBytes::from(buf2);
+
+        let msg = MsgUpgradeAnyClient {
+            client_id: ClientId::from_str("nonexistingclient").unwrap(),
+            client_state: MockClientState(MockHeader::new(Height::new(1, 26))).into(),
+            consensus_state: MockConsensusState(MockHeader::new(Height::new(1, 26))).into(),
+            proof_upgrade_client: MerkleProof::try_from(c_bytes).unwrap(),
+            proof_upgrade_consensus_state: MerkleProof::try_from(cs_bytes).unwrap(),
+            signer,
+        };
+
+        let output = dispatch(&ctx, ClientMsg::UpgradeClient(msg.clone()));
+
+        match output {
+            Ok(_) => {
+                panic!("unexpected success (expected error)");
+            }
+            Err(err) => {
+                assert_eq!(err.kind(), &Kind::ClientNotFound(msg.client_id));
+            }
+        }
+    }
+
+    #[test]
+    fn test_update_client_low_height() {
+        let client_id = ClientId::default();
+        let signer = get_dummy_account_id();
+
+        let ctx = MockContext::default().with_client(&client_id, Height::new(0, 42));
+
+        let buf: Vec<u8> = Vec::new();
+        let buf2: Vec<u8> = Vec::new();
+
+        let c_bytes = CommitmentProofBytes::from(buf);
+        let cs_bytes = CommitmentProofBytes::from(buf2);
+
+        let msg = MsgUpgradeAnyClient {
+            client_id,
+            client_state: MockClientState(MockHeader::new(Height::new(0, 26))).into(),
+            consensus_state: MockConsensusState(MockHeader::new(Height::new(0, 26))).into(),
+            proof_upgrade_client: MerkleProof::try_from(c_bytes).unwrap(),
+            proof_upgrade_consensus_state: MerkleProof::try_from(cs_bytes).unwrap(),
+            signer,
+        };
+
+        let output = dispatch(&ctx, ClientMsg::UpgradeClient(msg.clone()));
+
+        match output {
+            Ok(_) => {
+                panic!("unexpected success (expected error)");
+            }
+            Err(err) => {
+                assert_eq!(
+                    err.kind(),
+                    &Kind::LowUgradeHeight(Height::new(0, 42), msg.client_state.latest_height())
+                );
+            }
         }
     }
 }
-
-}
-
-
