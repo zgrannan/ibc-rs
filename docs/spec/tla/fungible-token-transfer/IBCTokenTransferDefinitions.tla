@@ -76,8 +76,7 @@ EXTENDS Integers, FiniteSets, Sequences
         packetCommitments: Set(PACKETCOMM), 
         packetsToAcknowledge: Seq(PACKETTOACK), 
         packetReceipts: Set(PACKETREC),
-        packetAcknowledgements: Set(PACKETACK),
-        escrowAccounts: ACCOUNT -> Int
+        packetAcknowledgements: Set(PACKETACK)
     ]; 
 *)   
 (* @typeAlias: DATAGRAM = 
