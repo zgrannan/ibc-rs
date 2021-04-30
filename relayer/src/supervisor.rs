@@ -13,7 +13,8 @@ use ibc::events::VecIbcEvents;
 use ibc::ics02_client::client_state::ClientState;
 use ibc::ics02_client::events::UpdateClient;
 use ibc::ics04_channel::channel::IdentifiedChannelEnd;
-use ibc::ics24_host::identifier::ClientId;
+
+use ibc::ics24_host::identifier::{ClientId, ConnectionId};
 use ibc::{
     events::IbcEvent,
     ics02_client::events::NewBlock,
@@ -141,16 +142,9 @@ impl Supervisor {
         for chains in [self.chains.clone(), self.chains.clone().swap()].iter() {
             let channels: Vec<IdentifiedChannelEnd> = chains.a.query_channels(req.clone())?;
             for channel in channels.iter() {
-                // Only clear packets for opened channels
                 // TODO next - more thought needed here as optimistic sends will fail to clear
                 // maybe instead just check if there are pending packets...but the new problem
                 // will be the reference height for clear vs events, etc.
-                if !channel
-                    .channel_end
-                    .state_matches(&ibc::ics04_channel::channel::State::Open)
-                {
-                    continue;
-                }
 
                 // get the channel's connection
                 let connection_id =
@@ -168,6 +162,24 @@ impl Supervisor {
                 let client = chains.a.query_client_state(client_id, Height::zero())?;
                 if client.chain_id() != chains.b.id() {
                     continue;
+                }
+                // Only clear packets for opened channels
+                if !channel
+                    .channel_end
+                    .state_matches(&ibc::ics04_channel::channel::State::Open)
+                {
+                    // create the path object and spawn worker
+                    let channel_object = Object::Channel(Channel {
+                        dst_chain_id: chains.b.id(),
+                        src_chain_id: chains.a.id(),
+                        src_channel_id: channel.channel_id.clone(),
+                        src_port_id: channel.port_id.clone(),
+                        src_connection_id: connection_id.clone(),
+                        src_client_id: client_id.clone(),
+                    });
+
+                    let worker = Worker::spawn(chains.clone(), channel_object.clone());
+                    self.workers.entry(channel_object).or_insert(worker);
                 }
 
                 // create the client object and spawn worker
@@ -261,6 +273,7 @@ impl Supervisor {
                         }
                     }
                     Object::Client(_) => {}
+                    Object::Channel(_) => {}
                 }
             }
         }
@@ -341,6 +354,7 @@ impl Worker {
         let result = match object {
             Object::UnidirectionalChannelPath(path) => self.run_uni_chan_path(path),
             Object::Client(client) => self.run_client(client),
+            Object::Channel(channel) => self.run_channel(channel),
         };
 
         if let Err(e) = result {
@@ -409,6 +423,48 @@ impl Worker {
         }
     }
 
+    /// Run the event loop for events associated with a [`Channel`].
+    fn run_channel(self, _channel: Channel) -> Result<(), BoxError> {
+
+        let done = '🥳';
+
+        let a_chain = self.chains.a.clone();
+        let b_chain = self.chains.b.clone();
+
+        let handshake_channel = channel::Channel::new(
+            connection: Connection,
+            ordering: Order,
+            a_port: PortId,
+            b_port: PortId,
+            version: Option<String>,
+        )
+
+        match channel.state {
+            ibc::ics04_channel::channel::State::Init => {
+
+                //check channel on counterparty b_chain: 
+                //if not open_try 
+                let x = handshake_channel.build_chan_open_try_and_send();
+                match x {
+                    Err(e) => {
+                        error!("Failed ChanTry {:?}: {:?}", handshake_channel .b_side, e);
+                        continue;
+                    }
+                    Ok(event) => {
+                        handshake_channel.b_side.channel_id = extract_channel_id(&event)?.clone();
+                        println!("{}  {} => {:#?}\n", done, b_chain.id(), event);
+                        try_success = true;
+                        break;
+                    }
+                }
+                //else if is in open_try finish last two steps 
+            }
+            _ => {}
+        }
+
+        todo!();
+    }
+
     /// Run the event loop for events associated with a [`UnidirectionalChannelPath`].
     fn run_uni_chan_path(self, path: UnidirectionalChannelPath) -> Result<(), BoxError> {
         let mut link = Link::new_from_opts(
@@ -472,6 +528,40 @@ impl Client {
 
 /// A unidirectional path from a source chain, channel and port.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct Channel {
+    /// Destination chain identifier.
+    pub dst_chain_id: ChainId,
+
+    /// Source chain identifier.
+    pub src_chain_id: ChainId,
+
+    /// Source channel identiier.
+    pub src_channel_id: ChannelId,
+
+    /// Source port identiier.
+    pub src_port_id: PortId,
+
+    /// Ordering 
+    pub order: Ordering, 
+
+    /// Source connection_id
+    pub connection: Connection,
+
+    ///temp
+    pub channel_end: IdentifiedChannelEnd,
+}
+
+impl Channel {
+    pub fn short_name(&self) -> String {
+        format!(
+            "{}/{}:{} -> {}",
+            self.src_channel_id, self.src_port_id, self.src_chain_id, self.dst_chain_id,
+        )
+    }
+}
+
+/// A unidirectional path from a source chain, channel and port.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct UnidirectionalChannelPath {
     /// Destination chain identifier.
     pub dst_chain_id: ChainId,
@@ -505,6 +595,8 @@ impl UnidirectionalChannelPath {
 pub enum Object {
     /// See [`Client`].
     Client(Client),
+    /// See [`Channel`].
+    Channel(Channel),
     /// See [`UnidirectionalChannelPath`].
     UnidirectionalChannelPath(UnidirectionalChannelPath),
 }
@@ -512,6 +604,12 @@ pub enum Object {
 impl From<Client> for Object {
     fn from(c: Client) -> Self {
         Self::Client(c)
+    }
+}
+
+impl From<Channel> for Object {
+    fn from(c: Channel) -> Self {
+        Self::Channel(c)
     }
 }
 
@@ -525,6 +623,7 @@ impl Object {
     pub fn src_chain_id(&self) -> &ChainId {
         match self {
             Self::Client(ref client) => &client.src_chain_id,
+            Self::Channel(ref channel) => &channel.src_chain_id,
             Self::UnidirectionalChannelPath(ref path) => &path.src_chain_id,
         }
     }
@@ -532,6 +631,7 @@ impl Object {
     pub fn dst_chain_id(&self) -> &ChainId {
         match self {
             Self::Client(ref client) => &client.dst_chain_id,
+            Self::Channel(ref channel) => &channel.dst_chain_id,
             Self::UnidirectionalChannelPath(ref path) => &path.dst_chain_id,
         }
     }
@@ -539,6 +639,7 @@ impl Object {
     pub fn short_name(&self) -> String {
         match self {
             Self::Client(ref client) => client.short_name(),
+            Self::Channel(ref channel) => channel.short_name(),
             Self::UnidirectionalChannelPath(ref path) => path.short_name(),
         }
     }
