@@ -185,6 +185,12 @@ impl OpenInit {
     pub fn set_height(&mut self, height: Height) {
         self.0.height = height;
     }
+    pub fn connection_id(&self) -> &ConnectionId  {
+        &self.0.connection_id
+    }
+    pub fn port_id(&self) -> &PortId  {
+        &self.0.port_id
+    }
 }
 
 impl From<Attributes> for OpenInit {
@@ -228,6 +234,12 @@ impl OpenTry {
     }
     pub fn set_height(&mut self, height: Height) {
         self.0.height = height;
+    }
+    pub fn connection_id(&self) -> &ConnectionId  {
+        &self.0.connection_id
+    }
+    pub fn port_id(&self) -> &PortId  {
+        &self.0.port_id
     }
 }
 
@@ -273,6 +285,12 @@ impl OpenAck {
     pub fn set_height(&mut self, height: Height) {
         self.0.height = height;
     }
+    pub fn connection_id(&self) -> &ConnectionId  {
+        &self.0.connection_id
+    }
+    pub fn port_id(&self) -> &PortId  {
+        &self.0.port_id
+    }
 }
 
 impl From<Attributes> for OpenAck {
@@ -316,6 +334,12 @@ impl OpenConfirm {
     }
     pub fn set_height(&mut self, height: Height) {
         self.0.height = height;
+    }
+    pub fn connection_id(&self) -> &ConnectionId  {
+        &self.0.connection_id
+    }
+    pub fn port_id(&self) -> &PortId  {
+        &self.0.port_id
     }
 }
 
