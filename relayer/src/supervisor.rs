@@ -13,7 +13,7 @@ use ibc::{events::VecIbcEvents, ics04_channel::events::{OpenAck, OpenConfirm, Op
 use ibc::ics02_client::client_state::ClientState;
 use ibc::ics02_client::events::UpdateClient;
 use ibc::ics04_channel::channel::IdentifiedChannelEnd;
-use crate::channel::ChannelSide;
+use crate::channel::{ChannelSide,extract_channel_id};
 
 use ibc::ics24_host::identifier::{ClientId, ConnectionId};
 use ibc::{
@@ -180,28 +180,35 @@ impl Supervisor {
                         connection_id: connection_id.clone(),
                     });
 
+
+
+                    debug!(
+                        "create workers: creating a worker for object {:?}", channel_object
+                    );
                     let worker = Worker::spawn(chains.clone(), channel_object.clone());
                     self.workers.entry(channel_object).or_insert(worker);
+
+                    continue;
                 }
 
-                // create the client object and spawn worker
-                let client_object = Object::Client(Client {
-                    dst_client_id: client_id.clone(),
-                    dst_chain_id: chains.a.id(),
-                    src_chain_id: client.chain_id(),
-                });
-                let worker = Worker::spawn(chains.clone(), client_object.clone());
-                self.workers.entry(client_object).or_insert(worker);
+                // // create the client object and spawn worker
+                // let client_object = Object::Client(Client {
+                //     dst_client_id: client_id.clone(),
+                //     dst_chain_id: chains.a.id(),
+                //     src_chain_id: client.chain_id(),
+                // });
+                // let worker = Worker::spawn(chains.clone(), client_object.clone());
+                // self.workers.entry(client_object).or_insert(worker);
 
-                // create the path object and spawn worker
-                let path_object = Object::UnidirectionalChannelPath(UnidirectionalChannelPath {
-                    dst_chain_id: chains.b.id(),
-                    src_chain_id: chains.a.id(),
-                    src_channel_id: channel.channel_id.clone(),
-                    src_port_id: channel.port_id.clone(),
-                });
-                let worker = Worker::spawn(chains.clone(), path_object.clone());
-                self.workers.entry(path_object).or_insert(worker);
+                // // create the path object and spawn worker
+                // let path_object = Object::UnidirectionalChannelPath(UnidirectionalChannelPath {
+                //     dst_chain_id: chains.b.id(),
+                //     src_chain_id: chains.a.id(),
+                //     src_channel_id: channel.channel_id.clone(),
+                //     src_port_id: channel.port_id.clone(),
+                // });
+                // let worker = Worker::spawn(chains.clone(), path_object.clone());
+                // self.workers.entry(path_object).or_insert(worker);
             }
         }
         Ok(())
@@ -309,6 +316,11 @@ impl Supervisor {
 
                 return None;
             }
+
+
+            debug!(
+                "process_batch -- worker for object creating a worker for object {:?}", object
+            );
 
             let worker = Worker::spawn(chains, object.clone());
             let worker = self.workers.entry(object).or_insert(worker);
@@ -438,11 +450,21 @@ impl Worker {
         let a_channel = self.chains.a.query_channel(&channel.src_port_id, &channel.src_channel_id, Height::zero())?;
 
 
+        let mut state = &ibc::ics04_channel::channel::State::Uninitialized;
+
+        let b_channel;
+
         let counterparty_channel_id = if a_channel.remote.channel_id.is_none() {
             Default::default()
-        } else {a_channel.remote.channel_id.clone().unwrap()};
+        } else {   
+            b_channel = self.chains.b.query_channel(&a_channel.remote.port_id.clone(),&a_channel.remote.channel_id.clone().unwrap(), Height::zero())?;
+            state = &b_channel.state;
+            a_channel.remote.channel_id.clone().unwrap()
 
-        let handshake_channel = RelayChannel {
+        };
+
+        
+        let mut handshake_channel = RelayChannel {
             ordering: a_channel.ordering().clone(),
             a_side: ChannelSide::new(
                 a_chain.clone(),
@@ -456,7 +478,7 @@ impl Worker {
                 connection.counterparty().client_id().clone(),
                 connection.counterparty().connection_id().unwrap().clone(),
                 a_channel.remote.port_id.clone(),
-                counterparty_channel_id,
+                counterparty_channel_id.clone(),
             ),
             connection_delay: connection.delay_period(),
             version: Some(a_channel.version.clone()),
@@ -465,26 +487,35 @@ impl Worker {
 
         if a_channel.state_matches(&ibc::ics04_channel::channel::State::Init){
             if a_channel.remote.channel_id.is_none() {
-                handshake_channel.build_chan_open_try_and_send()?;
+                debug!("chain {} has channel {} in state Init \n", a_chain.id(), channel.src_channel_id.clone()); 
+                let event = handshake_channel.build_chan_open_try_and_send()?;
+                handshake_channel.b_side.channel_id = extract_channel_id(&event)?.clone();
+                println!("{}  {} => {:#?}\n", done, b_chain.id(), event);
             }
         }else{ 
             if a_channel.state_matches(&ibc::ics04_channel::channel::State::TryOpen){
                 if a_channel.remote.channel_id.is_some() {
                     //Try chanOpenTry on b_chain
-                    handshake_channel.build_chan_open_ack_and_send()?;
+                   debug!("chain {} has channel {} in state TryOpen with counterparty {} in state {} \n", a_chain.id(), channel.src_channel_id.clone(), counterparty_channel_id.clone(), state); 
+                   let event = handshake_channel.build_chan_open_ack_and_send()?; 
+                   println!("{}  {} => {:#?}\n", done, a_chain.id(), event); 
+
                 }//TODO else error 
             }else{
                 //if &a_channel.remote.channel_id().is_some(){
-                    let b_channel = b_chain.query_channel(&a_channel.remote.port_id(), &a_channel.remote.channel_id().unwrap(), Height::zero());
+                    // let b_channel = b_chain.query_channel(&a_channel.remote.port_id(), &a_channel.remote.channel_id().unwrap(), Height::zero());
                 
                     // if b_channel.is_err() {
                 //     break;
                 // }
                 match (
                     a_channel.state().clone(),
-                    b_channel.unwrap().state().clone()) 
+                    state) 
                         {
                         (ibc::ics04_channel::channel::State::Open, ibc::ics04_channel::channel::State::TryOpen) => {
+
+                            debug!("chain {} has channel {} in state Open counterparty TryOpen \n", a_chain.id(), channel.src_channel_id.clone()); 
+
                             // Confirm to b_chain
                              handshake_channel.build_chan_open_confirm_and_send()?;
                             
@@ -511,8 +542,10 @@ impl Worker {
                             match event 
                             {
                                 IbcEvent::OpenInitChannel(open_init) => {
-                                    debug!("[{}] channel handshake OpenInit [{}] channel from event OpenInit", 
+
+                                    debug!("worker of channel {} received an OpenInit from chain {:?} it should equal [{}] channel from event OpenInit",  
                                         handshake_channel.a_side.channel_id(), 
+                                        handshake_channel.a_side.chain_id(),
                                         open_init.channel_id().clone().unwrap());
                                     handshake_channel.build_chan_open_try_and_send()?;
                                     //if it has a counterparty do nothing 
@@ -520,8 +553,9 @@ impl Worker {
                                 }
 
                                 IbcEvent::OpenTryChannel(open_try) => {
-                                    debug!("[{}] channel handshake OpenTry  [{}] channel from event OpenTry ", 
+                                    debug!("[worker of channel {} received OpenTry from {:?} it should equal  [{}] channel from event OpenTry ", 
                                         handshake_channel.a_side.channel_id(),
+                                        handshake_channel.a_side.chain_id(),
                                         open_try.channel_id().clone().unwrap());
                                     handshake_channel.build_chan_open_ack_and_send()?;
                                     //check channel counterparty
@@ -530,8 +564,9 @@ impl Worker {
                                 }
                                 
                                 IbcEvent::OpenAckChannel(open_ack) => {
-                                    debug!("[{}] channel handshake OpenAck [{}] channel from event OpenAck", 
+                                    debug!("[{}] channel handshake OpenAck  from {:?} [{}] channel from event OpenAck", 
                                         handshake_channel.a_side.channel_id(),
+                                        handshake_channel.a_side.chain_id(),
                                         open_ack.channel_id().clone().unwrap()
                                     );
                                     handshake_channel.build_chan_close_confirm_and_send()?;
@@ -946,14 +981,14 @@ pub fn collect_events(src_chain: &dyn ChainHandle, batch: EventBatch) -> Collect
 
     for event in batch.events {
         match event {
-            IbcEvent::NewBlock(_) => {
-                collected.new_block = Some(event);
-            }
-            IbcEvent::UpdateClient(ref update) => {
-                if let Ok(object) = Object::for_update_client(update, src_chain) {
-                    collected.per_object.entry(object).or_default().push(event);
-                }
-            }
+            // IbcEvent::NewBlock(_) => {
+            //     collected.new_block = Some(event);
+            // }
+            // IbcEvent::UpdateClient(ref update) => {
+            //     if let Ok(object) = Object::for_update_client(update, src_chain) {
+            //         collected.per_object.entry(object).or_default().push(event);
+            //     }
+            // }
             IbcEvent::SendPacket(ref packet) => {
                 if let Ok(object) = Object::for_send_packet(packet, src_chain) {
                     collected.per_object.entry(object).or_default().push(event);

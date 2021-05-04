@@ -45,7 +45,7 @@ pub struct ChannelSide {
     client_id: ClientId,
     connection_id: ConnectionId,
     port_id: PortId,
-    channel_id: ChannelId,
+    pub channel_id: ChannelId,
 }
 
 impl ChannelSide {
@@ -843,7 +843,7 @@ impl Channel {
     }
 }
 
-fn extract_channel_id(event: &IbcEvent) -> Result<&ChannelId, ChannelError> {
+pub fn extract_channel_id(event: &IbcEvent) -> Result<&ChannelId, ChannelError> {
     match event {
         IbcEvent::OpenInitChannel(ev) => ev.channel_id().as_ref(),
         IbcEvent::OpenTryChannel(ev) => ev.channel_id().as_ref(),
@@ -884,8 +884,10 @@ fn check_destination_channel_state(
         Ok(())
     } else {
         Err(ChannelError::Failed(format!(
-            "channel {} already exist in an incompatible state",
-            channel_id
+            "channel {} already exist in an incompatible state existing is {} expected is {}",
+            channel_id,
+            existing_channel.state().clone(),
+            expected_channel.state().clone()
         )))
     }
 }
