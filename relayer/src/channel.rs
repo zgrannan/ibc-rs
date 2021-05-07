@@ -875,8 +875,8 @@ fn check_destination_channel_state(
         existing_channel.state().clone() as u32 <= expected_channel.state().clone() as u32;
 
     let good_channel_ids = existing_channel.counterparty().channel_id().is_none()
-        || existing_channel.counterparty().channel_id()
-            == expected_channel.counterparty().channel_id();
+        || existing_channel.counterparty().channel_id().clone()
+            == expected_channel.counterparty().channel_id().clone();
 
     // TODO check versions
 
@@ -884,10 +884,12 @@ fn check_destination_channel_state(
         Ok(())
     } else {
         Err(ChannelError::Failed(format!(
-            "channel {} already exist in an incompatible state existing is {} expected is {}",
+            "channel {} already exist in an incompatible state existing is {} expected is {} existing channel is {:?} and expected channel id is {:?} ",
             channel_id,
             existing_channel.state().clone(),
-            expected_channel.state().clone()
+            expected_channel.state().clone(),
+            existing_channel.counterparty().channel_id(),
+            expected_channel.counterparty().channel_id() 
         )))
     }
 }
