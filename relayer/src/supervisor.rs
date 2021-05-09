@@ -193,30 +193,30 @@ impl Supervisor {
                 //     continue;
                 // }
 
-                //Only clear packets for opened channels
-                if channel
-                    .channel_end
-                    .state_matches(&ibc::ics04_channel::channel::State::Open)
-                {
-                    // create the client object and spawn worker
-                    let client_object = Object::Client(Client {
-                        dst_client_id: client_id.clone(),
-                        dst_chain_id: chains.a.id(),
-                        src_chain_id: client.chain_id(),
-                    });
-                    let worker = Worker::spawn(chains.clone(), client_object.clone());
-                    self.workers.entry(client_object).or_insert(worker);
+            //     //Only clear packets for opened channels
+            //     if channel
+            //         .channel_end
+            //         .state_matches(&ibc::ics04_channel::channel::State::Open)
+            //     {
+            //         // create the client object and spawn worker
+            //         let client_object = Object::Client(Client {
+            //             dst_client_id: client_id.clone(),
+            //             dst_chain_id: chains.a.id(),
+            //             src_chain_id: client.chain_id(),
+            //         });
+            //         let worker = Worker::spawn(chains.clone(), client_object.clone());
+            //         self.workers.entry(client_object).or_insert(worker);
 
-                    // create the path object and spawn worker
-                    let path_object = Object::UnidirectionalChannelPath(UnidirectionalChannelPath {
-                        dst_chain_id: chains.b.id(),
-                        src_chain_id: chains.a.id(),
-                        src_channel_id: channel.channel_id.clone(),
-                        src_port_id: channel.port_id.clone(),
-                    });
-                    let worker = Worker::spawn(chains.clone(), path_object.clone());
-                    self.workers.entry(path_object).or_insert(worker);
-               }
+            //         // create the path object and spawn worker
+            //         let path_object = Object::UnidirectionalChannelPath(UnidirectionalChannelPath {
+            //             dst_chain_id: chains.b.id(),
+            //             src_chain_id: chains.a.id(),
+            //             src_channel_id: channel.channel_id.clone(),
+            //             src_port_id: channel.port_id.clone(),
+            //         });
+            //         let worker = Worker::spawn(chains.clone(), path_object.clone());
+            //         self.workers.entry(path_object).or_insert(worker);
+            //    }
             }
         }
         Ok(())
@@ -291,7 +291,7 @@ impl Supervisor {
                             worker.send_new_block(height, new_block)?;
                         }
                     }
-                    Object::Client(_) => {}
+                    //Object::Client(_) => {}
                     Object::Channel(_) => {}
                 }
             }
@@ -383,7 +383,7 @@ impl Worker {
     fn run(self, object: Object) {
         let result = match object.clone() {
             Object::UnidirectionalChannelPath(path) => self.run_uni_chan_path(path),
-            Object::Client(client) => self.run_client(client),
+            //Object::Client(client) => self.run_client(client),
             Object::Channel(channel) => self.run_channel(channel),
         };
 
@@ -635,9 +635,10 @@ impl Worker {
         };
 
         loop {
-            if let Ok(cmd) = self.rx.try_recv() {
-                match cmd {
-                    WorkerCmd::IbcEvents { batch } => {
+            if let  Ok(WorkerCmd::IbcEvents { batch })  = self.rx.try_recv() {
+                // Ok(cmd)
+                // match cmd {
+                //     WorkerCmd::IbcEvents { batch } => {
                         for event in batch.events {
                             match event {
                                 IbcEvent::OpenInitChannel(_open_init) => {}
@@ -772,7 +773,7 @@ impl Worker {
                                 _ => {}
                             }
                         }
-                    }
+                   // }
 
                     // WorkerCmd::NewBlock {
                     //     height: _,
@@ -782,7 +783,7 @@ impl Worker {
                     // } //link.a_to_b.clear_packets(height)?,
 
                     // _ => {}
-                }
+               // }
             }
         }
     }
@@ -909,19 +910,19 @@ impl UnidirectionalChannelPath {
 /// for processing.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Object {
-    /// See [`Client`].
-    Client(Client),
+    // /// See [`Client`].
+    // Client(Client),
     /// See [`Channel`].
     Channel(Channel),
     /// See [`UnidirectionalChannelPath`].
     UnidirectionalChannelPath(UnidirectionalChannelPath),
 }
 
-impl From<Client> for Object {
-    fn from(c: Client) -> Self {
-        Self::Client(c)
-    }
-}
+// impl From<Client> for Object {
+//     fn from(c: Client) -> Self {
+//         Self::Client(c)
+//     }
+// }
 
 impl From<Channel> for Object {
     fn from(c: Channel) -> Self {
@@ -938,7 +939,7 @@ impl From<UnidirectionalChannelPath> for Object {
 impl Object {
     pub fn src_chain_id(&self) -> &ChainId {
         match self {
-            Self::Client(ref client) => &client.src_chain_id,
+           // Self::Client(ref client) => &client.src_chain_id,
             Self::Channel(ref channel) => &channel.src_chain_id,
             Self::UnidirectionalChannelPath(ref path) => &path.src_chain_id,
         }
@@ -946,7 +947,7 @@ impl Object {
 
     pub fn dst_chain_id(&self) -> &ChainId {
         match self {
-            Self::Client(ref client) => &client.dst_chain_id,
+          //  Self::Client(ref client) => &client.dst_chain_id,
             Self::Channel(ref channel) => &channel.dst_chain_id,
             Self::UnidirectionalChannelPath(ref path) => &path.dst_chain_id,
         }
@@ -954,36 +955,36 @@ impl Object {
 
     pub fn short_name(&self) -> String {
         match self {
-            Self::Client(ref client) => client.short_name(),
+           // Self::Client(ref client) => client.short_name(),
             Self::Channel(ref channel) => channel.short_name(),
             Self::UnidirectionalChannelPath(ref path) => path.short_name(),
         }
     }
 
-    /// Build the object associated with the given [`UpdateClient`] event.
-    pub fn for_update_client(
-        e: &UpdateClient,
-        dst_chain: &dyn ChainHandle,
-    ) -> Result<Self, BoxError> {
-        let client_state = dst_chain.query_client_state(e.client_id(), Height::zero())?;
-        if client_state.refresh_time().is_none() {
-            return Err(format!(
-                "client '{}' on chain {} does not require refresh",
-                e.client_id(),
-                dst_chain.id()
-            )
-            .into());
-        }
+    // /// Build the object associated with the given [`UpdateClient`] event.
+    // pub fn for_update_client(
+    //     e: &UpdateClient,
+    //     dst_chain: &dyn ChainHandle,
+    // ) -> Result<Self, BoxError> {
+    //     let client_state = dst_chain.query_client_state(e.client_id(), Height::zero())?;
+    //     if client_state.refresh_time().is_none() {
+    //         return Err(format!(
+    //             "client '{}' on chain {} does not require refresh",
+    //             e.client_id(),
+    //             dst_chain.id()
+    //         )
+    //         .into());
+    //     }
 
-        let src_chain_id = client_state.chain_id();
+    //     let src_chain_id = client_state.chain_id();
 
-        Ok(Client {
-            dst_client_id: e.client_id().clone(),
-            dst_chain_id: dst_chain.id(),
-            src_chain_id,
-        }
-        .into())
-    }
+    //     Ok(Client {
+    //         dst_client_id: e.client_id().clone(),
+    //         dst_chain_id: dst_chain.id(),
+    //         src_chain_id,
+    //     }
+    //     .into())
+    // }
 
     /// Build the object associated with the given [`SendPacket`] event.
     pub fn for_send_packet(e: &SendPacket, src_chain: &dyn ChainHandle) -> Result<Self, BoxError> {
@@ -1181,11 +1182,11 @@ pub fn collect_events(src_chain: &dyn ChainHandle, batch: EventBatch) -> Collect
             IbcEvent::NewBlock(_) => {
                 collected.new_block = Some(event);
             }
-            IbcEvent::UpdateClient(ref update) => {
-                if let Ok(object) = Object::for_update_client(update, src_chain) {
-                    collected.per_object.entry(object).or_default().push(event);
-                }
-            }
+            // IbcEvent::UpdateClient(ref update) => {
+            //     if let Ok(object) = Object::for_update_client(update, src_chain) {
+            //         collected.per_object.entry(object).or_default().push(event);
+            //     }
+            // }
             IbcEvent::SendPacket(ref packet) => {
                 if let Ok(object) = Object::for_send_packet(packet, src_chain) {
                     collected.per_object.entry(object).or_default().push(event);
