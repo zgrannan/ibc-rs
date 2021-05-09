@@ -193,24 +193,30 @@ impl Supervisor {
                 //     continue;
                 // }
 
-                // // create the client object and spawn worker
-                // let client_object = Object::Client(Client {
-                //     dst_client_id: client_id.clone(),
-                //     dst_chain_id: chains.a.id(),
-                //     src_chain_id: client.chain_id(),
-                // });
-                // let worker = Worker::spawn(chains.clone(), client_object.clone());
-                // self.workers.entry(client_object).or_insert(worker);
+                //Only clear packets for opened channels
+                if channel
+                    .channel_end
+                    .state_matches(&ibc::ics04_channel::channel::State::Open)
+                {
+                    // create the client object and spawn worker
+                    let client_object = Object::Client(Client {
+                        dst_client_id: client_id.clone(),
+                        dst_chain_id: chains.a.id(),
+                        src_chain_id: client.chain_id(),
+                    });
+                    let worker = Worker::spawn(chains.clone(), client_object.clone());
+                    self.workers.entry(client_object).or_insert(worker);
 
-                // // create the path object and spawn worker
-                // let path_object = Object::UnidirectionalChannelPath(UnidirectionalChannelPath {
-                //     dst_chain_id: chains.b.id(),
-                //     src_chain_id: chains.a.id(),
-                //     src_channel_id: channel.channel_id.clone(),
-                //     src_port_id: channel.port_id.clone(),
-                // });
-                // let worker = Worker::spawn(chains.clone(), path_object.clone());
-                // self.workers.entry(path_object).or_insert(worker);
+                    // create the path object and spawn worker
+                    let path_object = Object::UnidirectionalChannelPath(UnidirectionalChannelPath {
+                        dst_chain_id: chains.b.id(),
+                        src_chain_id: chains.a.id(),
+                        src_channel_id: channel.channel_id.clone(),
+                        src_port_id: channel.port_id.clone(),
+                    });
+                    let worker = Worker::spawn(chains.clone(), path_object.clone());
+                    self.workers.entry(path_object).or_insert(worker);
+               }
             }
         }
         Ok(())
@@ -715,9 +721,7 @@ impl Worker {
                                         } //TODO else error
                                     }
 
-                                    //handshake_channel.build_chan_close_confirm_and_send()?;
-                                    //if it has an Open counterparty do nothing
-                                    //otherwise send openConfirm message
+                                
                                 }
                                 IbcEvent::OpenConfirmChannel(open_confirm) => {
                                     debug!("[{}] {} channel handshake OpenConfirm [{}] channel from event OpenConfirm {} ", 
@@ -726,10 +730,7 @@ impl Worker {
                                     handshake_channel.a_side.chain_id(),
                                     open_confirm.channel_id().clone().unwrap()
                                 );
-                                    // handshake_channel.a_side.channel_id(),
-                                    // open_confirm.channel_id().clone().unwrap());
-                                    //exit  worker ?
-                                    //launch path and client ?
+                                   
 
                                     let a_channel = self.chains.a.query_channel(
                                         &channel.src_port_id,
@@ -748,7 +749,6 @@ impl Worker {
                                         return Ok(());
                                     }
                                     stage = 4;
-
 
 
                                     if a_channel
@@ -774,19 +774,17 @@ impl Worker {
                         }
                     }
 
-                    WorkerCmd::NewBlock {
-                        height: _,
-                        new_block: _,
-                    } => {
-                        debug!("\n new block \n ");
-                    } //link.a_to_b.clear_packets(height)?,
+                    // WorkerCmd::NewBlock {
+                    //     height: _,
+                    //     new_block: _,
+                    // } => {
+                    //     debug!("\n new block \n ");
+                    // } //link.a_to_b.clear_packets(height)?,
 
-                    _ => {}
+                    // _ => {}
                 }
             }
         }
-
-        // todo!();
     }
 
     /// Run the event loop for events associated with a [`UnidirectionalChannelPath`].
@@ -1180,14 +1178,14 @@ pub fn collect_events(src_chain: &dyn ChainHandle, batch: EventBatch) -> Collect
 
     for event in batch.events {
         match event {
-            // IbcEvent::NewBlock(_) => {
-            //     collected.new_block = Some(event);
-            // }
-            // IbcEvent::UpdateClient(ref update) => {
-            //     if let Ok(object) = Object::for_update_client(update, src_chain) {
-            //         collected.per_object.entry(object).or_default().push(event);
-            //     }
-            // }
+            IbcEvent::NewBlock(_) => {
+                collected.new_block = Some(event);
+            }
+            IbcEvent::UpdateClient(ref update) => {
+                if let Ok(object) = Object::for_update_client(update, src_chain) {
+                    collected.per_object.entry(object).or_default().push(event);
+                }
+            }
             IbcEvent::SendPacket(ref packet) => {
                 if let Ok(object) = Object::for_send_packet(packet, src_chain) {
                     collected.per_object.entry(object).or_default().push(event);
