@@ -291,7 +291,7 @@ impl Supervisor {
                             worker.send_new_block(height, new_block)?;
                         }
                     }
-                    //Object::Client(_) => {}
+                    Object::Client(_) => {}
                     Object::Channel(_) => {}
                 }
             }
@@ -383,7 +383,7 @@ impl Worker {
     fn run(self, object: Object) {
         let result = match object.clone() {
             Object::UnidirectionalChannelPath(path) => self.run_uni_chan_path(path),
-            //Object::Client(client) => self.run_client(client),
+            Object::Client(client) => self.run_client(client),
             Object::Channel(channel) => self.run_channel(channel),
         };
 
@@ -503,6 +503,7 @@ impl Worker {
         };
 
         let mut stage = 0; //Nothing started
+        let mut found = false; 
 
         debug!(
             "\n [{}] initial handshake_channel is {:?}  \n ",
@@ -517,14 +518,16 @@ impl Worker {
                     pagination: ibc_proto::cosmos::base::query::pagination::all(),
                 };
 
-                let mut found = false; 
+                
                 let channels: Vec<IdentifiedChannelEnd> = b_chain.query_channels(req.clone())?;
                 for chan in channels.iter() { 
                     if chan.channel_end.remote.channel_id.is_some() && 
                         chan.channel_end.remote.channel_id.clone().unwrap() ==  channel.src_channel_id.clone() {
                            
                             debug!("[{}] found a pair channel {} on chain {}",channel.short_name(),chan.channel_id, handshake_channel.b_side.chain_id());
-                            found = true; 
+                            found = true;
+                            handshake_channel.b_side.channel_id = chan.channel_id.clone();
+
                             break;
                     }
                 }
@@ -654,24 +657,33 @@ impl Worker {
                                     );
 
 
-                                    if stage >=3 {
-                                        debug! ("[{}] channel in stage >= OpenAck that is it already processed its OpenAck event ", channel.short_name());
-                                        continue;
+                                    // if stage >=3 {
+                                    //     debug! ("[{}] channel in stage >= OpenAck that is it already processed its OpenAck event ", channel.short_name());
+                                    //     continue;
+                                    // }
+                                   // stage = 3 ;
+
+                                    if stage==1 && !found {
+                                        debug!("[{}] writting b_side before open_confirm {} ", channel.short_name(),handshake_channel.b_side.channel_id);
+
+                                                handshake_channel.b_side.channel_id = open_ack.counterparty_channel_id().clone().unwrap();
+                        
+                                                debug!("[{}] writting b_side after open_confirm {} ", channel.short_name(),handshake_channel.b_side.channel_id);
                                     }
-                                    stage = 3 ;
+
                                 
 
-                                    let a_channel = self.chains.a.query_channel(
-                                        &channel.src_port_id,
-                                        &channel.src_channel_id,
-                                        Height::zero(),
-                                    )?;
+                                    // let a_channel = self.chains.a.query_channel(
+                                    //     &channel.src_port_id,
+                                    //     &channel.src_channel_id,
+                                    //     Height::zero(),
+                                    // )?;
 
-                                    let b_channel = self.chains.b.query_channel(
-                                        &a_channel.remote.port_id.clone(),
-                                        &a_channel.remote.channel_id.clone().unwrap(),
-                                        Height::zero(),
-                                    )?;
+                                    // let b_channel = self.chains.b.query_channel(
+                                    //     &a_channel.remote.port_id.clone(),
+                                    //     &a_channel.remote.channel_id.clone().unwrap(),
+                                    //     Height::zero(),
+                                    // )?;
 
                                     debug!(
                                         "[{}] hanshake_channel b_side channel id is {}",
@@ -679,48 +691,51 @@ impl Worker {
                                         handshake_channel.b_side.channel_id()
                                     );
 
-                                    if a_channel
-                                        .state_matches(&ibc::ics04_channel::channel::State::Open)
-                                    {
-                                        debug!(
-                                            " [{}] channel {} is OPEN \n",
-                                            channel.short_name(),
-                                            channel.src_channel_id
-                                        );
-                                        if a_channel.remote.channel_id.is_some() {
-                                            if b_channel.state_matches(
-                                                &ibc::ics04_channel::channel::State::TryOpen,
-                                            ) {
-                                                debug!(
-                                                    " [{}] channel {} is TryOPEN \n ",
-                                                    channel.short_name(),
-                                                    a_channel.remote.channel_id.clone().unwrap()
-                                                );
+                                    let event = handshake_channel.build_chan_open_confirm_and_send()?;
+                                    println!("{}  {} => {:#?}\n",done,b_chain.id(),event);
+
+                                    // if a_channel
+                                    //     .state_matches(&ibc::ics04_channel::channel::State::Open)
+                                    // {
+                                    //     debug!(
+                                    //         " [{}] channel {} is OPEN \n",
+                                    //         channel.short_name(),
+                                    //         channel.src_channel_id
+                                    //     );
+                                    //     if a_channel.remote.channel_id.is_some() {
+                                    //         if b_channel.state_matches(
+                                    //             &ibc::ics04_channel::channel::State::TryOpen,
+                                    //         ) {
+                                    //             debug!(
+                                    //                 " [{}] channel {} is TryOPEN \n ",
+                                    //                 channel.short_name(),
+                                    //                 a_channel.remote.channel_id.clone().unwrap()
+                                    //             );
 
 
-                                                debug!(
-                                                    "\n [{}] sends build_chan_open_confirm_and_send \n on handshake_channel {:?}",
-                                                    channel.short_name(),
-                                                    handshake_channel
-                                                );  
+                                    //             debug!(
+                                    //                 "\n [{}] sends in loop build_chan_open_confirm_and_send \n on handshake_channel {:?}",
+                                    //                 channel.short_name(),
+                                    //                 handshake_channel
+                                    //             );  
 
-                                                debug!("[{}] writting b_side before open_confirm {} ", channel.short_name(),handshake_channel.b_side.channel_id);
+                                    //             debug!("[{}] writting b_side before open_confirm {} ", channel.short_name(),handshake_channel.b_side.channel_id);
 
-                                                handshake_channel.b_side.channel_id = a_channel.remote.channel_id.clone().unwrap();
+                                    //             handshake_channel.b_side.channel_id = a_channel.remote.channel_id.clone().unwrap();
                         
-                                                debug!("[{}] writting b_side after open_confirm {} ", channel.short_name(),handshake_channel.b_side.channel_id);
+                                    //             debug!("[{}] writting b_side after open_confirm {} ", channel.short_name(),handshake_channel.b_side.channel_id);
 
-                                                let event = handshake_channel
-                                                    .build_chan_open_confirm_and_send()?;
-                                                println!(
-                                                    "{}  {} => {:#?}\n",
-                                                    done,
-                                                    b_chain.id(),
-                                                    event
-                                                );
-                                            }
-                                        } //TODO else error
-                                    }
+                                    //             let event = handshake_channel
+                                    //                 .build_chan_open_confirm_and_send()?;
+                                    //             println!(
+                                    //                 "{}  {} => {:#?}\n",
+                                    //                 done,
+                                    //                 b_chain.id(),
+                                    //                 event
+                                    //             );
+                                    //         }
+                                    //     } //TODO else error
+                                    // }
 
                                 
                                 }
@@ -733,40 +748,46 @@ impl Worker {
                                 );
                                    
 
-                                    let a_channel = self.chains.a.query_channel(
-                                        &channel.src_port_id,
-                                        &channel.src_channel_id,
-                                        Height::zero(),
-                                    )?;
+                                    // let a_channel = self.chains.a.query_channel(
+                                    //     &channel.src_port_id,
+                                    //     &channel.src_channel_id,
+                                    //     Height::zero(),
+                                    // )?;
 
-                                    let b_channel = self.chains.b.query_channel(
-                                        &a_channel.remote.port_id.clone(),
-                                        &a_channel.remote.channel_id.clone().unwrap(),
-                                        Height::zero(),
-                                    )?;
+                                    // let b_channel = self.chains.b.query_channel(
+                                    //     &a_channel.remote.port_id.clone(),
+                                    //     &a_channel.remote.channel_id.clone().unwrap(),
+                                    //     Height::zero(),
+                                    // )?;
 
-                                    if stage >=4 {
-                                        debug! ("[{}] channel in stage >= OpenConfirm that is it already processed its OpenTry event ", channel.short_name());
-                                        return Ok(());
-                                    }
-                                    stage = 4;
+                                    // if stage >=4 {
+                                    //     debug! ("[{}] channel in stage >= OpenConfirm that is it already processed its OpenTry event ", channel.short_name());
+                                    //     return Ok(());
+                                    // }
+                                    // stage = 4;
 
+                                    println!(
+                                        "{}  {}  {}  Channel handshake finished for {:#?}\n",
+                                        done, done, done,  &channel.src_channel_id,
+                                    );
 
-                                    if a_channel
-                                        .state_matches(&ibc::ics04_channel::channel::State::Open)
-                                    {
-                                        if a_channel.remote.channel_id.is_some() {
-                                            if b_channel.state_matches(
-                                                &ibc::ics04_channel::channel::State::Open,
-                                            ) {
-                                                println!(
-                                                "{}  {}  {}  Channel handshake finished for {:#?}\n",
-                                                done, done, done,  &channel.src_channel_id,
-                                            );
-                                                return Ok(());
-                                            }
-                                        }
-                                    }
+                                    return Ok(());
+
+                                    // if a_channel
+                                    //     .state_matches(&ibc::ics04_channel::channel::State::Open)
+                                    // {
+                                    //     if a_channel.remote.channel_id.is_some() {
+                                    //         if b_channel.state_matches(
+                                    //             &ibc::ics04_channel::channel::State::Open,
+                                    //         ) {
+                                    //             println!(
+                                    //             "{}  {}  {}  Channel handshake finished for {:#?}\n",
+                                    //             done, done, done,  &channel.src_channel_id,
+                                    //         );
+                                    //             return Ok(());
+                                    //         }
+                                    //     }
+                                    // }
                                 }
                                 IbcEvent::CloseInitChannel(_) => {}
                                 IbcEvent::CloseConfirmChannel(_) => {}
@@ -910,19 +931,19 @@ impl UnidirectionalChannelPath {
 /// for processing.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Object {
-    // /// See [`Client`].
-    // Client(Client),
+    /// See [`Client`].
+    Client(Client),
     /// See [`Channel`].
     Channel(Channel),
     /// See [`UnidirectionalChannelPath`].
     UnidirectionalChannelPath(UnidirectionalChannelPath),
 }
 
-// impl From<Client> for Object {
-//     fn from(c: Client) -> Self {
-//         Self::Client(c)
-//     }
-// }
+impl From<Client> for Object {
+    fn from(c: Client) -> Self {
+        Self::Client(c)
+    }
+}
 
 impl From<Channel> for Object {
     fn from(c: Channel) -> Self {
@@ -939,7 +960,7 @@ impl From<UnidirectionalChannelPath> for Object {
 impl Object {
     pub fn src_chain_id(&self) -> &ChainId {
         match self {
-           // Self::Client(ref client) => &client.src_chain_id,
+            Self::Client(ref client) => &client.src_chain_id,
             Self::Channel(ref channel) => &channel.src_chain_id,
             Self::UnidirectionalChannelPath(ref path) => &path.src_chain_id,
         }
@@ -947,7 +968,7 @@ impl Object {
 
     pub fn dst_chain_id(&self) -> &ChainId {
         match self {
-          //  Self::Client(ref client) => &client.dst_chain_id,
+            Self::Client(ref client) => &client.dst_chain_id,
             Self::Channel(ref channel) => &channel.dst_chain_id,
             Self::UnidirectionalChannelPath(ref path) => &path.dst_chain_id,
         }
@@ -955,36 +976,36 @@ impl Object {
 
     pub fn short_name(&self) -> String {
         match self {
-           // Self::Client(ref client) => client.short_name(),
+            Self::Client(ref client) => client.short_name(),
             Self::Channel(ref channel) => channel.short_name(),
             Self::UnidirectionalChannelPath(ref path) => path.short_name(),
         }
     }
 
-    // /// Build the object associated with the given [`UpdateClient`] event.
-    // pub fn for_update_client(
-    //     e: &UpdateClient,
-    //     dst_chain: &dyn ChainHandle,
-    // ) -> Result<Self, BoxError> {
-    //     let client_state = dst_chain.query_client_state(e.client_id(), Height::zero())?;
-    //     if client_state.refresh_time().is_none() {
-    //         return Err(format!(
-    //             "client '{}' on chain {} does not require refresh",
-    //             e.client_id(),
-    //             dst_chain.id()
-    //         )
-    //         .into());
-    //     }
+    /// Build the object associated with the given [`UpdateClient`] event.
+    pub fn for_update_client(
+        e: &UpdateClient,
+        dst_chain: &dyn ChainHandle,
+    ) -> Result<Self, BoxError> {
+        let client_state = dst_chain.query_client_state(e.client_id(), Height::zero())?;
+        if client_state.refresh_time().is_none() {
+            return Err(format!(
+                "client '{}' on chain {} does not require refresh",
+                e.client_id(),
+                dst_chain.id()
+            )
+            .into());
+        }
 
-    //     let src_chain_id = client_state.chain_id();
+        let src_chain_id = client_state.chain_id();
 
-    //     Ok(Client {
-    //         dst_client_id: e.client_id().clone(),
-    //         dst_chain_id: dst_chain.id(),
-    //         src_chain_id,
-    //     }
-    //     .into())
-    // }
+        Ok(Client {
+            dst_client_id: e.client_id().clone(),
+            dst_chain_id: dst_chain.id(),
+            src_chain_id,
+        }
+        .into())
+    }
 
     /// Build the object associated with the given [`SendPacket`] event.
     pub fn for_send_packet(e: &SendPacket, src_chain: &dyn ChainHandle) -> Result<Self, BoxError> {
@@ -1182,11 +1203,11 @@ pub fn collect_events(src_chain: &dyn ChainHandle, batch: EventBatch) -> Collect
             IbcEvent::NewBlock(_) => {
                 collected.new_block = Some(event);
             }
-            // IbcEvent::UpdateClient(ref update) => {
-            //     if let Ok(object) = Object::for_update_client(update, src_chain) {
-            //         collected.per_object.entry(object).or_default().push(event);
-            //     }
-            // }
+            IbcEvent::UpdateClient(ref update) => {
+                if let Ok(object) = Object::for_update_client(update, src_chain) {
+                    collected.per_object.entry(object).or_default().push(event);
+                }
+            }
             IbcEvent::SendPacket(ref packet) => {
                 if let Ok(object) = Object::for_send_packet(packet, src_chain) {
                     collected.per_object.entry(object).or_default().push(event);

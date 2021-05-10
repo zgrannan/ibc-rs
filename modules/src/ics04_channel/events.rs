@@ -291,6 +291,9 @@ impl OpenAck {
     pub fn port_id(&self) -> &PortId {
         &self.0.port_id
     }
+    pub fn counterparty_channel_id(&self) ->&Option<ChannelId> {
+        &self.0.counterparty_channel_id
+    }
 }
 
 impl From<Attributes> for OpenAck {
