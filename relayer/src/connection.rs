@@ -22,6 +22,8 @@ use ibc::Height as ICSHeight;
 use crate::object::Connection as WorkerConnectionObject;
 use crate::supervisor::error::Error as WorkerConnectionError;
 
+use ibc_proto::ibc::core::connection::v1::QueryConnectionRequest;
+
 
 
 use crate::chain::handle::ChainHandle;
@@ -193,62 +195,64 @@ impl Connection {
         })
     }
 
-    // pub fn restore_from_state(
-    //     chain: Box<dyn ChainHandle>,
-    //     counterparty_chain: Box<dyn ChainHandle>,
-    //     connection: WorkerConnectionObject,
-    //     height: Height,
-    // ) -> Result<(Connection, State), BoxError> {
-    //     let a_connection =
-    //         chain.query_connection(&connection.src_connection_id,height)?;
+    pub fn restore_from_state(
+        chain: Box<dyn ChainHandle>,
+        counterparty_chain: Box<dyn ChainHandle>,
+        connection: WorkerConnectionObject,
+        height: Height,
+    ) -> Result<(Connection, State), BoxError> {
 
-    
-    //     let connection = chain.query_connection(&connection_id, Height::zero())?;
+        let a_connection =
+            chain.query_connection(&connection.src_connection_id,height)?;
 
-    //     let mut handshake_connection = Connection {
-    //         delay_period: Default::default()//TODO how to get the  delay period 
-    //         a_side: ConnectionSide::new(
-    //             chain.clone(),
-    //             connection.client_id().clone(),
-    //             connection_id.clone(),
-    //             channel.src_port_id.clone(),
-    //             Some(channel.src_channel_id.clone()),
-    //         ),
-    //         b_side: ConnectionSide::new(
-    //             counterparty_chain.clone(),
-    //             connection.counterparty().client_id().clone(),
-    //             connection.counterparty().connection_id().unwrap().clone(),
-    //             a_channel.remote.port_id.clone(),
-    //             a_channel.remote.channel_id.clone(),
-    //         ),
-    //         connection_delay: connection.delay_period(),
-    //         version: Some(a_channel.version.clone()),
-    //     };
+        let b_connection_id = 
+            if a_connection.counterparty().connection_id().is_some() {
+                a_connection.counterparty().connection_id().unwrap().clone()
+            } 
+            else { 
+                Default::default()
+            };
 
-    //     if a_channel.state_matches(&ibc::ics04_channel::channel::State::Init)
-    //         && a_channel.remote.channel_id.is_none()
-    //     {
-    //         let req = QueryConnectionChannelsRequest {
-    //             connection: connection_id.to_string(),
-    //             pagination: ibc_proto::cosmos::base::query::pagination::all(),
-    //         };
 
-    //         let channels: Vec<IdentifiedChannelEnd> =
-    //             counterparty_chain.query_connection_channels(req)?;
 
-    //         for chan in channels.iter() {
-    //             if chan.channel_end.remote.channel_id.is_some()
-    //                 && chan.channel_end.remote.channel_id.clone().unwrap()
-    //                     == channel.src_channel_id.clone()
-    //             {
-    //                 handshake_channel.b_side.channel_id = Some(chan.channel_id.clone());
-    //                 break;
-    //             }
-    //         }
-    //     }
 
-    //     Ok((handshake_channel, a_channel.state))
-    // }
+        let mut handshake_connection = Connection {
+            delay_period: Default::default(),//TODO how to get the  delay period 
+            a_side: ConnectionSide::new(
+                chain.clone(),
+                a_connection.client_id().clone(),
+                connection.src_connection_id.clone(),
+            ),
+            b_side: ConnectionSide::new(
+                counterparty_chain.clone(),
+                a_connection.counterparty().client_id().clone(),
+                b_connection_id,
+            ),
+        };
+
+        if a_connection.state_matches(&ibc::ics03_connection::connection::State::Init)
+            //&& a_channel.remote.channel_id.is_none() TODO add when option type in 
+        {
+            let req = QueryConnectionsRequest {
+                pagination: ibc_proto::cosmos::base::query::pagination::all(),
+            };
+
+            let connections: Vec<IdentifiedConnectionEnd> =
+                counterparty_chain.query_connections(req)?;
+
+            for chan in channels.iter() {
+                if chan.channel_end.remote.channel_id.is_some()
+                    && chan.channel_end.remote.channel_id.clone().unwrap()
+                        == channel.src_channel_id.clone()
+                {
+                    handshake_channel.b_side.channel_id = Some(chan.channel_id.clone());
+                    break;
+                }
+            }
+        }
+
+        Ok((handshake_channel, a_channel.state))
+    }
 
     pub fn find(
         a_client: ForeignClient,

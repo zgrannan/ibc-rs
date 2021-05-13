@@ -174,6 +174,13 @@ impl ChainHandle for ProdChainHandle {
         })
     }
 
+    fn query_connections(
+        &self,
+        request: QueryConnectionsRequest,
+    ) -> Result<Vec<ConnectionId>, Error> {
+        self.send(|reply_to| ChainRequest::QueryConnections { request, reply_to })
+    }
+
     fn query_next_sequence_receive(
         &self,
         request: QueryNextSequenceReceiveRequest,
