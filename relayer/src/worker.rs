@@ -8,11 +8,13 @@ use tracing::{debug, error, error_span, info, trace, warn};
 use ibc::{events::IbcEvent, ics02_client::events::UpdateClient};
 
 use crate::channel::Channel as RelayChannel;
+use crate::connection::Connection as RelayConnection;
+
 use crate::{
     chain::handle::ChainHandlePair,
     foreign_client::{ForeignClient, ForeignClientError, MisbehaviourResults},
     link::{Link, LinkParameters},
-    object::{Channel, Client, Object, UnidirectionalChannelPath},
+    object::{Channel, Client, Object, UnidirectionalChannelPath, Connection},
 };
 
 mod handle;
@@ -61,6 +63,7 @@ impl Worker {
             Object::UnidirectionalChannelPath(path) => self.run_uni_chan_path(path),
             Object::Client(client) => self.run_client(client),
             Object::Channel(channel) => self.run_channel(channel),
+            Object::Connection(connection) => self.run_connection(connection),
         };
 
         if let Err(e) = result {
@@ -255,6 +258,48 @@ impl Worker {
                             first_iteration = false;
                         }
                     }
+                };
+            }
+        }
+    }
+
+    fn run_connection(self, connection: Connection) -> Result<(), BoxError> {
+        let done = '🥳';
+
+        let a_chain = self.chains.a.clone();
+        let b_chain = self.chains.b.clone();
+
+        let mut handshake_connetion;
+
+        let mut first_iteration = true;
+
+        loop {
+            if let Ok(cmd) = self.rx.try_recv() {
+                match cmd {
+                    WorkerCmd::IbcEvents { batch } => {
+                        for event in batch.events {
+                            handshake_connetion = RelayConnection::restore_from_event(
+                                a_chain.clone(),
+                                b_chain.clone(),
+                                event.clone(),
+                            )?;
+                            let result = handshake_connetion.handshake_step_with_event(event.clone());
+
+                            match result {
+                                Err(e) => {
+                                    debug!("\n Failed {:?} with error {:?} \n", event, e);
+                                }
+                                Ok(ev) => {
+                                    println!("{} => {:#?}\n", done, ev.clone());
+                                }
+                            }
+                            first_iteration = false;
+                        }
+                    }
+                    WorkerCmd::NewBlock {
+                        height: _current_height,
+                        new_block: _,
+                    } => {}
                 };
             }
         }

@@ -75,6 +75,8 @@ pub enum Object {
     UnidirectionalChannelPath(UnidirectionalChannelPath),
     /// See [`Channel`].
     Channel(Channel),
+    /// See [`Connection`].
+    Connection(Connection),
 }
 
 impl Object {
@@ -86,6 +88,8 @@ impl Object {
             Object::UnidirectionalChannelPath(p) => p.src_chain_id == *src_chain_id,
             Object::Client(_) => false,
             Object::Channel(c) => c.src_chain_id == *src_chain_id,
+            Object::Connection(c) => false, //TODO Change
+
         }
     }
 }
@@ -105,6 +109,12 @@ impl From<UnidirectionalChannelPath> for Object {
 impl From<Channel> for Object {
     fn from(c: Channel) -> Self {
         Self::Channel(c)
+    }
+}
+
+impl From<Connection> for Object {
+    fn from(c: Connection) -> Self {
+        Self::Connection(c)
     }
 }
 
@@ -134,12 +144,39 @@ impl Channel {
     }
 }
 
+//Channel
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct Connection {
+    /// Destination chain identifier.
+    pub dst_chain_id: ChainId,
+
+    /// Source chain identifier.
+    pub src_chain_id: ChainId,
+
+    /// Source channel identiier.
+    pub src_channel_id: ChannelId,
+
+    /// Source port identiier.
+    pub src_port_id: PortId,
+    // pub connection_id: ConnectionId,
+}
+
+impl Connection {
+    pub fn short_name(&self) -> String {
+        format!(
+            "{}/{}:{} -> {}",
+            self.src_channel_id, self.src_port_id, self.src_chain_id, self.dst_chain_id,
+        )
+    }
+}
+
 impl Object {
     pub fn src_chain_id(&self) -> &ChainId {
         match self {
             Self::Client(ref client) => &client.src_chain_id,
             Self::UnidirectionalChannelPath(ref path) => &path.src_chain_id,
             Self::Channel(ref channel) => &channel.src_chain_id,
+            Self::Connection(ref connection) => &connection.src_chain_id,
         }
     }
 
@@ -148,6 +185,7 @@ impl Object {
             Self::Client(ref client) => &client.dst_chain_id,
             Self::UnidirectionalChannelPath(ref path) => &path.dst_chain_id,
             Self::Channel(ref channel) => &channel.dst_chain_id,
+            Self::Connection(ref connection) => &connection.dst_chain_id,
         }
     }
 
@@ -156,6 +194,7 @@ impl Object {
             Self::Client(ref client) => client.short_name(),
             Self::UnidirectionalChannelPath(ref path) => path.short_name(),
             Self::Channel(ref channel) => channel.short_name(),
+            Self::Connection(ref connection) => connection.short_name(),
         }
     }
 
