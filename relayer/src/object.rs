@@ -2,15 +2,18 @@ use anomaly::BoxError;
 
 use ibc::{
     ics02_client::{client_state::ClientState, events::UpdateClient},
+    ics03_connection::events::Attributes as ConnectionAttributes,
     ics04_channel::events::{
         Attributes, CloseInit, SendPacket, TimeoutPacket, WriteAcknowledgement,
     },
-    ics24_host::identifier::{ChainId, ChannelId, ClientId, PortId},
+    ics24_host::identifier::{ChainId, ChannelId, ClientId, ConnectionId, PortId},
     Height,
 };
 
 use crate::chain::{
-    counterparty::{channel_connection_client, get_counterparty_chain},
+    counterparty::{
+        channel_connection_client, get_counterparty_chain, get_counterparty_chain_for_connection,
+    },
     handle::ChainHandle,
 };
 
@@ -89,7 +92,6 @@ impl Object {
             Object::Client(_) => false,
             Object::Channel(c) => c.src_chain_id == *src_chain_id,
             Object::Connection(c) => false, //TODO Change
-
         }
     }
 }
@@ -132,7 +134,6 @@ pub struct Channel {
 
     /// Source port identiier.
     pub src_port_id: PortId,
-    // pub connection_id: ConnectionId,
 }
 
 impl Channel {
@@ -154,18 +155,14 @@ pub struct Connection {
     pub src_chain_id: ChainId,
 
     /// Source channel identiier.
-    pub src_channel_id: ChannelId,
-
-    /// Source port identiier.
-    pub src_port_id: PortId,
-    // pub connection_id: ConnectionId,
+    pub src_connection_id: ConnectionId,
 }
 
 impl Connection {
     pub fn short_name(&self) -> String {
         format!(
-            "{}/{}:{} -> {}",
-            self.src_channel_id, self.src_port_id, self.src_chain_id, self.dst_chain_id,
+            "{}:{} -> {}",
+            self.src_connection_id, self.src_chain_id, self.dst_chain_id,
         )
     }
 }
@@ -219,6 +216,29 @@ impl Object {
             dst_client_id: e.client_id().clone(),
             dst_chain_id: dst_chain.id(),
             src_chain_id,
+        }
+        .into())
+    }
+
+    /// Build the object associated with the given [`Open Connection`] event.
+    pub fn for_open_connection(
+        e: &ConnectionAttributes,
+        src_chain: &dyn ChainHandle,
+    ) -> Result<Self, BoxError> {
+        let dst_chain_id = get_counterparty_chain_for_connection(e.client_id.clone(), src_chain);
+
+        if dst_chain_id.is_err() {
+            return Err("dest chain missing in init".into());
+        }
+
+        if e.connection_id.is_none() {
+            return Err("connection id missing in init".into());
+        }
+
+        Ok(Connection {
+            dst_chain_id: dst_chain_id.unwrap(),
+            src_chain_id: src_chain.id(),
+            src_connection_id: e.connection_id.clone().unwrap(),
         }
         .into())
     }

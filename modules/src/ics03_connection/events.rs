@@ -94,6 +94,9 @@ impl OpenInit {
     pub fn set_height(&mut self, height: Height) {
         self.0.height = height;
     }
+    pub fn attributes(&self) -> &Attributes {
+        &self.0
+    }
 }
 
 impl From<Attributes> for OpenInit {
@@ -136,6 +139,9 @@ impl OpenTry {
     }
     pub fn set_height(&mut self, height: Height) {
         self.0.height = height;
+    }
+    pub fn attributes(&self) -> &Attributes {
+        &self.0
     }
 }
 
@@ -180,6 +186,9 @@ impl OpenAck {
     pub fn set_height(&mut self, height: Height) {
         self.0.height = height;
     }
+    pub fn attributes(&self) -> &Attributes {
+        &self.0
+    }
 }
 
 impl From<Attributes> for OpenAck {
@@ -222,6 +231,9 @@ impl OpenConfirm {
     }
     pub fn set_height(&mut self, height: Height) {
         self.0.height = height;
+    }
+    pub fn attributes(&self) -> &Attributes {
+        &self.0
     }
 }
 

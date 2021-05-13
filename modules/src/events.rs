@@ -6,6 +6,7 @@ use serde_derive::{Deserialize, Serialize};
 use crate::ics02_client::events as ClientEvents;
 use crate::ics02_client::events::NewBlock;
 use crate::ics03_connection::events as ConnectionEvents;
+use crate::ics03_connection::events::Attributes as ConnectionAttributes;
 use crate::ics04_channel::events as ChannelEvents;
 use crate::ics04_channel::events::Attributes as ChannelAttributes;
 use crate::Height;
@@ -191,6 +192,15 @@ impl IbcEvent {
             IbcEvent::OpenTryChannel(ev) => ev.attributes(),
             IbcEvent::OpenAckChannel(ev) => ev.attributes(),
             IbcEvent::OpenConfirmChannel(ev) => ev.attributes(),
+            _ => unimplemented!(),
+        }
+    }
+    pub fn connection_attributes(&mut self) -> &ConnectionAttributes {
+        match self {
+            IbcEvent::OpenInitConnection(ev) => ev.attributes(),
+            IbcEvent::OpenTryConnection(ev) => ev.attributes(),
+            IbcEvent::OpenAckConnection(ev) => ev.attributes(),
+            IbcEvent::OpenConfirmConnection(ev) => ev.attributes(),
             _ => unimplemented!(),
         }
     }

@@ -131,6 +131,40 @@ impl Supervisor {
                             .push(event.clone());
                     }
                 }
+
+                IbcEvent::OpenInitConnection(ref _open_init) => {
+                    if let Ok(object) = Object::for_open_connection(
+                        event.clone().connection_attributes(),
+                        src_chain,
+                    ) {
+                        collected.per_object.entry(object).or_default().push(event);
+                    }
+                }
+                IbcEvent::OpenTryConnection(ref _open_init) => {
+                    if let Ok(object) = Object::for_open_connection(
+                        event.clone().connection_attributes(),
+                        src_chain,
+                    ) {
+                        collected.per_object.entry(object).or_default().push(event);
+                    }
+                }
+                IbcEvent::OpenAckConnection(ref _open_init) => {
+                    if let Ok(object) = Object::for_open_connection(
+                        event.clone().connection_attributes(),
+                        src_chain,
+                    ) {
+                        collected.per_object.entry(object).or_default().push(event);
+                    }
+                }
+                IbcEvent::OpenConfirmConnection(ref _open_init) => {
+                    if let Ok(object) = Object::for_open_connection(
+                        event.clone().connection_attributes(),
+                        src_chain,
+                    ) {
+                        collected.per_object.entry(object).or_default().push(event);
+                    }
+                }
+
                 IbcEvent::SendPacket(ref packet) => {
                     if let Ok(object) = Object::for_send_packet(packet, src_chain) {
                         collected.per_object.entry(object).or_default().push(event);

@@ -14,7 +14,7 @@ use crate::{
     chain::handle::ChainHandlePair,
     foreign_client::{ForeignClient, ForeignClientError, MisbehaviourResults},
     link::{Link, LinkParameters},
-    object::{Channel, Client, Object, UnidirectionalChannelPath, Connection},
+    object::{Channel, Client, Connection, Object, UnidirectionalChannelPath},
 };
 
 mod handle;
@@ -263,7 +263,7 @@ impl Worker {
         }
     }
 
-    fn run_connection(self, connection: Connection) -> Result<(), BoxError> {
+    fn run_connection(self, _connection: Connection) -> Result<(), BoxError> {
         let done = '🥳';
 
         let a_chain = self.chains.a.clone();
@@ -283,7 +283,8 @@ impl Worker {
                                 b_chain.clone(),
                                 event.clone(),
                             )?;
-                            let result = handshake_connetion.handshake_step_with_event(event.clone());
+                            let result =
+                                handshake_connetion.handshake_step_with_event(event.clone());
 
                             match result {
                                 Err(e) => {
@@ -297,9 +298,34 @@ impl Worker {
                         }
                     }
                     WorkerCmd::NewBlock {
-                        height: _current_height,
+                        height: current_height,
                         new_block: _,
-                    } => {}
+                    } => {
+                        // if first_iteration {
+                        //     let height = current_height.decrement()?;
+
+                        //     let (h, state) = RelayConnection::restore_from_state(
+                        //         a_chain.clone(),
+                        //         b_chain.clone(),
+                        //         connection.clone(),
+                        //         height,
+                        //     )?;
+
+                        //     handshake_connection = h;
+
+                        //     let result = handshake_connection.handshake_step_with_state(state);
+
+                        //     match result {
+                        //         Err(e) => {
+                        //             debug!("\n Failed with error {:?} \n", e);
+                        //         }
+                        //         Ok(ev) => {
+                        //             println!("{} => {:#?}\n", done, ev.clone());
+                        //         }
+                        //     }
+                        //     first_iteration = false;
+                        // }
+                    }
                 };
             }
         }

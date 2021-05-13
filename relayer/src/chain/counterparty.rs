@@ -5,7 +5,7 @@ use ibc::{
     ics02_client::client_state::{ClientState, IdentifiedAnyClientState},
     ics03_connection::connection::IdentifiedConnectionEnd,
     ics04_channel::channel::IdentifiedChannelEnd,
-    ics24_host::identifier::{ChainId, ChannelId, PortId},
+    ics24_host::identifier::{ChainId, ChannelId, ClientId, PortId},
     Height,
 };
 
@@ -115,5 +115,22 @@ pub fn get_counterparty_chain_for_channel(
         .query_client_state(&client_id, Height::zero())
         .map_err(|e| Error::QueryFailed(format!("{}", e)))?;
 
+    Ok(client_state.chain_id())
+}
+
+pub fn get_counterparty_chain_for_connection(
+    client_id: ClientId,
+    src_chain: &dyn ChainHandle,
+) -> Result<ChainId, Error> {
+    let client_state = src_chain
+        .query_client_state(&client_id, Height::zero())
+        .map_err(|e| Error::QueryFailed(format!("{}", e)))?;
+
+    trace!(
+        chain_id=%src_chain.id(),
+        "counterparty chain: {}", client_state.chain_id()
+    );
+
+    //Ok(IdentifiedAnyClientState::new(client_id.clone(), client_state))
     Ok(client_state.chain_id())
 }

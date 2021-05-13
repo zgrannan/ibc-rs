@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use anomaly::BoxError;
 use prost_types::Any;
 use serde::Serialize;
 use thiserror::Error;
@@ -17,6 +18,11 @@ use ibc::ics03_connection::msgs::conn_open_try::MsgConnectionOpenTry;
 use ibc::ics24_host::identifier::{ChainId, ClientId, ConnectionId};
 use ibc::tx_msg::Msg;
 use ibc::Height as ICSHeight;
+
+use crate::object::Connection as WorkerConnectionObject;
+use crate::supervisor::error::Error as WorkerConnectionError;
+
+
 
 use crate::chain::handle::ChainHandle;
 use crate::error::Error;
@@ -130,6 +136,119 @@ impl Connection {
 
         Ok(c)
     }
+
+    pub fn restore_from_event(
+        chain: Box<dyn ChainHandle>,
+        counterparty_chain: Box<dyn ChainHandle>,
+        connection_open_event: IbcEvent,
+    ) -> Result<Connection, BoxError> {
+        match connection_open_event.clone() {
+            IbcEvent::OpenInitConnection(_open_init) => {}
+            IbcEvent::OpenTryConnection(_open_try) => {}
+            IbcEvent::OpenAckConnection(_open_ack) => {}
+            IbcEvent::OpenConfirmConnection(_open_confirm) => {}
+            _ => {
+                return Err("Supported only for Connection Open Events"
+                    .to_string()
+                    .into())
+            }
+        };
+
+        let delay_period = Default::default();
+
+        let connection_id = connection_open_event
+            .clone()
+            .connection_attributes()
+            .connection_id
+            .clone();
+
+        let counterparty_connection_id = connection_open_event
+            .clone()
+            .connection_attributes()
+            .counterparty_connection_id
+            .clone();
+
+        let cc_id = if counterparty_connection_id.is_none() {
+            Default::default()
+        } else {
+            counterparty_connection_id.unwrap()
+        };
+
+        let client_id = connection_open_event
+            .clone()
+            .connection_attributes()
+            .client_id
+            .clone();
+
+        let counterparty_client_id = connection_open_event
+            .clone()
+            .connection_attributes()
+            .counterparty_client_id
+            .clone();
+
+        Ok(Connection {
+            delay_period,
+            a_side: ConnectionSide::new(chain, client_id, connection_id.unwrap()),
+            b_side: ConnectionSide::new(counterparty_chain, counterparty_client_id, cc_id),
+        })
+    }
+
+    // pub fn restore_from_state(
+    //     chain: Box<dyn ChainHandle>,
+    //     counterparty_chain: Box<dyn ChainHandle>,
+    //     connection: WorkerConnectionObject,
+    //     height: Height,
+    // ) -> Result<(Connection, State), BoxError> {
+    //     let a_connection =
+    //         chain.query_connection(&connection.src_connection_id,height)?;
+
+    
+    //     let connection = chain.query_connection(&connection_id, Height::zero())?;
+
+    //     let mut handshake_connection = Connection {
+    //         delay_period: Default::default()//TODO how to get the  delay period 
+    //         a_side: ConnectionSide::new(
+    //             chain.clone(),
+    //             connection.client_id().clone(),
+    //             connection_id.clone(),
+    //             channel.src_port_id.clone(),
+    //             Some(channel.src_channel_id.clone()),
+    //         ),
+    //         b_side: ConnectionSide::new(
+    //             counterparty_chain.clone(),
+    //             connection.counterparty().client_id().clone(),
+    //             connection.counterparty().connection_id().unwrap().clone(),
+    //             a_channel.remote.port_id.clone(),
+    //             a_channel.remote.channel_id.clone(),
+    //         ),
+    //         connection_delay: connection.delay_period(),
+    //         version: Some(a_channel.version.clone()),
+    //     };
+
+    //     if a_channel.state_matches(&ibc::ics04_channel::channel::State::Init)
+    //         && a_channel.remote.channel_id.is_none()
+    //     {
+    //         let req = QueryConnectionChannelsRequest {
+    //             connection: connection_id.to_string(),
+    //             pagination: ibc_proto::cosmos::base::query::pagination::all(),
+    //         };
+
+    //         let channels: Vec<IdentifiedChannelEnd> =
+    //             counterparty_chain.query_connection_channels(req)?;
+
+    //         for chan in channels.iter() {
+    //             if chan.channel_end.remote.channel_id.is_some()
+    //                 && chan.channel_end.remote.channel_id.clone().unwrap()
+    //                     == channel.src_channel_id.clone()
+    //             {
+    //                 handshake_channel.b_side.channel_id = Some(chan.channel_id.clone());
+    //                 break;
+    //             }
+    //         }
+    //     }
+
+    //     Ok((handshake_channel, a_channel.state))
+    // }
 
     pub fn find(
         a_client: ForeignClient,
@@ -343,6 +462,27 @@ impl Connection {
             "Failed to finish connection handshake in {:?} iterations",
             MAX_ITER
         )))
+    }
+
+    pub fn handshake_step_with_event(
+        &mut self,
+        event: IbcEvent,
+    ) -> Result<Vec<IbcEvent>, ConnectionError> {
+        match event {
+            IbcEvent::OpenInitConnection(_open_init) => {
+                // There is a race here: for the same source channel s, in Init,
+                // another chan_open_try with source s (that creates destination d) can come from the user and if it is
+                // executed first on the chain, before the one send by the relayer.
+                // In this case the relayer will create a new channel (d' != d) stuck in TryOpen whose counterparty is s
+                // There is no way to avoid it, we can add a check (like in handshake_step_with_state) but
+                // it will slow down and there will still be a window where the behavior is possible.
+                Ok(vec![self.build_conn_try_and_send()?])
+            }
+            IbcEvent::OpenTryConnection(_open_try) => Ok(vec![self.build_conn_ack_and_send()?]),
+            IbcEvent::OpenAckConnection(_open_ack) => Ok(vec![self.build_conn_confirm_and_send()?]),
+            IbcEvent::OpenConfirmConnection(_open_confirm) => Ok(vec![]),
+            _ => Ok(vec![]),
+        }
     }
 
     /// Retrieves the connection from destination and compares against the expected connection
