@@ -30,7 +30,7 @@ use ibc_proto::ibc::core::channel::v1::{
     QueryNextSequenceReceiveRequest, QueryPacketAcknowledgementsRequest,
     QueryPacketCommitmentsRequest, QueryUnreceivedAcksRequest, QueryUnreceivedPacketsRequest,
 };
-use ibc_proto::ibc::core::connection::QueryConnectionsRequest;
+use ibc_proto::ibc::core::connection::v1::QueryConnectionsRequest;
 use ibc_proto::ibc::core::client::v1::QueryConsensusStatesRequest;
 use ibc_proto::ibc::core::commitment::v1::MerkleProof;
 pub use prod::ProdChainHandle;
@@ -326,7 +326,7 @@ pub trait ChainHandle: DynClone + Send + Sync + Debug {
 
     fn query_connections(
         &self,
-        height: Height,
+        request: QueryConnectionsRequest,
     ) -> Result<Vec<ConnectionId>, Error>;
 
     fn query_connection_channels(

@@ -261,6 +261,10 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
                             self.query_connection(connection_id, height, reply_to)?
                         },
 
+                        Ok(ChainRequest::QueryConnections { request, reply_to }) => {
+                            self.query_connections(request, reply_to)?
+                        },
+
                         Ok(ChainRequest::QueryChannels { request, reply_to }) => {
                             self.query_channels(request, reply_to)?
                         },

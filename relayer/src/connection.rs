@@ -22,7 +22,7 @@ use ibc::Height as ICSHeight;
 use crate::object::Connection as WorkerConnectionObject;
 use crate::supervisor::error::Error as WorkerConnectionError;
 
-use ibc_proto::ibc::core::connection::v1::QueryConnectionRequest;
+use ibc_proto::ibc::core::connection::v1::QueryConnectionsRequest;
 
 
 
@@ -237,21 +237,24 @@ impl Connection {
                 pagination: ibc_proto::cosmos::base::query::pagination::all(),
             };
 
-            let connections: Vec<IdentifiedConnectionEnd> =
+            let connections: Vec<ConnectionId> =
                 counterparty_chain.query_connections(req)?;
 
-            for chan in channels.iter() {
-                if chan.channel_end.remote.channel_id.is_some()
-                    && chan.channel_end.remote.channel_id.clone().unwrap()
-                        == channel.src_channel_id.clone()
-                {
-                    handshake_channel.b_side.channel_id = Some(chan.channel_id.clone());
-                    break;
-                }
+            for connection_id in connections.iter() {
+                let connection_end = counterparty_chain
+                    .query_connection(connection_id, Height::zero())?;
+                if connection_end.counterparty().connection_id().is_some()
+                    && connection_end.counterparty().connection_id().clone().unwrap().clone()
+                        == connection.src_connection_id.clone(){
+                        
+                            handshake_connection.b_side.connection_id = connection_id.clone();
+                            //Some(connection_id);
+                            break;
+                    }
             }
         }
 
-        Ok((handshake_channel, a_channel.state))
+        Ok((handshake_connection, a_connection.state().clone()))
     }
 
     pub fn find(
@@ -488,6 +491,27 @@ impl Connection {
             _ => Ok(vec![]),
         }
     }
+
+
+
+    pub fn handshake_step_with_state(
+        &mut self,
+        state: State,
+    ) -> Result<Vec<IbcEvent>, ConnectionError> {
+        match state {
+            ibc::ics03_connection::connection::State::Init => {
+                Ok(vec![self.build_conn_try_and_send()?])
+            }
+            ibc::ics03_connection::connection::State::TryOpen => {
+                Ok(vec![self.build_conn_ack_and_send()?])
+            }
+            ibc::ics03_connection::connection::State::Open => {
+                Ok(vec![self.build_conn_confirm_and_send()?])
+            }
+            _ => Ok(vec![]),
+        }
+    }
+
 
     /// Retrieves the connection from destination and compares against the expected connection
     /// built from the message type (`msg_type`) and options (`opts`).

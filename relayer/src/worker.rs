@@ -263,13 +263,13 @@ impl Worker {
         }
     }
 
-    fn run_connection(self, _connection: Connection) -> Result<(), BoxError> {
+    fn run_connection(self, connection: Connection) -> Result<(), BoxError> {
         let done = '🥳';
 
         let a_chain = self.chains.a.clone();
         let b_chain = self.chains.b.clone();
 
-        let mut handshake_connetion;
+        let mut handshake_connection;
 
         let mut first_iteration = true;
 
@@ -278,13 +278,13 @@ impl Worker {
                 match cmd {
                     WorkerCmd::IbcEvents { batch } => {
                         for event in batch.events {
-                            handshake_connetion = RelayConnection::restore_from_event(
+                            handshake_connection = RelayConnection::restore_from_event(
                                 a_chain.clone(),
                                 b_chain.clone(),
                                 event.clone(),
                             )?;
                             let result =
-                                handshake_connetion.handshake_step_with_event(event.clone());
+                            handshake_connection.handshake_step_with_event(event.clone());
 
                             match result {
                                 Err(e) => {
@@ -301,30 +301,30 @@ impl Worker {
                         height: current_height,
                         new_block: _,
                     } => {
-                        // if first_iteration {
-                        //     let height = current_height.decrement()?;
+                        if first_iteration {
+                            let height = current_height.decrement()?;
 
-                        //     let (h, state) = RelayConnection::restore_from_state(
-                        //         a_chain.clone(),
-                        //         b_chain.clone(),
-                        //         connection.clone(),
-                        //         height,
-                        //     )?;
+                            let (h, state) = RelayConnection::restore_from_state(
+                                a_chain.clone(),
+                                b_chain.clone(),
+                                connection.clone(),
+                                height,
+                            )?;
 
-                        //     handshake_connection = h;
+                            handshake_connection = h;
 
-                        //     let result = handshake_connection.handshake_step_with_state(state);
+                            let result = handshake_connection.handshake_step_with_state(state);
 
-                        //     match result {
-                        //         Err(e) => {
-                        //             debug!("\n Failed with error {:?} \n", e);
-                        //         }
-                        //         Ok(ev) => {
-                        //             println!("{} => {:#?}\n", done, ev.clone());
-                        //         }
-                        //     }
-                        //     first_iteration = false;
-                        // }
+                            match result {
+                                Err(e) => {
+                                    debug!("\n Failed with error {:?} \n", e);
+                                }
+                                Ok(ev) => {
+                                    println!("{} => {:#?}\n", done, ev.clone());
+                                }
+                            }
+                            first_iteration = false;
+                        }
                     }
                 };
             }
