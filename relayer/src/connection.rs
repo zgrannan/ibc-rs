@@ -20,11 +20,8 @@ use ibc::tx_msg::Msg;
 use ibc::Height as ICSHeight;
 
 use crate::object::Connection as WorkerConnectionObject;
-use crate::supervisor::error::Error as WorkerConnectionError;
 
 use ibc_proto::ibc::core::connection::v1::QueryConnectionsRequest;
-
-
 
 use crate::chain::handle::ChainHandle;
 use crate::error::Error;
@@ -201,23 +198,16 @@ impl Connection {
         connection: WorkerConnectionObject,
         height: Height,
     ) -> Result<(Connection, State), BoxError> {
+        let a_connection = chain.query_connection(&connection.src_connection_id, height)?;
 
-        let a_connection =
-            chain.query_connection(&connection.src_connection_id,height)?;
-
-        let b_connection_id = 
-            if a_connection.counterparty().connection_id().is_some() {
-                a_connection.counterparty().connection_id().unwrap().clone()
-            } 
-            else { 
-                Default::default()
-            };
-
-
-
+        let b_connection_id = if a_connection.counterparty().connection_id().is_some() {
+            a_connection.counterparty().connection_id().unwrap().clone()
+        } else {
+            Default::default()
+        };
 
         let mut handshake_connection = Connection {
-            delay_period: Default::default(),//TODO how to get the  delay period 
+            delay_period: Default::default(), //TODO how to get the  delay period
             a_side: ConnectionSide::new(
                 chain.clone(),
                 a_connection.client_id().clone(),
@@ -231,26 +221,30 @@ impl Connection {
         };
 
         if a_connection.state_matches(&ibc::ics03_connection::connection::State::Init)
-            //&& a_channel.remote.channel_id.is_none() TODO add when option type in 
+        //&& a_channel.remote.channel_id.is_none() TODO add when option type in
         {
             let req = QueryConnectionsRequest {
                 pagination: ibc_proto::cosmos::base::query::pagination::all(),
             };
 
-            let connections: Vec<ConnectionId> =
-                counterparty_chain.query_connections(req)?;
+            let connections: Vec<ConnectionId> = counterparty_chain.query_connections(req)?;
 
             for connection_id in connections.iter() {
-                let connection_end = counterparty_chain
-                    .query_connection(connection_id, Height::zero())?;
+                let connection_end =
+                    counterparty_chain.query_connection(connection_id, Height::zero())?;
                 if connection_end.counterparty().connection_id().is_some()
-                    && connection_end.counterparty().connection_id().clone().unwrap().clone()
-                        == connection.src_connection_id.clone(){
-                        
-                            handshake_connection.b_side.connection_id = connection_id.clone();
-                            //Some(connection_id);
-                            break;
-                    }
+                    && connection_end
+                        .counterparty()
+                        .connection_id()
+                        .clone()
+                        .unwrap()
+                        .clone()
+                        == connection.src_connection_id.clone()
+                {
+                    handshake_connection.b_side.connection_id = connection_id.clone();
+                    //Some(connection_id);
+                    break;
+                }
             }
         }
 
@@ -492,8 +486,6 @@ impl Connection {
         }
     }
 
-
-
     pub fn handshake_step_with_state(
         &mut self,
         state: State,
@@ -511,7 +503,6 @@ impl Connection {
             _ => Ok(vec![]),
         }
     }
-
 
     /// Retrieves the connection from destination and compares against the expected connection
     /// built from the message type (`msg_type`) and options (`opts`).

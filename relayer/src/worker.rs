@@ -284,7 +284,7 @@ impl Worker {
                                 event.clone(),
                             )?;
                             let result =
-                            handshake_connection.handshake_step_with_event(event.clone());
+                                handshake_connection.handshake_step_with_event(event.clone());
 
                             match result {
                                 Err(e) => {

@@ -91,7 +91,7 @@ impl Object {
             Object::UnidirectionalChannelPath(p) => p.src_chain_id == *src_chain_id,
             Object::Client(_) => false,
             Object::Channel(c) => c.src_chain_id == *src_chain_id,
-            Object::Connection(c) => c.src_chain_id == *src_chain_id, 
+            Object::Connection(c) => c.src_chain_id == *src_chain_id,
         }
     }
 }

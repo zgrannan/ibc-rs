@@ -23,13 +23,16 @@ use ibc::{
     signer::Signer,
     Height,
 };
-use ibc_proto::ibc::core::{channel::v1::{
-    PacketState, QueryChannelsRequest, QueryConnectionChannelsRequest,
-    QueryNextSequenceReceiveRequest, QueryPacketAcknowledgementsRequest,
-    QueryPacketCommitmentsRequest, QueryUnreceivedAcksRequest, QueryUnreceivedPacketsRequest,
-}, connection::v1::QueryConnectionsRequest};
 use ibc_proto::ibc::core::client::v1::QueryConsensusStatesRequest;
 use ibc_proto::ibc::core::commitment::v1::MerkleProof;
+use ibc_proto::ibc::core::{
+    channel::v1::{
+        PacketState, QueryChannelsRequest, QueryConnectionChannelsRequest,
+        QueryNextSequenceReceiveRequest, QueryPacketAcknowledgementsRequest,
+        QueryPacketCommitmentsRequest, QueryUnreceivedAcksRequest, QueryUnreceivedPacketsRequest,
+    },
+    connection::v1::QueryConnectionsRequest,
+};
 
 use crate::{
     connection::ConnectionMsgType,

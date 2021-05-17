@@ -14,7 +14,10 @@ use ibc::{
         header::{AnyHeader, Header},
         misbehaviour::AnyMisbehaviour,
     },
-    ics03_connection::{connection::{ConnectionEnd,IdentifiedConnectionEnd}, version::Version},
+    ics03_connection::{
+        connection::ConnectionEnd,
+        version::Version,
+    },
     ics04_channel::{
         channel::ChannelEnd,
         packet::{PacketMsgType, Sequence},
@@ -33,9 +36,9 @@ use ibc_proto::ibc::core::{
         QueryNextSequenceReceiveRequest, QueryPacketAcknowledgementsRequest,
         QueryPacketCommitmentsRequest, QueryUnreceivedAcksRequest, QueryUnreceivedPacketsRequest,
     },
-    connection::v1::QueryConnectionsRequest,
     client::v1::QueryConsensusStatesRequest,
     commitment::v1::MerkleProof,
+    connection::v1::QueryConnectionsRequest,
 };
 
 use crate::{
@@ -591,7 +594,6 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
         Ok(())
     }
 
-
     fn query_connections(
         &self,
         request: QueryConnectionsRequest,
@@ -603,7 +605,6 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
 
         Ok(())
     }
-
 
     fn query_connection_channels(
         &self,
