@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from time import sleep
 import json
 import logging as l
 import subprocess
@@ -37,6 +38,7 @@ class CmdResult(Generic[T]):
         elif self.retries < self.config.max_retries:
             left = self.config.max_retries - self.retries
             l.warn(f'Command failed: retrying (retries left: {left})')
+            sleep(2.0)
             return self.cmd.retry(self.config, self.retries).success()
         else:
             raise ExpectedSuccess(self.cmd, status, result)
