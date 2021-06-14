@@ -429,12 +429,12 @@ impl Channel {
     ///     steps are necessary to finalize the channel open handshake.
     /// In both `Err` cases, there should be retry calling this method.
     fn do_chan_open_ack_confirm_step(&self) -> Result<(), ChannelError> {
-        fn query_channel_states(ctx: &Channel) -> Result<(State, State), ChannelError> {
-            let src_channel_id = ctx
+        fn query_channel_states(channel: &Channel) -> Result<(State, State), ChannelError> {
+            let src_channel_id = channel
                 .src_channel_id()
                 .ok_or(ChannelError::MissingLocalChannelId)?;
 
-            let dst_channel_id = ctx
+            let dst_channel_id = channel
                 .dst_channel_id()
                 .ok_or(ChannelError::MissingCounterpartyChannelId)?;
 
@@ -444,23 +444,23 @@ impl Channel {
             );
 
             // Continue loop if query error
-            let a_channel = ctx
+            let a_channel = channel
                 .src_chain()
-                .query_channel(&ctx.src_port_id(), src_channel_id, Height::zero())
+                .query_channel(&channel.src_port_id(), src_channel_id, Height::zero())
                 .map_err(|_| {
                     ChannelError::Failed(format!(
                         "failed to query source chain {}",
-                        ctx.src_chain().id()
+                        channel.src_chain().id()
                     ))
                 })?;
 
-            let b_channel = ctx
+            let b_channel = channel
                 .dst_chain()
-                .query_channel(&ctx.dst_port_id(), dst_channel_id, Height::zero())
+                .query_channel(&channel.dst_port_id(), dst_channel_id, Height::zero())
                 .map_err(|_| {
                     ChannelError::Failed(format!(
                         "failed to query destination chain {}",
-                        ctx.dst_chain().id()
+                        channel.dst_chain().id()
                     ))
                 })?;
 
@@ -486,32 +486,6 @@ impl Channel {
             }
         }
 
-        fn build_chan_open_ack_and_send(channel: &Channel) -> Result<(), ChannelError> {
-            let event = channel.build_chan_open_ack_and_send().map_err(|e| {
-                error!("failed ChanAck {:?}: {}", channel.b_side, e);
-                e
-            })?;
-
-            info!(
-                "done with ChanAck step {} => {:#?}\n",
-                channel.dst_chain().id(),
-                event
-            );
-
-            Ok(())
-        }
-
-        fn build_chan_open_confirm_and_send(channel: &Channel) -> Result<(), ChannelError> {
-            let event = channel.build_chan_open_confirm_and_send().map_err(|e| {
-                error!("failed ChanConfirm {:?}: {}", channel.b_side, e);
-                e
-            })?;
-
-            info!("done {} => {:#?}\n", channel.dst_chain().id(), event);
-
-            Ok(())
-        }
-
         let (a_state, b_state) = query_channel_states(self)?;
         debug!(
             "do_chan_open_ack_confirm_step with channel states: {}, {}",
@@ -520,12 +494,12 @@ impl Channel {
 
         match (a_state, b_state) {
             // Handle sending the Ack message to the source chain
-            (State::Init, State::TryOpen) => {
-                build_chan_open_ack_and_send(&self.flipped())?;
+            (State::Init, State::TryOpen) | (State::TryOpen, State::TryOpen) => {
+                self.flipped().build_chan_open_ack_and_send()?;
 
                 expect_channel_states(self, State::Open, State::TryOpen)?;
 
-                build_chan_open_confirm_and_send(&self)?;
+                self.build_chan_open_confirm_and_send()?;
 
                 expect_channel_states(self, State::Open, State::Open)?;
 
@@ -534,31 +508,20 @@ impl Channel {
 
             // Handle sending the Ack message to the destination chain
             (State::TryOpen, State::Init) => {
-                build_chan_open_ack_and_send(&self)?;
+                self.flipped().build_chan_open_ack_and_send()?;
 
                 expect_channel_states(self, State::TryOpen, State::Open)?;
 
-                build_chan_open_confirm_and_send(&self.flipped())?;
+                self.flipped().build_chan_open_confirm_and_send()?;
 
                 expect_channel_states(self, State::Open, State::Open)?;
 
                 Ok(())
             }
 
-            (State::TryOpen, State::TryOpen) => {
-                build_chan_open_ack_and_send(&self.flipped())?;
-
-                expect_channel_states(self, State::Open, State::TryOpen)?;
-
-                build_chan_open_confirm_and_send(&self)?;
-
-                expect_channel_states(self, State::Open, State::Open)?;
-
-                Ok(())
-            }
             // Handle sending the Confirm message to the destination chain
             (State::Open, State::TryOpen) => {
-                build_chan_open_confirm_and_send(&self)?;
+                self.build_chan_open_confirm_and_send()?;
 
                 expect_channel_states(self, State::Open, State::Open)?;
 
@@ -567,16 +530,18 @@ impl Channel {
 
             // Send Confirm to the source chain
             (State::TryOpen, State::Open) => {
-                build_chan_open_confirm_and_send(&self.flipped())?;
+                self.flipped().build_chan_open_confirm_and_send()?;
 
                 expect_channel_states(self, State::Open, State::Open)?;
 
                 Ok(())
             }
+
             (State::Open, State::Open) => {
                 info!("channel handshake already finished for {:#?}\n", self);
                 Ok(())
             }
+
             // In all other conditions, return Ok, since the channel open handshake does not apply.
             _ => Ok(()),
         }
@@ -1013,31 +978,49 @@ impl Channel {
     }
 
     pub fn build_chan_open_ack_and_send(&self) -> Result<IbcEvent, ChannelError> {
-        let dst_msgs = self.build_chan_open_ack()?;
+        fn do_build_chan_open_ack_and_send(channel: &Channel) -> Result<IbcEvent, ChannelError> {
+            let dst_msgs = channel.build_chan_open_ack()?;
 
-        let events = self
-            .dst_chain()
-            .send_msgs(dst_msgs)
-            .map_err(|e| ChannelError::SubmitError(self.dst_chain().id(), e))?;
+            let events = channel
+                .dst_chain()
+                .send_msgs(dst_msgs)
+                .map_err(|e| ChannelError::SubmitError(channel.dst_chain().id(), e))?;
 
-        // Find the relevant event for channel open ack
-        let result = events
-            .into_iter()
-            .find(|event| {
-                matches!(event, IbcEvent::OpenAckChannel(_))
-                    || matches!(event, IbcEvent::ChainError(_))
-            })
-            .ok_or_else(|| {
-                ChannelError::Failed("no chan ack event was in the response".to_string())
-            })?;
+            // Find the relevant event for channel open ack
+            let event = events
+                .into_iter()
+                .find(|event| {
+                    matches!(event, IbcEvent::OpenAckChannel(_))
+                        || matches!(event, IbcEvent::ChainError(_))
+                })
+                .ok_or_else(|| {
+                    ChannelError::Failed("no chan ack event was in the response".to_string())
+                })?;
 
-        match result {
-            IbcEvent::OpenAckChannel(_) => Ok(result),
-            IbcEvent::ChainError(e) => {
-                Err(ChannelError::Failed(format!("tx response error: {}", e)))
+            match event {
+                IbcEvent::OpenAckChannel(_) => {
+                    info!(
+                        "done with ChanAck step {} => {:#?}\n",
+                        channel.dst_chain().id(),
+                        event
+                    );
+
+                    Ok(event)
+                }
+                IbcEvent::ChainError(e) => {
+                    Err(ChannelError::Failed(format!("tx response error: {}", e)))
+                }
+                _ => Err(ChannelError::Failed(format!(
+                    "unexpected IBC event {}",
+                    event
+                ))),
             }
-            _ => panic!("internal error"),
         }
+
+        do_build_chan_open_ack_and_send(self).map_err(|e| {
+            error!("failed ChanAck {:?}: {}", self.b_side, e);
+            e
+        })
     }
 
     pub fn build_chan_open_confirm(&self) -> Result<Vec<Any>, ChannelError> {
@@ -1097,31 +1080,46 @@ impl Channel {
     }
 
     pub fn build_chan_open_confirm_and_send(&self) -> Result<IbcEvent, ChannelError> {
-        let dst_msgs = self.build_chan_open_confirm()?;
+        fn do_build_chan_open_confirm_and_send(
+            channel: &Channel,
+        ) -> Result<IbcEvent, ChannelError> {
+            let dst_msgs = channel.build_chan_open_confirm()?;
 
-        let events = self
-            .dst_chain()
-            .send_msgs(dst_msgs)
-            .map_err(|e| ChannelError::SubmitError(self.dst_chain().id(), e))?;
+            let events = channel
+                .dst_chain()
+                .send_msgs(dst_msgs)
+                .map_err(|e| ChannelError::SubmitError(channel.dst_chain().id(), e))?;
 
-        // Find the relevant event for channel open confirm
-        let result = events
-            .into_iter()
-            .find(|event| {
-                matches!(event, IbcEvent::OpenConfirmChannel(_))
-                    || matches!(event, IbcEvent::ChainError(_))
-            })
-            .ok_or_else(|| {
-                ChannelError::Failed("no chan confirm event was in the response".to_string())
-            })?;
+            // Find the relevant event for channel open confirm
+            let event = events
+                .into_iter()
+                .find(|event| {
+                    matches!(event, IbcEvent::OpenConfirmChannel(_))
+                        || matches!(event, IbcEvent::ChainError(_))
+                })
+                .ok_or_else(|| {
+                    ChannelError::Failed("no chan confirm event was in the response".to_string())
+                })?;
 
-        match result {
-            IbcEvent::OpenConfirmChannel(_) => Ok(result),
-            IbcEvent::ChainError(e) => {
-                Err(ChannelError::Failed(format!("tx response error: {}", e)))
+            match event {
+                IbcEvent::OpenConfirmChannel(_) => {
+                    info!("done {} => {:#?}\n", channel.dst_chain().id(), event);
+                    Ok(event)
+                }
+                IbcEvent::ChainError(e) => {
+                    Err(ChannelError::Failed(format!("tx response error: {}", e)))
+                }
+                _ => Err(ChannelError::Failed(format!(
+                    "unexpected IBC event {}",
+                    event
+                ))),
             }
-            _ => panic!("internal error"),
         }
+
+        do_build_chan_open_confirm_and_send(self).map_err(|e| {
+            error!("failed ChanConfirm {:?}: {}", self.b_side, e);
+            e
+        })
     }
 
     pub fn build_chan_close_init(&self) -> Result<Vec<Any>, ChannelError> {
