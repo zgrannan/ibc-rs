@@ -23,6 +23,7 @@ use crate::{
     config::Config,
     object::{Channel, Client, Connection, Object, Packet},
     registry::Registry,
+    supervisor::scan::ChainScanner,
     worker::WorkerMap,
 };
 
@@ -74,6 +75,14 @@ impl<'a> SpawnContext<'a> {
     }
 
     pub fn spawn_workers_for_chain(&mut self, chain_id: &ChainId) {
+        {
+            let mut scanner = ChainScanner::new(self.config, self.registry);
+            scanner.scan(chain_id);
+
+            let scan = scanner.get();
+            eprintln!("Scan: {}", scan);
+        }
+
         let clients_req = QueryClientStatesRequest {
             pagination: ibc_proto::cosmos::base::query::pagination::all(),
         };

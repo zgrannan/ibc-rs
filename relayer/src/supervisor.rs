@@ -32,6 +32,8 @@ use dump_state::SupervisorState;
 pub mod spawn;
 use spawn::SpawnContext;
 
+pub mod scan;
+
 pub mod cmd;
 use cmd::{CmdEffect, ConfigUpdate, SupervisorCmd};
 
