@@ -230,7 +230,7 @@ impl<'a> SpawnContext<'a> {
 
             if !connection_end.is_open() {
                 debug!(
-                    "connection {} not open, skip workers for channels over this connetion",
+                    "connection {} not open, skip workers for channels over this connection",
                     connection.connection_id
                 );
                 continue;

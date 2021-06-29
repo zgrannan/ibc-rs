@@ -39,7 +39,7 @@ pub fn counterparty_chain_from_connection(
     Ok(client_state.chain_id())
 }
 
-fn connection_on_destination(
+pub fn connection_on_destination(
     connection_id_on_source: &ConnectionId,
     counterparty_client_id: &ClientId,
     counterparty_chain: &dyn ChainHandle,
