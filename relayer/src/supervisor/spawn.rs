@@ -1,46 +1,31 @@
 use anomaly::BoxError;
-use itertools::Itertools;
-use tracing::{debug, error, warn};
+use tracing::debug;
 
 use ibc::{
     ics02_client::client_state::{ClientState, IdentifiedAnyClientState},
     ics03_connection::connection::{IdentifiedConnectionEnd, State as ConnectionState},
-    ics04_channel::channel::{IdentifiedChannelEnd, State as ChannelState},
-    ics24_host::identifier::{ChainId, ConnectionId},
-    Height,
-};
-
-use ibc_proto::ibc::core::{
-    channel::v1::QueryConnectionChannelsRequest, client::v1::QueryClientStatesRequest,
-    connection::v1::QueryClientConnectionsRequest,
+    ics04_channel::channel::State as ChannelState,
 };
 
 use crate::{
-    chain::{
-        counterparty::{channel_on_destination, connection_state_on_destination},
-        handle::ChainHandle,
-    },
+    chain::handle::ChainHandle,
     config::Config,
     object::{Channel, Client, Connection, Object, Packet},
     registry::Registry,
-    supervisor::scan::ChainScanner,
+    supervisor::scan::{ChainScan, ClientScan},
     worker::WorkerMap,
 };
 
-use super::{Error, RwArc};
-
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
-pub enum SpawnMode {
-    Startup,
-    Reload,
-}
+use super::{
+    scan::{ChannelScan, ConnectionScan, Scan},
+    RwArc,
+};
 
 /// A context for spawning workers within the [`crate::supervisor::Supervisor`].
 pub struct SpawnContext<'a> {
     config: &'a RwArc<Config>,
     registry: &'a mut Registry,
     workers: &'a mut WorkerMap,
-    mode: SpawnMode,
 }
 
 impl<'a> SpawnContext<'a> {
@@ -48,303 +33,65 @@ impl<'a> SpawnContext<'a> {
         config: &'a RwArc<Config>,
         registry: &'a mut Registry,
         workers: &'a mut WorkerMap,
-        mode: SpawnMode,
     ) -> Self {
         Self {
             config,
             registry,
             workers,
-            mode,
         }
     }
 
-    pub fn spawn_workers(&mut self) {
-        let chain_ids = self
-            .config
-            .read()
-            .expect("poisoned lock")
-            .chains
-            .iter()
-            .map(|c| &c.id)
-            .cloned()
-            .collect_vec();
-
-        for chain_id in chain_ids {
-            self.spawn_workers_for_chain(&chain_id);
+    pub fn spawn_workers(&mut self, scan: Scan) {
+        for (_, chain_scan) in scan.chains {
+            self.spawn_chain_workers(chain_scan);
         }
     }
 
-    pub fn spawn_workers_for_chain(&mut self, chain_id: &ChainId) {
-        {
-            let mut scanner = ChainScanner::new(self.config, self.registry);
-            scanner.scan(chain_id);
+    pub fn spawn_chain_workers(&mut self, chain_scan: ChainScan) {
+        let ChainScan { chain, clients } = chain_scan;
 
-            let scan = scanner.get();
-            eprintln!("Scan: {}", scan);
-        }
+        debug!(chain.id = %chain.id(), "spawning workers");
 
-        let clients_req = QueryClientStatesRequest {
-            pagination: ibc_proto::cosmos::base::query::pagination::all(),
-        };
-
-        let chain = match self.registry.get_or_spawn(chain_id) {
-            Ok(chain_handle) => chain_handle,
-            Err(e) => {
-                error!(
-                    "skipping workers for chain {}, reason: failed to spawn chain runtime with error: {}",
-                    chain_id, e
-                );
-
-                return;
-            }
-        };
-
-        let clients = match chain.query_clients(clients_req) {
-            Ok(clients) => clients,
-            Err(e) => {
-                error!(
-                    "skipping workers for chain {}, reason: failed to query clients with error: {}",
-                    chain_id, e
-                );
-
-                return;
-            }
-        };
-
-        for client in clients {
-            self.spawn_workers_for_client(chain.clone(), client);
+        for (_, client) in clients {
+            self.spawn_client_workers(chain.clone(), client);
         }
     }
 
-    pub fn spawn_workers_for_client(
-        &mut self,
-        chain: Box<dyn ChainHandle>,
-        client: IdentifiedAnyClientState,
-    ) {
-        let counterparty_chain_id = client.client_state.chain_id();
-        let has_counterparty = self
-            .config
-            .read()
-            .expect("poisoned lock")
-            .has_chain(&counterparty_chain_id);
+    pub fn spawn_client_workers(&mut self, chain: Box<dyn ChainHandle>, client_scan: ClientScan) {
+        let ClientScan {
+            client,
+            connections,
+        } = client_scan;
 
-        if !has_counterparty {
-            debug!(
-                "skipping client worker for client {} on chain {} has its counterparty ({}) is not present in config",
-                client.client_id, chain.id(), counterparty_chain_id
-            );
+        debug!(chain.id = %chain.id(), client.id = %client.client_id, "spawning client workers");
 
-            return;
-        }
-
-        let chain_id = chain.id();
-
-        let conns_req = QueryClientConnectionsRequest {
-            client_id: client.client_id.to_string(),
-        };
-
-        let client_connections = match chain.query_client_connections(conns_req) {
-            Ok(connections) => connections,
-            Err(e) => {
-                error!(
-                    "skipping workers for chain {}, reason: failed to query client connections for client {}: {}",
-                    chain_id, client.client_id, e
-                );
-
-                return;
-            }
-        };
-
-        for connection_id in client_connections {
-            self.spawn_workers_for_connection(chain.clone(), &client, connection_id);
+        for (_, connection) in connections {
+            self.spawn_connection_workers(chain.clone(), &client, connection);
         }
     }
 
-    pub fn spawn_workers_for_connection(
+    pub fn spawn_connection_workers(
         &mut self,
         chain: Box<dyn ChainHandle>,
         client: &IdentifiedAnyClientState,
-        connection_id: ConnectionId,
-    ) {
-        let chain_id = chain.id();
-
-        let connection_end = match chain.query_connection(&connection_id, Height::zero()) {
-            Ok(connection_end) => connection_end,
-            Err(e) => {
-                error!(
-                    "skipping workers for chain {} and connection {}, reason: failed to query connection end: {}",
-                    chain_id, connection_id, e
-                );
-
-                return;
-            }
-        };
-
-        if !connection_end.is_open() {
-            debug!(
-                "connection {} not open, skip workers for channels over this connetion",
-                connection_id
-            );
-
-            return;
-        }
-
-        let conns_req = QueryClientConnectionsRequest {
-            client_id: client.client_id.to_string(),
-        };
-
-        let client_connections = match chain.query_client_connections(conns_req) {
-            Ok(connections) => connections,
-            Err(e) => {
-                error!(
-                    "skipping workers for chain {}, reason: failed to query client connections for client {}: {}",
-                    chain_id, client.client_id, e
-                );
-
-                return;
-            }
-        };
-
-        for connection_id in client_connections {
-            let connection_end = match chain.query_connection(&connection_id, Height::zero()) {
-                Ok(connection_end) => connection_end,
-                Err(e) => {
-                    error!(
-                        "skipping workers for chain {} and connection {}, reason: failed to query connection end: {}",
-                        chain_id, connection_id, e
-                    );
-
-                    continue;
-                }
-            };
-
-            let connection = IdentifiedConnectionEnd {
-                connection_id: connection_id.clone(),
-                connection_end: connection_end.clone(),
-            };
-
-            match self.spawn_connection_workers(chain.clone(), client.clone(), connection.clone()) {
-                Ok(()) => debug!(
-                    "done spawning workers for connection {} on chain {}",
-                    connection.connection_id,
-                    chain.id(),
-                ),
-                Err(e) => error!(
-                    "skipped workers for connection {} on chain {} due to error {}",
-                    chain.id(),
-                    connection.connection_id,
-                    e
-                ),
-            }
-
-            if !connection_end.is_open() {
-                debug!(
-                    "connection {} not open, skip workers for channels over this connection",
-                    connection.connection_id
-                );
-                continue;
-            }
-
-            let connection = IdentifiedConnectionEnd {
-                connection_id: connection_id.clone(),
-                connection_end: connection_end.clone(),
-            };
-
-            match self.counterparty_connection_state(client.clone(), connection.clone()) {
-                Err(e) => {
-                    debug!("error with counterparty: reason {}", e);
-                    continue;
-                }
-                Ok(state) => {
-                    if !state.eq(&ConnectionState::Open) {
-                        debug!(
-                            "connection {} not open, skip workers for channels over this connection",
-                            connection.connection_id
-                        );
-
-                        debug!(
-                            "drop connection {} because its counterparty is not open",
-                            connection_id
-                        );
-
-                        continue;
-                    }
-                }
-            };
-
-            let chans_req = QueryConnectionChannelsRequest {
-                connection: connection_id.to_string(),
-                pagination: ibc_proto::cosmos::base::query::pagination::all(),
-            };
-
-            let connection_channels = match chain.query_connection_channels(chans_req) {
-                Ok(channels) => channels,
-                Err(e) => {
-                    error!(
-                        "skipping workers for chain {} and connection {}, reason: failed to query its channels: {}",
-                        chain.id(), connection_id, e
-                    );
-
-                    return;
-                }
-            };
-
-            let connection = IdentifiedConnectionEnd::new(connection_id, connection_end);
-
-            for channel in connection_channels {
-                let channel_id = channel.channel_id.clone();
-
-                match self.spawn_workers_for_channel(chain.clone(), &client, &connection, channel) {
-                    Ok(()) => debug!(
-                        "done spawning workers for chain {} and channel {}",
-                        chain.id(),
-                        channel_id,
-                    ),
-                    Err(e) => error!(
-                        "skipped workers for chain {} and channel {} due to error {}",
-                        chain.id(),
-                        channel_id,
-                        e
-                    ),
-                }
-            }
-        }
-    }
-
-    fn counterparty_connection_state(
-        &mut self,
-        client: IdentifiedAnyClientState,
-        connection: IdentifiedConnectionEnd,
-    ) -> Result<ConnectionState, BoxError> {
-        let counterparty_chain = self
-            .registry
-            .get_or_spawn(&client.client_state.chain_id())?;
-
-        Ok(connection_state_on_destination(
-            connection,
-            counterparty_chain.as_ref(),
-        )?)
-    }
-
-    fn spawn_connection_workers(
-        &mut self,
-        chain: Box<dyn ChainHandle>,
-        client: IdentifiedAnyClientState,
-        connection: IdentifiedConnectionEnd,
+        connection_scan: ConnectionScan,
     ) -> Result<(), BoxError> {
-        let handshake_enabled = self
-            .config
-            .read()
-            .expect("poisoned lock")
-            .handshake_enabled();
+        let ConnectionScan {
+            connection,
+            counterparty,
+            channels,
+        } = connection_scan;
+
+        let handshake_enabled = self.handshake_enabled();
 
         let counterparty_chain = self
             .registry
             .get_or_spawn(&client.client_state.chain_id())?;
 
         let conn_state_src = connection.connection_end.state;
-        let conn_state_dst =
-            connection_state_on_destination(connection.clone(), counterparty_chain.as_ref())?;
+        let conn_state_dst = counterparty
+            .as_ref()
+            .map_or(ConnectionState::Uninitialized, |c| c.state);
 
         debug!(
             "connection {} on chain {} is: {:?}, state on dest. chain ({}) is: {:?}",
@@ -361,6 +108,8 @@ impl<'a> SpawnContext<'a> {
                 connection.connection_id,
                 chain.id()
             );
+
+            // nothing to do
         } else if !conn_state_dst.is_open()
             && conn_state_dst.less_or_equal_progress(conn_state_src)
             && handshake_enabled
@@ -369,7 +118,7 @@ impl<'a> SpawnContext<'a> {
             let connection_object = Object::Connection(Connection {
                 dst_chain_id: client.client_state.chain_id(),
                 src_chain_id: chain.id(),
-                src_connection_id: connection.connection_id,
+                src_connection_id: connection.connection_id.clone(),
             });
 
             self.workers
@@ -386,33 +135,66 @@ impl<'a> SpawnContext<'a> {
                 });
         }
 
+        if !connection.connection_end.is_open() {
+            debug!(
+                "connection {} not open, skip workers for channels over this connection",
+                connection.connection_id
+            );
+
+            return Ok(());
+        }
+
+        match counterparty {
+            None => {
+                debug!(
+                    "no counterparty for connection {}",
+                    connection.connection_id
+                );
+                return Ok(());
+            }
+            Some(counterparty) => {
+                if !counterparty.is_open() {
+                    debug!(
+                        "connection {} not open, skip workers for channels over this connection",
+                        connection.connection_id
+                    );
+
+                    debug!(
+                        "drop connection {} because its counterparty is not open",
+                        connection.connection_id
+                    );
+
+                    return Ok(());
+                }
+
+                for channel_scan in channels {
+                    self.spawn_channel_workers(
+                        chain.clone(),
+                        counterparty_chain.clone(),
+                        &client,
+                        channel_scan,
+                    );
+                }
+            }
+        }
+
         Ok(())
     }
 
-    /// Spawns all the [`Worker`]s that will handle a given channel for a given source chain.
-    pub fn spawn_workers_for_channel(
+    fn spawn_channel_workers(
         &mut self,
         chain: Box<dyn ChainHandle>,
+        counterparty_chain: Box<dyn ChainHandle>,
         client: &IdentifiedAnyClientState,
-        connection: &IdentifiedConnectionEnd,
-        channel: IdentifiedChannelEnd,
-    ) -> Result<(), Error> {
-        let handshake_enabled = self
-            .config
-            .read()
-            .expect("poisoned lock")
-            .handshake_enabled();
-
-        let counterparty_chain = self
-            .registry
-            .get_or_spawn(&client.client_state.chain_id())
-            .map_err(|e| Error::FailedToSpawnChainRuntime(e.to_string()))?;
-
-        let counterparty_channel =
-            channel_on_destination(&channel, &connection, counterparty_chain.as_ref())?;
+        channel_scan: ChannelScan,
+    ) {
+        let ChannelScan {
+            channel,
+            counterparty,
+        } = channel_scan;
 
         let chan_state_src = channel.channel_end.state;
-        let chan_state_dst = counterparty_channel
+        let chan_state_dst = counterparty
             .as_ref()
             .map_or(ChannelState::Uninitialized, |c| c.state);
 
@@ -441,31 +223,6 @@ impl<'a> SpawnContext<'a> {
                 )
                 .then(|| debug!("spawned Client worker: {}", client_object.short_name()));
 
-            // On config reload, we need to spawn the Client worker for the counterparty as well,
-            // otherwise we may never do it, eg. if the counterparty chain was not updated in the
-            // config.
-            if self.mode == SpawnMode::Reload {
-                let counterparty_client_id = connection.connection_end.counterparty().client_id();
-                let counterparty_client_object = Object::Client(Client {
-                    dst_client_id: counterparty_client_id.clone(),
-                    dst_chain_id: client.client_state.chain_id(),
-                    src_chain_id: chain.id(),
-                });
-
-                self.workers
-                    .spawn(
-                        counterparty_client_object.clone(),
-                        chain.clone(),
-                        counterparty_chain.clone(),
-                    )
-                    .then(|| {
-                        debug!(
-                            "spawned Client worker: {}",
-                            counterparty_client_object.short_name()
-                        )
-                    });
-            }
-
             // TODO: Only start the Packet worker if there are outstanding packets or ACKs.
             //       https://github.com/informalsystems/ibc-rs/issues/901
 
@@ -484,49 +241,9 @@ impl<'a> SpawnContext<'a> {
                     counterparty_chain.clone(),
                 )
                 .then(|| debug!("spawned Path worker: {}", path_object.short_name()));
-
-            if self.mode != SpawnMode::Reload {
-                return Ok(());
-            }
-
-            // On config reload, we need to spawn the Packet worker for the counterparty as well,
-            // otherwise we may never do it, eg. if the counterparty chain was not updated in the
-            // config.
-
-            let remote_channel = counterparty_channel.and_then(|c| {
-                c.remote
-                    .channel_id
-                    .as_ref()
-                    .map(|cid| (c.remote.port_id.clone(), cid.clone()))
-            });
-
-            if let Some((remote_port_id, remote_channel_id)) = remote_channel {
-                // spawn worker for the counterparty chain
-                let counterparty_path_object = Object::Packet(Packet {
-                    src_chain_id: counterparty_chain.id(),
-                    dst_chain_id: chain.id(),
-                    src_channel_id: remote_channel_id,
-                    src_port_id: remote_port_id,
-                });
-
-                self.workers
-                    .spawn(counterparty_path_object.clone(), counterparty_chain, chain)
-                    .then(|| {
-                        debug!(
-                            "spawned Path worker: {}",
-                            counterparty_path_object.short_name()
-                        )
-                    });
-            } else {
-                warn!(
-                    "cannot spawn counterparty to Packet worker '{}', \
-                     reason: cannot find remote channel on counterparty",
-                    path_object.short_name()
-                );
-            }
         } else if !chan_state_dst.is_open()
             && chan_state_dst.less_or_equal_progress(chan_state_src)
-            && handshake_enabled
+            && self.handshake_enabled()
         {
             // create worker for channel handshake that will advance the remote state
             let channel_object = Object::Channel(Channel {
@@ -540,14 +257,12 @@ impl<'a> SpawnContext<'a> {
                 .spawn(channel_object.clone(), chain, counterparty_chain)
                 .then(|| debug!("spawned Channel worker: {}", channel_object.short_name()));
         }
-
-        Ok(())
     }
 
-    pub fn shutdown_workers_for_chain(&mut self, chain_id: &ChainId) {
-        let affected_workers = self.workers.objects_for_chain(chain_id);
-        for object in affected_workers {
-            self.workers.shutdown_worker(&object);
-        }
+    fn handshake_enabled(&self) -> bool {
+        self.config
+            .read()
+            .expect("poisoned lock")
+            .handshake_enabled()
     }
 }

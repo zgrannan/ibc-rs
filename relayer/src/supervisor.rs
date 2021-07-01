@@ -37,7 +37,7 @@ pub mod scan;
 pub mod cmd;
 use cmd::{CmdEffect, ConfigUpdate, SupervisorCmd};
 
-use self::spawn::SpawnMode;
+use self::scan::{ChainScanner, Scan};
 
 type ArcBatch = Arc<event::monitor::Result<EventBatch>>;
 type Subscription = Receiver<ArcBatch>;
@@ -200,20 +200,40 @@ impl Supervisor {
         collected
     }
 
+    /// Create a new `ChainScanner` for scanning chains.
+    fn chain_scanner(&mut self) -> ChainScanner<'_> {
+        ChainScanner::new(&self.config, &mut self.registry)
+    }
+
+    /// Scan the given chains
+    fn scan(&mut self, chain_ids: impl IntoIterator<Item = ChainId>) -> Scan {
+        let mut scanner = self.chain_scanner();
+        for chain_id in chain_ids.into_iter() {
+            scanner.scan(&chain_id);
+        }
+        scanner.get()
+    }
+
     /// Create a new `SpawnContext` for spawning workers.
-    fn spawn_context(&mut self, mode: SpawnMode) -> SpawnContext<'_> {
-        SpawnContext::new(&self.config, &mut self.registry, &mut self.workers, mode)
+    fn spawn_context(&mut self) -> SpawnContext<'_> {
+        SpawnContext::new(&self.config, &mut self.registry, &mut self.workers)
     }
 
     /// Spawn all the workers necessary for the relayer to connect
     /// and relay between all the chains in the configurations.
-    fn spawn_workers(&mut self, mode: SpawnMode) {
-        self.spawn_context(mode).spawn_workers();
+    fn spawn_workers(&mut self) {
+        let chain_ids = {
+            let config = self.config.read().expect("poisoned lock");
+            config.chains.iter().map(|c| &c.id).cloned().collect_vec()
+        };
+
+        let scan = self.scan(chain_ids);
+        self.spawn_context().spawn_workers(scan);
     }
 
     /// Run the supervisor event loop.
     pub fn run(mut self) -> Result<(), BoxError> {
-        self.spawn_workers(SpawnMode::Startup);
+        self.spawn_workers();
 
         let mut subscriptions = self.init_subscriptions()?;
 
@@ -363,8 +383,8 @@ impl Supervisor {
         }
 
         debug!(chain.id=%id, "spawning workers");
-        let mut ctx = self.spawn_context(SpawnMode::Reload);
-        ctx.spawn_workers_for_chain(&id);
+        let scan = self.scan(vec![id]);
+        self.spawn_context().spawn_workers(scan);
 
         CmdEffect::ConfigChanged
     }
@@ -389,8 +409,7 @@ impl Supervisor {
             .retain(|c| &c.id != id);
 
         debug!(chain.id=%id, "shutting down workers");
-        let mut ctx = self.spawn_context(SpawnMode::Reload);
-        ctx.shutdown_workers_for_chain(&id);
+        self.workers.shutdown_chain_workers(&id);
 
         debug!(chain.id=%id, "shutting down chain runtime");
         self.registry.shutdown(&id);

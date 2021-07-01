@@ -4,22 +4,29 @@ use tracing::{debug, error};
 
 use ibc::{
     ics02_client::client_state::{ClientState, IdentifiedAnyClientState},
-    ics03_connection::connection::IdentifiedConnectionEnd,
-    ics04_channel::channel::IdentifiedChannelEnd,
+    ics03_connection::connection::{ConnectionEnd, IdentifiedConnectionEnd},
+    ics04_channel::channel::{ChannelEnd, IdentifiedChannelEnd},
     ics24_host::identifier::{ChainId, ClientId, ConnectionId},
     Height,
 };
 
 use ibc_proto::cosmos::base::query::pagination;
 
-use crate::{chain::handle::ChainHandle, config::Config, registry::Registry};
+use crate::{
+    chain::{
+        counterparty::{channel_on_destination, connection_on_destination},
+        handle::ChainHandle,
+    },
+    config::Config,
+    registry::Registry,
+};
 
 use super::RwArc;
 
 #[derive(Clone, Debug)]
 pub struct ClientScan {
-    client: IdentifiedAnyClientState,
-    connections: BTreeMap<ConnectionId, ConnectionScan>,
+    pub client: IdentifiedAnyClientState,
+    pub connections: BTreeMap<ConnectionId, ConnectionScan>,
 }
 
 impl ClientScan {
@@ -33,23 +40,40 @@ impl ClientScan {
 
 #[derive(Clone, Debug)]
 pub struct ConnectionScan {
-    connection: IdentifiedConnectionEnd,
-    channels: Vec<IdentifiedChannelEnd>,
+    pub connection: IdentifiedConnectionEnd,
+    pub counterparty: Option<ConnectionEnd>,
+    pub channels: Vec<ChannelScan>,
 }
 
 impl ConnectionScan {
-    pub fn new(connection: IdentifiedConnectionEnd) -> Self {
+    pub fn new(connection: IdentifiedConnectionEnd, counterparty: Option<ConnectionEnd>) -> Self {
         Self {
             connection,
+            counterparty,
             channels: Vec::new(),
         }
     }
 }
 
 #[derive(Clone, Debug)]
+pub struct ChannelScan {
+    pub channel: IdentifiedChannelEnd,
+    pub counterparty: Option<ChannelEnd>,
+}
+
+impl ChannelScan {
+    pub fn new(channel: IdentifiedChannelEnd, counterparty: Option<ChannelEnd>) -> Self {
+        Self {
+            channel,
+            counterparty,
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
 pub struct ChainScan {
-    chain: Box<dyn ChainHandle>,
-    clients: BTreeMap<ClientId, ClientScan>,
+    pub chain: Box<dyn ChainHandle>,
+    pub clients: BTreeMap<ClientId, ClientScan>,
 }
 
 impl ChainScan {
@@ -75,7 +99,7 @@ impl ChainScan {
 
 #[derive(Clone, Debug, Default)]
 pub struct Scan {
-    chains: BTreeMap<ChainId, ChainScan>,
+    pub chains: BTreeMap<ChainId, ChainScan>,
 }
 
 impl fmt::Display for Scan {
@@ -84,18 +108,18 @@ impl fmt::Display for Scan {
             writeln!(f, "# {}", chain_id)?;
             for (client_id, client) in &chain.clients {
                 writeln!(f, "  * {}", client_id)?;
-                for (connection_id, c) in &client.connections {
+                for (connection_id, co) in &client.connections {
                     writeln!(
                         f,
                         "    - {} ({:?})",
-                        connection_id, c.connection.connection_end.state
+                        connection_id, co.connection.connection_end.state,
                     )?;
 
-                    for channel in &c.channels {
+                    for ch in &co.channels {
                         writeln!(
                             f,
                             "      > {} ({:?})",
-                            channel.channel_id, channel.channel_end.state
+                            ch.channel.channel_id, ch.channel.channel_end.state
                         )?;
                     }
                 }
@@ -212,7 +236,7 @@ impl<'a> ChainScanner<'a> {
     }
 
     fn scan_client(
-        &self,
+        &mut self,
         chain: &dyn ChainHandle,
         client: IdentifiedAnyClientState,
     ) -> Option<ClientScan> {
@@ -223,21 +247,22 @@ impl<'a> ChainScanner<'a> {
         );
 
         let counterparty_chain_id = client.client_state.chain_id();
+        let counterparty_chain = match self.registry.get_or_spawn(&counterparty_chain_id) {
+            Ok(chain) => chain,
+            Err(_) => {
+                debug!(
+                    "skipping connections scan for client {} on chain {} has its counterparty ({}) is not present in config",
+                    client.client_id, chain.id(), counterparty_chain_id
+                );
 
-        let has_counterparty = self.has_chain(&counterparty_chain_id);
-        if !has_counterparty {
-            debug!(
-                "skipping connections scan for client {} on chain {} has its counterparty ({}) is not present in config",
-                client.client_id, chain.id(), counterparty_chain_id
-            );
-
-            return None;
-        }
+                return None;
+            }
+        };
 
         let connections = query_client_connections(chain, &client)
             .into_iter()
             .flatten()
-            .flat_map(|id| self.scan_connection(chain, id))
+            .flat_map(|id| self.scan_connection(chain, counterparty_chain.as_ref(), id))
             .map(|c| (c.connection.connection_id.clone(), c))
             .collect();
 
@@ -250,6 +275,7 @@ impl<'a> ChainScanner<'a> {
     fn scan_connection(
         &self,
         chain: &dyn ChainHandle,
+        counterparty_chain: &dyn ChainHandle,
         connection_id: ConnectionId,
     ) -> Option<ConnectionScan> {
         let connection_end = match chain.query_connection(&connection_id, Height::zero()) {
@@ -264,24 +290,22 @@ impl<'a> ChainScanner<'a> {
             }
         };
 
-        if !connection_end.is_open() {
-            debug!(
-                "connection {} not open, skip scan for channels over this connection",
-                connection_id
-            );
-
-            return None;
-        }
+        let counterparty_client_id = connection_end.counterparty().client_id();
+        let counterparty =
+            connection_on_destination(&connection_id, counterparty_client_id, counterparty_chain)
+                .ok()
+                .flatten();
 
         let connection = IdentifiedConnectionEnd {
             connection_id,
             connection_end,
         };
 
-        let channels = self.scan_connection_channels(chain, &connection);
+        let channels = self.scan_connection_channels(chain, counterparty_chain, &connection);
 
         Some(ConnectionScan {
             connection,
+            counterparty,
             channels,
         })
     }
@@ -289,17 +313,20 @@ impl<'a> ChainScanner<'a> {
     fn scan_connection_channels(
         &self,
         chain: &dyn ChainHandle,
+        counterparty_chain: &dyn ChainHandle,
         connection: &IdentifiedConnectionEnd,
-    ) -> Vec<IdentifiedChannelEnd> {
-        let channels = query_connection_channels(chain, connection);
-        channels.unwrap_or_else(Vec::new)
-    }
+    ) -> Vec<ChannelScan> {
+        query_connection_channels(chain, connection)
+            .unwrap_or_else(Vec::new)
+            .into_iter()
+            .map(|channel| {
+                let counterparty = channel_on_destination(&channel, connection, counterparty_chain)
+                    .ok()
+                    .flatten();
 
-    fn has_chain(&self, chain_id: &ChainId) -> bool {
-        self.config
-            .read()
-            .expect("poisoned lock")
-            .has_chain(chain_id)
+                ChannelScan::new(channel, counterparty)
+            })
+            .collect()
     }
 }
 

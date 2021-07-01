@@ -146,6 +146,13 @@ impl WorkerMap {
         }
     }
 
+    pub fn shutdown_chain_workers(&mut self, chain_id: &ChainId) {
+        let affected_workers = self.objects_for_chain(chain_id);
+        for object in affected_workers {
+            self.shutdown_worker(&object);
+        }
+    }
+
     /// Get an iterator over the worker map's objects.
     pub fn objects(&self) -> impl Iterator<Item = &Object> {
         self.workers.keys()
