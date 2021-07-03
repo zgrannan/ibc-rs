@@ -71,7 +71,7 @@ use ibc_proto::ibc::core::connection::v1::{
     QueryClientConnectionsRequest, QueryConnectionsRequest,
 };
 
-use crate::chain::QueryResponse;
+use crate::chain::{QueryResponse, utils};
 use crate::config::{ChainConfig, GasPrice};
 use crate::error::{Error, Kind};
 use crate::event::monitor::{EventMonitor, EventReceiver};
@@ -169,10 +169,13 @@ impl CosmosSdkChain {
 
         let account_seq = self.account_sequence()?;
 
+        let sid = utils::batch_short_id(&proto_msgs);
+
         debug!(
-            "send_tx: sending {} messages to {} using nonce {}",
-            proto_msgs.len(),
+            "[{}] [{}] send_tx: sending {} msg(s) using nonce {}",
             self.id(),
+            sid,
+            proto_msgs.len(),
             account_seq,
         );
 
@@ -213,8 +216,9 @@ impl CosmosSdkChain {
         let adjusted_fee = self.fee_with_gas(estimated_gas);
 
         trace!(
-            "send_tx: {} based on the estimated gas, adjusting fee from {:?} to {:?}",
+            "[{}] [{}] send_tx: based on the estimated gas, adjusting fee from {:?} to {:?}",
             self.id(),
+            sid,
             fee,
             adjusted_fee
         );
@@ -238,8 +242,9 @@ impl CosmosSdkChain {
             .map_err(|e| Kind::Rpc(self.config.rpc_addr.clone()).context(e))?;
 
         debug!(
-            "send_tx: broadcast_tx_sync to {}: {:?}",
+            "[{}] [{}] send_tx: broadcast_tx_sync: {:?}",
             self.id(),
+            sid,
             response
         );
 
@@ -393,8 +398,9 @@ impl CosmosSdkChain {
             debug!(
                 sequence = %account.sequence,
                 number = %account.account_number,
-                "send_tx: retrieved account for {}",
-                self.id()
+                address = %account.address,
+                "[{}] send_tx: retrieved account",
+                self.id(),
             );
 
             self.account = Some(account);
@@ -491,7 +497,8 @@ impl CosmosSdkChain {
     ) -> Result<Vec<TxSyncResult>, Error> {
         use crate::util::retry::{retry_with_index, RetryResult};
 
-        trace!("waiting for commit of block(s)");
+        trace!("[{}] waiting for block commit(s)",
+            self.id());
 
         // Wait a little bit initially
         thread::sleep(Duration::from_millis(200));
@@ -501,7 +508,8 @@ impl CosmosSdkChain {
         let result = retry_with_index(retry_strategy::wait_for_block_commits(), |index| {
             if all_tx_results_found(&tx_sync_results) {
                 trace!(
-                    "wait_for_block_commits: retrieved {} tx results after {} tries ({}ms)",
+                    "[{}] wait_for_block_commits: retrieved {} tx results after {} tries ({}ms)",
+                    self.id(),
                     tx_sync_results.len(),
                     index,
                     start.elapsed().as_millis()

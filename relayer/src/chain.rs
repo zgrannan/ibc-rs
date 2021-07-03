@@ -44,6 +44,7 @@ pub(crate) mod cosmos;
 pub mod counterparty;
 pub mod handle;
 pub mod runtime;
+mod utils;
 
 #[cfg(test)]
 pub mod mock;
