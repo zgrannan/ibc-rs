@@ -1,4 +1,6 @@
-use std::{collections::HashMap, ops::Deref, sync::Arc, time::Duration};
+use alloc::collections::btree_map::BTreeMap as HashMap;
+use alloc::sync::Arc;
+use core::{ops::Deref, time::Duration};
 
 use crossbeam_channel::Receiver;
 use itertools::Itertools;
@@ -573,9 +575,9 @@ impl Supervisor {
         let height = batch.height;
         let chain_id = batch.chain_id.clone();
 
-        let mut collected = self.collect_events(src_chain.clone().as_ref(), batch);
+        let collected = self.collect_events(src_chain.clone().as_ref(), batch);
 
-        for (object, events) in collected.per_object.drain() {
+        for (object, events) in collected.per_object.into_iter() {
             if events.is_empty() {
                 continue;
             }

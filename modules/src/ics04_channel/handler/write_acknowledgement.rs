@@ -7,7 +7,7 @@ use crate::{
     events::IbcEvent,
     handler::{HandlerOutput, HandlerResult},
 };
-use std::vec::Vec;
+use alloc::vec::Vec;
 
 #[derive(Clone, Debug)]
 pub struct WriteAckPacketResult {
@@ -83,7 +83,7 @@ pub fn process(
 
 #[cfg(test)]
 mod tests {
-    use std::convert::TryInto;
+    use core::convert::TryInto;
     use test_env_log::test;
 
     use crate::ics02_client::height::Height;

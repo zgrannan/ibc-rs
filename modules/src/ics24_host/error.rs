@@ -1,8 +1,5 @@
-use crate::primitives::String;
+use alloc::string::String;
 use flex_error::define_error;
-
-#[cfg(not(feature = "std"))]
-impl crate::primitives::StdError for ValidationError {}
 
 define_error! {
     #[derive(Debug, PartialEq, Eq)]

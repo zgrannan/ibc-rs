@@ -28,15 +28,14 @@
 //! - ICS 26: Routing
 //! - Applications:
 //!    - ICS 20: Fungible Token Transfer
-#[cfg(not(feature = "std"))]
-extern crate sp_std as std;
+
+extern crate alloc;
 
 pub mod application;
 pub mod events;
 pub mod handler;
 pub mod keys;
 pub mod macros;
-pub mod primitives;
 pub mod proofs;
 pub mod query;
 pub mod signer;

@@ -1,3 +1,5 @@
+extern crate alloc;
+
 mod runner;
 
 use modelator::{run, TestError};

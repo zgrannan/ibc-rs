@@ -10,7 +10,8 @@ use crate::ics04_channel::msgs::acknowledgement::MsgAcknowledgement;
 use crate::ics04_channel::packet::{PacketResult, Sequence};
 use crate::ics04_channel::{context::ChannelReader, error};
 use crate::ics24_host::identifier::{ChannelId, PortId};
-use crate::primitives::format;
+use alloc::format;
+
 #[derive(Clone, Debug)]
 pub struct AckPacketResult {
     pub port_id: PortId,
@@ -151,7 +152,7 @@ mod tests {
     use crate::timestamp::ZERO_DURATION;
     use test_env_log::test;
 
-    use std::convert::TryFrom;
+    use core::convert::TryFrom;
 
     #[test]
     fn ack_packet_processing() {

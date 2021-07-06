@@ -1,4 +1,4 @@
-use std::time::Duration;
+use core::time::Duration;
 
 use flex_error::define_error;
 use ibc::ics02_client::client_state::AnyClientState;

@@ -1,9 +1,9 @@
 #![allow(clippy::borrowed_box)]
 
+use core::time::Duration;
 use flex_error::{define_error, ErrorMessageTracer, ErrorReport};
 use prost_types::Any;
 use serde::Serialize;
-use std::time::Duration;
 use tracing::{debug, error, info};
 
 use ibc::events::IbcEvent;
@@ -33,7 +33,7 @@ use crate::util::retry::retry_with_index;
 use crate::util::retry::RetryResult;
 
 mod retry_strategy {
-    use std::time::Duration;
+    use core::time::Duration;
 
     use retry::delay::Fibonacci;
 

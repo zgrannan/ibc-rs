@@ -10,8 +10,7 @@ use crate::ics04_channel::handler::verify::{
 use crate::ics04_channel::msgs::timeout_on_close::MsgTimeoutOnClose;
 use crate::ics04_channel::packet::PacketResult;
 use crate::ics04_channel::{context::ChannelReader, error, handler::timeout::TimeoutPacketResult};
-use crate::primitives::format;
-use std::prelude::*;
+use alloc::format;
 
 pub fn process(
     ctx: &dyn ChannelReader,
@@ -161,7 +160,7 @@ mod tests {
 
     use crate::mock::context::MockContext;
 
-    use std::convert::TryFrom;
+    use core::convert::TryFrom;
     use test_env_log::test;
 
     #[test]

@@ -5,9 +5,6 @@ use crate::proofs::ProofError;
 use crate::Height;
 use flex_error::define_error;
 
-#[cfg(not(feature = "std"))]
-impl crate::primitives::StdError for Error {}
-
 define_error! {
     Error {
         Ics02Client

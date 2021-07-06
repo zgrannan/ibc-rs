@@ -1,11 +1,8 @@
 use crate::ics04_channel::error as channel_error;
 use crate::ics24_host::error::ValidationError;
 use crate::ics24_host::identifier::{ChannelId, PortId};
-use crate::primitives::String;
+use alloc::string::String;
 use flex_error::define_error;
-
-#[cfg(not(feature = "std"))]
-impl crate::primitives::StdError for Error {}
 
 define_error! {
     Error {

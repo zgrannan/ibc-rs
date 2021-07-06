@@ -1,10 +1,10 @@
-use crate::primitives::ToString;
+use alloc::string::ToString;
+use core::convert::TryFrom;
 use ibc_proto::ibc::core::channel::v1::Packet as RawPacket;
 use serde_derive::{Deserialize, Serialize};
-use std::convert::TryFrom;
-use std::prelude::*;
-use std::str::FromStr;
-use std::vec::Vec;
+
+use alloc::vec::Vec;
+use core::str::FromStr;
 
 use crate::ics04_channel::error;
 use crate::ics24_host::identifier::{ChannelId, PortId};
@@ -40,8 +40,8 @@ pub enum Receipt {
     Ok,
 }
 
-impl std::fmt::Display for PacketMsgType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for PacketMsgType {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             PacketMsgType::Recv => write!(f, "(PacketMsgType::Recv)"),
             PacketMsgType::Ack => write!(f, "(PacketMsgType::Ack)"),
@@ -94,8 +94,8 @@ impl From<Sequence> for u64 {
     }
 }
 
-impl std::fmt::Display for Sequence {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+impl core::fmt::Display for Sequence {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
         write!(f, "{}", self.0)
     }
 }
@@ -121,8 +121,8 @@ impl Packet {
     }
 }
 
-impl std::fmt::Debug for Packet {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+impl core::fmt::Debug for Packet {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
         write!(
             f,
             "{:?} {:?} {:?}",
@@ -132,8 +132,8 @@ impl std::fmt::Debug for Packet {
 }
 
 /// Custom debug output to omit the packet data
-impl std::fmt::Display for Packet {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+impl core::fmt::Display for Packet {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
         write!(
             f,
             "seq:{}, path:{}/{}->{}/{}, toh:{}, tos:{})",
@@ -252,7 +252,7 @@ pub mod test_utils {
 
 #[cfg(test)]
 mod tests {
-    use std::convert::TryFrom;
+    use core::convert::TryFrom;
     use test_env_log::test;
 
     use ibc_proto::ibc::core::channel::v1::Packet as RawPacket;

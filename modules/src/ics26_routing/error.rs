@@ -2,11 +2,8 @@ use crate::application::ics20_fungible_token_transfer;
 use crate::ics02_client;
 use crate::ics03_connection;
 use crate::ics04_channel;
-use crate::primitives::String;
+use alloc::string::String;
 use flex_error::{define_error, TraceError};
-
-#[cfg(not(feature = "std"))]
-impl crate::primitives::StdError for Error {}
 
 define_error! {
     Error {

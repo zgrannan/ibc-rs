@@ -3,15 +3,11 @@ use crate::ics07_tendermint::error::Error as Ics07Error;
 use crate::ics23_commitment::error::Error as Ics23Error;
 use crate::ics24_host::error::ValidationError;
 use crate::ics24_host::identifier::ClientId;
-use crate::primitives::format;
-use crate::primitives::String;
 use crate::Height;
+use alloc::{format, string::String};
+use core::num::TryFromIntError;
 use flex_error::{define_error, TraceError};
-use std::num::TryFromIntError;
 use tendermint_proto::Error as TendermintError;
-
-#[cfg(not(feature = "std"))]
-impl crate::primitives::StdError for Error {}
 
 define_error! {
     Error {

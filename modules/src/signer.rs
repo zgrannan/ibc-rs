@@ -1,6 +1,6 @@
-use crate::primitives::{String, ToString};
+use alloc::string::{String, ToString};
+use core::{convert::Infallible, fmt::Display, str::FromStr};
 use serde::{Deserialize, Serialize};
-use std::{convert::Infallible, fmt::Display, str::FromStr};
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct Signer(String);
@@ -16,7 +16,7 @@ impl Signer {
 }
 
 impl Display for Signer {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{}", self.0)
     }
 }

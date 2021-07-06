@@ -1,9 +1,8 @@
-use crate::primitives::String;
-use crate::primitives::ToString;
+use alloc::string::{String, ToString};
+use core::convert::TryFrom;
 use serde::{Deserialize, Serialize};
-use std::convert::TryFrom;
-use std::prelude::*;
-use std::vec::Vec;
+
+use alloc::vec::Vec;
 use tendermint_proto::Protobuf;
 
 use ibc_proto::ibc::core::connection::v1::Version as RawVersion;
@@ -93,7 +92,7 @@ pub fn pick_version(
 
 #[cfg(test)]
 mod tests {
-    use std::convert::{TryFrom, TryInto};
+    use core::convert::{TryFrom, TryInto};
     use test_env_log::test;
 
     use ibc_proto::ibc::core::connection::v1::Version as RawVersion;

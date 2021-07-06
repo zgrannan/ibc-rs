@@ -1,14 +1,11 @@
-use std::convert::Infallible;
-use std::convert::TryFrom;
-#[cfg(feature = "std")]
+use core::convert::Infallible;
+use core::convert::TryFrom;
 use std::time::SystemTime;
 
-use crate::primitives::ToString;
+use alloc::string::ToString;
 use chrono::{TimeZone, Utc};
 use prost_types::Timestamp;
 use serde::Serialize;
-#[cfg(not(feature = "std"))]
-use tendermint::primitives::SystemTime;
 use tendermint::{hash::Algorithm, time::Time, Hash};
 use tendermint_proto::Protobuf;
 

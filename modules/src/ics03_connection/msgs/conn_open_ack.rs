@@ -1,8 +1,7 @@
-use crate::primitives::String;
-use crate::primitives::ToString;
+use alloc::string::{String, ToString};
+use alloc::vec::Vec;
+use core::convert::{TryFrom, TryInto};
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenAck as RawMsgConnectionOpenAck;
-use std::convert::{TryFrom, TryInto};
-use std::vec::Vec;
 use tendermint_proto::Protobuf;
 
 use crate::ics02_client::client_state::AnyClientState;
@@ -195,7 +194,7 @@ pub mod test_util {
 
 #[cfg(test)]
 mod tests {
-    use std::convert::TryFrom;
+    use core::convert::TryFrom;
     use test_env_log::test;
 
     use ibc_proto::ibc::core::client::v1::Height;

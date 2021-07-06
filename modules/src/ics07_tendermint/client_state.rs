@@ -1,12 +1,9 @@
-use std::convert::{TryFrom, TryInto};
-use std::str::FromStr;
-#[cfg(feature = "std")]
-use std::time::Duration;
+use core::convert::{TryFrom, TryInto};
+use core::str::FromStr;
+use core::time::Duration;
 
-use crate::primitives::{String, ToString};
-use std::vec::Vec;
-#[cfg(not(feature = "std"))]
-use tendermint::primitives::Duration;
+use alloc::string::{String, ToString};
+use alloc::vec::Vec;
 
 use serde::{Deserialize, Serialize};
 use tendermint::trust_threshold::{
@@ -63,7 +60,7 @@ impl ClientState {
         // Basic validation of trusting period and unbonding period: each should be non-zero.
         if trusting_period <= Duration::new(0, 0) {
             return Err(error::invalid_trusting_period_error(
-                "ClientState trusting period must be greater than zero".into(),
+                "ClientState trusting period must be greater than zero".to_string(),
             ));
         }
         if unbonding_period <= Duration::new(0, 0) {
@@ -238,7 +235,7 @@ impl From<ClientState> for RawClientState {
 
 #[cfg(test)]
 mod tests {
-    use std::time::Duration;
+    use core::time::Duration;
     use test_env_log::test;
 
     use tendermint::trust_threshold::TrustThresholdFraction as TrustThreshold;
@@ -377,7 +374,7 @@ mod tests {
 
 #[cfg(any(test, feature = "mocks"))]
 pub mod test_util {
-    use std::time::Duration;
+    use core::time::Duration;
 
     use tendermint::block::Header;
 

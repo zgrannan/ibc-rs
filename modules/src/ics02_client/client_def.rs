@@ -12,30 +12,12 @@ use crate::ics04_channel::packet::Sequence;
 use crate::ics07_tendermint::client_def::TendermintClient;
 use crate::ics23_commitment::commitment::{CommitmentPrefix, CommitmentProofBytes, CommitmentRoot};
 use crate::ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId};
-use crate::primitives::String;
 use crate::Height;
-use std::vec::Vec;
+use alloc::string::String;
+use alloc::vec::Vec;
 
 #[cfg(any(test, feature = "mocks"))]
 use crate::mock::client_def::MockClient;
-
-// define_error!{
-//     Error {
-//         Ics02
-//             [ client_client_error::Error ]
-//             | _ | { "ICS02 client error" },
-
-//         LowHeaderHeight
-//             {
-//                 header_height: Height,
-//                 latest_height: Height
-//             }
-//             | e | {
-//                 format!("received header height ({:?}) is lower than (or equal to) client latest height ({:?})",
-//                     e.header_height, e.latest_height)
-//             },
-//     }
-// }
 
 pub trait ClientDef: Clone {
     type Header: Header;

@@ -1,10 +1,7 @@
 use crate::ics24_host::error::ValidationError;
-use crate::primitives::String;
+use alloc::string::String;
 use flex_error::{define_error, DisplayError, DisplayOnly, TraceError};
 use tendermint::error::Error as TendermintError;
-
-#[cfg(not(feature = "std"))]
-impl crate::primitives::StdError for Error {}
 
 define_error! {
     Error {

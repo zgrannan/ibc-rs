@@ -3,9 +3,6 @@ use crate::ics26_routing::error::Error as RoutingError;
 use crate::Height;
 use flex_error::define_error;
 
-#[cfg(not(feature = "std"))]
-impl crate::primitives::StdError for Error {}
-
 define_error! {
     Error {
         ClientStateNotFound

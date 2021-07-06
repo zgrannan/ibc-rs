@@ -1,15 +1,11 @@
-#[cfg(feature = "std")]
-use std::collections::HashMap;
+use alloc::collections::btree_map::BTreeMap as HashMap;
 
-#[cfg(not(feature = "std"))]
-use std::collections::btree_map::BTreeMap as HashMap;
-
-use crate::primitives::format;
-use crate::primitives::String;
-use crate::primitives::ToString;
+use alloc::borrow::ToOwned;
+use alloc::format;
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec::Vec;
 use serde_derive::{Deserialize, Serialize};
-use std::borrow::ToOwned;
-use std::vec::Vec;
 
 use crate::ics02_client::error as client_error;
 use crate::ics02_client::events as ClientEvents;
@@ -23,9 +19,9 @@ use crate::ics04_channel::events::Attributes as ChannelAttributes;
 use crate::ics24_host::error::ValidationError;
 use crate::timestamp::ParseTimestampError;
 use crate::Height;
+use core::fmt;
 use flex_error::{define_error, TraceError};
 use prost::alloc::fmt::Formatter;
-use std::fmt;
 
 define_error! {
     Error {
@@ -290,8 +286,8 @@ impl RawObject {
 }
 
 #[cfg(feature = "std")]
-pub fn extract_events<S: ::std::hash::BuildHasher>(
-    events: &HashMap<String, Vec<String>, S>,
+pub fn extract_events(
+    events: &HashMap<String, Vec<String>>,
     action_string: &str,
 ) -> Result<(), Error> {
     if let Some(message_action) = events.get("message.action") {
@@ -336,9 +332,9 @@ macro_rules! make_event {
     ($a:ident, $b:literal) => {
         #[derive(Debug, Deserialize, Serialize, Clone)]
         pub struct $a {
-            pub data: ::std::collections::HashMap<String, Vec<String>>,
+            pub data: ::alloc::collections::btree_map::BTreeMap<String, Vec<String>>,
         }
-        impl ::std::convert::TryFrom<$crate::events::RawObject> for $a {
+        impl ::core::convert::TryFrom<$crate::events::RawObject> for $a {
             type Error = $crate::event::Error;
 
             fn try_from(result: $crate::events::RawObject) -> Result<Self, Self::Error> {

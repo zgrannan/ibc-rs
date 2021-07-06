@@ -146,7 +146,7 @@ pub fn process(
 
 #[cfg(test)]
 mod tests {
-    use std::convert::TryFrom;
+    use core::convert::TryFrom;
     use test_env_log::test;
 
     use crate::ics03_connection::connection::ConnectionEnd;

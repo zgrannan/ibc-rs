@@ -1,12 +1,11 @@
-use core::marker::{Send, Sync};
-use std::convert::TryFrom;
-
-use crate::primitives::ToString;
+use alloc::string::ToString;
 use chrono::{DateTime, Utc};
+use core::convert::Infallible;
+use core::convert::TryFrom;
+use core::marker::{Send, Sync};
 use ibc_proto::ibc::core::client::v1::ConsensusStateWithHeight;
 use prost_types::Any;
 use serde::Serialize;
-use std::convert::Infallible;
 use tendermint_proto::Protobuf;
 
 use crate::events::IbcEventType;
@@ -26,7 +25,7 @@ pub const TENDERMINT_CONSENSUS_STATE_TYPE_URL: &str =
 
 pub const MOCK_CONSENSUS_STATE_TYPE_URL: &str = "/ibc.mock.ConsensusState";
 
-pub trait ConsensusState: Clone + std::fmt::Debug + Send + Sync {
+pub trait ConsensusState: Clone + core::fmt::Debug + Send + Sync {
     type Error;
 
     /// Type of client associated with this consensus state (eg. Tendermint)

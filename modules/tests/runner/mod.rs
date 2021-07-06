@@ -1,8 +1,8 @@
 pub mod step;
 
-use std::collections::HashMap;
-use std::fmt::Debug;
-use std::time::Duration;
+use alloc::collections::btree_map::BTreeMap as HashMap;
+use core::fmt::Debug;
+use core::time::Duration;
 
 use ibc::ics02_client::client_consensus::AnyConsensusState;
 use ibc::ics02_client::client_state::AnyClientState;

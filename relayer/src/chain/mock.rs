@@ -1,7 +1,7 @@
-use std::ops::Add;
-use std::sync::Arc;
+use alloc::sync::Arc;
+use core::ops::Add;
+use core::time::Duration;
 use std::thread;
-use std::time::Duration;
 
 use crossbeam_channel as channel;
 use prost_types::Any;
@@ -381,8 +381,8 @@ impl Chain for MockChain {
 // For integration tests with the modules
 #[cfg(test)]
 pub mod test_utils {
-    use std::str::FromStr;
-    use std::time::Duration;
+    use core::str::FromStr;
+    use core::time::Duration;
 
     use ibc::ics24_host::identifier::ChainId;
 

@@ -1543,7 +1543,8 @@ dependencies = [
 [[package]]
 name = "ics23"
 version = "0.6.5"
-source = "git+https://github.com/DaviRain-Su/ics23.git?branch=suooprt-no-std#99c8eda4ead5d3ca9a901a44f1cb209be41f33cc"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a575acddcafc39b28ccc3c685a0029b58e4741af99cd6c9fa11406ad4c4085d6"
 dependencies = [
  "anyhow",
  "bytes",
@@ -1552,7 +1553,6 @@ dependencies = [
  "ripemd160",
  "sha2",
  "sha3",
- "sp-std",
 ]
 
 [[package]]
@@ -1853,12 +1853,6 @@ dependencies = [
  "security-framework-sys",
  "tempfile",
 ]
-
-[[package]]
-name = "no-std-compat"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b93853da6d84c2e3c7d730d6473e8817692dd89be387eb01b94d7f108ecb5b8c"
 
 [[package]]
 name = "nom"
@@ -3144,25 +3138,20 @@ dependencies = [
 [[package]]
 name = "tendermint"
 version = "0.20.0"
-source = "git+https://github.com/octopus-network/tendermint-rs.git?branch=octpus-no-std-flex-error#ce34310ab6c5b8addc59155cae3cf86032a3ea1e"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e7d330f5d92e5e1c7a84130805b48b4983d98a37257034544492e3566315142b"
 dependencies = [
- "anyhow",
+ "anomaly",
  "async-trait",
  "bytes",
  "chrono",
- "displaydoc",
  "ed25519",
  "ed25519-dalek",
- "flex-error",
- "funty",
  "futures",
- "k256",
- "no-std-compat",
  "num-traits",
  "once_cell",
  "prost",
  "prost-types",
- "ripemd160",
  "serde",
  "serde_bytes",
  "serde_json",
@@ -3172,6 +3161,7 @@ dependencies = [
  "subtle",
  "subtle-encoding",
  "tendermint-proto",
+ "thiserror",
  "toml",
  "url",
  "zeroize",
@@ -3180,7 +3170,8 @@ dependencies = [
 [[package]]
 name = "tendermint-light-client"
 version = "0.20.0"
-source = "git+https://github.com/octopus-network/tendermint-rs.git?branch=octpus-no-std-flex-error#ce34310ab6c5b8addc59155cae3cf86032a3ea1e"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c8809a07c5f1a400a1ce49bb6473a713f059511db4201f0f810ea4614665a212"
 dependencies = [
  "anomaly",
  "contracts",
@@ -3201,7 +3192,8 @@ dependencies = [
 [[package]]
 name = "tendermint-proto"
 version = "0.20.0"
-source = "git+https://github.com/octopus-network/tendermint-rs.git?branch=octpus-no-std-flex-error#ce34310ab6c5b8addc59155cae3cf86032a3ea1e"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fadcaea1eecd91dbdd9636fe8ad38d2b41fc0ae814c176e51e00925cdda78a34"
 dependencies = [
  "anomaly",
  "bytes",
@@ -3219,7 +3211,8 @@ dependencies = [
 [[package]]
 name = "tendermint-rpc"
 version = "0.20.0"
-source = "git+https://github.com/octopus-network/tendermint-rs.git?branch=octpus-no-std-flex-error#ce34310ab6c5b8addc59155cae3cf86032a3ea1e"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d8f1c168b05be5e5c4237f49584356432defc91903f9dd7dbe74798eda48db43"
 dependencies = [
  "async-trait",
  "async-tungstenite",
@@ -3249,7 +3242,8 @@ dependencies = [
 [[package]]
 name = "tendermint-testgen"
 version = "0.20.0"
-source = "git+https://github.com/octopus-network/tendermint-rs.git?branch=octpus-no-std-flex-error#ce34310ab6c5b8addc59155cae3cf86032a3ea1e"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cbe4acaa8aa91bb208a22a7aa3e57610e2f6948c0b69667f7666ebc1bec27171"
 dependencies = [
  "ed25519-dalek",
  "gumdrop 0.8.0",

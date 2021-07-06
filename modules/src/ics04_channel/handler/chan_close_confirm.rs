@@ -9,7 +9,6 @@ use crate::ics04_channel::events::Attributes;
 use crate::ics04_channel::handler::verify::verify_channel_proofs;
 use crate::ics04_channel::handler::{ChannelIdState, ChannelResult};
 use crate::ics04_channel::msgs::chan_close_confirm::MsgChannelCloseConfirm;
-use std::prelude::*;
 
 pub(crate) fn process(
     ctx: &dyn ChannelReader,

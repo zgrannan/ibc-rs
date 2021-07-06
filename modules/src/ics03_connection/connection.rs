@@ -1,19 +1,12 @@
-use std::convert::{TryFrom, TryInto};
-use std::str::FromStr;
-#[cfg(feature = "std")]
-use std::time::Duration;
-#[cfg(feature = "std")]
-use std::u64;
-
-#[cfg(not(feature = "std"))]
+use core::convert::{TryFrom, TryInto};
+use core::str::FromStr;
+use core::time::Duration;
 use core::u64;
 
-use crate::primitives::ToString;
+use alloc::string::{String, ToString};
 use serde::{Deserialize, Serialize};
-use std::prelude::*;
-use std::vec::Vec;
-#[cfg(not(feature = "std"))]
-use tendermint::primitives::Duration;
+
+use alloc::vec::Vec;
 use tendermint_proto::Protobuf;
 
 use ibc_proto::ibc::core::connection::v1::{

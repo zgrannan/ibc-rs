@@ -31,10 +31,7 @@ std = [
     "sha2/std",
     "flex-error/std",
     "displaydoc/std",
-    "tendermint/std",
-    "ics23/std",
     "sp-std/std",
-    # "anyhow/std",
 ]
 
 [dependencies]

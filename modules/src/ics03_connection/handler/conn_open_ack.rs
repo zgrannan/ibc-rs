@@ -9,7 +9,6 @@ use crate::ics03_connection::events::Attributes;
 use crate::ics03_connection::handler::verify::{check_client_consensus_height, verify_proofs};
 use crate::ics03_connection::handler::{ConnectionIdState, ConnectionResult};
 use crate::ics03_connection::msgs::conn_open_ack::MsgConnectionOpenAck;
-use std::prelude::*;
 
 pub(crate) fn process(
     ctx: &dyn ConnectionReader,
@@ -103,8 +102,8 @@ pub(crate) fn process(
 
 #[cfg(test)]
 mod tests {
-    use std::convert::TryFrom;
-    use std::str::FromStr;
+    use core::convert::TryFrom;
+    use core::str::FromStr;
     use test_env_log::test;
 
     use crate::events::IbcEvent;

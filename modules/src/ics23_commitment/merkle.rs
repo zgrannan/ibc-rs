@@ -5,10 +5,10 @@ use ibc_proto::ibc::core::commitment::v1::MerkleProof as RawMerkleProof;
 
 use crate::ics23_commitment::commitment::{CommitmentPrefix, CommitmentProofBytes};
 use crate::ics23_commitment::error;
-use crate::primitives::format;
-use crate::primitives::String;
-use std::prelude::*;
-use std::vec::Vec;
+use alloc::format;
+use alloc::string::String;
+
+use alloc::vec::Vec;
 #[derive(Clone, Debug, PartialEq)]
 pub struct EmptyPrefixError;
 

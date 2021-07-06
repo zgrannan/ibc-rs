@@ -1,13 +1,13 @@
-use crate::primitives::format;
-use crate::primitives::String;
+use alloc::borrow::ToOwned;
+use alloc::format;
+use alloc::string::String;
+use alloc::vec::Vec;
+use core::cmp::Ordering;
+use core::convert::TryFrom;
+use core::num::ParseIntError;
+use core::str::FromStr;
 use flex_error::{define_error, TraceError};
 use serde_derive::{Deserialize, Serialize};
-use std::borrow::ToOwned;
-use std::cmp::Ordering;
-use std::convert::TryFrom;
-use std::num::ParseIntError;
-use std::str::FromStr;
-use std::vec::Vec;
 use tendermint_proto::Protobuf;
 
 use ibc_proto::ibc::core::client::v1::Height as RawHeight;
@@ -124,8 +124,8 @@ impl From<Height> for RawHeight {
     }
 }
 
-impl std::fmt::Debug for Height {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+impl core::fmt::Debug for Height {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
         f.debug_struct("Height")
             .field("revision", &self.revision_number)
             .field("height", &self.revision_height)
@@ -134,8 +134,8 @@ impl std::fmt::Debug for Height {
 }
 
 /// Custom debug output to omit the packet data
-impl std::fmt::Display for Height {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+impl core::fmt::Display for Height {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
         write!(f, "{}-{}", self.revision_number, self.revision_height)
     }
 }

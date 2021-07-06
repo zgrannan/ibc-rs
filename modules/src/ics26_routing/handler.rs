@@ -23,9 +23,9 @@ use crate::ics26_routing::msgs::Ics26Envelope::{
     self, Ics20Msg, Ics2Msg, Ics3Msg, Ics4ChannelMsg, Ics4PacketMsg,
 };
 
-use std::boxed::Box;
-use std::prelude::*;
-use std::vec::Vec;
+use alloc::boxed::Box;
+
+use alloc::vec::Vec;
 /// Mimics the DeliverTx ABCI interface, but a slightly lower level. No need for authentication
 /// info or signature checks here.
 /// https://github.com/cosmos/cosmos-sdk/tree/master/docs/basics
@@ -247,7 +247,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use std::convert::TryFrom;
+    use core::convert::TryFrom;
     use test_env_log::test;
 
     use crate::events::IbcEvent;

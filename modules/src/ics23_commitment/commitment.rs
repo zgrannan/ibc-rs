@@ -1,9 +1,9 @@
 use crate::ics23_commitment::error;
-use crate::primitives::format;
+use alloc::format;
+use alloc::vec::Vec;
+use core::{convert::TryFrom, fmt};
 use ibc_proto::ibc::core::commitment::v1::MerkleProof as RawMerkleProof;
 use serde::{Deserialize, Serialize};
-use std::vec::Vec;
-use std::{convert::TryFrom, fmt};
 use subtle_encoding::{Encoding, Hex};
 #[derive(Clone, PartialEq, Eq, Serialize)]
 #[serde(transparent)]
@@ -128,7 +128,7 @@ impl From<Vec<u8>> for CommitmentPrefix {
 
 impl fmt::Debug for CommitmentPrefix {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let converted = std::str::from_utf8(self.as_bytes());
+        let converted = core::str::from_utf8(self.as_bytes());
         match converted {
             Ok(s) => write!(f, "{}", s),
             Err(_e) => write!(f, "<not valid UTF8: {:?}>", self.as_bytes()),

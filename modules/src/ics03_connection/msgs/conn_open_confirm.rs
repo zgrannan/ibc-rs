@@ -1,6 +1,5 @@
-use crate::primitives::String;
-use crate::primitives::ToString;
-use std::convert::TryFrom;
+use alloc::string::{String, ToString};
+use core::convert::TryFrom;
 
 use tendermint_proto::Protobuf;
 
@@ -105,7 +104,7 @@ pub mod test_util {
 
 #[cfg(test)]
 mod tests {
-    use std::convert::TryFrom;
+    use core::convert::TryFrom;
     use test_env_log::test;
 
     use ibc_proto::ibc::core::client::v1::Height;
