@@ -1,4 +1,5 @@
 use ibc_proto::ibc::core::commitment::v1::MerkleProof;
+use ibc_proto::ibc::core::commitment::v1::MerklePath;
 
 use crate::ics02_client::client_consensus::AnyConsensusState;
 use crate::ics02_client::client_def::ClientDef;
@@ -17,6 +18,8 @@ use crate::ics07_tendermint::predicates::Predicates;
 use crate::ics23_commitment::commitment::{CommitmentPrefix, CommitmentProofBytes, CommitmentRoot};
 use crate::ics24_host::identifier::ConnectionId;
 use crate::ics24_host::identifier::{ChannelId, ClientId, PortId};
+use crate::ics24_host::{ClientUpgradePath, Path};
+
 use crate::Height;
 use tendermint::trust_threshold::TrustThresholdFraction;
 use tendermint::validator::Set;
@@ -41,18 +44,12 @@ impl ClientDef for TendermintClient {
         // check if a consensus state is already installed; if so it should
         // match the untrusted header.
 
-        //TODO remove:
-        // let time = header.signed_header.header.time;
-
         if let Some(cs) = ctx.consensus_state(&client_id, header.height()) {
             //could the header height be zero ?
             let consensus_state = downcast!(
                 cs => AnyConsensusState::Tendermint
             )
             .ok_or_else(|| Kind::ClientArgsTypeMismatch(ClientType::Tendermint))?;
-
-            //     //TODO remove:
-            // header.signed_header.header.time = consensus_state.timestamp;
 
             if consensus_state != ConsensusState::from(header.clone()) {
                 //freeze the client and return the installed consensus state
@@ -64,8 +61,6 @@ impl ClientDef for TendermintClient {
                 return Ok((client_state, consensus_state));
             }
         };
-        //  //TODO remove:
-        //     header.signed_header.header.time = time;
 
         let latest_consensus_state =
             match ctx.consensus_state(&client_id, client_state.latest_height) {
@@ -268,4 +263,17 @@ impl ClientDef for TendermintClient {
     ) -> Result<(Self::ClientState, Self::ConsensusState), Box<dyn std::error::Error>> {
         todo!()
     }
+}
+
+// construct MerklePath for the committed client from upgradePath
+pub fn construct_upgrade_client_merkle_path(mut upgradePath: Vec<String>, last_height :Height) ->
+MerklePath {
+
+	let lastKey = upgradePath.pop();
+ 
+    let append_key = ClientUpgradePath::UpgradedClientState(last_height.revision_height);
+
+	upgradePath.push(append_key);
+ 
+	return MerklePath{ key_value: upgradePath};
 }

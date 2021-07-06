@@ -1,4 +1,5 @@
 use tendermint::merkle::proof::Proof;
+//use std::convert::TryFrom;
 
 use ibc_proto::ibc::core::commitment::v1::MerklePath;
 use ibc_proto::ibc::core::commitment::v1::MerkleProof as RawMerkleProof;
@@ -70,10 +71,10 @@ pub struct MerkleProof {
 //         Ok(MerkleProof { proof: value.proofs.into_iter().map(|v| v.into()).collect() })
 //     }
 // }
-//
+
 // impl From<MerkleProof> for RawMerkleProof {
 //     fn from(value: MerkleProof) -> Self {
-//         RawMerkleProof { proof: value.proof }
+//         RawMerkleProof { proofs: value.proof }
 //     }
 // }
 

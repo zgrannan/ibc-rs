@@ -40,13 +40,24 @@ pub fn process(
 
     let upgrade_client_state = msg.client_state.clone();
 
-    if client_state.latest_height() >= upgrade_client_state.latest_height() {
+    if client_state.latest_height().revision_number >= upgrade_client_state.latest_height().revision_number {
         return Err(Kind::LowUpgradeHeight(
             client_state.latest_height(),
             upgrade_client_state.latest_height(),
         )
         .into());
     }
+
+    // if client_state.latest_height() >= upgrade_client_state.latest_height() {
+    //     return Err(Kind::LowUpgradeHeight(
+    //         client_state.latest_height(),
+    //         upgrade_client_state.latest_height(),
+    //     )
+    //     .into());
+    // }
+    
+
+    //TODO Check Trusting period or duration_expired 
 
     let client_type = ctx
         .client_type(&client_id)
