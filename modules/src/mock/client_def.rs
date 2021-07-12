@@ -154,11 +154,13 @@ impl ClientDef for MockClient {
     }
     fn verify_upgrade_and_update_state(
         &self,
-        client_state: &Self::ClientState,
-        consensus_state: &Self::ConsensusState,
+        _client_state: Self::ClientState,
+        _consensus_state: Self::ConsensusState,
+        new_client_state: Self::ClientState,
+        new_consensus_state: Self::ConsensusState,
         _proof_upgrade_client: MerkleProof,
         _proof_upgrade_consensus_state: MerkleProof,
     ) -> Result<(Self::ClientState, Self::ConsensusState), Box<dyn std::error::Error>> {
-        Ok((*client_state, *consensus_state))
+        Ok((new_client_state, new_consensus_state))
     }
 }

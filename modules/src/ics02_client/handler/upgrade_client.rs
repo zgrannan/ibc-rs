@@ -40,7 +40,9 @@ pub fn process(
 
     let upgrade_client_state = msg.client_state.clone();
 
-    if client_state.latest_height().revision_number >= upgrade_client_state.latest_height().revision_number {
+    if client_state.latest_height().revision_number
+        >= upgrade_client_state.latest_height().revision_number
+    {
         return Err(Kind::LowUpgradeHeight(
             client_state.latest_height(),
             upgrade_client_state.latest_height(),
@@ -48,16 +50,21 @@ pub fn process(
         .into());
     }
 
-    // if client_state.latest_height() >= upgrade_client_state.latest_height() {
-    //     return Err(Kind::LowUpgradeHeight(
-    //         client_state.latest_height(),
-    //         upgrade_client_state.latest_height(),
-    //     )
-    //     .into());
-    // }
-    
+    if client_state.latest_height() >= upgrade_client_state.latest_height() {
+        return Err(Kind::LowUpgradeHeight(
+            client_state.latest_height(),
+            upgrade_client_state.latest_height(),
+        )
+        .into());
+    }
 
-    //TODO Check Trusting period or duration_expired 
+    let consensus_state = ctx
+        .consensus_state(&client_id, client_state.latest_height())
+        .ok_or_else(|| {
+            Kind::ConsensusStateNotFound(client_id.clone(), client_state.latest_height())
+        })?;
+
+    //TODO Check Trusting period or duration_expired
 
     let client_type = ctx
         .client_type(&client_id)
@@ -67,14 +74,16 @@ pub fn process(
 
     let (new_client_state, new_consensus_state) = client_def
         .verify_upgrade_and_update_state(
-            &upgrade_client_state,
-            &msg.consensus_state,
+            client_state,
+            consensus_state,
+            upgrade_client_state,
+            msg.consensus_state,
             msg.proof_upgrade_client.clone(),
             msg.proof_upgrade_consensus_state,
         )
         .map_err(|e| Kind::UpgradeVerificationFailure.context(e.to_string()))?;
 
-    // Not implemented yet: https://github.com/informalsystems/ibc-rs/issues/722
+    // Verification not implemented yet: https://github.com/informalsystems/ibc-rs/issues/722
     // todo!()
 
     let result = ClientResult::Upgrade(Result {

@@ -153,6 +153,9 @@ pub enum Kind {
 
     #[error(" hearder height = {0} is invalid")]
     InvalidHeaderHeight(Height),
+
+    #[error("Upgrade path is empty, cannot upgrade client")]
+    UpgradePathEmpty,
 }
 
 impl Kind {

@@ -63,6 +63,24 @@ pub enum ClientUpgradePath {
     UpgradedClientState(u64),
     UpgradedClientConsensusState(u64),
 }
+impl ClientUpgradePath {
+    pub fn to_string(&self) -> String {
+        match &self {
+            ClientUpgradePath::UpgradedClientState(height) => {
+                format!(
+                    "{}/{}/{}",
+                    UPGRADED_IBC_STATE, height, UPGRADED_CLIENT_STATE
+                )
+            }
+            ClientUpgradePath::UpgradedClientConsensusState(height) => {
+                format!(
+                    "{}/{}/{}",
+                    UPGRADED_IBC_STATE, height, UPGRADED_CLIENT_CONSENSUS_STATE
+                )
+            }
+        }
+    }
+}
 
 impl Path {
     /// Indication if the path is provable.

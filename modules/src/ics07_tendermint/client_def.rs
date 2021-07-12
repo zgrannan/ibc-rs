@@ -1,5 +1,5 @@
-use ibc_proto::ibc::core::commitment::v1::MerkleProof;
 use ibc_proto::ibc::core::commitment::v1::MerklePath;
+use ibc_proto::ibc::core::commitment::v1::MerkleProof;
 
 use crate::ics02_client::client_consensus::AnyConsensusState;
 use crate::ics02_client::client_def::ClientDef;
@@ -18,7 +18,7 @@ use crate::ics07_tendermint::predicates::Predicates;
 use crate::ics23_commitment::commitment::{CommitmentPrefix, CommitmentProofBytes, CommitmentRoot};
 use crate::ics24_host::identifier::ConnectionId;
 use crate::ics24_host::identifier::{ChannelId, ClientId, PortId};
-use crate::ics24_host::{ClientUpgradePath, Path};
+use crate::ics24_host::ClientUpgradePath;
 
 use crate::Height;
 use tendermint::trust_threshold::TrustThresholdFraction;
@@ -256,24 +256,77 @@ impl ClientDef for TendermintClient {
 
     fn verify_upgrade_and_update_state(
         &self,
-        _client_state: &Self::ClientState,
-        _consensus_state: &Self::ConsensusState,
+        client_state: Self::ClientState,
+        _consensus_state: Self::ConsensusState,
+        new_client_state: Self::ClientState,
+        new_consensus_state: Self::ConsensusState,
         _proof_upgrade_client: MerkleProof,
         _proof_upgrade_consensus_state: MerkleProof,
     ) -> Result<(Self::ClientState, Self::ConsensusState), Box<dyn std::error::Error>> {
-        todo!()
+        if client_state.upgrade_path.is_empty() {
+            return Err(Kind::UpgradePathEmpty.into());
+        }
+
+        let _upgrade_client_path = construct_upgrade_client_merkle_path(
+            client_state.upgrade_path.clone(),
+            client_state.latest_height,
+        );
+        //TODO check construct_upgrade_consensus_merkle_path does not modify upgrade_path
+        let _upgrade_consensus_path = construct_upgrade_consensus_merkle_path(
+            client_state.upgrade_path.clone(),
+            client_state.latest_height,
+        );
+
+        //TODO membership verification
+
+        let mut new_state = client_state;
+
+        new_state.chain_id = new_client_state.chain_id;
+        new_state.unbonding_period = new_client_state.unbonding_period;
+        new_state.latest_height = new_client_state.latest_height;
+        new_state.upgrade_path = new_client_state.upgrade_path;
+
+        Ok((new_state, new_consensus_state))
     }
 }
 
 // construct MerklePath for the committed client from upgradePath
-pub fn construct_upgrade_client_merkle_path(mut upgradePath: Vec<String>, last_height :Height) ->
-MerklePath {
+pub fn construct_upgrade_client_merkle_path(
+    upgrade_path: Vec<String>,
+    last_height: Height,
+) -> Result<MerklePath, Box<dyn std::error::Error>> {
+    let mut copy_upgrade = upgrade_path;
+    let _last_key = match copy_upgrade.pop() {
+        Some(v) => v,
+        None => {
+            return Err(Kind::UpgradePathEmpty.into());
+        }
+    };
 
-	let lastKey = upgradePath.pop();
- 
     let append_key = ClientUpgradePath::UpgradedClientState(last_height.revision_height);
+    copy_upgrade.push(append_key.to_string());
 
-	upgradePath.push(append_key);
- 
-	return MerklePath{ key_value: upgradePath};
+    Ok(MerklePath {
+        key_path: copy_upgrade,
+    })
+}
+
+pub fn construct_upgrade_consensus_merkle_path(
+    upgrade_path: Vec<String>,
+    last_height: Height,
+) -> Result<MerklePath, Box<dyn std::error::Error>> {
+    let mut copy_upgrade = upgrade_path;
+    let _last_key = match copy_upgrade.pop() {
+        Some(v) => v,
+        None => {
+            return Err(Kind::UpgradePathEmpty.into());
+        }
+    };
+
+    let append_key = ClientUpgradePath::UpgradedClientConsensusState(last_height.revision_height);
+    copy_upgrade.push(append_key.to_string());
+
+    Ok(MerklePath {
+        key_path: copy_upgrade,
+    })
 }
