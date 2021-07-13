@@ -63,17 +63,17 @@ pub enum ClientUpgradePath {
     UpgradedClientState(u64),
     UpgradedClientConsensusState(u64),
 }
-impl ClientUpgradePath {
-    pub fn to_string(&self) -> String {
+impl Display for ClientUpgradePath {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         match &self {
             ClientUpgradePath::UpgradedClientState(height) => {
-                format!(
+                write!(f,
                     "{}/{}/{}",
                     UPGRADED_IBC_STATE, height, UPGRADED_CLIENT_STATE
                 )
             }
             ClientUpgradePath::UpgradedClientConsensusState(height) => {
-                format!(
+                write!(f,
                     "{}/{}/{}",
                     UPGRADED_IBC_STATE, height, UPGRADED_CLIENT_CONSENSUS_STATE
                 )
