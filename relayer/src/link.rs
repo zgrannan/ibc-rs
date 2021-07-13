@@ -198,7 +198,7 @@ pub struct RelayPath {
     // Marks whether this path has already cleared pending packets.
     // Packets should be cleared once (at startup), then this
     // flag turns to `false`.
-    clear_packets: bool,
+    pub clear_packets: bool,
     // Operational data, targeting both the source and destination chain.
     // These vectors of operational data are ordered decreasingly by their age, with element at
     // position `0` being the oldest.
@@ -437,6 +437,7 @@ impl RelayPath {
             "[{}] finished scheduling the clearing of pending packets",
             self
         );
+        self.clear_packets = false;
 
         Ok(())
     }
@@ -446,13 +447,9 @@ impl RelayPath {
         // With the first batch of events, also trigger the clearing of old packets.
         if self.clear_packets {
             self.clear_packets(batch.height)?;
-
-            // Disable further clearing of old packet.
-            // Clearing will happen separately, upon new blocks.
-            self.clear_packets = false;
         }
 
-        // Collect relevant events from the incoming batch & adjust their height.
+        // Collect relevant events from the incomin g batch & adjust their height.
         let events = self.filter_events(&batch.events);
 
         // Transform the events into operational data items
@@ -1551,11 +1548,6 @@ impl RelayPath {
         } else {
             None
         }
-    }
-
-    /// Set the relay path's clear packets flag.
-    pub fn set_clear_packets(&mut self, clear_packets: bool) {
-        self.clear_packets = clear_packets;
     }
 
     fn restore_src_client(&self) -> ForeignClient {
