@@ -80,10 +80,10 @@ pub struct MerkleProof {
 pub fn convert_tm_to_ics_merkle_proof(tm_proof: &Proof) -> Result<RawMerkleProof, Error> {
     let mut proofs = vec![];
 
-    for op in &tm_proof.ops {
-        let mut parsed = ibc_proto::ics23::CommitmentProof { proof: None };
-        prost::Message::merge(&mut parsed, op.data.as_slice())
-            .map_err(Error::CommitmentProofDecodingFailed)?;
+    for _op in &tm_proof.ops {
+        let parsed = ibc_proto::ics23::CommitmentProof { proof: None };
+        // prost::Message::merge(&mut parsed, op.data.as_slice())
+        //     .map_err(Error::CommitmentProofDecodingFailed)?;
 
         proofs.push(parsed);
     }

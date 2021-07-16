@@ -14,23 +14,23 @@ pub const COSMOS_SDK_VERSION: &str = include_str!("prost/COSMOS_SDK_COMMIT");
 pub mod cosmos {
     pub mod auth {
         pub mod v1beta1 {
-            include!("prost/cosmos.auth.v1beta1.rs");
+            //include!("prost/cosmos.auth.v1beta1.rs");
         }
     }
     pub mod staking {
         pub mod v1beta1 {
-            include!("prost/cosmos.staking.v1beta1.rs");
+            // include!("prost/cosmos.staking.v1beta1.rs");
         }
     }
     pub mod base {
         pub mod abci {
             pub mod v1beta1 {
-                include!("prost/cosmos.base.abci.v1beta1.rs");
+                // include!("prost/cosmos.base.abci.v1beta1.rs");
             }
         }
         pub mod kv {
             pub mod v1beta1 {
-                include!("prost/cosmos.base.kv.v1beta1.rs");
+                // include!("prost/cosmos.base.kv.v1beta1.rs");
             }
         }
         pub mod query {
@@ -39,24 +39,24 @@ pub mod cosmos {
             }
 
             pub mod pagination {
-                use super::v1beta1::PageRequest;
+                // use super::v1beta1::PageRequest;
 
-                pub fn all() -> Option<PageRequest> {
-                    Some(PageRequest {
-                        limit: u64::MAX,
-                        ..Default::default()
-                    })
-                }
+             // pub fn all() -> Option<PageRequest> {
+             //     Some(PageRequest {
+             //         limit: u64::MAX,
+             //         ..Default::default()
+             //     })
+             // }
             }
         }
         pub mod reflection {
             pub mod v1beta1 {
-                include!("prost/cosmos.base.reflection.v1beta1.rs");
+                // include!("prost/cosmos.base.reflection.v1beta1.rs");
             }
         }
         pub mod store {
             pub mod v1beta1 {
-                include!("prost/cosmos.base.store.v1beta1.rs");
+                // include!("prost/cosmos.base.store.v1beta1.rs");
             }
         }
         pub mod v1beta1 {
@@ -64,35 +64,35 @@ pub mod cosmos {
         }
         pub mod tendermint {
             pub mod v1beta1 {
-                include!("prost/cosmos.base.tendermint.v1beta1.rs");
+                // include!("prost/cosmos.base.tendermint.v1beta1.rs");
             }
         }
     }
     pub mod crypto {
         pub mod multisig {
             pub mod v1beta1 {
-                include!("prost/cosmos.crypto.multisig.v1beta1.rs");
+                // include!("prost/cosmos.crypto.multisig.v1beta1.rs");
             }
         }
     }
     pub mod tx {
         pub mod signing {
             pub mod v1beta1 {
-                include!("prost/cosmos.tx.signing.v1beta1.rs");
+                // include!("prost/cosmos.tx.signing.v1beta1.rs");
             }
         }
         pub mod v1beta1 {
-            include!("prost/cosmos.tx.v1beta1.rs");
+            // include!("prost/cosmos.tx.v1beta1.rs");
         }
     }
     pub mod upgrade {
         pub mod v1beta1 {
-            include!("prost/cosmos.upgrade.v1beta1.rs");
+            // include!("prost/cosmos.upgrade.v1beta1.rs");
         }
     }
     pub mod gov {
         pub mod v1beta1 {
-            include!("prost/cosmos.gov.v1beta1.rs");
+            // include!("prost/cosmos.gov.v1beta1.rs");
         }
     }
 }
@@ -128,19 +128,19 @@ pub mod ibc {
         }
         pub mod types {
             pub mod v1 {
-                include!("prost/ibc.core.types.v1.rs");
+                // include!("prost/ibc.core.types.v1.rs");
             }
         }
     }
     pub mod lightclients {
         pub mod localhost {
             pub mod v1 {
-                include!("prost/ibc.lightclients.localhost.v1.rs");
+                // include!("prost/ibc.lightclients.localhost.v1.rs");
             }
         }
         pub mod solomachine {
             pub mod v1 {
-                include!("prost/ibc.lightclients.solomachine.v1.rs");
+                // include!("prost/ibc.lightclients.solomachine.v1.rs");
             }
         }
         pub mod tendermint {
@@ -150,7 +150,7 @@ pub mod ibc {
         }
     }
     pub mod mock {
-        include!("prost/ibc.mock.rs");
+        // include!("prost/ibc.mock.rs");
     }
 }
 

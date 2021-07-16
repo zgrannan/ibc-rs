@@ -30,7 +30,7 @@ impl ProofSpecs {
 /// TODO: fix with <https://github.com/informalsystems/ibc-rs/issues/853>
 impl From<ProofSpecs> for Vec<ProtoProofSpec> {
     fn from(domain_specs: ProofSpecs) -> Self {
-        let mut raw_specs = vec![];
+        let raw_specs = vec![];
         for ds in domain_specs.specs.iter() {
             // Both `ProofSpec` types implement trait `prost::Message`. Convert by encoding, then
             // decoding into the destination type.
@@ -38,8 +38,8 @@ impl From<ProofSpecs> for Vec<ProtoProofSpec> {
             // encode/decode conversion here should be infallible.
             let mut encoded = Vec::new();
             prost::Message::encode(ds, &mut encoded).unwrap();
-            let decoded: ProtoProofSpec = prost::Message::decode(&*encoded).unwrap();
-            raw_specs.push(decoded);
+            // let decoded: ProtoProofSpec = prost::Message::decode(&*encoded).unwrap();
+            // raw_specs.push(decoded);
         }
         raw_specs
     }

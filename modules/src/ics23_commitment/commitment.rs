@@ -1,3 +1,5 @@
+use prusti_contracts::*;
+
 use crate::ics23_commitment::error::Error;
 use ibc_proto::ibc::core::commitment::v1::MerkleProof as RawMerkleProof;
 use serde::{Deserialize, Serialize};
@@ -76,21 +78,25 @@ impl From<CommitmentProofBytes> for Vec<u8> {
 // }
 
 impl From<RawMerkleProof> for CommitmentProofBytes {
-    fn from(proof: RawMerkleProof) -> Self {
-        let mut buf = Vec::new();
-        prost::Message::encode(&proof, &mut buf).unwrap();
-        buf.into()
+    #[trusted]
+    fn from(_proof: RawMerkleProof) -> Self {
+        // let mut buf = Vec::new();
+        // prost::Message::encode(&proof, &mut buf).unwrap();
+        // buf.into()
+        panic!("no")
     }
 }
 
 impl TryFrom<CommitmentProofBytes> for RawMerkleProof {
     type Error = Error;
 
-    fn try_from(value: CommitmentProofBytes) -> Result<Self, Self::Error> {
-        let value: Vec<u8> = value.into();
-        let res: RawMerkleProof =
-            prost::Message::decode(value.as_ref()).map_err(Error::InvalidRawMerkleProof)?;
-        Ok(res)
+    #[trusted]
+    fn try_from(_value: CommitmentProofBytes) -> Result<Self, Self::Error> {
+        panic!("No")
+        // let value: Vec<u8> = value.into();
+        // let res: RawMerkleProof =
+        //     prost::Message::decode(value.as_ref()).map_err(Error::InvalidRawMerkleProof)?;
+        // Ok(res)
     }
 }
 

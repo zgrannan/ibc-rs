@@ -24,3 +24,5 @@ __pycache__/
 # Ignore modelator aritfacts
 .modelator
 mc.log
+target
+log

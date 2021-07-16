@@ -1330,8 +1330,9 @@ dependencies = [
  "ibc-proto",
  "ics23",
  "modelator",
- "prost",
- "prost-types",
+ "prost 0.7.0",
+ "prost-types 0.7.0",
+ "prusti-contracts",
  "regex",
  "serde",
  "serde_derive",
@@ -1339,7 +1340,7 @@ dependencies = [
  "sha2",
  "subtle-encoding",
  "tendermint",
- "tendermint-proto",
+ "tendermint-proto 0.20.0",
  "tendermint-rpc",
  "tendermint-testgen",
  "test-env-log",
@@ -1354,9 +1355,10 @@ version = "0.8.2"
 dependencies = [
  "anomaly",
  "bytes",
- "prost",
- "prost-types",
- "tendermint-proto",
+ "prost 0.7.0",
+ "prost-types 0.7.0",
+ "prusti-contracts",
+ "tendermint-proto 0.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror",
  "tonic",
 ]
@@ -1386,8 +1388,8 @@ dependencies = [
  "ibc-telemetry",
  "itertools 0.10.1",
  "k256",
- "prost",
- "prost-types",
+ "prost 0.7.0",
+ "prost-types 0.7.0",
  "retry",
  "ripemd160",
  "semver 1.0.3",
@@ -1401,7 +1403,7 @@ dependencies = [
  "subtle-encoding",
  "tendermint",
  "tendermint-light-client",
- "tendermint-proto",
+ "tendermint-proto 0.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "tendermint-rpc",
  "tendermint-testgen",
  "test-env-log",
@@ -1432,8 +1434,8 @@ dependencies = [
  "ibc-telemetry",
  "itertools 0.10.1",
  "once_cell",
- "prost",
- "prost-types",
+ "prost 0.7.0",
+ "prost-types 0.7.0",
  "regex",
  "serde",
  "serde_derive",
@@ -1443,7 +1445,7 @@ dependencies = [
  "subtle-encoding",
  "tendermint",
  "tendermint-light-client",
- "tendermint-proto",
+ "tendermint-proto 0.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "tendermint-rpc",
  "thiserror",
  "tokio",
@@ -1474,7 +1476,7 @@ dependencies = [
  "anyhow",
  "bytes",
  "hex",
- "prost",
+ "prost 0.7.0",
  "ripemd160",
  "sha2",
  "sha3",
@@ -2129,7 +2131,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9e6984d2f1a23009bd270b8bb56d0926810a3d483f59c987d77969e9d8e840b2"
 dependencies = [
  "bytes",
- "prost-derive",
+ "prost-derive 0.7.0",
+]
+
+[[package]]
+name = "prost"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "de5e2533f59d08fcf364fd374ebda0692a70bd6d7e66ef97f306f45c6c5d8020"
+dependencies = [
+ "bytes",
+ "prost-derive 0.8.0",
 ]
 
 [[package]]
@@ -2146,13 +2158,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "prost-derive"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "600d2f334aa05acb02a755e217ef1ab6dea4d51b58b7846588b747edec04efba"
+dependencies = [
+ "anyhow",
+ "itertools 0.10.1",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "prost-types"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b518d7cdd93dab1d1122cf07fa9a60771836c668dde9d9e2a139f957f0d9f1bb"
 dependencies = [
  "bytes",
- "prost",
+ "prost 0.7.0",
+]
+
+[[package]]
+name = "prost-types"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "603bbd6394701d13f3f25aada59c7de9d35a6a5887cfc156181234a44002771b"
+dependencies = [
+ "bytes",
+ "prost 0.8.0",
 ]
 
 [[package]]
@@ -2160,6 +2195,43 @@ name = "protobuf"
 version = "2.24.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "db50e77ae196458ccd3dc58a31ea1a90b0698ab1b7928d89f644c25d72070267"
+
+[[package]]
+name = "prusti-contracts"
+version = "0.1.0"
+dependencies = [
+ "prusti-contracts-impl",
+ "prusti-contracts-internal",
+]
+
+[[package]]
+name = "prusti-contracts-impl"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "prusti-specs",
+ "quote",
+]
+
+[[package]]
+name = "prusti-contracts-internal"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "prusti-specs",
+]
+
+[[package]]
+name = "prusti-specs"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "serde",
+ "serde_json",
+ "syn",
+ "uuid",
+]
 
 [[package]]
 name = "quick-error"
@@ -2966,8 +3038,8 @@ dependencies = [
  "futures",
  "num-traits",
  "once_cell",
- "prost",
- "prost-types",
+ "prost 0.7.0",
+ "prost-types 0.7.0",
  "serde",
  "serde_bytes",
  "serde_json",
@@ -2976,7 +3048,7 @@ dependencies = [
  "signature",
  "subtle",
  "subtle-encoding",
- "tendermint-proto",
+ "tendermint-proto 0.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror",
  "toml",
  "url",
@@ -3008,6 +3080,24 @@ dependencies = [
 [[package]]
 name = "tendermint-proto"
 version = "0.20.0"
+dependencies = [
+ "anomaly",
+ "bytes",
+ "chrono",
+ "num-derive",
+ "num-traits",
+ "prost 0.8.0",
+ "prost-types 0.8.0",
+ "prusti-contracts",
+ "serde",
+ "serde_bytes",
+ "subtle-encoding",
+ "thiserror",
+]
+
+[[package]]
+name = "tendermint-proto"
+version = "0.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fadcaea1eecd91dbdd9636fe8ad38d2b41fc0ae814c176e51e00925cdda78a34"
 dependencies = [
@@ -3016,8 +3106,8 @@ dependencies = [
  "chrono",
  "num-derive",
  "num-traits",
- "prost",
- "prost-types",
+ "prost 0.7.0",
+ "prost-types 0.7.0",
  "serde",
  "serde_bytes",
  "subtle-encoding",
@@ -3046,7 +3136,7 @@ dependencies = [
  "serde_json",
  "subtle-encoding",
  "tendermint",
- "tendermint-proto",
+ "tendermint-proto 0.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror",
  "tokio",
  "tracing",
@@ -3336,8 +3426,8 @@ dependencies = [
  "hyper",
  "percent-encoding",
  "pin-project",
- "prost",
- "prost-derive",
+ "prost 0.7.0",
+ "prost-derive 0.7.0",
  "rustls-native-certs",
  "tokio",
  "tokio-rustls",
@@ -3604,6 +3694,10 @@ name = "uuid"
 version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bc5cf98d8186244414c848017f0e2676b3fcb46807f6668a97dfe67359a3c4b7"
+dependencies = [
+ "getrandom 0.2.3",
+ "serde",
+]
 
 [[package]]
 name = "vcpkg"
