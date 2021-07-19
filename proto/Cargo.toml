@@ -28,7 +28,6 @@ anomaly = "0.2"
 bytes = "1.0"
 thiserror = "1.0"
 tonic = "0.4"
-prusti-contracts = { path = "../../prusti-dev/prusti-contracts" }
 
 [dependencies.tendermint-proto]
 version = "=0.20.0"

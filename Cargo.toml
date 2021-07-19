@@ -5,11 +5,11 @@ members = [
     "relayer",
     "relayer-cli",
     "telemetry",
-    "proto",
 ]
 
 exclude = [
-    "proto-compiler"
+    "proto-compiler",
+    "proto"
 ]
 
 # [patch.crates-io]
