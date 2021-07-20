@@ -11,6 +11,7 @@ use crate::proofs::{ConsensusProof, Proofs};
 use crate::Height;
 
 /// Entry point for verifying all proofs bundled in any ICS3 message.
+#[trusted]
 pub fn verify_proofs(
     ctx: &dyn ConnectionReader,
     client_state: Option<AnyClientState>,

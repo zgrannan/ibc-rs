@@ -1,5 +1,6 @@
 //! Types for the IBC events emitted from Tendermint Websocket by the channels module.
 use crate::events::{IbcEvent, RawObject};
+use prusti_contracts::*;
 use crate::ics02_client::height::Height;
 use crate::ics04_channel::packet::Packet;
 use crate::ics24_host::identifier::{ChannelId, ConnectionId, PortId};
@@ -41,6 +42,7 @@ const PKT_TIMEOUT_TIMESTAMP_ATTRIBUTE_KEY: &str = "packet_timeout_timestamp";
 
 const PKT_ACK_ATTRIBUTE_KEY: &str = "packet_ack";
 
+#[trusted]
 pub fn try_from_tx(event: &tendermint::abci::Event) -> Option<IbcEvent> {
     match event.type_str.as_str() {
         OPEN_INIT_EVENT_TYPE => Some(IbcEvent::OpenInitChannel(OpenInit::from(
@@ -102,6 +104,7 @@ pub fn try_from_tx(event: &tendermint::abci::Event) -> Option<IbcEvent> {
     }
 }
 
+#[trusted]
 fn extract_attributes_from_tx(event: &tendermint::abci::Event) -> Attributes {
     let mut attr = Attributes::default();
 
@@ -125,6 +128,7 @@ fn extract_attributes_from_tx(event: &tendermint::abci::Event) -> Attributes {
     attr
 }
 
+#[trusted]
 fn extract_packet_and_write_ack_from_tx(
     event: &tendermint::abci::Event,
 ) -> (Packet, Option<Vec<u8>>) {

@@ -1,5 +1,6 @@
 //! Protocol logic specific to ICS3 messages of type `MsgConnectionOpenInit`.
 
+use prusti_contracts::*;
 use crate::events::IbcEvent;
 use crate::handler::{HandlerOutput, HandlerResult};
 use crate::ics03_connection::connection::{ConnectionEnd, State};
@@ -10,6 +11,7 @@ use crate::ics03_connection::handler::{ConnectionIdState, ConnectionResult};
 use crate::ics03_connection::msgs::conn_open_init::MsgConnectionOpenInit;
 use crate::ics24_host::identifier::ConnectionId;
 
+#[trusted]
 pub(crate) fn process(
     ctx: &dyn ConnectionReader,
     msg: MsgConnectionOpenInit,

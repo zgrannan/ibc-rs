@@ -67,6 +67,7 @@ pub fn default_version_string() -> String {
     Version::default().to_string()
 }
 
+#[trusted]
 pub fn get_compatible_versions() -> Vec<String> {
     vec![default_version_string()]
 }

@@ -32,6 +32,7 @@ const CONSENSUS_HEIGHT_ATTRIBUTE_KEY: &str = "consensus_height";
 /// The content of the `key` field for the header in update client event.
 const HEADER: &str = "header";
 
+#[trusted]
 pub fn try_from_tx(event: &tendermint::abci::Event) -> Option<IbcEvent> {
     match event.type_str.as_ref() {
         CREATE_EVENT_TYPE => Some(IbcEvent::CreateClient(CreateClient(

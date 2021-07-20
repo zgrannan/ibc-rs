@@ -1,5 +1,6 @@
 use std::convert::TryFrom;
 
+use prusti_contracts::*;
 use serde::{Deserialize, Serialize};
 use tendermint_proto::Protobuf;
 
@@ -66,11 +67,13 @@ impl Default for Version {
 }
 
 /// Returns the lists of supported versions
+#[trusted]
 pub fn get_compatible_versions() -> Vec<Version> {
     vec![Version::default()]
 }
 
 /// Selects a version from the intersection of locally supported and counterparty versions.
+#[trusted]
 pub fn pick_version(
     supported_versions: Vec<Version>,
     counterparty_versions: Vec<Version>,

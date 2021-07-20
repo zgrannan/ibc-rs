@@ -1,5 +1,6 @@
 //! This module implements the processing logic for ICS3 (connection open handshake) messages.
 
+use prusti_contracts::*;
 use crate::handler::HandlerOutput;
 use crate::ics03_connection::connection::ConnectionEnd;
 use crate::ics03_connection::context::ConnectionReader;
@@ -41,6 +42,7 @@ pub struct ConnectionResult {
 
 /// General entry point for processing any type of message related to the ICS3 connection open
 /// handshake protocol.
+#[trusted]
 pub fn dispatch<Ctx>(
     ctx: &Ctx,
     msg: ConnectionMsg,
