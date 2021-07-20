@@ -15,7 +15,7 @@ use prost::alloc::fmt::Formatter;
 use std::fmt;
 
 /// Events types
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone)]
 pub enum IbcEventType {
     CreateClient,
     UpdateClient,
@@ -35,7 +35,7 @@ impl IbcEventType {
 }
 
 /// Events created by the IBC component of a chain, destined for a relayer.
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone)]
 pub enum IbcEvent {
     NewBlock(NewBlock),
 
@@ -133,10 +133,11 @@ pub fn from_tx_response_event(height: Height, event: &tendermint::abci::Event) -
 
 impl IbcEvent {
     pub fn to_json(&self) -> String {
-        match serde_json::to_string(self) {
-            Ok(value) => value,
-            Err(_) => format!("{:?}", self), // Fallback to debug printing
-        }
+        format!("{:?}", self) // Fallback to debug printing
+        // match serde_json::to_string(self) {
+        //     Ok(value) => value,
+        //     Err(_) => format!("{:?}", self), // Fallback to debug printing
+        // }
     }
 
     pub fn height(&self) -> Height {

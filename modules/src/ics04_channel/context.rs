@@ -2,6 +2,8 @@
 //! the interface that any host chain must implement to be able to process any `ChannelMsg`.
 //!
 
+use prusti_contracts::trusted;
+
 use crate::ics02_client::client_consensus::AnyConsensusState;
 use crate::ics02_client::client_state::AnyClientState;
 use crate::ics03_connection::connection::ConnectionEnd;
@@ -67,6 +69,7 @@ pub trait ChannelReader {
 /// A context supplying all the necessary write-only dependencies (i.e., storage writing facility)
 /// for processing any `ChannelMsg`.
 pub trait ChannelKeeper {
+    #[trusted]
     fn store_channel_result(&mut self, result: ChannelResult) -> Result<(), Error> {
         // The handler processed this channel & some modifications occurred, store the new end.
         self.store_channel(
