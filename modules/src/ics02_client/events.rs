@@ -2,6 +2,7 @@
 use std::convert::{TryFrom, TryInto};
 
 use anomaly::BoxError;
+use prusti_contracts::trusted;
 use serde_derive::{Deserialize, Serialize};
 use subtle_encoding::hex;
 use tendermint_proto::Protobuf;
@@ -50,6 +51,7 @@ pub fn try_from_tx(event: &tendermint::abci::Event) -> Option<IbcEvent> {
     }
 }
 
+#[trusted]
 fn extract_attributes_from_tx(event: &tendermint::abci::Event) -> Attributes {
     let mut attr = Attributes::default();
 
@@ -68,6 +70,7 @@ fn extract_attributes_from_tx(event: &tendermint::abci::Event) -> Attributes {
     attr
 }
 
+#[trusted]
 pub fn extract_header_from_tx(event: &tendermint::abci::Event) -> Option<AnyHeader> {
     for tag in &event.attributes {
         let key = tag.key.as_ref();

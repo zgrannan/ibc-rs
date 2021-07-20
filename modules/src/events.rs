@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use anomaly::BoxError;
+use prusti_contracts::trusted;
 use serde_derive::{Deserialize, Serialize};
 
 use crate::ics02_client::events as ClientEvents;
@@ -24,6 +25,7 @@ pub enum IbcEventType {
 }
 
 impl IbcEventType {
+    #[trusted]
     pub fn as_str(&self) -> &'static str {
         match *self {
             IbcEventType::CreateClient => "create_client",
@@ -235,6 +237,7 @@ impl RawObject {
     }
 }
 
+#[trusted]
 pub fn extract_events<S: ::std::hash::BuildHasher>(
     events: &HashMap<String, Vec<String>, S>,
     action_string: &str,

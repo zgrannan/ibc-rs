@@ -13,16 +13,17 @@ use crate::proofs::Proofs;
 /// Entry point for verifying all proofs bundled in any ICS4 message for channel protocols.
 #[trusted]
 pub fn verify_channel_proofs(
-    ctx: &dyn ChannelReader,
-    channel_end: &ChannelEnd,
-    connection_end: &ConnectionEnd,
-    expected_chan: &ChannelEnd,
-    proofs: &Proofs,
+   _ctx: &dyn ChannelReader,
+   _channel_end: &ChannelEnd,
+   _connection_end: &ConnectionEnd,
+   _expected_chan: &ChannelEnd,
+   _proofs: &Proofs,
 ) -> Result<(), Error> {
     panic!("no")
 }
 
 /// Entry point for verifying all proofs bundled in a ICS4 packet recv. message.
+#[trusted]
 pub fn verify_packet_recv_proofs(
     ctx: &dyn ChannelReader,
     packet: &Packet,
@@ -70,11 +71,11 @@ pub fn verify_packet_recv_proofs(
 /// Entry point for verifying all proofs bundled in an ICS4 packet ack message.
 #[trusted]
 pub fn verify_packet_acknowledgement_proofs(
-    ctx: &dyn ChannelReader,
-    packet: &Packet,
-    acknowledgement: Vec<u8>,
-    client_id: ClientId,
-    proofs: &Proofs,
+   _ctx: &dyn ChannelReader,
+   _packet: &Packet,
+   _acknowledgement: Vec<u8>,
+   _client_id: ClientId,
+   _proofs: &Proofs,
 ) -> Result<(), Error> {
     panic!("no")
     // let client_state = ctx
@@ -105,11 +106,11 @@ pub fn verify_packet_acknowledgement_proofs(
 /// Entry point for verifying all timeout proofs.
 #[trusted]
 pub fn verify_next_sequence_recv(
-    ctx: &dyn ChannelReader,
-    client_id: ClientId,
-    packet: Packet,
-    seq: Sequence,
-    proofs: &Proofs,
+   _ctx: &dyn ChannelReader,
+   _client_id: ClientId,
+   _packet: Packet,
+   _seq: Sequence,
+   _proofs: &Proofs,
 ) -> Result<(), Error> {
     panic!("no")
     // let client_state = ctx
@@ -138,10 +139,10 @@ pub fn verify_next_sequence_recv(
 
 #[trusted]
 pub fn verify_packet_receipt_absence(
-    ctx: &dyn ChannelReader,
-    client_id: ClientId,
-    packet: Packet,
-    proofs: &Proofs,
+   _ctx: &dyn ChannelReader,
+   _client_id: ClientId,
+   _packet: Packet,
+   _proofs: &Proofs,
 ) -> Result<(), Error> {
     panic!("no")
     // let client_state = ctx

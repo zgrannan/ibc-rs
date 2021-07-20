@@ -1,3 +1,5 @@
+use prusti_contracts::trusted;
+
 use crate::events::IbcEvent;
 use crate::handler::{HandlerOutput, HandlerResult};
 use crate::ics02_client::client_state::ClientState;
@@ -21,6 +23,7 @@ pub struct SendPacketResult {
     pub data: Vec<u8>,
 }
 
+#[trusted]
 pub fn send_packet(ctx: &dyn ChannelReader, packet: Packet) -> HandlerResult<PacketResult, Error> {
     let mut output = HandlerOutput::builder();
 

@@ -1,5 +1,7 @@
 //! Protocol logic specific to processing ICS3 messages of type `MsgConnectionOpenAck`.
 
+use prusti_contracts::trusted;
+
 use crate::events::IbcEvent;
 use crate::handler::{HandlerOutput, HandlerResult};
 use crate::ics03_connection::connection::{ConnectionEnd, Counterparty, State};
@@ -10,6 +12,7 @@ use crate::ics03_connection::handler::verify::{check_client_consensus_height, ve
 use crate::ics03_connection::handler::{ConnectionIdState, ConnectionResult};
 use crate::ics03_connection::msgs::conn_open_ack::MsgConnectionOpenAck;
 
+#[trusted]
 pub(crate) fn process(
     ctx: &dyn ConnectionReader,
     msg: MsgConnectionOpenAck,

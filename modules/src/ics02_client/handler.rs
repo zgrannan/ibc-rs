@@ -1,5 +1,7 @@
 //! This module implements the processing logic for ICS2 (client abstractions and functions) msgs.
 
+use prusti_contracts::trusted;
+
 use crate::handler::HandlerOutput;
 use crate::ics02_client::context::ClientReader;
 use crate::ics02_client::error::Error;
@@ -17,6 +19,7 @@ pub enum ClientResult {
 }
 
 /// General entry point for processing any message related to ICS2 (client functions) protocols.
+#[trusted]
 pub fn dispatch<Ctx>(ctx: &Ctx, msg: ClientMsg) -> Result<HandlerOutput<ClientResult>, Error>
 where
     Ctx: ClientReader,

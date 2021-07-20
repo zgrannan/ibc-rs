@@ -1,6 +1,7 @@
 use std::convert::TryFrom;
 
 use ibc_proto::ibc::core::connection::v1::Version as RawVersion;
+use prusti_contracts::trusted;
 use tendermint_proto::Protobuf;
 
 use crate::ics04_channel::error::{Error, Kind};
@@ -70,6 +71,7 @@ pub fn get_compatible_versions() -> Vec<String> {
     vec![default_version_string()]
 }
 
+#[trusted]
 pub fn pick_version(
     supported_versions: Vec<String>,
     counterparty_versions: Vec<String>,
@@ -94,6 +96,7 @@ pub fn pick_version(
     Ok(intersection[0].to_string())
 }
 
+#[trusted]
 pub fn validate_versions(versions: Vec<String>) -> Result<Vec<String>, Error> {
     if versions.is_empty() {
         return Err(Kind::InvalidVersion
@@ -106,6 +109,7 @@ pub fn validate_versions(versions: Vec<String>) -> Result<Vec<String>, Error> {
     Ok(versions)
 }
 
+#[trusted]
 pub fn validate_version(raw_version: String) -> Result<String, Error> {
     let version =
         Version::from_str(raw_version.as_ref()).map_err(|e| Kind::InvalidVersion.context(e))?;

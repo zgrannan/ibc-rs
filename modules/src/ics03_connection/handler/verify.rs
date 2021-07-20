@@ -2,9 +2,7 @@
 
 use prusti_contracts::trusted;
 
-use crate::ics02_client::client_consensus::ConsensusState;
-use crate::ics02_client::client_state::{AnyClientState, ClientState};
-use crate::ics02_client::{client_def::AnyClient, client_def::ClientDef};
+use crate::ics02_client::client_state::AnyClientState;
 use crate::ics03_connection::connection::ConnectionEnd;
 use crate::ics03_connection::context::ConnectionReader;
 use crate::ics03_connection::error::{Error, Kind};
@@ -60,11 +58,11 @@ pub fn verify_proofs(
 /// which created this proof). This object must match the state of `expected_conn`.
 #[trusted]
 pub fn verify_connection_proof(
-    ctx: &dyn ConnectionReader,
-    connection_end: &ConnectionEnd,
-    expected_conn: &ConnectionEnd,
-    proof_height: Height,
-    proof: &CommitmentProofBytes,
+   _ctx: &dyn ConnectionReader,
+   _connection_end: &ConnectionEnd,
+   _expected_conn: &ConnectionEnd,
+   _proof_height: Height,
+   _proof: &CommitmentProofBytes,
 ) -> Result<(), Error> {
     panic!("No")
     // Fetch the client state (IBC client on the local/host chain).
@@ -115,11 +113,11 @@ pub fn verify_connection_proof(
 /// `proof` is correct.
 #[trusted]
 pub fn verify_client_proof(
-    ctx: &dyn ConnectionReader,
-    connection_end: &ConnectionEnd,
-    expected_client_state: AnyClientState,
-    proof_height: Height,
-    proof: &CommitmentProofBytes,
+   _ctx: &dyn ConnectionReader,
+   _connection_end: &ConnectionEnd,
+   _expected_client_state: AnyClientState,
+   _proof_height: Height,
+   _proof: &CommitmentProofBytes,
 ) -> Result<(), Error> {
     panic!("no")
     // Fetch the local client state (IBC client running on the host chain).
@@ -157,10 +155,10 @@ pub fn verify_client_proof(
 
 #[trusted]
 pub fn verify_consensus_proof(
-    ctx: &dyn ConnectionReader,
-    connection_end: &ConnectionEnd,
-    proof_height: Height,
-    proof: &ConsensusProof,
+   _ctx: &dyn ConnectionReader,
+   _connection_end: &ConnectionEnd,
+   _proof_height: Height,
+   _proof: &ConsensusProof,
 ) -> Result<(), Error> {
     panic!("No")
     // // Fetch the client state (IBC client on the local chain).

@@ -4,6 +4,7 @@ use crate::ics02_client::height::Height;
 use crate::ics24_host::identifier::{ClientId, ConnectionId};
 use crate::{attribute, some_attribute};
 use anomaly::BoxError;
+use prusti_contracts::trusted;
 use serde_derive::{Deserialize, Serialize};
 use std::convert::TryFrom;
 
@@ -37,6 +38,7 @@ pub fn try_from_tx(event: &tendermint::abci::Event) -> Option<IbcEvent> {
     }
 }
 
+#[trusted]
 fn extract_attributes_from_tx(event: &tendermint::abci::Event) -> Attributes {
     let mut attr = Attributes::default();
 

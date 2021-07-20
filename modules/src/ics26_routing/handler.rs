@@ -1,5 +1,6 @@
 use core::convert::TryInto;
 use prost_types::Any;
+use prusti_contracts::trusted;
 
 use crate::application::ics20_fungible_token_transfer::relay_application_logic::send_transfer::send_transfer as ics20_msg_dispatcher;
 use crate::ics02_client::handler::dispatch as ics2_msg_dispatcher;
@@ -18,6 +19,7 @@ use crate::{events::IbcEvent, handler::HandlerOutput};
 /// Returns a vector of all events that got generated as a byproduct of processing `messages`.
 ///
 /// See <https://github.com/cosmos/cosmos-sdk/tree/master/docs/basics>
+#[trusted]
 pub fn deliver<Ctx>(ctx: &mut Ctx, messages: Vec<Any>) -> Result<Vec<IbcEvent>, Error>
 where
     Ctx: Ics26Context,

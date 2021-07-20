@@ -1,3 +1,5 @@
+use prusti_contracts::trusted;
+
 use crate::events::IbcEvent;
 use crate::handler::{HandlerOutput, HandlerResult};
 use crate::ics04_channel::channel::State;
@@ -13,6 +15,7 @@ use crate::ics04_channel::{
     context::ChannelReader, error::Error, error::Kind, handler::timeout::TimeoutPacketResult,
 };
 
+#[trusted]
 pub fn process(
     ctx: &dyn ChannelReader,
     msg: MsgTimeoutOnClose,

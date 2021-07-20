@@ -1,3 +1,5 @@
+use prusti_contracts::trusted;
+
 use crate::events::IbcEvent;
 use crate::handler::{HandlerOutput, HandlerResult};
 use crate::ics04_channel::channel::State;
@@ -20,6 +22,7 @@ pub struct TimeoutPacketResult {
     pub channel: Option<ChannelEnd>,
 }
 
+#[trusted]
 pub fn process(ctx: &dyn ChannelReader, msg: MsgTimeout) -> HandlerResult<PacketResult, Error> {
     let mut output = HandlerOutput::builder();
 
