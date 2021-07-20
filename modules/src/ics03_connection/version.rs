@@ -69,7 +69,7 @@ impl Default for Version {
 /// Returns the lists of supported versions
 #[trusted]
 pub fn get_compatible_versions() -> Vec<Version> {
-    vec![Version::default()]
+panic!("No") //     vec![Version::default()]
 }
 
 /// Selects a version from the intersection of locally supported and counterparty versions.
@@ -78,21 +78,21 @@ pub fn pick_version(
     supported_versions: Vec<Version>,
     counterparty_versions: Vec<Version>,
 ) -> Option<Version> {
-    let mut intersection: Vec<Version> = vec![];
-    for s in supported_versions.iter() {
-        for c in counterparty_versions.iter() {
-            if c.identifier != s.identifier {
-                continue;
-            }
-            // TODO - perform feature intersection and error if empty
-            intersection.append(&mut vec![s.clone()]);
-        }
-    }
-    intersection.sort_by(|a, b| a.identifier.cmp(&b.identifier));
-    if intersection.is_empty() {
-        return None;
-    }
-    Some(intersection[0].clone())
+panic!("No") //     let mut intersection: Vec<Version> = vec![];
+//     for s in supported_versions.iter() {
+//         for c in counterparty_versions.iter() {
+//             if c.identifier != s.identifier {
+//                 continue;
+//             }
+//             // TODO - perform feature intersection and error if empty
+//             intersection.append(&mut vec![s.clone()]);
+//         }
+//     }
+//     intersection.sort_by(|a, b| a.identifier.cmp(&b.identifier));
+//     if intersection.is_empty() {
+//         return None;
+//     }
+//     Some(intersection[0].clone())
 }
 
 #[cfg(test)]

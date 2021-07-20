@@ -242,13 +242,13 @@ pub fn extract_events<S: ::std::hash::BuildHasher>(
     events: &HashMap<String, Vec<String>, S>,
     action_string: &str,
 ) -> Result<(), BoxError> {
-    if let Some(message_action) = events.get("message.action") {
-        if message_action.contains(&action_string.to_owned()) {
-            return Ok(());
-        }
-        return Err("Missing action string".into());
-    }
-    Err("Incorrect Event Type".into())
+panic!("No") //     if let Some(message_action) = events.get("message.action") {
+//         if message_action.contains(&action_string.to_owned()) {
+//             return Ok(());
+//         }
+//         return Err("Missing action string".into());
+//     }
+//     Err("Incorrect Event Type".into())
 }
 
 #[macro_export]

@@ -17,108 +17,108 @@ pub(crate) fn process(
     ctx: &dyn ConnectionReader,
     msg: MsgConnectionOpenTry,
 ) -> HandlerResult<ConnectionResult, Error> {
-    let mut output = HandlerOutput::builder();
-
-    // Check that consensus height (for client proof) in message is not too advanced nor too old.
-    check_client_consensus_height(ctx, msg.consensus_height())?;
-
-    // Unwrap the old connection end (if any) and its identifier.
-    let (mut new_connection_end, conn_id) = match msg.previous_connection_id() {
-        // A connection with this id should already exist. Search & validate.
-        Some(prev_id) => {
-            let old_connection_end = ctx
-                .connection_end(prev_id)
-                .ok_or_else(|| Kind::ConnectionNotFound(prev_id.clone()))?;
-
-            // Validate that existing connection end matches with the one we're trying to establish.
-            if old_connection_end.state_matches(&State::Init)
-                && old_connection_end.counterparty_matches(&msg.counterparty())
-                && old_connection_end.client_id_matches(msg.client_id())
-                && old_connection_end.delay_period() == msg.delay_period
-            {
-                // A ConnectionEnd already exists and all validation passed.
-                output.log(format!(
-                    "success: `previous_connection_id` {} validation passed",
-                    prev_id
-                ));
-                Ok((old_connection_end, prev_id.clone()))
-            } else {
-                // A ConnectionEnd already exists and validation failed.
-                Err(Into::<Error>::into(Kind::ConnectionMismatch(
-                    prev_id.clone(),
-                )))
-            }
-        }
-        // No prev. connection id was supplied, create a new connection end and conn id.
-        None => {
-            // Build a new connection end as well as an identifier.
-            let conn_end = ConnectionEnd::new(
-                State::Init,
-                msg.client_id().clone(),
-                msg.counterparty(),
-                msg.counterparty_versions(),
-                msg.delay_period,
-            );
-            let id_counter = ctx.connection_counter();
-            let conn_id = ConnectionId::new(id_counter);
-
-            output.log(format!(
-                "success: new connection end and identifier {} generated",
-                conn_id
-            ));
-            Ok((conn_end, conn_id))
-        }
-    }?;
-
-    // Proof verification in two steps:
-    // 1. Setup: build the ConnectionEnd as we expect to find it on the other party.
-    let expected_conn = ConnectionEnd::new(
-        State::Init,
-        msg.counterparty().client_id().clone(),
-        Counterparty::new(msg.client_id().clone(), None, ctx.commitment_prefix()),
-        msg.counterparty_versions(),
-        msg.delay_period,
-    );
-
-    // 2. Pass the details to the verification function.
-    verify_proofs(
-        ctx,
-        msg.client_state(),
-        &new_connection_end,
-        &expected_conn,
-        msg.proofs(),
-    )?;
-
-    // Transition the connection end to the new state & pick a version.
-    new_connection_end.set_state(State::TryOpen);
-
-    // Pick the version.
-    new_connection_end.set_version(
-        ctx.pick_version(ctx.get_compatible_versions(), msg.counterparty_versions())
-            .ok_or(Kind::NoCommonVersion)?,
-    );
-
-    assert_eq!(new_connection_end.versions().len(), 1);
-
-    output.log("success: connection verification passed");
-
-    let result = ConnectionResult {
-        connection_id: conn_id.clone(),
-        connection_id_state: if matches!(msg.previous_connection_id, None) {
-            ConnectionIdState::Generated
-        } else {
-            ConnectionIdState::Reused
-        },
-        connection_end: new_connection_end,
-    };
-
-    let event_attributes = Attributes {
-        connection_id: Some(conn_id),
-        ..Default::default()
-    };
-    output.emit(IbcEvent::OpenTryConnection(event_attributes.into()));
-
-    Ok(output.with_result(result))
+panic!("No") //     let mut output = HandlerOutput::builder();
+// 
+//     // Check that consensus height (for client proof) in message is not too advanced nor too old.
+//     check_client_consensus_height(ctx, msg.consensus_height())?;
+// 
+//     // Unwrap the old connection end (if any) and its identifier.
+//     let (mut new_connection_end, conn_id) = match msg.previous_connection_id() {
+//         // A connection with this id should already exist. Search & validate.
+//         Some(prev_id) => {
+//             let old_connection_end = ctx
+//                 .connection_end(prev_id)
+//                 .ok_or_else(|| Kind::ConnectionNotFound(prev_id.clone()))?;
+// 
+//             // Validate that existing connection end matches with the one we're trying to establish.
+//             if old_connection_end.state_matches(&State::Init)
+//                 && old_connection_end.counterparty_matches(&msg.counterparty())
+//                 && old_connection_end.client_id_matches(msg.client_id())
+//                 && old_connection_end.delay_period() == msg.delay_period
+//             {
+//                 // A ConnectionEnd already exists and all validation passed.
+//                 output.log(format!(
+//                     "success: `previous_connection_id` {} validation passed",
+//                     prev_id
+//                 ));
+//                 Ok((old_connection_end, prev_id.clone()))
+//             } else {
+//                 // A ConnectionEnd already exists and validation failed.
+//                 Err(Into::<Error>::into(Kind::ConnectionMismatch(
+//                     prev_id.clone(),
+//                 )))
+//             }
+//         }
+//         // No prev. connection id was supplied, create a new connection end and conn id.
+//         None => {
+//             // Build a new connection end as well as an identifier.
+//             let conn_end = ConnectionEnd::new(
+//                 State::Init,
+//                 msg.client_id().clone(),
+//                 msg.counterparty(),
+//                 msg.counterparty_versions(),
+//                 msg.delay_period,
+//             );
+//             let id_counter = ctx.connection_counter();
+//             let conn_id = ConnectionId::new(id_counter);
+// 
+//             output.log(format!(
+//                 "success: new connection end and identifier {} generated",
+//                 conn_id
+//             ));
+//             Ok((conn_end, conn_id))
+//         }
+//     }?;
+// 
+//     // Proof verification in two steps:
+//     // 1. Setup: build the ConnectionEnd as we expect to find it on the other party.
+//     let expected_conn = ConnectionEnd::new(
+//         State::Init,
+//         msg.counterparty().client_id().clone(),
+//         Counterparty::new(msg.client_id().clone(), None, ctx.commitment_prefix()),
+//         msg.counterparty_versions(),
+//         msg.delay_period,
+//     );
+// 
+//     // 2. Pass the details to the verification function.
+//     verify_proofs(
+//         ctx,
+//         msg.client_state(),
+//         &new_connection_end,
+//         &expected_conn,
+//         msg.proofs(),
+//     )?;
+// 
+//     // Transition the connection end to the new state & pick a version.
+//     new_connection_end.set_state(State::TryOpen);
+// 
+//     // Pick the version.
+//     new_connection_end.set_version(
+//         ctx.pick_version(ctx.get_compatible_versions(), msg.counterparty_versions())
+//             .ok_or(Kind::NoCommonVersion)?,
+//     );
+// 
+//     assert_eq!(new_connection_end.versions().len(), 1);
+// 
+//     output.log("success: connection verification passed");
+// 
+//     let result = ConnectionResult {
+//         connection_id: conn_id.clone(),
+//         connection_id_state: if matches!(msg.previous_connection_id, None) {
+//             ConnectionIdState::Generated
+//         } else {
+//             ConnectionIdState::Reused
+//         },
+//         connection_end: new_connection_end,
+//     };
+// 
+//     let event_attributes = Attributes {
+//         connection_id: Some(conn_id),
+//         ..Default::default()
+//     };
+//     output.emit(IbcEvent::OpenTryConnection(event_attributes.into()));
+// 
+//     Ok(output.with_result(result))
 }
 
 #[cfg(test)]

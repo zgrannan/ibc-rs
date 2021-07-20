@@ -69,7 +69,7 @@ pub fn default_version_string() -> String {
 
 #[trusted]
 pub fn get_compatible_versions() -> Vec<String> {
-    vec![default_version_string()]
+panic!("No") //     vec![default_version_string()]
 }
 
 #[trusted]
@@ -77,55 +77,55 @@ pub fn pick_version(
     supported_versions: Vec<String>,
     counterparty_versions: Vec<String>,
 ) -> Result<String, Error> {
-    let mut intersection: Vec<Version> = vec![];
-    for s in supported_versions.iter() {
-        let supported_version =
-            Version::decode(s.as_bytes()).map_err(|e| Kind::InvalidVersion.context(e))?;
-        for c in counterparty_versions.iter() {
-            let counterparty_version = Version::from_str(c.as_str())?;
-            if supported_version.identifier != counterparty_version.identifier {
-                continue;
-            }
-            // TODO - perform feature intersection and error if empty
-            intersection.append(&mut vec![supported_version.clone()]);
-        }
-    }
-    intersection.sort_by(|a, b| a.identifier.cmp(&b.identifier));
-    if intersection.is_empty() {
-        return Err(Kind::NoCommonVersion.into());
-    }
-    Ok(intersection[0].to_string())
+panic!("No") //     let mut intersection: Vec<Version> = vec![];
+//     for s in supported_versions.iter() {
+//         let supported_version =
+//             Version::decode(s.as_bytes()).map_err(|e| Kind::InvalidVersion.context(e))?;
+//         for c in counterparty_versions.iter() {
+//             let counterparty_version = Version::from_str(c.as_str())?;
+//             if supported_version.identifier != counterparty_version.identifier {
+//                 continue;
+//             }
+//             // TODO - perform feature intersection and error if empty
+//             intersection.append(&mut vec![supported_version.clone()]);
+//         }
+//     }
+//     intersection.sort_by(|a, b| a.identifier.cmp(&b.identifier));
+//     if intersection.is_empty() {
+//         return Err(Kind::NoCommonVersion.into());
+//     }
+//     Ok(intersection[0].to_string())
 }
 
 #[trusted]
 pub fn validate_versions(versions: Vec<String>) -> Result<Vec<String>, Error> {
-    if versions.is_empty() {
-        return Err(Kind::InvalidVersion
-            .context("no versions".to_string())
-            .into());
-    }
-    for version_str in versions.iter() {
-        validate_version(version_str.clone())?;
-    }
-    Ok(versions)
+panic!("No") //     if versions.is_empty() {
+//         return Err(Kind::InvalidVersion
+//             .context("no versions".to_string())
+//             .into());
+//     }
+//     for version_str in versions.iter() {
+//         validate_version(version_str.clone())?;
+//     }
+//     Ok(versions)
 }
 
 #[trusted]
 pub fn validate_version(raw_version: String) -> Result<String, Error> {
-    let version =
-        Version::from_str(raw_version.as_ref()).map_err(|e| Kind::InvalidVersion.context(e))?;
-
-    if version.identifier.trim().is_empty() {
-        return Err(Kind::InvalidVersion
-            .context("empty version string".to_string())
-            .into());
-    }
-    for feature in version.features {
-        if feature.trim().is_empty() {
-            return Err(Kind::InvalidVersion
-                .context("empty feature string".to_string())
-                .into());
-        }
-    }
-    Ok(raw_version)
+panic!("No") //     let version =
+//         Version::from_str(raw_version.as_ref()).map_err(|e| Kind::InvalidVersion.context(e))?;
+// 
+//     if version.identifier.trim().is_empty() {
+//         return Err(Kind::InvalidVersion
+//             .context("empty version string".to_string())
+//             .into());
+//     }
+//     for feature in version.features {
+//         if feature.trim().is_empty() {
+//             return Err(Kind::InvalidVersion
+//                 .context("empty feature string".to_string())
+//                 .into());
+//         }
+//     }
+//     Ok(raw_version)
 }

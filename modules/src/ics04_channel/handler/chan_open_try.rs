@@ -19,140 +19,140 @@ pub(crate) fn process(
     ctx: &dyn ChannelReader,
     msg: MsgChannelOpenTry,
 ) -> HandlerResult<ChannelResult, Error> {
-    let mut output = HandlerOutput::builder();
-
-    // Unwrap the old channel end (if any) and validate it against the message.
-    let (mut new_channel_end, channel_id) = match msg.previous_channel_id() {
-        Some(prev_id) => {
-            let old_channel_end = ctx
-                .channel_end(&(msg.port_id().clone(), prev_id.clone()))
-                .ok_or_else(|| Kind::ChannelNotFound(msg.port_id.clone(), prev_id.clone()))?;
-
-            // Validate that existing channel end matches with the one we're trying to establish.
-            if old_channel_end.state_matches(&State::Init)
-                && old_channel_end.order_matches(msg.channel.ordering())
-                && old_channel_end.connection_hops_matches(msg.channel.connection_hops())
-                && old_channel_end.counterparty_matches(msg.channel.counterparty())
-                && old_channel_end.version_matches(&msg.channel.version())
-            {
-                // A ChannelEnd already exists and all validation passed.
-                Ok((old_channel_end, prev_id.clone()))
-            } else {
-                // A ConnectionEnd already exists and validation failed.
-                Err(Into::<Error>::into(Kind::ChannelMismatch(prev_id.clone())))
-            }
-        }
-        // No previous channel id was supplied. Create a new channel end & an identifier.
-        None => {
-            let channel_end = ChannelEnd::new(
-                State::Init,
-                *msg.channel.ordering(),
-                msg.channel.counterparty().clone(),
-                msg.channel.connection_hops().clone(),
-                msg.counterparty_version().clone(),
-            );
-
-            // Channel identifier construction.
-            let id_counter = ctx.channel_counter();
-            let chan_id = ChannelId::new(id_counter);
-
-            output.log(format!(
-                "success: generated new channel identifier: {}",
-                chan_id
-            ));
-
-            Ok((channel_end, chan_id))
-        }
-    }?;
-
-    // An IBC connection running on the local (host) chain should exist.
-    if msg.channel.connection_hops().len() != 1 {
-        return Err(
-            Kind::InvalidConnectionHopsLength(1, msg.channel.connection_hops().len()).into(),
-        );
-    }
-
-    let connection_end_opt = ctx.connection_end(&msg.channel().connection_hops()[0]);
-
-    let conn = connection_end_opt
-        .ok_or_else(|| Kind::MissingConnection(msg.channel().connection_hops()[0].clone()))?;
-
-    if !conn.state_matches(&ConnectionState::Open) {
-        return Err(Kind::ConnectionNotOpen(msg.channel.connection_hops()[0].clone()).into());
-    }
-
-    let get_versions = conn.versions();
-    let version = match get_versions.as_slice() {
-        [version] => version,
-        _ => return Err(Kind::InvalidVersionLengthConnection.into()),
-    };
-
-    let channel_feature = msg.channel().ordering().to_string();
-    if !version.is_supported_feature(channel_feature) {
-        return Err(Kind::ChannelFeatureNotSuportedByConnection.into());
-    }
-
-    // Channel capabilities
-    let channel_cap = ctx.authenticated_capability(&msg.port_id().clone())?;
-
-    if msg.channel().version().is_empty() {
-        return Err(Kind::InvalidVersion.into());
-    }
-
-    // Proof verification in two steps:
-    // 1. Setup: build the Channel as we expect to find it on the other party.
-    //      the port should be identical with the port we're using; the channel id should not be set
-    //      since the counterparty cannot know yet which ID did we choose.
-    let expected_counterparty = Counterparty::new(msg.port_id().clone(), None);
-    let counterparty = conn.counterparty();
-    let ccid = counterparty.connection_id().ok_or_else(|| {
-        Kind::UndefinedConnectionCounterparty(msg.channel().connection_hops()[0].clone())
-    })?;
-    let expected_connection_hops = vec![ccid.clone()];
-
-    // The other party should be storing a channel end in this configuration.
-    let expected_channel_end = ChannelEnd::new(
-        State::Init,
-        *msg.channel.ordering(),
-        expected_counterparty,
-        expected_connection_hops,
-        msg.counterparty_version().clone(),
-    );
-
-    // 2. Actual proofs are verified now.
-    verify_channel_proofs(
-        ctx,
-        &new_channel_end,
-        &conn,
-        &expected_channel_end,
-        msg.proofs(),
-    )
-    .map_err(|e| Kind::FailedChanneOpenTryVerification.context(e))?;
-
-    output.log("success: channel open try ");
-
-    // Transition the channel end to the new state & pick a version.
-    new_channel_end.set_state(State::TryOpen);
-
-    let result = ChannelResult {
-        port_id: msg.port_id().clone(),
-        channel_cap,
-        channel_id_state: if matches!(msg.previous_channel_id, None) {
-            ChannelIdState::Generated
-        } else {
-            ChannelIdState::Reused
-        },
-        channel_id: channel_id.clone(),
-        channel_end: new_channel_end,
-    };
-
-    let event_attributes = Attributes {
-        channel_id: Some(channel_id),
-        ..Default::default()
-    };
-    output.emit(IbcEvent::OpenTryChannel(event_attributes.into()));
-
-    Ok(output.with_result(result))
+panic!("No") //     let mut output = HandlerOutput::builder();
+// 
+//     // Unwrap the old channel end (if any) and validate it against the message.
+//     let (mut new_channel_end, channel_id) = match msg.previous_channel_id() {
+//         Some(prev_id) => {
+//             let old_channel_end = ctx
+//                 .channel_end(&(msg.port_id().clone(), prev_id.clone()))
+//                 .ok_or_else(|| Kind::ChannelNotFound(msg.port_id.clone(), prev_id.clone()))?;
+// 
+//             // Validate that existing channel end matches with the one we're trying to establish.
+//             if old_channel_end.state_matches(&State::Init)
+//                 && old_channel_end.order_matches(msg.channel.ordering())
+//                 && old_channel_end.connection_hops_matches(msg.channel.connection_hops())
+//                 && old_channel_end.counterparty_matches(msg.channel.counterparty())
+//                 && old_channel_end.version_matches(&msg.channel.version())
+//             {
+//                 // A ChannelEnd already exists and all validation passed.
+//                 Ok((old_channel_end, prev_id.clone()))
+//             } else {
+//                 // A ConnectionEnd already exists and validation failed.
+//                 Err(Into::<Error>::into(Kind::ChannelMismatch(prev_id.clone())))
+//             }
+//         }
+//         // No previous channel id was supplied. Create a new channel end & an identifier.
+//         None => {
+//             let channel_end = ChannelEnd::new(
+//                 State::Init,
+//                 *msg.channel.ordering(),
+//                 msg.channel.counterparty().clone(),
+//                 msg.channel.connection_hops().clone(),
+//                 msg.counterparty_version().clone(),
+//             );
+// 
+//             // Channel identifier construction.
+//             let id_counter = ctx.channel_counter();
+//             let chan_id = ChannelId::new(id_counter);
+// 
+//             output.log(format!(
+//                 "success: generated new channel identifier: {}",
+//                 chan_id
+//             ));
+// 
+//             Ok((channel_end, chan_id))
+//         }
+//     }?;
+// 
+//     // An IBC connection running on the local (host) chain should exist.
+//     if msg.channel.connection_hops().len() != 1 {
+//         return Err(
+//             Kind::InvalidConnectionHopsLength(1, msg.channel.connection_hops().len()).into(),
+//         );
+//     }
+// 
+//     let connection_end_opt = ctx.connection_end(&msg.channel().connection_hops()[0]);
+// 
+//     let conn = connection_end_opt
+//         .ok_or_else(|| Kind::MissingConnection(msg.channel().connection_hops()[0].clone()))?;
+// 
+//     if !conn.state_matches(&ConnectionState::Open) {
+//         return Err(Kind::ConnectionNotOpen(msg.channel.connection_hops()[0].clone()).into());
+//     }
+// 
+//     let get_versions = conn.versions();
+//     let version = match get_versions.as_slice() {
+//         [version] => version,
+//         _ => return Err(Kind::InvalidVersionLengthConnection.into()),
+//     };
+// 
+//     let channel_feature = msg.channel().ordering().to_string();
+//     if !version.is_supported_feature(channel_feature) {
+//         return Err(Kind::ChannelFeatureNotSuportedByConnection.into());
+//     }
+// 
+//     // Channel capabilities
+//     let channel_cap = ctx.authenticated_capability(&msg.port_id().clone())?;
+// 
+//     if msg.channel().version().is_empty() {
+//         return Err(Kind::InvalidVersion.into());
+//     }
+// 
+//     // Proof verification in two steps:
+//     // 1. Setup: build the Channel as we expect to find it on the other party.
+//     //      the port should be identical with the port we're using; the channel id should not be set
+//     //      since the counterparty cannot know yet which ID did we choose.
+//     let expected_counterparty = Counterparty::new(msg.port_id().clone(), None);
+//     let counterparty = conn.counterparty();
+//     let ccid = counterparty.connection_id().ok_or_else(|| {
+//         Kind::UndefinedConnectionCounterparty(msg.channel().connection_hops()[0].clone())
+//     })?;
+//     let expected_connection_hops = vec![ccid.clone()];
+// 
+//     // The other party should be storing a channel end in this configuration.
+//     let expected_channel_end = ChannelEnd::new(
+//         State::Init,
+//         *msg.channel.ordering(),
+//         expected_counterparty,
+//         expected_connection_hops,
+//         msg.counterparty_version().clone(),
+//     );
+// 
+//     // 2. Actual proofs are verified now.
+//     verify_channel_proofs(
+//         ctx,
+//         &new_channel_end,
+//         &conn,
+//         &expected_channel_end,
+//         msg.proofs(),
+//     )
+//     .map_err(|e| Kind::FailedChanneOpenTryVerification.context(e))?;
+// 
+//     output.log("success: channel open try ");
+// 
+//     // Transition the channel end to the new state & pick a version.
+//     new_channel_end.set_state(State::TryOpen);
+// 
+//     let result = ChannelResult {
+//         port_id: msg.port_id().clone(),
+//         channel_cap,
+//         channel_id_state: if matches!(msg.previous_channel_id, None) {
+//             ChannelIdState::Generated
+//         } else {
+//             ChannelIdState::Reused
+//         },
+//         channel_id: channel_id.clone(),
+//         channel_end: new_channel_end,
+//     };
+// 
+//     let event_attributes = Attributes {
+//         channel_id: Some(channel_id),
+//         ..Default::default()
+//     };
+//     output.emit(IbcEvent::OpenTryChannel(event_attributes.into()));
+// 
+//     Ok(output.with_result(result))
 }
 
 #[cfg(test)]

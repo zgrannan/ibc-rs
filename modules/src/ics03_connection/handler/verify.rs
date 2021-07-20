@@ -19,39 +19,39 @@ pub fn verify_proofs(
     expected_conn: &ConnectionEnd,
     proofs: &Proofs,
 ) -> Result<(), Error> {
-    verify_connection_proof(
-        ctx,
-        connection_end,
-        expected_conn,
-        proofs.height(),
-        proofs.object_proof(),
-    )?;
-
-    // If the message includes a client state, then verify the proof for that state.
-    if let Some(expected_client_state) = client_state {
-        verify_client_proof(
-            ctx,
-            connection_end,
-            expected_client_state,
-            proofs.height(),
-            proofs
-                .client_proof()
-                .as_ref()
-                .ok_or(Kind::NullClientProof)?,
-        )?;
-    }
-
-    // If a consensus proof is attached to the message, then verify it.
-    if let Some(proof) = proofs.consensus_proof() {
-        Ok(verify_consensus_proof(
-            ctx,
-            connection_end,
-            proofs.height(),
-            &proof,
-        )?)
-    } else {
-        Ok(())
-    }
+panic!("No") //     verify_connection_proof(
+//         ctx,
+//         connection_end,
+//         expected_conn,
+//         proofs.height(),
+//         proofs.object_proof(),
+//     )?;
+// 
+//     // If the message includes a client state, then verify the proof for that state.
+//     if let Some(expected_client_state) = client_state {
+//         verify_client_proof(
+//             ctx,
+//             connection_end,
+//             expected_client_state,
+//             proofs.height(),
+//             proofs
+//                 .client_proof()
+//                 .as_ref()
+//                 .ok_or(Kind::NullClientProof)?,
+//         )?;
+//     }
+// 
+//     // If a consensus proof is attached to the message, then verify it.
+//     if let Some(proof) = proofs.consensus_proof() {
+//         Ok(verify_consensus_proof(
+//             ctx,
+//             connection_end,
+//             proofs.height(),
+//             &proof,
+//         )?)
+//     } else {
+//         Ok(())
+//     }
 }
 
 /// Verifies the authenticity and semantic correctness of a commitment `proof`. The commitment

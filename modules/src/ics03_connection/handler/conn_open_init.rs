@@ -16,43 +16,43 @@ pub(crate) fn process(
     ctx: &dyn ConnectionReader,
     msg: MsgConnectionOpenInit,
 ) -> HandlerResult<ConnectionResult, Error> {
-    let mut output = HandlerOutput::builder();
-
-    // An IBC client running on the local (host) chain should exist.
-    if ctx.client_state(msg.client_id()).is_none() {
-        return Err(Kind::MissingClient(msg.client_id().clone()).into());
-    }
-
-    let new_connection_end = ConnectionEnd::new(
-        State::Init,
-        msg.client_id().clone(),
-        msg.counterparty().clone(),
-        ctx.get_compatible_versions(),
-        msg.delay_period,
-    );
-
-    // Construct the identifier for the new connection.
-    let id_counter = ctx.connection_counter();
-    let conn_id = ConnectionId::new(id_counter);
-
-    output.log(format!(
-        "success: generated new connection identifier: {}",
-        conn_id
-    ));
-
-    let result = ConnectionResult {
-        connection_id: conn_id.clone(),
-        connection_id_state: ConnectionIdState::Generated,
-        connection_end: new_connection_end,
-    };
-
-    let event_attributes = Attributes {
-        connection_id: Some(conn_id),
-        ..Default::default()
-    };
-    output.emit(IbcEvent::OpenInitConnection(event_attributes.into()));
-
-    Ok(output.with_result(result))
+panic!("No") //     let mut output = HandlerOutput::builder();
+// 
+//     // An IBC client running on the local (host) chain should exist.
+//     if ctx.client_state(msg.client_id()).is_none() {
+//         return Err(Kind::MissingClient(msg.client_id().clone()).into());
+//     }
+// 
+//     let new_connection_end = ConnectionEnd::new(
+//         State::Init,
+//         msg.client_id().clone(),
+//         msg.counterparty().clone(),
+//         ctx.get_compatible_versions(),
+//         msg.delay_period,
+//     );
+// 
+//     // Construct the identifier for the new connection.
+//     let id_counter = ctx.connection_counter();
+//     let conn_id = ConnectionId::new(id_counter);
+// 
+//     output.log(format!(
+//         "success: generated new connection identifier: {}",
+//         conn_id
+//     ));
+// 
+//     let result = ConnectionResult {
+//         connection_id: conn_id.clone(),
+//         connection_id_state: ConnectionIdState::Generated,
+//         connection_end: new_connection_end,
+//     };
+// 
+//     let event_attributes = Attributes {
+//         connection_id: Some(conn_id),
+//         ..Default::default()
+//     };
+//     output.emit(IbcEvent::OpenInitConnection(event_attributes.into()));
+// 
+//     Ok(output.with_result(result))
 }
 
 #[cfg(test)]

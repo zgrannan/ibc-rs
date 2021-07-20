@@ -22,45 +22,45 @@ const COUNTERPARTY_CLIENT_ID_ATTRIBUTE_KEY: &str = "counterparty_client_id";
 
 #[trusted]
 pub fn try_from_tx(event: &tendermint::abci::Event) -> Option<IbcEvent> {
-    match event.type_str.as_ref() {
-        INIT_EVENT_TYPE => Some(IbcEvent::OpenInitConnection(OpenInit::from(
-            extract_attributes_from_tx(event),
-        ))),
-        TRY_EVENT_TYPE => Some(IbcEvent::OpenTryConnection(OpenTry::from(
-            extract_attributes_from_tx(event),
-        ))),
-        ACK_EVENT_TYPE => Some(IbcEvent::OpenAckConnection(OpenAck::from(
-            extract_attributes_from_tx(event),
-        ))),
-        CONFIRM_EVENT_TYPE => Some(IbcEvent::OpenConfirmConnection(OpenConfirm::from(
-            extract_attributes_from_tx(event),
-        ))),
-        _ => None,
-    }
+panic!("No") //     match event.type_str.as_ref() {
+//         INIT_EVENT_TYPE => Some(IbcEvent::OpenInitConnection(OpenInit::from(
+//             extract_attributes_from_tx(event),
+//         ))),
+//         TRY_EVENT_TYPE => Some(IbcEvent::OpenTryConnection(OpenTry::from(
+//             extract_attributes_from_tx(event),
+//         ))),
+//         ACK_EVENT_TYPE => Some(IbcEvent::OpenAckConnection(OpenAck::from(
+//             extract_attributes_from_tx(event),
+//         ))),
+//         CONFIRM_EVENT_TYPE => Some(IbcEvent::OpenConfirmConnection(OpenConfirm::from(
+//             extract_attributes_from_tx(event),
+//         ))),
+//         _ => None,
+//     }
 }
 
 #[trusted]
 fn extract_attributes_from_tx(event: &tendermint::abci::Event) -> Attributes {
-    let mut attr = Attributes::default();
-
-    for tag in &event.attributes {
-        let key = tag.key.as_ref();
-        let value = tag.value.as_ref();
-        match key {
-            CONN_ID_ATTRIBUTE_KEY => attr.connection_id = value.parse().ok(),
-            CLIENT_ID_ATTRIBUTE_KEY => attr.client_id = value.parse().unwrap(),
-            COUNTERPARTY_CONN_ID_ATTRIBUTE_KEY => {
-                attr.counterparty_connection_id = value.parse().ok()
-            }
-            COUNTERPARTY_CLIENT_ID_ATTRIBUTE_KEY => {
-                attr.counterparty_client_id = value.parse().unwrap()
-            }
-            // TODO: `Attributes` has 5 fields and we're only parsing 4
-            _ => {}
-        }
-    }
-
-    attr
+panic!("No") //     let mut attr = Attributes::default();
+// 
+//     for tag in &event.attributes {
+//         let key = tag.key.as_ref();
+//         let value = tag.value.as_ref();
+//         match key {
+//             CONN_ID_ATTRIBUTE_KEY => attr.connection_id = value.parse().ok(),
+//             CLIENT_ID_ATTRIBUTE_KEY => attr.client_id = value.parse().unwrap(),
+//             COUNTERPARTY_CONN_ID_ATTRIBUTE_KEY => {
+//                 attr.counterparty_connection_id = value.parse().ok()
+//             }
+//             COUNTERPARTY_CLIENT_ID_ATTRIBUTE_KEY => {
+//                 attr.counterparty_client_id = value.parse().unwrap()
+//             }
+//             // TODO: `Attributes` has 5 fields and we're only parsing 4
+//             _ => {}
+//         }
+//     }
+// 
+//     attr
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]

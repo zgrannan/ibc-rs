@@ -12,14 +12,14 @@ pub fn apply_prefix(
     prefix: &CommitmentPrefix,
     mut path: Vec<String>,
 ) -> Result<MerklePath, Box<dyn std::error::Error>> {
-    if prefix.is_empty() {
-        return Err("empty prefix".into());
-    }
-
-    let mut result: Vec<String> = vec![format!("{:?}", prefix)];
-    result.append(&mut path);
-
-    Ok(MerklePath { key_path: result })
+panic!("No") //     if prefix.is_empty() {
+//         return Err("empty prefix".into());
+//     }
+// 
+//     let mut result: Vec<String> = vec![format!("{:?}", prefix)];
+//     result.append(&mut path);
+// 
+//     Ok(MerklePath { key_path: result })
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -81,15 +81,15 @@ pub struct MerkleProof {
 
 #[trusted]
 pub fn convert_tm_to_ics_merkle_proof(tm_proof: &Proof) -> Result<RawMerkleProof, Error> {
-    let mut proofs = vec![];
-
-    for _op in &tm_proof.ops {
-        let parsed = ibc_proto::ics23::CommitmentProof { proof: None };
-        // prost::Message::merge(&mut parsed, op.data.as_slice())
-        //     .map_err(Error::CommitmentProofDecodingFailed)?;
-
-        proofs.push(parsed);
-    }
-
-    Ok(RawMerkleProof { proofs })
+panic!("No") //     let mut proofs = vec![];
+// 
+//     for _op in &tm_proof.ops {
+//         let parsed = ibc_proto::ics23::CommitmentProof { proof: None };
+//         // prost::Message::merge(&mut parsed, op.data.as_slice())
+//         //     .map_err(Error::CommitmentProofDecodingFailed)?;
+// 
+//         proofs.push(parsed);
+//     }
+// 
+//     Ok(RawMerkleProof { proofs })
 }
