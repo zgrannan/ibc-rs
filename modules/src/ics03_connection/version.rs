@@ -21,7 +21,7 @@ impl Version {
     /// Checks whether or not the given feature is supported in this versin
 #[trusted]
     pub fn is_supported_feature(&self, feature: String) -> bool {
-        self.features.contains(&feature)
+panic!("No") //         self.features.contains(&feature)
     }
 }
 
@@ -31,22 +31,22 @@ impl TryFrom<RawVersion> for Version {
     type Error = anomaly::Error<Kind>;
 #[trusted]
     fn try_from(value: RawVersion) -> Result<Self, Self::Error> {
-        if value.identifier.trim().is_empty() {
-            return Err(Kind::InvalidVersion
-                .context("empty version string".to_string())
-                .into());
-        }
-        for feature in value.features.iter() {
-            if feature.trim().is_empty() {
-                return Err(Kind::InvalidVersion
-                    .context("empty feature string".to_string())
-                    .into());
-            }
-        }
-        Ok(Version {
-            identifier: value.identifier,
-            features: value.features,
-        })
+panic!("No") //         if value.identifier.trim().is_empty() {
+//             return Err(Kind::InvalidVersion
+//                 .context("empty version string".to_string())
+//                 .into());
+//         }
+//         for feature in value.features.iter() {
+//             if feature.trim().is_empty() {
+//                 return Err(Kind::InvalidVersion
+//                     .context("empty feature string".to_string())
+//                     .into());
+//             }
+//         }
+//         Ok(Version {
+//             identifier: value.identifier,
+//             features: value.features,
+//         })
     }
 }
 
@@ -62,10 +62,10 @@ impl From<Version> for RawVersion {
 impl Default for Version {
 #[trusted]
     fn default() -> Self {
-        Version {
-            identifier: "1".to_string(),
-            features: vec!["ORDER_ORDERED".to_string(), "ORDER_UNORDERED".to_string()],
-        }
+panic!("No") //         Version {
+//             identifier: "1".to_string(),
+//             features: vec!["ORDER_ORDERED".to_string(), "ORDER_UNORDERED".to_string()],
+//         }
     }
 }
 

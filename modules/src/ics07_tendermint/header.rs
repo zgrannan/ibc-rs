@@ -28,17 +28,17 @@ pub struct Header {
 impl std::fmt::Debug for Header {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        write!(f, " Header {{...}}")
+panic!("No") //         write!(f, " Header {{...}}")
     }
 }
 
 impl Header {
 #[trusted]
     pub fn height(&self) -> Height {
-        Height::new(
-            ChainId::chain_version(self.signed_header.header.chain_id.as_str()),
-            u64::from(self.signed_header.header.height),
-        )
+panic!("No") //         Height::new(
+//             ChainId::chain_version(self.signed_header.header.chain_id.as_str()),
+//             u64::from(self.signed_header.header.height),
+//         )
     }
 
     pub fn time(&self) -> Time {
@@ -91,28 +91,28 @@ impl TryFrom<RawHeader> for Header {
 
 #[trusted]
     fn try_from(raw: RawHeader) -> Result<Self, Self::Error> {
-        Ok(Self {
-            signed_header: raw
-                .signed_header
-                .ok_or_else(|| Kind::InvalidRawHeader.context("missing signed header"))?
-                .try_into()
-                .map_err(|_| Kind::InvalidHeader.context("signed header conversion"))?,
-            validator_set: raw
-                .validator_set
-                .ok_or_else(|| Kind::InvalidRawHeader.context("missing validator set"))?
-                .try_into()
-                .map_err(|e| Kind::InvalidRawHeader.context(e))?,
-            trusted_height: raw
-                .trusted_height
-                .ok_or_else(|| Kind::InvalidRawHeader.context("missing height"))?
-                .try_into()
-                .map_err(|e| Kind::InvalidRawHeight.context(e))?,
-            trusted_validator_set: raw
-                .trusted_validators
-                .ok_or_else(|| Kind::InvalidRawHeader.context("missing trusted validator set"))?
-                .try_into()
-                .map_err(|e| Kind::InvalidRawHeader.context(e))?,
-        })
+panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") //         Ok(Self {
+// // // // //             signed_header: raw
+// // // // //                 .signed_header
+// // // // //                 .ok_or_else(|| Kind::InvalidRawHeader.context("missing signed header"))?
+// // // // //                 .try_into()
+// // // // //                 .map_err(|_| Kind::InvalidHeader.context("signed header conversion"))?,
+// // // // //             validator_set: raw
+// // // // //                 .validator_set
+// // // // //                 .ok_or_else(|| Kind::InvalidRawHeader.context("missing validator set"))?
+// // // // //                 .try_into()
+// // // // //                 .map_err(|e| Kind::InvalidRawHeader.context(e))?,
+// // // // //             trusted_height: raw
+// // // // //                 .trusted_height
+// // // // //                 .ok_or_else(|| Kind::InvalidRawHeader.context("missing height"))?
+// // // // //                 .try_into()
+// // // // //                 .map_err(|e| Kind::InvalidRawHeight.context(e))?,
+// // // // //             trusted_validator_set: raw
+// // // // //                 .trusted_validators
+// // // // //                 .ok_or_else(|| Kind::InvalidRawHeader.context("missing trusted validator set"))?
+// // // // //                 .try_into()
+// // // // //                 .map_err(|e| Kind::InvalidRawHeader.context(e))?,
+// // // // //         })
     }
 }
 

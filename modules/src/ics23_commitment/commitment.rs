@@ -16,8 +16,8 @@ pub struct CommitmentRoot {
 impl fmt::Debug for CommitmentRoot {
 #[trusted]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let hex = Hex::upper_case().encode_to_string(&self.bytes).unwrap();
-        f.debug_tuple("CommitmentRoot").field(&hex).finish()
+panic!("No") //         let hex = Hex::upper_case().encode_to_string(&self.bytes).unwrap();
+//         f.debug_tuple("CommitmentRoot").field(&hex).finish()
     }
 }
 
@@ -30,7 +30,7 @@ impl CommitmentRoot {
 
 #[trusted]
     pub fn as_bytes(&self) -> &[u8] {
-        &self.bytes
+panic!("No") //         &self.bytes
     }
 
     pub fn into_vec(self) -> Vec<u8> {
@@ -122,7 +122,7 @@ impl CommitmentPrefix {
 
 #[trusted]
     pub fn as_bytes(&self) -> &[u8] {
-        &self.bytes
+panic!("No") //         &self.bytes
     }
 
     pub fn into_vec(self) -> Vec<u8> {
@@ -140,11 +140,11 @@ impl From<Vec<u8>> for CommitmentPrefix {
 impl fmt::Debug for CommitmentPrefix {
 #[trusted]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let converted = std::str::from_utf8(self.as_bytes());
-        match converted {
-            Ok(s) => write!(f, "{}", s),
-            Err(_e) => write!(f, "<not valid UTF8: {:?}>", self.as_bytes()),
-        }
+panic!("No") //         let converted = std::str::from_utf8(self.as_bytes());
+//         match converted {
+//             Ok(s) => write!(f, "{}", s),
+//             Err(_e) => write!(f, "<not valid UTF8: {:?}>", self.as_bytes()),
+//         }
     }
 }
 
@@ -154,7 +154,7 @@ impl Serialize for CommitmentPrefix {
     where
         S: serde::Serializer,
     {
-        format!("{:?}", self).serialize(serializer)
+panic!("No") //         format!("{:?}", self).serialize(serializer)
     }
 }
 

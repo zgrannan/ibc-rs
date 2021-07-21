@@ -71,20 +71,20 @@ impl Msg for MsgChannelOpenTry {
 
 #[trusted]
     fn route(&self) -> String {
-        crate::keys::ROUTER_KEY.to_string()
+panic!("No") //         crate::keys::ROUTER_KEY.to_string()
     }
 
 #[trusted]
     fn type_url(&self) -> String {
-        TYPE_URL.to_string()
+panic!("No") //         TYPE_URL.to_string()
     }
 
 #[trusted]
     fn validate_basic(&self) -> Result<(), ValidationError> {
-        match self.channel().counterparty().channel_id() {
-            None => Err(ValidationKind::InvalidCounterpartyChannelId.into()),
-            Some(_c) => Ok(()),
-        }
+panic!("No") //         match self.channel().counterparty().channel_id() {
+//             None => Err(ValidationKind::InvalidCounterpartyChannelId.into()),
+//             Some(_c) => Ok(()),
+//         }
     }
 }
 
@@ -95,58 +95,58 @@ impl TryFrom<RawMsgChannelOpenTry> for MsgChannelOpenTry {
 
 #[trusted]
     fn try_from(raw_msg: RawMsgChannelOpenTry) -> Result<Self, Self::Error> {
-        let proofs = Proofs::new(
-            raw_msg.proof_init.into(),
-            None,
-            None,
-            None,
-            raw_msg
-                .proof_height
-                .ok_or(Kind::MissingHeight)?
-                .try_into()
-                .map_err(|e| Kind::InvalidProof.context(e))?,
-        )
-        .map_err(|e| Kind::InvalidProof.context(e))?;
-
-        let previous_channel_id = Some(raw_msg.previous_channel_id)
-            .filter(|x| !x.is_empty())
-            .map(|v| FromStr::from_str(v.as_str()))
-            .transpose()
-            .map_err(|e| Kind::IdentifierError.context(e))?;
-
-        let msg = MsgChannelOpenTry {
-            port_id: raw_msg
-                .port_id
-                .parse()
-                .map_err(|e| Kind::IdentifierError.context(e))?,
-            previous_channel_id,
-            channel: raw_msg.channel.ok_or(Kind::MissingChannel)?.try_into()?,
-            counterparty_version: validate_version(raw_msg.counterparty_version)?,
-            proofs,
-            signer: raw_msg.signer.into(),
-        };
-
-        match msg.validate_basic() {
-            Err(_e) => Err(Kind::InvalidCounterpartyChannelId.into()),
-            Ok(()) => Ok(msg),
-        }
+panic!("No") // panic!("No") // panic!("No") //         let proofs = Proofs::new(
+// // //             raw_msg.proof_init.into(),
+// // //             None,
+// // //             None,
+// // //             None,
+// // //             raw_msg
+// // //                 .proof_height
+// // //                 .ok_or(Kind::MissingHeight)?
+// // //                 .try_into()
+// // //                 .map_err(|e| Kind::InvalidProof.context(e))?,
+// // //         )
+// // //         .map_err(|e| Kind::InvalidProof.context(e))?;
+// // // 
+// // //         let previous_channel_id = Some(raw_msg.previous_channel_id)
+// // //             .filter(|x| !x.is_empty())
+// // //             .map(|v| FromStr::from_str(v.as_str()))
+// // //             .transpose()
+// // //             .map_err(|e| Kind::IdentifierError.context(e))?;
+// // // 
+// // //         let msg = MsgChannelOpenTry {
+// // //             port_id: raw_msg
+// // //                 .port_id
+// // //                 .parse()
+// // //                 .map_err(|e| Kind::IdentifierError.context(e))?,
+// // //             previous_channel_id,
+// // //             channel: raw_msg.channel.ok_or(Kind::MissingChannel)?.try_into()?,
+// // //             counterparty_version: validate_version(raw_msg.counterparty_version)?,
+// // //             proofs,
+// // //             signer: raw_msg.signer.into(),
+// // //         };
+// // // 
+// // //         match msg.validate_basic() {
+// // //             Err(_e) => Err(Kind::InvalidCounterpartyChannelId.into()),
+// // //             Ok(()) => Ok(msg),
+// // //         }
     }
 }
 
 impl From<MsgChannelOpenTry> for RawMsgChannelOpenTry {
 #[trusted]
     fn from(domain_msg: MsgChannelOpenTry) -> Self {
-        RawMsgChannelOpenTry {
-            port_id: domain_msg.port_id.to_string(),
-            previous_channel_id: domain_msg
-                .previous_channel_id
-                .map_or_else(|| "".to_string(), |v| v.as_str().to_string()),
-            channel: Some(domain_msg.channel.into()),
-            counterparty_version: domain_msg.counterparty_version,
-            proof_init: domain_msg.proofs.object_proof().clone().into(),
-            proof_height: Some(domain_msg.proofs.height().into()),
-            signer: domain_msg.signer.to_string(),
-        }
+panic!("No") // panic!("No") // panic!("No") //         RawMsgChannelOpenTry {
+// // //             port_id: domain_msg.port_id.to_string(),
+// // //             previous_channel_id: domain_msg
+// // //                 .previous_channel_id
+// // //                 .map_or_else(|| "".to_string(), |v| v.as_str().to_string()),
+// // //             channel: Some(domain_msg.channel.into()),
+// // //             counterparty_version: domain_msg.counterparty_version,
+// // //             proof_init: domain_msg.proofs.object_proof().clone().into(),
+// // //             proof_height: Some(domain_msg.proofs.height().into()),
+// // //             signer: domain_msg.signer.to_string(),
+// // //         }
     }
 }
 

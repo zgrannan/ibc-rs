@@ -112,16 +112,16 @@ impl TryFrom<RawObject> for OpenInit {
     type Error = BoxError;
 #[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
-        Ok(OpenInit(Attributes {
-            height: obj.height,
-            connection_id: some_attribute!(obj, "connection_open_init.connection_id"),
-            client_id: attribute!(obj, "connection_open_init.client_id"),
-            counterparty_connection_id: some_attribute!(
-                obj,
-                "connection_open_init.counterparty_connection_id"
-            ),
-            counterparty_client_id: attribute!(obj, "connection_open_init.counterparty_client_id"),
-        }))
+panic!("No") //         Ok(OpenInit(Attributes {
+//             height: obj.height,
+//             connection_id: some_attribute!(obj, "connection_open_init.connection_id"),
+//             client_id: attribute!(obj, "connection_open_init.client_id"),
+//             counterparty_connection_id: some_attribute!(
+//                 obj,
+//                 "connection_open_init.counterparty_connection_id"
+//             ),
+//             counterparty_client_id: attribute!(obj, "connection_open_init.counterparty_client_id"),
+//         }))
     }
 }
 
@@ -159,16 +159,16 @@ impl TryFrom<RawObject> for OpenTry {
     type Error = BoxError;
 #[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
-        Ok(OpenTry(Attributes {
-            height: obj.height,
-            connection_id: some_attribute!(obj, "connection_open_try.connection_id"),
-            client_id: attribute!(obj, "connection_open_try.client_id"),
-            counterparty_connection_id: some_attribute!(
-                obj,
-                "connection_open_try.counterparty_connection_id"
-            ),
-            counterparty_client_id: attribute!(obj, "connection_open_try.counterparty_client_id"),
-        }))
+panic!("No") //         Ok(OpenTry(Attributes {
+//             height: obj.height,
+//             connection_id: some_attribute!(obj, "connection_open_try.connection_id"),
+//             client_id: attribute!(obj, "connection_open_try.client_id"),
+//             counterparty_connection_id: some_attribute!(
+//                 obj,
+//                 "connection_open_try.counterparty_connection_id"
+//             ),
+//             counterparty_client_id: attribute!(obj, "connection_open_try.counterparty_client_id"),
+//         }))
     }
 }
 
@@ -206,16 +206,16 @@ impl TryFrom<RawObject> for OpenAck {
     type Error = BoxError;
 #[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
-        Ok(OpenAck(Attributes {
-            height: obj.height,
-            connection_id: some_attribute!(obj, "connection_open_ack.connection_id"),
-            client_id: attribute!(obj, "connection_open_ack.client_id"),
-            counterparty_connection_id: some_attribute!(
-                obj,
-                "connection_open_ack.counterparty_connection_id"
-            ),
-            counterparty_client_id: attribute!(obj, "connection_open_ack.counterparty_client_id"),
-        }))
+panic!("No") //         Ok(OpenAck(Attributes {
+//             height: obj.height,
+//             connection_id: some_attribute!(obj, "connection_open_ack.connection_id"),
+//             client_id: attribute!(obj, "connection_open_ack.client_id"),
+//             counterparty_connection_id: some_attribute!(
+//                 obj,
+//                 "connection_open_ack.counterparty_connection_id"
+//             ),
+//             counterparty_client_id: attribute!(obj, "connection_open_ack.counterparty_client_id"),
+//         }))
     }
 }
 
@@ -253,19 +253,19 @@ impl TryFrom<RawObject> for OpenConfirm {
     type Error = BoxError;
 #[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
-        Ok(OpenConfirm(Attributes {
-            height: obj.height,
-            connection_id: some_attribute!(obj, "connection_open_confirm.connection_id"),
-            client_id: attribute!(obj, "connection_open_confirm.client_id"),
-            counterparty_connection_id: some_attribute!(
-                obj,
-                "connection_open_confirm.counterparty_connection_id"
-            ),
-            counterparty_client_id: attribute!(
-                obj,
-                "connection_open_confirm.counterparty_client_id"
-            ),
-        }))
+panic!("No") //         Ok(OpenConfirm(Attributes {
+//             height: obj.height,
+//             connection_id: some_attribute!(obj, "connection_open_confirm.connection_id"),
+//             client_id: attribute!(obj, "connection_open_confirm.client_id"),
+//             counterparty_connection_id: some_attribute!(
+//                 obj,
+//                 "connection_open_confirm.counterparty_connection_id"
+//             ),
+//             counterparty_client_id: attribute!(
+//                 obj,
+//                 "connection_open_confirm.counterparty_client_id"
+//             ),
+//         }))
     }
 }
 

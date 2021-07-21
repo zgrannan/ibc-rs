@@ -129,6 +129,6 @@ impl std::fmt::Debug for Kind {
 impl Kind {
 #[trusted]
     pub fn context(self, source: impl Into<BoxError>) -> Context<Self> {
-        Context::new(self, Some(source.into()))
+panic!("No") //         Context::new(self, Some(source.into()))
     }
 }

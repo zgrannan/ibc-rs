@@ -27,50 +27,50 @@ pub fn process(
     ctx: &dyn ClientReader,
     msg: MsgUpdateAnyClient,
 ) -> HandlerResult<ClientResult, Error> {
-    let mut output = HandlerOutput::builder();
-
-    let MsgUpdateAnyClient {
-        client_id,
-        header,
-        signer: _,
-    } = msg;
-
-    // Read client type from the host chain store. The client should already exist.
-    let client_type = ctx
-        .client_type(&client_id)
-        .ok_or_else(|| Kind::ClientNotFound(client_id.clone()))?;
-
-    let client_def = AnyClient::from_client_type(client_type);
-
-    // Read client state from the host chain store.
-    let client_state = ctx
-        .client_state(&client_id)
-        .ok_or_else(|| Kind::ClientNotFound(client_id.clone()))?;
-
-    let latest_height = client_state.latest_height();
-    ctx.consensus_state(&client_id, latest_height)
-        .ok_or_else(|| Kind::ConsensusStateNotFound(client_id.clone(), latest_height))?;
-
-    // Use client_state to validate the new header against the latest consensus_state.
-    // This function will return the new client_state (its latest_height changed) and a
-    // consensus_state obtained from header. These will be later persisted by the keeper.
-    let (new_client_state, new_consensus_state) = client_def
-        .check_header_and_update_state(client_state, header)
-        .map_err(|e| Kind::HeaderVerificationFailure.context(e.to_string()))?;
-
-    let result = ClientResult::Update(Result {
-        client_id: client_id.clone(),
-        client_state: new_client_state,
-        consensus_state: new_consensus_state,
-    });
-
-    let event_attributes = Attributes {
-        client_id,
-        ..Default::default()
-    };
-    output.emit(IbcEvent::UpdateClient(event_attributes.into()));
-
-    Ok(output.with_result(result))
+panic!("No") // panic!("No") // panic!("No") //     let mut output = HandlerOutput::builder();
+// // // 
+// // //     let MsgUpdateAnyClient {
+// // //         client_id,
+// // //         header,
+// // //         signer: _,
+// // //     } = msg;
+// // // 
+// // //     // Read client type from the host chain store. The client should already exist.
+// // //     let client_type = ctx
+// // //         .client_type(&client_id)
+// // //         .ok_or_else(|| Kind::ClientNotFound(client_id.clone()))?;
+// // // 
+// // //     let client_def = AnyClient::from_client_type(client_type);
+// // // 
+// // //     // Read client state from the host chain store.
+// // //     let client_state = ctx
+// // //         .client_state(&client_id)
+// // //         .ok_or_else(|| Kind::ClientNotFound(client_id.clone()))?;
+// // // 
+// // //     let latest_height = client_state.latest_height();
+// // //     ctx.consensus_state(&client_id, latest_height)
+// // //         .ok_or_else(|| Kind::ConsensusStateNotFound(client_id.clone(), latest_height))?;
+// // // 
+// // //     // Use client_state to validate the new header against the latest consensus_state.
+// // //     // This function will return the new client_state (its latest_height changed) and a
+// // //     // consensus_state obtained from header. These will be later persisted by the keeper.
+// // //     let (new_client_state, new_consensus_state) = client_def
+// // //         .check_header_and_update_state(client_state, header)
+// // //         .map_err(|e| Kind::HeaderVerificationFailure.context(e.to_string()))?;
+// // // 
+// // //     let result = ClientResult::Update(Result {
+// // //         client_id: client_id.clone(),
+// // //         client_state: new_client_state,
+// // //         consensus_state: new_consensus_state,
+// // //     });
+// // // 
+// // //     let event_attributes = Attributes {
+// // //         client_id,
+// // //         ..Default::default()
+// // //     };
+// // //     output.emit(IbcEvent::UpdateClient(event_attributes.into()));
+// // // 
+// // //     Ok(output.with_result(result))
 }
 
 #[cfg(test)]

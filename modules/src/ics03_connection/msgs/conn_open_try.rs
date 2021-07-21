@@ -84,12 +84,12 @@ impl Msg for MsgConnectionOpenTry {
 
 #[trusted]
     fn route(&self) -> String {
-        crate::keys::ROUTER_KEY.to_string()
+panic!("No") //         crate::keys::ROUTER_KEY.to_string()
     }
 
 #[trusted]
     fn type_url(&self) -> String {
-        TYPE_URL.to_string()
+panic!("No") //         TYPE_URL.to_string()
     }
 }
 
@@ -100,109 +100,109 @@ impl TryFrom<RawMsgConnectionOpenTry> for MsgConnectionOpenTry {
 
 #[trusted]
     fn try_from(msg: RawMsgConnectionOpenTry) -> Result<Self, Self::Error> {
-        let previous_connection_id = Some(msg.previous_connection_id)
-            .filter(|x| !x.is_empty())
-            .map(|v| FromStr::from_str(v.as_str()))
-            .transpose()
-            .map_err(|e| Kind::IdentifierError.context(e))?;
-
-        let consensus_height = msg
-            .consensus_height
-            .ok_or(Kind::MissingConsensusHeight)?
-            .try_into() // Cast from the raw height type into the domain type.
-            .map_err(|e| Kind::InvalidProof.context(e))?;
-
-        let consensus_proof_obj = ConsensusProof::new(msg.proof_consensus.into(), consensus_height)
-            .map_err(|e| Kind::InvalidProof.context(e))?;
-
-        let proof_height = msg
-            .proof_height
-            .ok_or(Kind::MissingProofHeight)?
-            .try_into()
-            .map_err(|e| Kind::InvalidProof.context(e))?;
-
-        let client_proof = Some(msg.proof_client)
-            .filter(|x| !x.is_empty())
-            .map(CommitmentProofBytes::from);
-
-        let counterparty_versions = msg
-            .counterparty_versions
-            .into_iter()
-            .map(Version::try_from)
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|e| Kind::InvalidVersion.context(e))?;
-
-        if counterparty_versions.is_empty() {
-            return Err(Kind::EmptyVersions
-                .context("empty counterparty versions in try message".to_string())
-                .into());
-        }
-
-        Ok(Self {
-            previous_connection_id,
-            client_id: msg
-                .client_id
-                .parse()
-                .map_err(|e| Kind::IdentifierError.context(e))?,
-            client_state: msg
-                .client_state
-                .map(AnyClientState::try_from)
-                .transpose()
-                .map_err(|e| Kind::InvalidProof.context(e))?,
-            counterparty: msg
-                .counterparty
-                .ok_or(Kind::MissingCounterparty)?
-                .try_into()?,
-            counterparty_versions,
-            proofs: Proofs::new(
-                msg.proof_init.into(),
-                client_proof,
-                Some(consensus_proof_obj),
-                None,
-                proof_height,
-            )
-            .map_err(|e| Kind::InvalidProof.context(e))?,
-            delay_period: Duration::from_nanos(msg.delay_period),
-            signer: msg.signer.into(),
-        })
+panic!("No") // panic!("No") // panic!("No") // panic!("No") //         let previous_connection_id = Some(msg.previous_connection_id)
+// // // //             .filter(|x| !x.is_empty())
+// // // //             .map(|v| FromStr::from_str(v.as_str()))
+// // // //             .transpose()
+// // // //             .map_err(|e| Kind::IdentifierError.context(e))?;
+// // // // 
+// // // //         let consensus_height = msg
+// // // //             .consensus_height
+// // // //             .ok_or(Kind::MissingConsensusHeight)?
+// // // //             .try_into() // Cast from the raw height type into the domain type.
+// // // //             .map_err(|e| Kind::InvalidProof.context(e))?;
+// // // // 
+// // // //         let consensus_proof_obj = ConsensusProof::new(msg.proof_consensus.into(), consensus_height)
+// // // //             .map_err(|e| Kind::InvalidProof.context(e))?;
+// // // // 
+// // // //         let proof_height = msg
+// // // //             .proof_height
+// // // //             .ok_or(Kind::MissingProofHeight)?
+// // // //             .try_into()
+// // // //             .map_err(|e| Kind::InvalidProof.context(e))?;
+// // // // 
+// // // //         let client_proof = Some(msg.proof_client)
+// // // //             .filter(|x| !x.is_empty())
+// // // //             .map(CommitmentProofBytes::from);
+// // // // 
+// // // //         let counterparty_versions = msg
+// // // //             .counterparty_versions
+// // // //             .into_iter()
+// // // //             .map(Version::try_from)
+// // // //             .collect::<Result<Vec<_>, _>>()
+// // // //             .map_err(|e| Kind::InvalidVersion.context(e))?;
+// // // // 
+// // // //         if counterparty_versions.is_empty() {
+// // // //             return Err(Kind::EmptyVersions
+// // // //                 .context("empty counterparty versions in try message".to_string())
+// // // //                 .into());
+// // // //         }
+// // // // 
+// // // //         Ok(Self {
+// // // //             previous_connection_id,
+// // // //             client_id: msg
+// // // //                 .client_id
+// // // //                 .parse()
+// // // //                 .map_err(|e| Kind::IdentifierError.context(e))?,
+// // // //             client_state: msg
+// // // //                 .client_state
+// // // //                 .map(AnyClientState::try_from)
+// // // //                 .transpose()
+// // // //                 .map_err(|e| Kind::InvalidProof.context(e))?,
+// // // //             counterparty: msg
+// // // //                 .counterparty
+// // // //                 .ok_or(Kind::MissingCounterparty)?
+// // // //                 .try_into()?,
+// // // //             counterparty_versions,
+// // // //             proofs: Proofs::new(
+// // // //                 msg.proof_init.into(),
+// // // //                 client_proof,
+// // // //                 Some(consensus_proof_obj),
+// // // //                 None,
+// // // //                 proof_height,
+// // // //             )
+// // // //             .map_err(|e| Kind::InvalidProof.context(e))?,
+// // // //             delay_period: Duration::from_nanos(msg.delay_period),
+// // // //             signer: msg.signer.into(),
+// // // //         })
     }
 }
 
 impl From<MsgConnectionOpenTry> for RawMsgConnectionOpenTry {
 #[trusted]
     fn from(ics_msg: MsgConnectionOpenTry) -> Self {
-        RawMsgConnectionOpenTry {
-            client_id: ics_msg.client_id.as_str().to_string(),
-            previous_connection_id: ics_msg
-                .previous_connection_id
-                .map_or_else(|| "".to_string(), |v| v.as_str().to_string()),
-            client_state: ics_msg
-                .client_state
-                .map_or_else(|| None, |v| Some(v.into())),
-            counterparty: Some(ics_msg.counterparty.into()),
-            delay_period: ics_msg.delay_period.as_nanos() as u64,
-            counterparty_versions: ics_msg
-                .counterparty_versions
-                .iter()
-                .map(|v| v.clone().into())
-                .collect(),
-            proof_height: Some(ics_msg.proofs.height().into()),
-            proof_init: ics_msg.proofs.object_proof().clone().into(),
-            proof_client: ics_msg
-                .proofs
-                .client_proof()
-                .clone()
-                .map_or_else(Vec::new, |v| v.into()),
-            proof_consensus: ics_msg
-                .proofs
-                .consensus_proof()
-                .map_or_else(Vec::new, |v| v.proof().clone().into()),
-            consensus_height: ics_msg
-                .proofs
-                .consensus_proof()
-                .map_or_else(|| None, |h| Some(h.height().into())),
-            signer: ics_msg.signer.to_string(),
-        }
+panic!("No") // panic!("No") // panic!("No") // panic!("No") //         RawMsgConnectionOpenTry {
+// // // //             client_id: ics_msg.client_id.as_str().to_string(),
+// // // //             previous_connection_id: ics_msg
+// // // //                 .previous_connection_id
+// // // //                 .map_or_else(|| "".to_string(), |v| v.as_str().to_string()),
+// // // //             client_state: ics_msg
+// // // //                 .client_state
+// // // //                 .map_or_else(|| None, |v| Some(v.into())),
+// // // //             counterparty: Some(ics_msg.counterparty.into()),
+// // // //             delay_period: ics_msg.delay_period.as_nanos() as u64,
+// // // //             counterparty_versions: ics_msg
+// // // //                 .counterparty_versions
+// // // //                 .iter()
+// // // //                 .map(|v| v.clone().into())
+// // // //                 .collect(),
+// // // //             proof_height: Some(ics_msg.proofs.height().into()),
+// // // //             proof_init: ics_msg.proofs.object_proof().clone().into(),
+// // // //             proof_client: ics_msg
+// // // //                 .proofs
+// // // //                 .client_proof()
+// // // //                 .clone()
+// // // //                 .map_or_else(Vec::new, |v| v.into()),
+// // // //             proof_consensus: ics_msg
+// // // //                 .proofs
+// // // //                 .consensus_proof()
+// // // //                 .map_or_else(Vec::new, |v| v.proof().clone().into()),
+// // // //             consensus_height: ics_msg
+// // // //                 .proofs
+// // // //                 .consensus_proof()
+// // // //                 .map_or_else(|| None, |h| Some(h.height().into())),
+// // // //             signer: ics_msg.signer.to_string(),
+// // // //         }
     }
 }
 

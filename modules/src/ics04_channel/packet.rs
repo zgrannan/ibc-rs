@@ -43,13 +43,13 @@ pub enum Receipt {
 impl std::fmt::Display for PacketMsgType {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            PacketMsgType::Recv => write!(f, "(PacketMsgType::Recv)"),
-            PacketMsgType::Ack => write!(f, "(PacketMsgType::Ack)"),
-            PacketMsgType::TimeoutUnordered => write!(f, "(PacketMsgType::TimeoutUnordered)"),
-            PacketMsgType::TimeoutOrdered => write!(f, "(PacketMsgType::TimeoutOrdered)"),
-            PacketMsgType::TimeoutOnClose => write!(f, "(PacketMsgType::TimeoutOnClose)"),
-        }
+panic!("No") //         match self {
+//             PacketMsgType::Recv => write!(f, "(PacketMsgType::Recv)"),
+//             PacketMsgType::Ack => write!(f, "(PacketMsgType::Ack)"),
+//             PacketMsgType::TimeoutUnordered => write!(f, "(PacketMsgType::TimeoutUnordered)"),
+//             PacketMsgType::TimeoutOrdered => write!(f, "(PacketMsgType::TimeoutOrdered)"),
+//             PacketMsgType::TimeoutOnClose => write!(f, "(PacketMsgType::TimeoutOnClose)"),
+//         }
     }
 }
 
@@ -75,9 +75,9 @@ impl FromStr for Sequence {
 
 #[trusted]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Self::from(s.parse::<u64>().map_err(|_e| {
-            Kind::InvalidStringAsSequence(s.to_string())
-        })?))
+panic!("No") //         Ok(Self::from(s.parse::<u64>().map_err(|_e| {
+//             Kind::InvalidStringAsSequence(s.to_string())
+//         })?))
     }
 }
 
@@ -106,7 +106,7 @@ impl From<Sequence> for u64 {
 impl std::fmt::Display for Sequence {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        write!(f, "{}", self.0)
+panic!("No") //         write!(f, "{}", self.0)
     }
 }
 
@@ -126,20 +126,20 @@ pub struct Packet {
 impl Packet {
 #[trusted]
     pub fn timed_out(&self, dst_chain_height: Height) -> bool {
-        (self.timeout_height != Height::zero() && self.timeout_height < dst_chain_height)
-            || (self.timeout_timestamp != Timestamp::none()
-                && Timestamp::now().check_expiry(&self.timeout_timestamp) == Expired)
+panic!("No") //         (self.timeout_height != Height::zero() && self.timeout_height < dst_chain_height)
+//             || (self.timeout_timestamp != Timestamp::none()
+//                 && Timestamp::now().check_expiry(&self.timeout_timestamp) == Expired)
     }
 }
 
 impl std::fmt::Debug for Packet {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        write!(
-            f,
-            "{:?} {:?} {:?}",
-            self.source_port, self.source_channel, self.sequence
-        )
+panic!("No") //         write!(
+//             f,
+//             "{:?} {:?} {:?}",
+//             self.source_port, self.source_channel, self.sequence
+//         )
     }
 }
 
@@ -147,17 +147,17 @@ impl std::fmt::Debug for Packet {
 impl std::fmt::Display for Packet {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        write!(
-            f,
-            "seq:{}, path:{}/{}->{}/{}, toh:{}, tos:{})",
-            self.sequence,
-            self.source_channel,
-            self.source_port,
-            self.destination_channel,
-            self.destination_port,
-            self.timeout_height,
-            self.timeout_timestamp
-        )
+panic!("No") //         write!(
+//             f,
+//             "seq:{}, path:{}/{}->{}/{}, toh:{}, tos:{})",
+//             self.sequence,
+//             self.source_channel,
+//             self.source_port,
+//             self.destination_channel,
+//             self.destination_port,
+//             self.timeout_height,
+//             self.timeout_timestamp
+//         )
     }
 }
 
@@ -182,47 +182,47 @@ impl TryFrom<RawPacket> for Packet {
 
 #[trusted]
     fn try_from(raw_pkt: RawPacket) -> Result<Self, Self::Error> {
-        if Sequence::from(raw_pkt.sequence).is_zero() {
-            return Err(Kind::ZeroPacketSequence.into());
-        }
-        let packet_timeout_height: Height = raw_pkt
-            .timeout_height
-            .ok_or(Kind::MissingHeight)?
-            .try_into()
-            .map_err(|e| Kind::InvalidTimeoutHeight.context(e))?;
-
-        if packet_timeout_height.is_zero() && raw_pkt.timeout_timestamp == 0 {
-            return Err(Kind::ZeroPacketTimeout.into());
-        }
-        if raw_pkt.data.is_empty() {
-            return Err(Kind::ZeroPacketData.into());
-        }
-
-        let timeout_timestamp = Timestamp::from_nanoseconds(raw_pkt.timeout_timestamp)
-            .map_err(|_| Kind::InvalidPacketTimestamp)?;
-
-        Ok(Packet {
-            sequence: Sequence::from(raw_pkt.sequence),
-            source_port: raw_pkt
-                .source_port
-                .parse()
-                .map_err(|e| Kind::IdentifierError.context(e))?,
-            source_channel: raw_pkt
-                .source_channel
-                .parse()
-                .map_err(|e| Kind::IdentifierError.context(e))?,
-            destination_port: raw_pkt
-                .destination_port
-                .parse()
-                .map_err(|e| Kind::IdentifierError.context(e))?,
-            destination_channel: raw_pkt
-                .destination_channel
-                .parse()
-                .map_err(|e| Kind::IdentifierError.context(e))?,
-            data: raw_pkt.data,
-            timeout_height: packet_timeout_height,
-            timeout_timestamp,
-        })
+panic!("No") //         if Sequence::from(raw_pkt.sequence).is_zero() {
+//             return Err(Kind::ZeroPacketSequence.into());
+//         }
+//         let packet_timeout_height: Height = raw_pkt
+//             .timeout_height
+//             .ok_or(Kind::MissingHeight)?
+//             .try_into()
+//             .map_err(|e| Kind::InvalidTimeoutHeight.context(e))?;
+// 
+//         if packet_timeout_height.is_zero() && raw_pkt.timeout_timestamp == 0 {
+//             return Err(Kind::ZeroPacketTimeout.into());
+//         }
+//         if raw_pkt.data.is_empty() {
+//             return Err(Kind::ZeroPacketData.into());
+//         }
+// 
+//         let timeout_timestamp = Timestamp::from_nanoseconds(raw_pkt.timeout_timestamp)
+//             .map_err(|_| Kind::InvalidPacketTimestamp)?;
+// 
+//         Ok(Packet {
+//             sequence: Sequence::from(raw_pkt.sequence),
+//             source_port: raw_pkt
+//                 .source_port
+//                 .parse()
+//                 .map_err(|e| Kind::IdentifierError.context(e))?,
+//             source_channel: raw_pkt
+//                 .source_channel
+//                 .parse()
+//                 .map_err(|e| Kind::IdentifierError.context(e))?,
+//             destination_port: raw_pkt
+//                 .destination_port
+//                 .parse()
+//                 .map_err(|e| Kind::IdentifierError.context(e))?,
+//             destination_channel: raw_pkt
+//                 .destination_channel
+//                 .parse()
+//                 .map_err(|e| Kind::IdentifierError.context(e))?,
+//             data: raw_pkt.data,
+//             timeout_height: packet_timeout_height,
+//             timeout_timestamp,
+//         })
     }
 }
 

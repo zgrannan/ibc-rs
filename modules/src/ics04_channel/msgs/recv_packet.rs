@@ -39,12 +39,12 @@ impl Msg for MsgRecvPacket {
 
 #[trusted]
     fn route(&self) -> String {
-        crate::keys::ROUTER_KEY.to_string()
+panic!("No") //         crate::keys::ROUTER_KEY.to_string()
     }
 
 #[trusted]
     fn type_url(&self) -> String {
-        TYPE_URL.to_string()
+panic!("No") //         TYPE_URL.to_string()
     }
 }
 
@@ -83,12 +83,12 @@ impl TryFrom<RawMsgRecvPacket> for MsgRecvPacket {
 impl From<MsgRecvPacket> for RawMsgRecvPacket {
 #[trusted]
     fn from(domain_msg: MsgRecvPacket) -> Self {
-        RawMsgRecvPacket {
-            packet: Some(domain_msg.packet.into()),
-            proof_commitment: domain_msg.proofs.object_proof().clone().into(),
-            proof_height: Some(domain_msg.proofs.height().into()),
-            signer: domain_msg.signer.to_string(),
-        }
+panic!("No") //         RawMsgRecvPacket {
+//             packet: Some(domain_msg.packet.into()),
+//             proof_commitment: domain_msg.proofs.object_proof().clone().into(),
+//             proof_height: Some(domain_msg.proofs.height().into()),
+//             signer: domain_msg.signer.to_string(),
+//         }
     }
 }
 

@@ -41,12 +41,12 @@ impl Msg for MsgConnectionOpenConfirm {
 
 #[trusted]
     fn route(&self) -> String {
-        crate::keys::ROUTER_KEY.to_string()
+panic!("No") //         crate::keys::ROUTER_KEY.to_string()
     }
 
 #[trusted]
     fn type_url(&self) -> String {
-        TYPE_URL.to_string()
+panic!("No") //         TYPE_URL.to_string()
     }
 }
 
@@ -57,32 +57,32 @@ impl TryFrom<RawMsgConnectionOpenConfirm> for MsgConnectionOpenConfirm {
 
 #[trusted]
     fn try_from(msg: RawMsgConnectionOpenConfirm) -> Result<Self, Self::Error> {
-        let proof_height = msg
-            .proof_height
-            .ok_or(Kind::MissingProofHeight)?
-            .try_into() // Cast from the raw height type into the domain type.
-            .map_err(|e| Kind::InvalidProof.context(e))?;
-        Ok(Self {
-            connection_id: msg
-                .connection_id
-                .parse()
-                .map_err(|e| Kind::IdentifierError.context(e))?,
-            proofs: Proofs::new(msg.proof_ack.into(), None, None, None, proof_height)
-                .map_err(|e| Kind::InvalidProof.context(e))?,
-            signer: msg.signer.into(),
-        })
+panic!("No") //         let proof_height = msg
+//             .proof_height
+//             .ok_or(Kind::MissingProofHeight)?
+//             .try_into() // Cast from the raw height type into the domain type.
+//             .map_err(|e| Kind::InvalidProof.context(e))?;
+//         Ok(Self {
+//             connection_id: msg
+//                 .connection_id
+//                 .parse()
+//                 .map_err(|e| Kind::IdentifierError.context(e))?,
+//             proofs: Proofs::new(msg.proof_ack.into(), None, None, None, proof_height)
+//                 .map_err(|e| Kind::InvalidProof.context(e))?,
+//             signer: msg.signer.into(),
+//         })
     }
 }
 
 impl From<MsgConnectionOpenConfirm> for RawMsgConnectionOpenConfirm {
 #[trusted]
     fn from(ics_msg: MsgConnectionOpenConfirm) -> Self {
-        RawMsgConnectionOpenConfirm {
-            connection_id: ics_msg.connection_id.as_str().to_string(),
-            proof_ack: ics_msg.proofs.object_proof().clone().into(),
-            proof_height: Some(ics_msg.proofs.height().into()),
-            signer: ics_msg.signer.to_string(),
-        }
+panic!("No") //         RawMsgConnectionOpenConfirm {
+//             connection_id: ics_msg.connection_id.as_str().to_string(),
+//             proof_ack: ics_msg.proofs.object_proof().clone().into(),
+//             proof_height: Some(ics_msg.proofs.height().into()),
+//             signer: ics_msg.signer.to_string(),
+//         }
     }
 }
 

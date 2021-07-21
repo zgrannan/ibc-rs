@@ -30,19 +30,19 @@ impl ClientType {
     /// Yields the identifier of this client type as a string
 #[trusted]
     pub fn as_str(&self) -> &'static str {
-        match self {
-            Self::Tendermint => Self::TENDERMINT_STR,
-
-            #[cfg(any(test, feature = "mocks"))]
-            Self::Mock => Self::MOCK_STR,
-        }
+panic!("No") //         match self {
+//             Self::Tendermint => Self::TENDERMINT_STR,
+// 
+//             #[cfg(any(test, feature = "mocks"))]
+//             Self::Mock => Self::MOCK_STR,
+//         }
     }
 }
 
 impl fmt::Display for ClientType {
 #[trusted]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "ClientType({})", self.as_str())
+panic!("No") //         write!(f, "ClientType({})", self.as_str())
     }
 }
 
@@ -51,14 +51,14 @@ impl std::str::FromStr for ClientType {
 
 #[trusted]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            Self::TENDERMINT_STR => Ok(Self::Tendermint),
-
-            #[cfg(any(test, feature = "mocks"))]
-            Self::MOCK_STR => Ok(Self::Mock),
-
-            _ => Err(error::Kind::UnknownClientType(s.to_string()).into()),
-        }
+panic!("No") //         match s {
+//             Self::TENDERMINT_STR => Ok(Self::Tendermint),
+// 
+//             #[cfg(any(test, feature = "mocks"))]
+//             Self::MOCK_STR => Ok(Self::Mock),
+// 
+//             _ => Err(error::Kind::UnknownClientType(s.to_string()).into()),
+//         }
     }
 }
 

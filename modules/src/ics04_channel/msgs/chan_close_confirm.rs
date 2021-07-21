@@ -53,12 +53,12 @@ impl Msg for MsgChannelCloseConfirm {
 
 #[trusted]
     fn route(&self) -> String {
-        crate::keys::ROUTER_KEY.to_string()
+panic!("No") //         crate::keys::ROUTER_KEY.to_string()
     }
 
 #[trusted]
     fn type_url(&self) -> String {
-        TYPE_URL.to_string()
+panic!("No") //         TYPE_URL.to_string()
     }
 }
 
@@ -69,44 +69,44 @@ impl TryFrom<RawMsgChannelCloseConfirm> for MsgChannelCloseConfirm {
 
 #[trusted]
     fn try_from(raw_msg: RawMsgChannelCloseConfirm) -> Result<Self, Self::Error> {
-        let proofs = Proofs::new(
-            raw_msg.proof_init.into(),
-            None,
-            None,
-            None,
-            raw_msg
-                .proof_height
-                .ok_or(Kind::MissingHeight)?
-                .try_into()
-                .map_err(|e| Kind::InvalidProof.context(e))?,
-        )
-        .map_err(|e| Kind::InvalidProof.context(e))?;
-
-        Ok(MsgChannelCloseConfirm {
-            port_id: raw_msg
-                .port_id
-                .parse()
-                .map_err(|e| Kind::IdentifierError.context(e))?,
-            channel_id: raw_msg
-                .channel_id
-                .parse()
-                .map_err(|e| Kind::IdentifierError.context(e))?,
-            proofs,
-            signer: raw_msg.signer.into(),
-        })
+panic!("No") //         let proofs = Proofs::new(
+//             raw_msg.proof_init.into(),
+//             None,
+//             None,
+//             None,
+//             raw_msg
+//                 .proof_height
+//                 .ok_or(Kind::MissingHeight)?
+//                 .try_into()
+//                 .map_err(|e| Kind::InvalidProof.context(e))?,
+//         )
+//         .map_err(|e| Kind::InvalidProof.context(e))?;
+// 
+//         Ok(MsgChannelCloseConfirm {
+//             port_id: raw_msg
+//                 .port_id
+//                 .parse()
+//                 .map_err(|e| Kind::IdentifierError.context(e))?,
+//             channel_id: raw_msg
+//                 .channel_id
+//                 .parse()
+//                 .map_err(|e| Kind::IdentifierError.context(e))?,
+//             proofs,
+//             signer: raw_msg.signer.into(),
+//         })
     }
 }
 
 impl From<MsgChannelCloseConfirm> for RawMsgChannelCloseConfirm {
 #[trusted]
     fn from(domain_msg: MsgChannelCloseConfirm) -> Self {
-        RawMsgChannelCloseConfirm {
-            port_id: domain_msg.port_id.to_string(),
-            channel_id: domain_msg.channel_id.to_string(),
-            proof_init: domain_msg.proofs.object_proof().clone().into(),
-            proof_height: Some(domain_msg.proofs.height().into()),
-            signer: domain_msg.signer.to_string(),
-        }
+panic!("No") //         RawMsgChannelCloseConfirm {
+//             port_id: domain_msg.port_id.to_string(),
+//             channel_id: domain_msg.channel_id.to_string(),
+//             proof_init: domain_msg.proofs.object_proof().clone().into(),
+//             proof_height: Some(domain_msg.proofs.height().into()),
+//             signer: domain_msg.signer.to_string(),
+//         }
     }
 }
 

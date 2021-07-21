@@ -179,7 +179,7 @@ impl Attributes {
     }
 #[trusted]
     pub fn channel_id(&self) -> Option<&ChannelId> {
-        self.channel_id.as_ref()
+panic!("No") //         self.channel_id.as_ref()
     }
 }
 
@@ -206,7 +206,7 @@ impl OpenInit {
     }
 #[trusted]
     pub fn channel_id(&self) -> Option<&ChannelId> {
-        self.0.channel_id.as_ref()
+panic!("No") //         self.0.channel_id.as_ref()
     }
     pub fn port_id(&self) -> &PortId {
         &self.0.port_id
@@ -229,17 +229,17 @@ impl TryFrom<RawObject> for OpenInit {
     type Error = BoxError;
 #[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
-        Ok(OpenInit(Attributes {
-            height: obj.height,
-            port_id: attribute!(obj, "channel_open_init.port_id"),
-            channel_id: some_attribute!(obj, "channel_open_init.channel_id"),
-            connection_id: attribute!(obj, "channel_open_init.connection_id"),
-            counterparty_port_id: attribute!(obj, "channel_open_init.counterparty_port_id"),
-            counterparty_channel_id: some_attribute!(
-                obj,
-                "channel_open_init.counterparty_channel_id"
-            ),
-        }))
+panic!("No") //         Ok(OpenInit(Attributes {
+//             height: obj.height,
+//             port_id: attribute!(obj, "channel_open_init.port_id"),
+//             channel_id: some_attribute!(obj, "channel_open_init.channel_id"),
+//             connection_id: attribute!(obj, "channel_open_init.connection_id"),
+//             counterparty_port_id: attribute!(obj, "channel_open_init.counterparty_port_id"),
+//             counterparty_channel_id: some_attribute!(
+//                 obj,
+//                 "channel_open_init.counterparty_channel_id"
+//             ),
+//         }))
     }
 }
 
@@ -260,7 +260,7 @@ impl OpenTry {
     }
 #[trusted]
     pub fn channel_id(&self) -> Option<&ChannelId> {
-        self.0.channel_id.as_ref()
+panic!("No") //         self.0.channel_id.as_ref()
     }
     pub fn port_id(&self) -> &PortId {
         &self.0.port_id
@@ -284,17 +284,17 @@ impl TryFrom<RawObject> for OpenTry {
     type Error = BoxError;
 #[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
-        Ok(OpenTry(Attributes {
-            height: obj.height,
-            port_id: attribute!(obj, "channel_open_try.port_id"),
-            channel_id: some_attribute!(obj, "channel_open_try.channel_id"),
-            connection_id: attribute!(obj, "channel_open_try.connection_id"),
-            counterparty_port_id: attribute!(obj, "channel_open_try.counterparty_port_id"),
-            counterparty_channel_id: some_attribute!(
-                obj,
-                "channel_open_try.counterparty_channel_id"
-            ),
-        }))
+panic!("No") //         Ok(OpenTry(Attributes {
+//             height: obj.height,
+//             port_id: attribute!(obj, "channel_open_try.port_id"),
+//             channel_id: some_attribute!(obj, "channel_open_try.channel_id"),
+//             connection_id: attribute!(obj, "channel_open_try.connection_id"),
+//             counterparty_port_id: attribute!(obj, "channel_open_try.counterparty_port_id"),
+//             counterparty_channel_id: some_attribute!(
+//                 obj,
+//                 "channel_open_try.counterparty_channel_id"
+//             ),
+//         }))
     }
 }
 
@@ -314,7 +314,7 @@ impl OpenAck {
     }
 #[trusted]
     pub fn channel_id(&self) -> Option<&ChannelId> {
-        self.0.channel_id.as_ref()
+panic!("No") //         self.0.channel_id.as_ref()
     }
 #[trusted]
     pub fn port_id(&self) -> &PortId {
@@ -330,7 +330,7 @@ impl OpenAck {
 
 #[trusted]
     pub fn counterparty_channel_id(&self) -> Option<&ChannelId> {
-        self.0.counterparty_channel_id.as_ref()
+panic!("No") //         self.0.counterparty_channel_id.as_ref()
     }
 }
 
@@ -345,17 +345,17 @@ impl TryFrom<RawObject> for OpenAck {
     type Error = BoxError;
 #[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
-        Ok(OpenAck(Attributes {
-            height: obj.height,
-            port_id: attribute!(obj, "channel_open_ack.port_id"),
-            channel_id: some_attribute!(obj, "channel_open_ack.channel_id"),
-            connection_id: attribute!(obj, "channel_open_ack.connection_id"),
-            counterparty_port_id: attribute!(obj, "channel_open_ack.counterparty_port_id"),
-            counterparty_channel_id: some_attribute!(
-                obj,
-                "channel_open_ack.counterparty_channel_id"
-            ),
-        }))
+panic!("No") //         Ok(OpenAck(Attributes {
+//             height: obj.height,
+//             port_id: attribute!(obj, "channel_open_ack.port_id"),
+//             channel_id: some_attribute!(obj, "channel_open_ack.channel_id"),
+//             connection_id: attribute!(obj, "channel_open_ack.connection_id"),
+//             counterparty_port_id: attribute!(obj, "channel_open_ack.counterparty_port_id"),
+//             counterparty_channel_id: some_attribute!(
+//                 obj,
+//                 "channel_open_ack.counterparty_channel_id"
+//             ),
+//         }))
     }
 }
 
@@ -376,7 +376,7 @@ impl OpenConfirm {
     }
 #[trusted]
     pub fn channel_id(&self) -> Option<&ChannelId> {
-        self.0.channel_id.as_ref()
+panic!("No") //         self.0.channel_id.as_ref()
     }
     pub fn port_id(&self) -> &PortId {
         &self.0.port_id
@@ -401,17 +401,17 @@ impl TryFrom<RawObject> for OpenConfirm {
     type Error = BoxError;
 #[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
-        Ok(OpenConfirm(Attributes {
-            height: obj.height,
-            port_id: attribute!(obj, "channel_open_confirm.port_id"),
-            channel_id: some_attribute!(obj, "channel_open_confirm.channel_id"),
-            connection_id: attribute!(obj, "channel_open_confirm.connection_id"),
-            counterparty_port_id: attribute!(obj, "channel_open_confirm.counterparty_port_id"),
-            counterparty_channel_id: some_attribute!(
-                obj,
-                "channel_open_confirm.counterparty_channel_id"
-            ),
-        }))
+panic!("No") //         Ok(OpenConfirm(Attributes {
+//             height: obj.height,
+//             port_id: attribute!(obj, "channel_open_confirm.port_id"),
+//             channel_id: some_attribute!(obj, "channel_open_confirm.channel_id"),
+//             connection_id: attribute!(obj, "channel_open_confirm.connection_id"),
+//             counterparty_port_id: attribute!(obj, "channel_open_confirm.counterparty_port_id"),
+//             counterparty_channel_id: some_attribute!(
+//                 obj,
+//                 "channel_open_confirm.counterparty_channel_id"
+//             ),
+//         }))
     }
 }
 
@@ -432,11 +432,11 @@ impl CloseInit {
 
 #[trusted]
     pub fn channel_id(&self) -> &ChannelId {
-        // FIXME(romac): Rework encoding of IbcEvents which use `Attributes`
-        self.0
-            .channel_id
-            .as_ref()
-            .expect("CloseInit should always have a channel_id")
+panic!("No") //         // FIXME(romac): Rework encoding of IbcEvents which use `Attributes`
+//         self.0
+//             .channel_id
+//             .as_ref()
+//             .expect("CloseInit should always have a channel_id")
     }
 
 #[trusted]
@@ -446,7 +446,7 @@ impl CloseInit {
 
 #[trusted]
     pub fn counterparty_channel_id(&self) -> Option<&ChannelId> {
-        self.0.counterparty_channel_id.as_ref()
+panic!("No") //         self.0.counterparty_channel_id.as_ref()
     }
 
 #[trusted]
@@ -469,17 +469,17 @@ impl TryFrom<RawObject> for CloseInit {
     type Error = BoxError;
 #[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
-        Ok(CloseInit(Attributes {
-            height: obj.height,
-            port_id: attribute!(obj, "channel_close_init.port_id"),
-            channel_id: some_attribute!(obj, "channel_close_init.channel_id"),
-            connection_id: attribute!(obj, "channel_close_init.connection_id"),
-            counterparty_port_id: attribute!(obj, "channel_close_init.counterparty_port_id"),
-            counterparty_channel_id: some_attribute!(
-                obj,
-                "channel_close_init.counterparty_channel_id"
-            ),
-        }))
+panic!("No") //         Ok(CloseInit(Attributes {
+//             height: obj.height,
+//             port_id: attribute!(obj, "channel_close_init.port_id"),
+//             channel_id: some_attribute!(obj, "channel_close_init.channel_id"),
+//             connection_id: attribute!(obj, "channel_close_init.connection_id"),
+//             counterparty_port_id: attribute!(obj, "channel_close_init.counterparty_port_id"),
+//             counterparty_channel_id: some_attribute!(
+//                 obj,
+//                 "channel_close_init.counterparty_channel_id"
+//             ),
+//         }))
     }
 }
 
@@ -493,13 +493,13 @@ impl From<CloseInit> for IbcEvent {
 impl std::fmt::Display for CloseInit {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        write!(
-            f,
-            "{} {} {:?}",
-            self.height(),
-            CLOSE_INIT_EVENT_TYPE,
-            self.0
-        )
+panic!("No") //         write!(
+//             f,
+//             "{} {} {:?}",
+//             self.height(),
+//             CLOSE_INIT_EVENT_TYPE,
+//             self.0
+//         )
     }
 }
 
@@ -509,7 +509,7 @@ pub struct CloseConfirm(Attributes);
 impl CloseConfirm {
 #[trusted]
     pub fn channel_id(&self) -> Option<&ChannelId> {
-        self.0.channel_id.as_ref()
+panic!("No") //         self.0.channel_id.as_ref()
     }
     pub fn height(&self) -> Height {
         self.0.height
@@ -529,24 +529,24 @@ impl TryFrom<RawObject> for CloseConfirm {
     type Error = BoxError;
 #[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
-        Ok(CloseConfirm(Attributes {
-            height: obj.height,
-            port_id: attribute!(obj, "channel_close_confirm.port_id"),
-            channel_id: some_attribute!(obj, "channel_close_confirm.channel_id"),
-            connection_id: attribute!(obj, "channel_close_confirm.connection_id"),
-            counterparty_port_id: attribute!(obj, "channel_close_confirm.counterparty_port_id"),
-            counterparty_channel_id: some_attribute!(
-                obj,
-                "channel_close_confirm.counterparty_channel_id"
-            ),
-        }))
+panic!("No") //         Ok(CloseConfirm(Attributes {
+//             height: obj.height,
+//             port_id: attribute!(obj, "channel_close_confirm.port_id"),
+//             channel_id: some_attribute!(obj, "channel_close_confirm.channel_id"),
+//             connection_id: attribute!(obj, "channel_close_confirm.connection_id"),
+//             counterparty_port_id: attribute!(obj, "channel_close_confirm.counterparty_port_id"),
+//             counterparty_channel_id: some_attribute!(
+//                 obj,
+//                 "channel_close_confirm.counterparty_channel_id"
+//             ),
+//         }))
     }
 }
 
 impl From<CloseConfirm> for IbcEvent {
 #[trusted]
     fn from(v: CloseConfirm) -> Self {
-        IbcEvent::CloseConfirmChannel(v)
+panic!("No") // panic!("No") // panic!("No") // panic!("No") //         IbcEvent::CloseConfirmChannel(v)
     }
 }
 
@@ -626,7 +626,7 @@ impl From<SendPacket> for IbcEvent {
 impl std::fmt::Display for SendPacket {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        write!(f, "SendPacket - h:{}, {}", self.height, self.packet)
+panic!("No") //         write!(f, "SendPacket - h:{}, {}", self.height, self.packet)
     }
 }
 
@@ -679,7 +679,7 @@ impl From<ReceivePacket> for IbcEvent {
 impl std::fmt::Display for ReceivePacket {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        write!(f, "ReceivePacket - h:{}, {}", self.height, self.packet)
+panic!("No") //         write!(f, "ReceivePacket - h:{}, {}", self.height, self.packet)
     }
 }
 
@@ -739,11 +739,11 @@ impl From<WriteAcknowledgement> for IbcEvent {
 impl std::fmt::Display for WriteAcknowledgement {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        write!(
-            f,
-            "WriteAcknowledgement - h:{}, {}",
-            self.height, self.packet
-        )
+panic!("No") //         write!(
+//             f,
+//             "WriteAcknowledgement - h:{}, {}",
+//             self.height, self.packet
+//         )
     }
 }
 
@@ -787,7 +787,7 @@ impl From<AcknowledgePacket> for IbcEvent {
 impl std::fmt::Display for AcknowledgePacket {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        write!(f, "h:{}, {}", self.height, self.packet)
+panic!("No") //         write!(f, "h:{}, {}", self.height, self.packet)
     }
 }
 
@@ -838,7 +838,7 @@ impl From<TimeoutPacket> for IbcEvent {
 impl std::fmt::Display for TimeoutPacket {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        write!(f, "TimeoutPacket - h:{}, {}", self.height, self.packet)
+panic!("No") //         write!(f, "TimeoutPacket - h:{}, {}", self.height, self.packet)
     }
 }
 
@@ -889,10 +889,10 @@ impl From<TimeoutOnClosePacket> for IbcEvent {
 impl std::fmt::Display for TimeoutOnClosePacket {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        write!(
-            f,
-            "TimeoutOnClosePacket - h:{}, {}",
-            self.height, self.packet
-        )
+panic!("No") //         write!(
+//             f,
+//             "TimeoutOnClosePacket - h:{}, {}",
+//             self.height, self.packet
+//         )
     }
 }

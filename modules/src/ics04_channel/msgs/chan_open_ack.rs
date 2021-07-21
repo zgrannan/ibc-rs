@@ -72,12 +72,12 @@ impl Msg for MsgChannelOpenAck {
 
 #[trusted]
     fn route(&self) -> String {
-        crate::keys::ROUTER_KEY.to_string()
+panic!("No") //         crate::keys::ROUTER_KEY.to_string()
     }
 
 #[trusted]
     fn type_url(&self) -> String {
-        TYPE_URL.to_string()
+panic!("No") //         TYPE_URL.to_string()
     }
 }
 
@@ -88,51 +88,51 @@ impl TryFrom<RawMsgChannelOpenAck> for MsgChannelOpenAck {
 
 #[trusted]
     fn try_from(raw_msg: RawMsgChannelOpenAck) -> Result<Self, Self::Error> {
-        let proofs = Proofs::new(
-            raw_msg.proof_try.into(),
-            None,
-            None,
-            None,
-            raw_msg
-                .proof_height
-                .ok_or(Kind::MissingHeight)?
-                .try_into()
-                .map_err(|e| Kind::InvalidProof.context(e))?,
-        )
-        .map_err(|e| Kind::InvalidProof.context(e))?;
-
-        Ok(MsgChannelOpenAck {
-            port_id: raw_msg
-                .port_id
-                .parse()
-                .map_err(|e| Kind::IdentifierError.context(e))?,
-            channel_id: raw_msg
-                .channel_id
-                .parse()
-                .map_err(|e| Kind::IdentifierError.context(e))?,
-            counterparty_channel_id: raw_msg
-                .counterparty_channel_id
-                .parse()
-                .map_err(|e| Kind::IdentifierError.context(e))?,
-            counterparty_version: validate_version(raw_msg.counterparty_version)?,
-            proofs,
-            signer: raw_msg.signer.into(),
-        })
+panic!("No") //         let proofs = Proofs::new(
+//             raw_msg.proof_try.into(),
+//             None,
+//             None,
+//             None,
+//             raw_msg
+//                 .proof_height
+//                 .ok_or(Kind::MissingHeight)?
+//                 .try_into()
+//                 .map_err(|e| Kind::InvalidProof.context(e))?,
+//         )
+//         .map_err(|e| Kind::InvalidProof.context(e))?;
+// 
+//         Ok(MsgChannelOpenAck {
+//             port_id: raw_msg
+//                 .port_id
+//                 .parse()
+//                 .map_err(|e| Kind::IdentifierError.context(e))?,
+//             channel_id: raw_msg
+//                 .channel_id
+//                 .parse()
+//                 .map_err(|e| Kind::IdentifierError.context(e))?,
+//             counterparty_channel_id: raw_msg
+//                 .counterparty_channel_id
+//                 .parse()
+//                 .map_err(|e| Kind::IdentifierError.context(e))?,
+//             counterparty_version: validate_version(raw_msg.counterparty_version)?,
+//             proofs,
+//             signer: raw_msg.signer.into(),
+//         })
     }
 }
 
 impl From<MsgChannelOpenAck> for RawMsgChannelOpenAck {
 #[trusted]
     fn from(domain_msg: MsgChannelOpenAck) -> Self {
-        RawMsgChannelOpenAck {
-            port_id: domain_msg.port_id.to_string(),
-            channel_id: domain_msg.channel_id.to_string(),
-            counterparty_channel_id: domain_msg.counterparty_channel_id.to_string(),
-            counterparty_version: domain_msg.counterparty_version.to_string(),
-            proof_try: domain_msg.proofs.object_proof().clone().into(),
-            proof_height: Some(domain_msg.proofs.height().into()),
-            signer: domain_msg.signer.to_string(),
-        }
+panic!("No") //         RawMsgChannelOpenAck {
+//             port_id: domain_msg.port_id.to_string(),
+//             channel_id: domain_msg.channel_id.to_string(),
+//             counterparty_channel_id: domain_msg.counterparty_channel_id.to_string(),
+//             counterparty_version: domain_msg.counterparty_version.to_string(),
+//             proof_try: domain_msg.proofs.object_proof().clone().into(),
+//             proof_height: Some(domain_msg.proofs.height().into()),
+//             signer: domain_msg.signer.to_string(),
+//         }
     }
 }
 

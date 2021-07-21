@@ -45,42 +45,42 @@ impl TryFrom<RawIdentifiedChannel> for IdentifiedChannelEnd {
 
 #[trusted]
     fn try_from(value: RawIdentifiedChannel) -> Result<Self, Self::Error> {
-        let raw_channel_end = RawChannel {
-            state: value.state,
-            ordering: value.ordering,
-            counterparty: value.counterparty,
-            connection_hops: value.connection_hops,
-            version: value.version,
-        };
-
-        Ok(IdentifiedChannelEnd {
-            port_id: value.port_id.parse().map_err(|_| Kind::IdentifierError)?,
-            channel_id: value
-                .channel_id
-                .parse()
-                .map_err(|_| Kind::IdentifierError)?,
-            channel_end: raw_channel_end.try_into()?,
-        })
+panic!("No") //         let raw_channel_end = RawChannel {
+//             state: value.state,
+//             ordering: value.ordering,
+//             counterparty: value.counterparty,
+//             connection_hops: value.connection_hops,
+//             version: value.version,
+//         };
+// 
+//         Ok(IdentifiedChannelEnd {
+//             port_id: value.port_id.parse().map_err(|_| Kind::IdentifierError)?,
+//             channel_id: value
+//                 .channel_id
+//                 .parse()
+//                 .map_err(|_| Kind::IdentifierError)?,
+//             channel_end: raw_channel_end.try_into()?,
+//         })
     }
 }
 
 impl From<IdentifiedChannelEnd> for RawIdentifiedChannel {
 #[trusted]
     fn from(value: IdentifiedChannelEnd) -> Self {
-        RawIdentifiedChannel {
-            state: value.channel_end.state as i32,
-            ordering: value.channel_end.ordering as i32,
-            counterparty: Some(value.channel_end.counterparty().clone().into()),
-            connection_hops: value
-                .channel_end
-                .connection_hops
-                .iter()
-                .map(|v| v.as_str().to_string())
-                .collect(),
-            version: value.channel_end.version,
-            port_id: value.port_id.to_string(),
-            channel_id: value.channel_id.to_string(),
-        }
+panic!("No") // panic!("No") //         RawIdentifiedChannel {
+// //             state: value.channel_end.state as i32,
+// //             ordering: value.channel_end.ordering as i32,
+// //             counterparty: Some(value.channel_end.counterparty().clone().into()),
+// //             connection_hops: value
+// //                 .channel_end
+// //                 .connection_hops
+// //                 .iter()
+// //                 .map(|v| v.as_str().to_string())
+// //                 .collect(),
+// //             version: value.channel_end.version,
+// //             port_id: value.port_id.to_string(),
+// //             channel_id: value.channel_id.to_string(),
+// //         }
     }
 }
 
@@ -96,13 +96,13 @@ pub struct ChannelEnd {
 impl Default for ChannelEnd {
 #[trusted]
     fn default() -> Self {
-        ChannelEnd {
-            state: State::Uninitialized,
-            ordering: Default::default(),
-            remote: Counterparty::default(),
-            connection_hops: vec![],
-            version: "".to_string(),
-        }
+panic!("No") //         ChannelEnd {
+//             state: State::Uninitialized,
+//             ordering: Default::default(),
+//             remote: Counterparty::default(),
+//             connection_hops: vec![],
+//             version: "".to_string(),
+//         }
     }
 }
 
@@ -113,54 +113,54 @@ impl TryFrom<RawChannel> for ChannelEnd {
 
 #[trusted]
     fn try_from(value: RawChannel) -> Result<Self, Self::Error> {
-        let chan_state: State = State::from_i32(value.state)?;
-
-        if chan_state == State::Uninitialized {
-            return Ok(ChannelEnd::default());
-        }
-
-        let chan_ordering = Order::from_i32(value.ordering)?;
-
-        // Assemble the 'remote' attribute of the Channel, which represents the Counterparty.
-        let remote = value
-            .counterparty
-            .ok_or(Kind::MissingCounterparty)?
-            .try_into()?;
-
-        // Parse each item in connection_hops into a ConnectionId.
-        let connection_hops = value
-            .connection_hops
-            .into_iter()
-            .map(|conn_id| ConnectionId::from_str(conn_id.as_str()))
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|e| Kind::IdentifierError.context(e))?;
-
-        let version = validate_version(value.version)?;
-
-        Ok(ChannelEnd::new(
-            chan_state,
-            chan_ordering,
-            remote,
-            connection_hops,
-            version,
-        ))
+panic!("No") // panic!("No") //         let chan_state: State = State::from_i32(value.state)?;
+// // 
+// //         if chan_state == State::Uninitialized {
+// //             return Ok(ChannelEnd::default());
+// //         }
+// // 
+// //         let chan_ordering = Order::from_i32(value.ordering)?;
+// // 
+// //         // Assemble the 'remote' attribute of the Channel, which represents the Counterparty.
+// //         let remote = value
+// //             .counterparty
+// //             .ok_or(Kind::MissingCounterparty)?
+// //             .try_into()?;
+// // 
+// //         // Parse each item in connection_hops into a ConnectionId.
+// //         let connection_hops = value
+// //             .connection_hops
+// //             .into_iter()
+// //             .map(|conn_id| ConnectionId::from_str(conn_id.as_str()))
+// //             .collect::<Result<Vec<_>, _>>()
+// //             .map_err(|e| Kind::IdentifierError.context(e))?;
+// // 
+// //         let version = validate_version(value.version)?;
+// // 
+// //         Ok(ChannelEnd::new(
+// //             chan_state,
+// //             chan_ordering,
+// //             remote,
+// //             connection_hops,
+// //             version,
+// //         ))
     }
 }
 
 impl From<ChannelEnd> for RawChannel {
 #[trusted]
     fn from(value: ChannelEnd) -> Self {
-        RawChannel {
-            state: value.state as i32,
-            ordering: value.ordering as i32,
-            counterparty: Some(value.counterparty().clone().into()),
-            connection_hops: value
-                .connection_hops
-                .iter()
-                .map(|v| v.as_str().to_string())
-                .collect(),
-            version: value.version,
-        }
+panic!("No") // panic!("No") //         RawChannel {
+// //             state: value.state as i32,
+// //             ordering: value.ordering as i32,
+// //             counterparty: Some(value.counterparty().clone().into()),
+// //             connection_hops: value
+// //                 .connection_hops
+// //                 .iter()
+// //                 .map(|v| v.as_str().to_string())
+// //                 .collect(),
+// //             version: value.version,
+// //         }
     }
 }
 
@@ -199,7 +199,7 @@ impl ChannelEnd {
     /// Returns `true` if this `ChannelEnd` is in state [`State::Open`].
 #[trusted]
     pub fn is_open(&self) -> bool {
-        self.state_matches(&State::Open)
+panic!("No") //         self.state_matches(&State::Open)
     }
 
     pub fn state(&self) -> &State {
@@ -222,22 +222,22 @@ impl ChannelEnd {
 
 #[trusted]
     pub fn version(&self) -> String {
-        self.version.parse().unwrap()
+panic!("No") //         self.version.parse().unwrap()
     }
 
 #[trusted]
     pub fn validate_basic(&self) -> Result<(), Error> {
-        if self.connection_hops.len() != 1 {
-            return Err(
-                Kind::InvalidConnectionHopsLength(1, self.connection_hops.len())
-                    .context("validate channel")
-                    .into(),
-            );
-        }
-        if self.version().trim() == "" {
-            return Err(Kind::InvalidVersion.context("empty version string").into());
-        }
-        self.counterparty().validate_basic()
+panic!("No") //         if self.connection_hops.len() != 1 {
+//             return Err(
+//                 Kind::InvalidConnectionHopsLength(1, self.connection_hops.len())
+//                     .context("validate channel")
+//                     .into(),
+//             );
+//         }
+//         if self.version().trim() == "" {
+//             return Err(Kind::InvalidVersion.context("empty version string").into());
+//         }
+//         self.counterparty().validate_basic()
     }
 
     /// Helper function to compare the state of this end with another state.
@@ -260,7 +260,7 @@ impl ChannelEnd {
 
 #[trusted]
     pub fn counterparty_matches(&self, other: &Counterparty) -> bool {
-        self.counterparty().eq(other)
+panic!("No") //         self.counterparty().eq(other)
     }
 
     pub fn version_matches(&self, other: &str) -> bool {
@@ -299,7 +299,7 @@ impl Counterparty {
 
 #[trusted]
     pub fn channel_id(&self) -> Option<&ChannelId> {
-        self.channel_id.as_ref()
+panic!("No") //         self.channel_id.as_ref()
     }
 
 #[trusted]
@@ -315,30 +315,30 @@ impl TryFrom<RawCounterparty> for Counterparty {
 
 #[trusted]
     fn try_from(value: RawCounterparty) -> Result<Self, Self::Error> {
-        let channel_id = Some(value.channel_id)
-            .filter(|x| !x.is_empty())
-            .map(|v| FromStr::from_str(v.as_str()))
-            .transpose()
-            .map_err(|e| Kind::IdentifierError.context(e))?;
-        Ok(Counterparty::new(
-            value
-                .port_id
-                .parse()
-                .map_err(|e| Kind::IdentifierError.context(e))?,
-            channel_id,
-        ))
+panic!("No") // panic!("No") // panic!("No") //         let channel_id = Some(value.channel_id)
+// // //             .filter(|x| !x.is_empty())
+// // //             .map(|v| FromStr::from_str(v.as_str()))
+// // //             .transpose()
+// // //             .map_err(|e| Kind::IdentifierError.context(e))?;
+// // //         Ok(Counterparty::new(
+// // //             value
+// // //                 .port_id
+// // //                 .parse()
+// // //                 .map_err(|e| Kind::IdentifierError.context(e))?,
+// // //             channel_id,
+// // //         ))
     }
 }
 
 impl From<Counterparty> for RawCounterparty {
 #[trusted]
     fn from(value: Counterparty) -> Self {
-        RawCounterparty {
-            port_id: value.port_id.as_str().to_string(),
-            channel_id: value
-                .channel_id
-                .map_or_else(|| "".to_string(), |v| v.as_str().to_string()),
-        }
+panic!("No") // panic!("No") // panic!("No") //         RawCounterparty {
+// // //             port_id: value.port_id.as_str().to_string(),
+// // //             channel_id: value
+// // //                 .channel_id
+// // //                 .map_or_else(|| "".to_string(), |v| v.as_str().to_string()),
+// // //         }
     }
 }
 
@@ -359,7 +359,7 @@ impl Default for Order {
 impl fmt::Display for Order {
 #[trusted]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.as_str())
+panic!("No") //         write!(f, "{}", self.as_str())
     }
 }
 
@@ -367,11 +367,11 @@ impl Order {
     /// Yields the Order as a string
 #[trusted]
     pub fn as_str(&self) -> &'static str {
-        match self {
-            Self::None => "UNINITIALIZED",
-            Self::Unordered => "ORDER_UNORDERED",
-            Self::Ordered => "ORDER_ORDERED",
-        }
+panic!("No") //         match self {
+//             Self::None => "UNINITIALIZED",
+//             Self::Unordered => "ORDER_UNORDERED",
+//             Self::Ordered => "ORDER_ORDERED",
+//         }
     }
 
     // Parses the Order out from a i32.
@@ -391,12 +391,12 @@ impl FromStr for Order {
 
 #[trusted]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "uninitialized" => Ok(Self::None),
-            "unordered" => Ok(Self::Unordered),
-            "ordered" => Ok(Self::Ordered),
-            _ => fail!(error::Kind::UnknownOrderType, s),
-        }
+panic!("No") //         match s.to_lowercase().as_str() {
+//             "uninitialized" => Ok(Self::None),
+//             "unordered" => Ok(Self::Unordered),
+//             "ordered" => Ok(Self::Ordered),
+//             _ => fail!(error::Kind::UnknownOrderType, s),
+//         }
     }
 }
 
@@ -413,13 +413,13 @@ impl State {
     /// Yields the state as a string
 #[trusted]
     pub fn as_string(&self) -> &'static str {
-        match self {
-            Self::Uninitialized => "UNINITIALIZED",
-            Self::Init => "INIT",
-            Self::TryOpen => "TRYOPEN",
-            Self::Open => "OPEN",
-            Self::Closed => "CLOSED",
-        }
+panic!("No") //         match self {
+//             Self::Uninitialized => "UNINITIALIZED",
+//             Self::Init => "INIT",
+//             Self::TryOpen => "TRYOPEN",
+//             Self::Open => "OPEN",
+//             Self::Closed => "CLOSED",
+//         }
     }
 
     /// Parses the State out from a i32.
@@ -438,7 +438,7 @@ impl State {
     /// Returns whether or not this channel state is `Open`.
 #[trusted]
     pub fn is_open(self) -> bool {
-        self == State::Open
+panic!("No") //         self == State::Open
     }
 
     /// Returns whether or not the channel with this state
@@ -452,7 +452,7 @@ impl State {
     /// ```
 #[trusted]
     pub fn less_or_equal_progress(self, other: Self) -> bool {
-        self as u32 <= other as u32
+panic!("No") //         self as u32 <= other as u32
     }
 }
 
@@ -460,7 +460,7 @@ impl State {
 impl std::fmt::Display for State {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        write!(f, "{}", self.as_string())
+panic!("No") //         write!(f, "{}", self.as_string())
     }
 }
 

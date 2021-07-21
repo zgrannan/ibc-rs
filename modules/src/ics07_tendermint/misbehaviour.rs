@@ -46,17 +46,17 @@ impl TryFrom<RawMisbehaviour> for Misbehaviour {
 
 #[trusted]
     fn try_from(raw: RawMisbehaviour) -> Result<Self, Self::Error> {
-        Ok(Self {
-            client_id: Default::default(),
-            header1: raw
-                .header_1
-                .ok_or_else(|| Kind::InvalidRawMisbehaviour.context("missing header1"))?
-                .try_into()?,
-            header2: raw
-                .header_2
-                .ok_or_else(|| Kind::InvalidRawMisbehaviour.context("missing header2"))?
-                .try_into()?,
-        })
+panic!("No") // panic!("No") //         Ok(Self {
+// //             client_id: Default::default(),
+// //             header1: raw
+// //                 .header_1
+// //                 .ok_or_else(|| Kind::InvalidRawMisbehaviour.context("missing header1"))?
+// //                 .try_into()?,
+// //             header2: raw
+// //                 .header_2
+// //                 .ok_or_else(|| Kind::InvalidRawMisbehaviour.context("missing header2"))?
+// //                 .try_into()?,
+// //         })
     }
 }
 
@@ -73,14 +73,14 @@ impl From<Misbehaviour> for RawMisbehaviour {
 impl std::fmt::Display for Misbehaviour {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        write!(
-            f,
-            "{:?} h1: {:?}-{:?} h2: {:?}-{:?}",
-            self.client_id,
-            self.header1.height(),
-            self.header1.trusted_height,
-            self.header2.height(),
-            self.header2.trusted_height,
-        )
+panic!("No") //         write!(
+//             f,
+//             "{:?} h1: {:?}-{:?} h2: {:?}-{:?}",
+//             self.client_id,
+//             self.header1.height(),
+//             self.header1.trusted_height,
+//             self.header2.height(),
+//             self.header2.trusted_height,
+//         )
     }
 }

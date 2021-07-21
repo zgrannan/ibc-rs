@@ -59,12 +59,12 @@ impl Msg for MsgCreateAnyClient {
 
 #[trusted]
     fn route(&self) -> String {
-        crate::keys::ROUTER_KEY.to_string()
+panic!("No") //         crate::keys::ROUTER_KEY.to_string()
     }
 
 #[trusted]
     fn type_url(&self) -> String {
-        TYPE_URL.to_string()
+panic!("No") //         TYPE_URL.to_string()
     }
 }
 
@@ -75,21 +75,21 @@ impl TryFrom<RawMsgCreateClient> for MsgCreateAnyClient {
 
 #[trusted]
     fn try_from(raw: RawMsgCreateClient) -> Result<Self, Self::Error> {
-        let raw_client_state = raw
-            .client_state
-            .ok_or_else(|| Kind::InvalidRawClientState.context("missing client state"))?;
-
-        let raw_consensus_state = raw
-            .consensus_state
-            .ok_or_else(|| Kind::InvalidRawConsensusState.context("missing consensus state"))?;
-
-        MsgCreateAnyClient::new(
-            AnyClientState::try_from(raw_client_state)
-                .map_err(|e| Kind::InvalidRawClientState.context(e))?,
-            AnyConsensusState::try_from(raw_consensus_state)
-                .map_err(|e| Kind::InvalidRawConsensusState.context(e))?,
-            raw.signer.into(),
-        )
+panic!("No") // panic!("No") //         let raw_client_state = raw
+// //             .client_state
+// //             .ok_or_else(|| Kind::InvalidRawClientState.context("missing client state"))?;
+// // 
+// //         let raw_consensus_state = raw
+// //             .consensus_state
+// //             .ok_or_else(|| Kind::InvalidRawConsensusState.context("missing consensus state"))?;
+// // 
+// //         MsgCreateAnyClient::new(
+// //             AnyClientState::try_from(raw_client_state)
+// //                 .map_err(|e| Kind::InvalidRawClientState.context(e))?,
+// //             AnyConsensusState::try_from(raw_consensus_state)
+// //                 .map_err(|e| Kind::InvalidRawConsensusState.context(e))?,
+// //             raw.signer.into(),
+// //         )
     }
 }
 

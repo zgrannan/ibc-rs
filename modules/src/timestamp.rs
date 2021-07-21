@@ -200,12 +200,12 @@ impl Display for ParseTimestampErrorKind {
 impl std::error::Error for ParseTimestampErrorKind {
     #[trusted]
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        None
+panic!("No") //         None
     }
 
     #[trusted]
     fn cause(&self) -> Option<&dyn std::error::Error> {
-        None
+panic!("No") //         None
     }
 }
 

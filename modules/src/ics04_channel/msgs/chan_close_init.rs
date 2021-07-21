@@ -46,12 +46,12 @@ impl Msg for MsgChannelCloseInit {
 
 #[trusted]
     fn route(&self) -> String {
-        crate::keys::ROUTER_KEY.to_string()
+panic!("No") //         crate::keys::ROUTER_KEY.to_string()
     }
 
 #[trusted]
     fn type_url(&self) -> String {
-        TYPE_URL.to_string()
+panic!("No") //         TYPE_URL.to_string()
     }
 }
 
@@ -62,17 +62,17 @@ impl TryFrom<RawMsgChannelCloseInit> for MsgChannelCloseInit {
 
 #[trusted]
     fn try_from(raw_msg: RawMsgChannelCloseInit) -> Result<Self, Self::Error> {
-        Ok(MsgChannelCloseInit {
-            port_id: raw_msg
-                .port_id
-                .parse()
-                .map_err(|e| Kind::IdentifierError.context(e))?,
-            channel_id: raw_msg
-                .channel_id
-                .parse()
-                .map_err(|e| Kind::IdentifierError.context(e))?,
-            signer: raw_msg.signer.into(),
-        })
+panic!("No") //         Ok(MsgChannelCloseInit {
+//             port_id: raw_msg
+//                 .port_id
+//                 .parse()
+//                 .map_err(|e| Kind::IdentifierError.context(e))?,
+//             channel_id: raw_msg
+//                 .channel_id
+//                 .parse()
+//                 .map_err(|e| Kind::IdentifierError.context(e))?,
+//             signer: raw_msg.signer.into(),
+//         })
     }
 }
 

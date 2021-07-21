@@ -46,12 +46,12 @@ impl Msg for MsgTimeout {
 
 #[trusted]
     fn route(&self) -> String {
-        crate::keys::ROUTER_KEY.to_string()
+panic!("No") //         crate::keys::ROUTER_KEY.to_string()
     }
 
 #[trusted]
     fn type_url(&self) -> String {
-        TYPE_URL.to_string()
+panic!("No") //         TYPE_URL.to_string()
     }
 }
 
@@ -93,13 +93,13 @@ impl TryFrom<RawMsgTimeout> for MsgTimeout {
 impl From<MsgTimeout> for RawMsgTimeout {
 #[trusted]
     fn from(domain_msg: MsgTimeout) -> Self {
-        RawMsgTimeout {
-            packet: Some(domain_msg.packet.into()),
-            proof_unreceived: domain_msg.proofs.object_proof().clone().into(),
-            proof_height: Some(domain_msg.proofs.height().into()),
-            next_sequence_recv: domain_msg.next_sequence_recv.into(),
-            signer: domain_msg.signer.to_string(),
-        }
+panic!("No") //         RawMsgTimeout {
+//             packet: Some(domain_msg.packet.into()),
+//             proof_unreceived: domain_msg.proofs.object_proof().clone().into(),
+//             proof_height: Some(domain_msg.proofs.height().into()),
+//             next_sequence_recv: domain_msg.next_sequence_recv.into(),
+//             signer: domain_msg.signer.to_string(),
+//         }
     }
 }
 

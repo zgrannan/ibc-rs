@@ -28,58 +28,58 @@ pub fn process(
     ctx: &dyn ClientReader,
     msg: MsgUpgradeAnyClient,
 ) -> HandlerResult<ClientResult, Error> {
-    let mut output = HandlerOutput::builder();
-    let MsgUpgradeAnyClient { client_id, .. } = msg;
-
-    // Read client state from the host chain store.
-    let client_state = ctx
-        .client_state(&client_id)
-        .ok_or_else(|| Kind::ClientNotFound(client_id.clone()))?;
-
-    if client_state.is_frozen() {
-        return Err(Kind::ClientFrozen(client_id).into());
-    }
-
-    let upgrade_client_state = msg.client_state.clone();
-
-    if client_state.latest_height() >= upgrade_client_state.latest_height() {
-        return Err(Kind::LowUpgradeHeight(
-            client_state.latest_height(),
-            upgrade_client_state.latest_height(),
-        )
-        .into());
-    }
-
-    let client_type = ctx
-        .client_type(&client_id)
-        .ok_or_else(|| Kind::ClientNotFound(client_id.clone()))?;
-
-    let client_def = AnyClient::from_client_type(client_type);
-
-    let (new_client_state, new_consensus_state) = client_def
-        .verify_upgrade_and_update_state(
-            &upgrade_client_state,
-            &msg.consensus_state,
-            msg.proof_upgrade_client.clone(),
-            msg.proof_upgrade_consensus_state,
-        )
-        .map_err(|e| Kind::UpgradeVerificationFailure.context(e.to_string()))?;
-
-    // Not implemented yet: https://github.com/informalsystems/ibc-rs/issues/722
-    // todo!()
-
-    let result = ClientResult::Upgrade(Result {
-        client_id: client_id.clone(),
-        client_state: new_client_state,
-        consensus_state: new_consensus_state,
-    });
-    let event_attributes = Attributes {
-        client_id,
-        ..Default::default()
-    };
-
-    output.emit(IbcEvent::UpgradeClient(event_attributes.into()));
-    Ok(output.with_result(result))
+panic!("No") // panic!("No") //     let mut output = HandlerOutput::builder();
+// //     let MsgUpgradeAnyClient { client_id, .. } = msg;
+// // 
+// //     // Read client state from the host chain store.
+// //     let client_state = ctx
+// //         .client_state(&client_id)
+// //         .ok_or_else(|| Kind::ClientNotFound(client_id.clone()))?;
+// // 
+// //     if client_state.is_frozen() {
+// //         return Err(Kind::ClientFrozen(client_id).into());
+// //     }
+// // 
+// //     let upgrade_client_state = msg.client_state.clone();
+// // 
+// //     if client_state.latest_height() >= upgrade_client_state.latest_height() {
+// //         return Err(Kind::LowUpgradeHeight(
+// //             client_state.latest_height(),
+// //             upgrade_client_state.latest_height(),
+// //         )
+// //         .into());
+// //     }
+// // 
+// //     let client_type = ctx
+// //         .client_type(&client_id)
+// //         .ok_or_else(|| Kind::ClientNotFound(client_id.clone()))?;
+// // 
+// //     let client_def = AnyClient::from_client_type(client_type);
+// // 
+// //     let (new_client_state, new_consensus_state) = client_def
+// //         .verify_upgrade_and_update_state(
+// //             &upgrade_client_state,
+// //             &msg.consensus_state,
+// //             msg.proof_upgrade_client.clone(),
+// //             msg.proof_upgrade_consensus_state,
+// //         )
+// //         .map_err(|e| Kind::UpgradeVerificationFailure.context(e.to_string()))?;
+// // 
+// //     // Not implemented yet: https://github.com/informalsystems/ibc-rs/issues/722
+// //     // todo!()
+// // 
+// //     let result = ClientResult::Upgrade(Result {
+// //         client_id: client_id.clone(),
+// //         client_state: new_client_state,
+// //         consensus_state: new_consensus_state,
+// //     });
+// //     let event_attributes = Attributes {
+// //         client_id,
+// //         ..Default::default()
+// //     };
+// // 
+// //     output.emit(IbcEvent::UpgradeClient(event_attributes.into()));
+// //     Ok(output.with_result(result))
 }
 
 #[cfg(test)]

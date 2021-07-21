@@ -27,12 +27,12 @@ pub enum IbcEventType {
 impl IbcEventType {
     #[trusted]
     pub fn as_str(&self) -> &'static str {
-        match *self {
-            IbcEventType::CreateClient => "create_client",
-            IbcEventType::UpdateClient => "update_client",
-            IbcEventType::SendPacket => "send_packet",
-            IbcEventType::WriteAck => "write_acknowledgement",
-        }
+panic!("No") //         match *self {
+//             IbcEventType::CreateClient => "create_client",
+//             IbcEventType::UpdateClient => "update_client",
+//             IbcEventType::SendPacket => "send_packet",
+//             IbcEventType::WriteAck => "write_acknowledgement",
+//         }
     }
 }
 
@@ -146,11 +146,11 @@ panic!("No") //     // Return the first hit we find
 impl IbcEvent {
 #[trusted]
     pub fn to_json(&self) -> String {
-        format!("{:?}", self) // Fallback to debug printing
-        // match serde_json::to_string(self) {
-        //     Ok(value) => value,
-        //     Err(_) => format!("{:?}", self), // Fallback to debug printing
-        // }
+panic!("No") //         format!("{:?}", self) // Fallback to debug printing
+//         // match serde_json::to_string(self) {
+//         //     Ok(value) => value,
+//         //     Err(_) => format!("{:?}", self), // Fallback to debug printing
+//         // }
     }
 
     pub fn height(&self) -> Height {
@@ -206,23 +206,23 @@ impl IbcEvent {
 
 #[trusted]
     pub fn channel_attributes(&self) -> Option<&ChannelAttributes> {
-panic!("No") //         match self {
-//             IbcEvent::OpenInitChannel(ev) => Some(ev.attributes()),
-//             IbcEvent::OpenTryChannel(ev) => Some(ev.attributes()),
-//             IbcEvent::OpenAckChannel(ev) => Some(ev.attributes()),
-//             IbcEvent::OpenConfirmChannel(ev) => Some(ev.attributes()),
-//             _ => None,
-//         }
+panic!("No") // panic!("No") //         match self {
+// //             IbcEvent::OpenInitChannel(ev) => Some(ev.attributes()),
+// //             IbcEvent::OpenTryChannel(ev) => Some(ev.attributes()),
+// //             IbcEvent::OpenAckChannel(ev) => Some(ev.attributes()),
+// //             IbcEvent::OpenConfirmChannel(ev) => Some(ev.attributes()),
+// //             _ => None,
+// //         }
     }
 #[trusted]
     pub fn connection_attributes(&self) -> Option<&ConnectionAttributes> {
-panic!("No") //         match self {
-//             IbcEvent::OpenInitConnection(ev) => Some(ev.attributes()),
-//             IbcEvent::OpenTryConnection(ev) => Some(ev.attributes()),
-//             IbcEvent::OpenAckConnection(ev) => Some(ev.attributes()),
-//             IbcEvent::OpenConfirmConnection(ev) => Some(ev.attributes()),
-//             _ => None,
-//         }
+panic!("No") // panic!("No") //         match self {
+// //             IbcEvent::OpenInitConnection(ev) => Some(ev.attributes()),
+// //             IbcEvent::OpenTryConnection(ev) => Some(ev.attributes()),
+// //             IbcEvent::OpenAckConnection(ev) => Some(ev.attributes()),
+// //             IbcEvent::OpenConfirmConnection(ev) => Some(ev.attributes()),
+// //             _ => None,
+// //         }
     }
 }
 
@@ -276,12 +276,12 @@ macro_rules! make_event {
 
 #[trusted]
             fn try_from(result: $crate::events::RawObject) -> Result<Self, Self::Error> {
-                match $crate::events::extract_events(&result.events, $b) {
-                    Ok(()) => Ok($a {
-                        data: result.events.clone(),
-                    }),
-                    Err(e) => Err(e),
-                }
+panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") //                 match $crate::events::extract_events(&result.events, $b) {
+// // // // // // // // // // // // // // // // // // // // //                     Ok(()) => Ok($a {
+// // // // // // // // // // // // // // // // // // // // //                         data: result.events.clone(),
+// // // // // // // // // // // // // // // // // // // // //                     }),
+// // // // // // // // // // // // // // // // // // // // //                     Err(e) => Err(e),
+// // // // // // // // // // // // // // // // // // // // //                 }
             }
         }
     };

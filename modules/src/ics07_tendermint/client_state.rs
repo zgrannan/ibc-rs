@@ -56,47 +56,47 @@ impl ClientState {
         upgrade_path: Vec<String>,
         allow_update: AllowUpdate,
     ) -> Result<ClientState, Error> {
-        // Basic validation of trusting period and unbonding period: each should be non-zero.
-        if trusting_period <= Duration::new(0, 0) {
-            return Err(Kind::InvalidTrustingPeriod
-                .context("ClientState trusting period must be greater than zero")
-                .into());
-        }
-        if unbonding_period <= Duration::new(0, 0) {
-            return Err(Kind::InvalidUnboundingPeriod
-                .context("ClientState unbonding period must be greater than zero")
-                .into());
-        }
-        if trusting_period >= unbonding_period {
-            return Err(Kind::InvalidUnboundingPeriod
-                .context("ClientState trusting period must be smaller than unbonding period")
-                .into());
-        }
-
-        // Basic validation for the frozen_height parameter.
-        if !frozen_height.is_zero() {
-            return Err(Kind::ValidationError
-                .context("ClientState cannot be frozen at creation time")
-                .into());
-        }
-        // Basic validation for the latest_height parameter.
-        if latest_height <= Height::zero() {
-            return Err(Kind::ValidationError
-                .context("ClientState latest height cannot be smaller or equal than zero")
-                .into());
-        }
-
-        Ok(Self {
-            chain_id,
-            trust_level,
-            trusting_period,
-            unbonding_period,
-            max_clock_drift,
-            frozen_height,
-            latest_height,
-            upgrade_path,
-            allow_update,
-        })
+panic!("No") //         // Basic validation of trusting period and unbonding period: each should be non-zero.
+//         if trusting_period <= Duration::new(0, 0) {
+//             return Err(Kind::InvalidTrustingPeriod
+//                 .context("ClientState trusting period must be greater than zero")
+//                 .into());
+//         }
+//         if unbonding_period <= Duration::new(0, 0) {
+//             return Err(Kind::InvalidUnboundingPeriod
+//                 .context("ClientState unbonding period must be greater than zero")
+//                 .into());
+//         }
+//         if trusting_period >= unbonding_period {
+//             return Err(Kind::InvalidUnboundingPeriod
+//                 .context("ClientState trusting period must be smaller than unbonding period")
+//                 .into());
+//         }
+// 
+//         // Basic validation for the frozen_height parameter.
+//         if !frozen_height.is_zero() {
+//             return Err(Kind::ValidationError
+//                 .context("ClientState cannot be frozen at creation time")
+//                 .into());
+//         }
+//         // Basic validation for the latest_height parameter.
+//         if latest_height <= Height::zero() {
+//             return Err(Kind::ValidationError
+//                 .context("ClientState latest height cannot be smaller or equal than zero")
+//                 .into());
+//         }
+// 
+//         Ok(Self {
+//             chain_id,
+//             trust_level,
+//             trusting_period,
+//             unbonding_period,
+//             max_clock_drift,
+//             frozen_height,
+//             latest_height,
+//             upgrade_path,
+//             allow_update,
+//         })
     }
 
     pub fn latest_height(&self) -> Height {
@@ -117,16 +117,16 @@ impl ClientState {
     /// Resets all fields except the blockchain-specific ones.
 #[trusted]
     pub fn zero_custom_fields(mut client_state: Self) -> Self {
-        client_state.trusting_period = ZERO_DURATION;
-        client_state.trust_level = TrustThresholdFraction {
-            numerator: 0,
-            denominator: 0,
-        };
-        client_state.allow_update.after_expiry = false;
-        client_state.allow_update.after_misbehaviour = false;
-        client_state.frozen_height = Height::zero();
-        client_state.max_clock_drift = ZERO_DURATION;
-        client_state
+panic!("No") //         client_state.trusting_period = ZERO_DURATION;
+//         client_state.trust_level = TrustThresholdFraction {
+//             numerator: 0,
+//             denominator: 0,
+//         };
+//         client_state.allow_update.after_expiry = false;
+//         client_state.allow_update.after_misbehaviour = false;
+//         client_state.frozen_height = Height::zero();
+//         client_state.max_clock_drift = ZERO_DURATION;
+//         client_state
     }
 
     /// Get the refresh time to ensure the state does not expire
@@ -170,49 +170,49 @@ impl TryFrom<RawClientState> for ClientState {
 
 #[trusted]
     fn try_from(raw: RawClientState) -> Result<Self, Self::Error> {
-        let trust_level = raw
-            .trust_level
-            .clone()
-            .ok_or_else(|| Kind::InvalidRawClientState.context("missing trusting period"))?;
-
-        Ok(Self {
-            chain_id: ChainId::from_str(raw.chain_id.as_str())
-                .map_err(|_| Kind::InvalidRawClientState.context("Invalid chain identifier"))?,
-            trust_level: TrustThreshold {
-                numerator: trust_level.numerator,
-                denominator: trust_level.denominator,
-            },
-            trusting_period: raw
-                .trusting_period
-                .ok_or_else(|| Kind::InvalidRawClientState.context("missing trusting period"))?
-                .try_into()
-                .map_err(|_| Kind::InvalidRawClientState.context("negative trusting period"))?,
-            unbonding_period: raw
-                .unbonding_period
-                .ok_or_else(|| Kind::InvalidRawClientState.context("missing unbonding period"))?
-                .try_into()
-                .map_err(|_| Kind::InvalidRawClientState.context("negative unbonding period"))?,
-            max_clock_drift: raw
-                .max_clock_drift
-                .ok_or_else(|| Kind::InvalidRawClientState.context("missing max clock drift"))?
-                .try_into()
-                .map_err(|_| Kind::InvalidRawClientState.context("negative max clock drift"))?,
-            latest_height: raw
-                .latest_height
-                .ok_or_else(|| Kind::InvalidRawClientState.context("missing latest height"))?
-                .try_into()
-                .map_err(|_| Kind::InvalidRawHeight)?,
-            frozen_height: raw
-                .frozen_height
-                .ok_or_else(|| Kind::InvalidRawClientState.context("missing frozen height"))?
-                .try_into()
-                .map_err(|_| Kind::InvalidRawHeight)?,
-            upgrade_path: raw.upgrade_path,
-            allow_update: AllowUpdate {
-                after_expiry: raw.allow_update_after_expiry,
-                after_misbehaviour: raw.allow_update_after_misbehaviour,
-            },
-        })
+panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") //         let trust_level = raw
+// // // // // // // // // // //             .trust_level
+// // // // // // // // // // //             .clone()
+// // // // // // // // // // //             .ok_or_else(|| Kind::InvalidRawClientState.context("missing trusting period"))?;
+// // // // // // // // // // // 
+// // // // // // // // // // //         Ok(Self {
+// // // // // // // // // // //             chain_id: ChainId::from_str(raw.chain_id.as_str())
+// // // // // // // // // // //                 .map_err(|_| Kind::InvalidRawClientState.context("Invalid chain identifier"))?,
+// // // // // // // // // // //             trust_level: TrustThreshold {
+// // // // // // // // // // //                 numerator: trust_level.numerator,
+// // // // // // // // // // //                 denominator: trust_level.denominator,
+// // // // // // // // // // //             },
+// // // // // // // // // // //             trusting_period: raw
+// // // // // // // // // // //                 .trusting_period
+// // // // // // // // // // //                 .ok_or_else(|| Kind::InvalidRawClientState.context("missing trusting period"))?
+// // // // // // // // // // //                 .try_into()
+// // // // // // // // // // //                 .map_err(|_| Kind::InvalidRawClientState.context("negative trusting period"))?,
+// // // // // // // // // // //             unbonding_period: raw
+// // // // // // // // // // //                 .unbonding_period
+// // // // // // // // // // //                 .ok_or_else(|| Kind::InvalidRawClientState.context("missing unbonding period"))?
+// // // // // // // // // // //                 .try_into()
+// // // // // // // // // // //                 .map_err(|_| Kind::InvalidRawClientState.context("negative unbonding period"))?,
+// // // // // // // // // // //             max_clock_drift: raw
+// // // // // // // // // // //                 .max_clock_drift
+// // // // // // // // // // //                 .ok_or_else(|| Kind::InvalidRawClientState.context("missing max clock drift"))?
+// // // // // // // // // // //                 .try_into()
+// // // // // // // // // // //                 .map_err(|_| Kind::InvalidRawClientState.context("negative max clock drift"))?,
+// // // // // // // // // // //             latest_height: raw
+// // // // // // // // // // //                 .latest_height
+// // // // // // // // // // //                 .ok_or_else(|| Kind::InvalidRawClientState.context("missing latest height"))?
+// // // // // // // // // // //                 .try_into()
+// // // // // // // // // // //                 .map_err(|_| Kind::InvalidRawHeight)?,
+// // // // // // // // // // //             frozen_height: raw
+// // // // // // // // // // //                 .frozen_height
+// // // // // // // // // // //                 .ok_or_else(|| Kind::InvalidRawClientState.context("missing frozen height"))?
+// // // // // // // // // // //                 .try_into()
+// // // // // // // // // // //                 .map_err(|_| Kind::InvalidRawHeight)?,
+// // // // // // // // // // //             upgrade_path: raw.upgrade_path,
+// // // // // // // // // // //             allow_update: AllowUpdate {
+// // // // // // // // // // //                 after_expiry: raw.allow_update_after_expiry,
+// // // // // // // // // // //                 after_misbehaviour: raw.allow_update_after_misbehaviour,
+// // // // // // // // // // //             },
+// // // // // // // // // // //         })
     }
 }
 

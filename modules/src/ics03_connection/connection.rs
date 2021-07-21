@@ -50,37 +50,37 @@ impl TryFrom<RawIdentifiedConnection> for IdentifiedConnectionEnd {
 
 #[trusted]
     fn try_from(value: RawIdentifiedConnection) -> Result<Self, Self::Error> {
-        let raw_connection_end = RawConnectionEnd {
-            client_id: value.client_id.to_string(),
-            versions: value.versions,
-            state: value.state,
-            counterparty: value.counterparty,
-            delay_period: value.delay_period,
-        };
-
-        Ok(IdentifiedConnectionEnd {
-            connection_id: value.id.parse().map_err(|_| Kind::IdentifierError)?,
-            connection_end: raw_connection_end.try_into()?,
-        })
+panic!("No") //         let raw_connection_end = RawConnectionEnd {
+//             client_id: value.client_id.to_string(),
+//             versions: value.versions,
+//             state: value.state,
+//             counterparty: value.counterparty,
+//             delay_period: value.delay_period,
+//         };
+// 
+//         Ok(IdentifiedConnectionEnd {
+//             connection_id: value.id.parse().map_err(|_| Kind::IdentifierError)?,
+//             connection_end: raw_connection_end.try_into()?,
+//         })
     }
 }
 
 impl From<IdentifiedConnectionEnd> for RawIdentifiedConnection {
 #[trusted]
     fn from(value: IdentifiedConnectionEnd) -> Self {
-        RawIdentifiedConnection {
-            id: value.connection_id.to_string(),
-            client_id: value.connection_end.client_id.to_string(),
-            versions: value
-                .connection_end
-                .versions
-                .iter()
-                .map(|v| From::from(v.clone()))
-                .collect(),
-            state: value.connection_end.state as i32,
-            delay_period: value.connection_end.delay_period.as_nanos() as u64,
-            counterparty: Some(value.connection_end.counterparty().clone().into()),
-        }
+panic!("No") //         RawIdentifiedConnection {
+//             id: value.connection_id.to_string(),
+//             client_id: value.connection_end.client_id.to_string(),
+//             versions: value
+//                 .connection_end
+//                 .versions
+//                 .iter()
+//                 .map(|v| From::from(v.clone()))
+//                 .collect(),
+//             state: value.connection_end.state as i32,
+//             delay_period: value.connection_end.delay_period.as_nanos() as u64,
+//             counterparty: Some(value.connection_end.counterparty().clone().into()),
+//         }
     }
 }
 
@@ -96,13 +96,13 @@ pub struct ConnectionEnd {
 impl Default for ConnectionEnd {
 #[trusted]
     fn default() -> Self {
-        Self {
-            state: State::Uninitialized,
-            client_id: Default::default(),
-            counterparty: Default::default(),
-            versions: vec![],
-            delay_period: ZERO_DURATION,
-        }
+panic!("No") //         Self {
+//             state: State::Uninitialized,
+//             client_id: Default::default(),
+//             counterparty: Default::default(),
+//             versions: vec![],
+//             delay_period: ZERO_DURATION,
+//         }
     }
 }
 
@@ -112,49 +112,49 @@ impl TryFrom<RawConnectionEnd> for ConnectionEnd {
     type Error = anomaly::Error<Kind>;
 #[trusted]
     fn try_from(value: RawConnectionEnd) -> Result<Self, Self::Error> {
-        let state = value.state.try_into()?;
-        if state == State::Uninitialized {
-            return Ok(ConnectionEnd::default());
-        }
-        if value.client_id.is_empty() {
-            return Err(Kind::EmptyProtoConnectionEnd.into());
-        }
-
-        Ok(Self::new(
-            state,
-            value
-                .client_id
-                .parse()
-                .map_err(|e| Kind::IdentifierError.context(e))?,
-            value
-                .counterparty
-                .ok_or(Kind::MissingCounterparty)?
-                .try_into()?,
-            value
-                .versions
-                .into_iter()
-                .map(Version::try_from)
-                .collect::<Result<Vec<_>, _>>()
-                .map_err(|e| Kind::InvalidVersion.context(e))?,
-            Duration::from_nanos(value.delay_period),
-        ))
+panic!("No") //         let state = value.state.try_into()?;
+//         if state == State::Uninitialized {
+//             return Ok(ConnectionEnd::default());
+//         }
+//         if value.client_id.is_empty() {
+//             return Err(Kind::EmptyProtoConnectionEnd.into());
+//         }
+// 
+//         Ok(Self::new(
+//             state,
+//             value
+//                 .client_id
+//                 .parse()
+//                 .map_err(|e| Kind::IdentifierError.context(e))?,
+//             value
+//                 .counterparty
+//                 .ok_or(Kind::MissingCounterparty)?
+//                 .try_into()?,
+//             value
+//                 .versions
+//                 .into_iter()
+//                 .map(Version::try_from)
+//                 .collect::<Result<Vec<_>, _>>()
+//                 .map_err(|e| Kind::InvalidVersion.context(e))?,
+//             Duration::from_nanos(value.delay_period),
+//         ))
     }
 }
 
 impl From<ConnectionEnd> for RawConnectionEnd {
 #[trusted]
     fn from(value: ConnectionEnd) -> Self {
-        RawConnectionEnd {
-            client_id: value.client_id.to_string(),
-            versions: value
-                .versions
-                .iter()
-                .map(|v| From::from(v.clone()))
-                .collect(),
-            state: value.state as i32,
-            counterparty: Some(value.counterparty.into()),
-            delay_period: value.delay_period.as_nanos() as u64,
-        }
+panic!("No") //         RawConnectionEnd {
+//             client_id: value.client_id.to_string(),
+//             versions: value
+//                 .versions
+//                 .iter()
+//                 .map(|v| From::from(v.clone()))
+//                 .collect(),
+//             state: value.state as i32,
+//             counterparty: Some(value.counterparty.into()),
+//             delay_period: value.delay_period.as_nanos() as u64,
+//         }
     }
 }
 
@@ -194,7 +194,7 @@ impl ConnectionEnd {
     /// Setter for the `version` field.
 #[trusted]
     pub fn set_version(&mut self, new_version: Version) {
-        self.versions = vec![new_version];
+panic!("No") //         self.versions = vec![new_version];
     }
 
     /// Helper function to compare the counterparty of this end with another counterparty.
@@ -210,12 +210,12 @@ impl ConnectionEnd {
 
 #[trusted]
     pub fn is_open(&self) -> bool {
-        self.state_matches(&State::Open)
+panic!("No") //         self.state_matches(&State::Open)
     }
 
 #[trusted]
     pub fn is_uninitialized(&self) -> bool {
-        self.state_matches(&State::Uninitialized)
+panic!("No") //         self.state_matches(&State::Uninitialized)
     }
 
     /// Helper function to compare the state of this end with another state.
@@ -275,38 +275,38 @@ impl TryFrom<RawCounterparty> for Counterparty {
 
 #[trusted]
     fn try_from(value: RawCounterparty) -> Result<Self, Self::Error> {
-        let connection_id = Some(value.connection_id)
-            .filter(|x| !x.is_empty())
-            .map(|v| FromStr::from_str(v.as_str()))
-            .transpose()
-            .map_err(|e| Kind::IdentifierError.context(e))?;
-        Ok(Counterparty::new(
-            value
-                .client_id
-                .parse()
-                .map_err(|e| Kind::IdentifierError.context(e))?,
-            connection_id,
-            value
-                .prefix
-                .ok_or(Kind::MissingCounterparty)?
-                .key_prefix
-                .into(),
-        ))
+panic!("No") // panic!("No") // panic!("No") //         let connection_id = Some(value.connection_id)
+// // //             .filter(|x| !x.is_empty())
+// // //             .map(|v| FromStr::from_str(v.as_str()))
+// // //             .transpose()
+// // //             .map_err(|e| Kind::IdentifierError.context(e))?;
+// // //         Ok(Counterparty::new(
+// // //             value
+// // //                 .client_id
+// // //                 .parse()
+// // //                 .map_err(|e| Kind::IdentifierError.context(e))?,
+// // //             connection_id,
+// // //             value
+// // //                 .prefix
+// // //                 .ok_or(Kind::MissingCounterparty)?
+// // //                 .key_prefix
+// // //                 .into(),
+// // //         ))
     }
 }
 
 impl From<Counterparty> for RawCounterparty {
 #[trusted]
     fn from(value: Counterparty) -> Self {
-        RawCounterparty {
-            client_id: value.client_id.as_str().to_string(),
-            connection_id: value
-                .connection_id
-                .map_or_else(|| "".to_string(), |v| v.as_str().to_string()),
-            prefix: Some(ibc_proto::ibc::core::commitment::v1::MerklePrefix {
-                key_prefix: value.prefix.into_vec(),
-            }),
-        }
+panic!("No") // panic!("No") // panic!("No") //         RawCounterparty {
+// // //             client_id: value.client_id.as_str().to_string(),
+// // //             connection_id: value
+// // //                 .connection_id
+// // //                 .map_or_else(|| "".to_string(), |v| v.as_str().to_string()),
+// // //             prefix: Some(ibc_proto::ibc::core::commitment::v1::MerklePrefix {
+// // //                 key_prefix: value.prefix.into_vec(),
+// // //             }),
+// // //         }
     }
 }
 
@@ -333,7 +333,7 @@ impl Counterparty {
     /// Getter for connection id.
     #[trusted]
     pub fn connection_id(&self) -> Option<&ConnectionId> {
-        self.connection_id.as_ref()
+panic!("No") //         self.connection_id.as_ref()
     }
 
     pub fn prefix(&self) -> &CommitmentPrefix {
@@ -358,12 +358,12 @@ impl State {
     /// Yields the State as a string.
 #[trusted]
     pub fn as_string(&self) -> &'static str {
-        match self {
-            Self::Uninitialized => "UNINITIALIZED",
-            Self::Init => "INIT",
-            Self::TryOpen => "TRYOPEN",
-            Self::Open => "OPEN",
-        }
+panic!("No") //         match self {
+//             Self::Uninitialized => "UNINITIALIZED",
+//             Self::Init => "INIT",
+//             Self::TryOpen => "TRYOPEN",
+//             Self::Open => "OPEN",
+//         }
     }
 
     /// Parses the State out from a i32.
@@ -381,7 +381,7 @@ impl State {
     /// Returns whether or not this connection state is `Open`.
 #[trusted]
     pub fn is_open(self) -> bool {
-        self == State::Open
+panic!("No") //         self == State::Open
     }
 
     /// Returns whether or not this connection with this state
@@ -395,7 +395,7 @@ impl State {
     /// ```
 #[trusted]
     pub fn less_or_equal_progress(self, other: Self) -> bool {
-        self as u32 <= other as u32
+panic!("No") //         self as u32 <= other as u32
     }
 }
 

@@ -51,16 +51,16 @@ impl Height {
 
 #[trusted]
     pub fn sub(&self, delta: u64) -> Result<Height, Error> {
-        if self.revision_height <= delta {
-            return Err(Kind::InvalidHeightResult
-                .context("height cannot end up zero or negative")
-                .into());
-        }
-
-        Ok(Height {
-            revision_number: self.revision_number,
-            revision_height: self.revision_height - delta,
-        })
+panic!("No") //         if self.revision_height <= delta {
+//             return Err(Kind::InvalidHeightResult
+//                 .context("height cannot end up zero or negative")
+//                 .into());
+//         }
+// 
+//         Ok(Height {
+//             revision_number: self.revision_number,
+//             revision_height: self.revision_height - delta,
+//         })
     }
 
     pub fn decrement(&self) -> Result<Height, Error> {
@@ -128,10 +128,10 @@ impl From<Height> for RawHeight {
 impl std::fmt::Debug for Height {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        f.debug_struct("Height")
-            .field("revision", &self.revision_number)
-            .field("height", &self.revision_height)
-            .finish()
+panic!("No") //         f.debug_struct("Height")
+//             .field("revision", &self.revision_number)
+//             .field("height", &self.revision_height)
+//             .finish()
     }
 }
 
@@ -139,7 +139,7 @@ impl std::fmt::Debug for Height {
 impl std::fmt::Display for Height {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        write!(f, "{}-{}", self.revision_number, self.revision_height)
+panic!("No") //         write!(f, "{}-{}", self.revision_number, self.revision_height)
     }
 }
 
@@ -148,22 +148,22 @@ impl TryFrom<&str> for Height {
 
 #[trusted]
     fn try_from(value: &str) -> Result<Self, Self::Error> {
-        let split: Vec<&str> = value.split('-').collect();
-        Ok(Height {
-            revision_number: split[0]
-                .parse::<u64>()
-                .map_err(|e| Kind::HeightConversion(value.to_owned(), e))?,
-            revision_height: split[1]
-                .parse::<u64>()
-                .map_err(|e| Kind::HeightConversion(value.to_owned(), e))?,
-        })
+panic!("No") // panic!("No") //         let split: Vec<&str> = value.split('-').collect();
+// //         Ok(Height {
+// //             revision_number: split[0]
+// //                 .parse::<u64>()
+// //                 .map_err(|e| Kind::HeightConversion(value.to_owned(), e))?,
+// //             revision_height: split[1]
+// //                 .parse::<u64>()
+// //                 .map_err(|e| Kind::HeightConversion(value.to_owned(), e))?,
+// //         })
     }
 }
 
 impl From<Height> for String {
 #[trusted]
     fn from(height: Height) -> Self {
-        format!("{}-{}", height.revision_number, height.revision_number)
+panic!("No") //         format!("{}-{}", height.revision_number, height.revision_number)
     }
 }
 

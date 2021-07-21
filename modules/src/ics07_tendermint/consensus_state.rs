@@ -65,46 +65,46 @@ impl TryFrom<RawConsensusState> for ConsensusState {
 
 #[trusted]
     fn try_from(raw: RawConsensusState) -> Result<Self, Self::Error> {
-        let proto_timestamp = raw
-            .timestamp
-            .ok_or_else(|| Kind::InvalidRawConsensusState.context("missing timestamp"))?;
-
-        Ok(Self {
-            root: raw
-                .root
-                .ok_or_else(|| Kind::InvalidRawConsensusState.context("missing commitment root"))?
-                .hash
-                .into(),
-            timestamp: Utc
-                .timestamp(proto_timestamp.seconds, proto_timestamp.nanos as u32)
-                .into(),
-            next_validators_hash: Hash::from_bytes(Algorithm::Sha256, &raw.next_validators_hash)
-                .map_err(|e| Kind::InvalidRawConsensusState.context(e.to_string()))?,
-        })
+panic!("No") // panic!("No") // panic!("No") //         let proto_timestamp = raw
+// // //             .timestamp
+// // //             .ok_or_else(|| Kind::InvalidRawConsensusState.context("missing timestamp"))?;
+// // // 
+// // //         Ok(Self {
+// // //             root: raw
+// // //                 .root
+// // //                 .ok_or_else(|| Kind::InvalidRawConsensusState.context("missing commitment root"))?
+// // //                 .hash
+// // //                 .into(),
+// // //             timestamp: Utc
+// // //                 .timestamp(proto_timestamp.seconds, proto_timestamp.nanos as u32)
+// // //                 .into(),
+// // //             next_validators_hash: Hash::from_bytes(Algorithm::Sha256, &raw.next_validators_hash)
+// // //                 .map_err(|e| Kind::InvalidRawConsensusState.context(e.to_string()))?,
+// // //         })
     }
 }
 
 impl From<ConsensusState> for RawConsensusState {
 #[trusted]
     fn from(value: ConsensusState) -> Self {
-        RawConsensusState {
-            timestamp: Some(Timestamp::from(SystemTime::from(value.timestamp))),
-            root: Some(ibc_proto::ibc::core::commitment::v1::MerkleRoot {
-                hash: value.root.into_vec(),
-            }),
-            next_validators_hash: value.next_validators_hash.as_bytes().to_vec(),
-        }
+panic!("No") //         RawConsensusState {
+//             timestamp: Some(Timestamp::from(SystemTime::from(value.timestamp))),
+//             root: Some(ibc_proto::ibc::core::commitment::v1::MerkleRoot {
+//                 hash: value.root.into_vec(),
+//             }),
+//             next_validators_hash: value.next_validators_hash.as_bytes().to_vec(),
+//         }
     }
 }
 
 impl From<tendermint::block::Header> for ConsensusState {
 #[trusted]
     fn from(header: tendermint::block::Header) -> Self {
-        Self {
-            root: CommitmentRoot::from_bytes(header.app_hash.as_ref()),
-            timestamp: header.time,
-            next_validators_hash: header.next_validators_hash,
-        }
+panic!("No") //         Self {
+//             root: CommitmentRoot::from_bytes(header.app_hash.as_ref()),
+//             timestamp: header.time,
+//             next_validators_hash: header.next_validators_hash,
+//         }
     }
 }
 

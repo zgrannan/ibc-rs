@@ -46,12 +46,12 @@ impl Msg for MsgTimeoutOnClose {
 
 #[trusted]
     fn route(&self) -> String {
-        crate::keys::ROUTER_KEY.to_string()
+panic!("No") //         crate::keys::ROUTER_KEY.to_string()
     }
 
 #[trusted]
     fn type_url(&self) -> String {
-        TYPE_URL.to_string()
+panic!("No") //         TYPE_URL.to_string()
     }
 }
 
@@ -92,18 +92,18 @@ impl TryFrom<RawMsgTimeoutOnClose> for MsgTimeoutOnClose {
 impl From<MsgTimeoutOnClose> for RawMsgTimeoutOnClose {
 #[trusted]
     fn from(domain_msg: MsgTimeoutOnClose) -> Self {
-        RawMsgTimeoutOnClose {
-            packet: Some(domain_msg.packet.into()),
-            proof_unreceived: domain_msg.proofs.object_proof().clone().into(),
-            proof_close: domain_msg
-                .proofs
-                .other_proof
-                .clone()
-                .map_or_else(Vec::new, |v| v.into()),
-            proof_height: Some(domain_msg.proofs.height().into()),
-            next_sequence_recv: domain_msg.next_sequence_recv.into(),
-            signer: domain_msg.signer.to_string(),
-        }
+panic!("No") //         RawMsgTimeoutOnClose {
+//             packet: Some(domain_msg.packet.into()),
+//             proof_unreceived: domain_msg.proofs.object_proof().clone().into(),
+//             proof_close: domain_msg
+//                 .proofs
+//                 .other_proof
+//                 .clone()
+//                 .map_or_else(Vec::new, |v| v.into()),
+//             proof_height: Some(domain_msg.proofs.height().into()),
+//             next_sequence_recv: domain_msg.next_sequence_recv.into(),
+//             signer: domain_msg.signer.to_string(),
+//         }
     }
 }
 

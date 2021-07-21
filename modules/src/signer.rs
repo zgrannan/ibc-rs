@@ -21,7 +21,7 @@ panic!("No") //         &self.0
 impl Display for Signer {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+panic!("No") //         write!(f, "{}", self.0)
     }
 }
 

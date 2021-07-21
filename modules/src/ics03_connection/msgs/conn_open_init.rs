@@ -44,12 +44,12 @@ impl Msg for MsgConnectionOpenInit {
 
 #[trusted]
     fn route(&self) -> String {
-        crate::keys::ROUTER_KEY.to_string()
+panic!("No") //         crate::keys::ROUTER_KEY.to_string()
     }
 
 #[trusted]
     fn type_url(&self) -> String {
-        TYPE_URL.to_string()
+panic!("No") //         TYPE_URL.to_string()
     }
 }
 
@@ -60,36 +60,36 @@ impl TryFrom<RawMsgConnectionOpenInit> for MsgConnectionOpenInit {
 
 #[trusted]
     fn try_from(msg: RawMsgConnectionOpenInit) -> Result<Self, Self::Error> {
-        Ok(Self {
-            client_id: msg
-                .client_id
-                .parse()
-                .map_err(|e| Kind::IdentifierError.context(e))?,
-            counterparty: msg
-                .counterparty
-                .ok_or(Kind::MissingCounterparty)?
-                .try_into()?,
-            version: msg
-                .version
-                .ok_or(Kind::InvalidVersion)?
-                .try_into()
-                .map_err(|e| Kind::InvalidVersion.context(e))?,
-            delay_period: Duration::from_nanos(msg.delay_period),
-            signer: msg.signer.into(),
-        })
+panic!("No") //         Ok(Self {
+//             client_id: msg
+//                 .client_id
+//                 .parse()
+//                 .map_err(|e| Kind::IdentifierError.context(e))?,
+//             counterparty: msg
+//                 .counterparty
+//                 .ok_or(Kind::MissingCounterparty)?
+//                 .try_into()?,
+//             version: msg
+//                 .version
+//                 .ok_or(Kind::InvalidVersion)?
+//                 .try_into()
+//                 .map_err(|e| Kind::InvalidVersion.context(e))?,
+//             delay_period: Duration::from_nanos(msg.delay_period),
+//             signer: msg.signer.into(),
+//         })
     }
 }
 
 impl From<MsgConnectionOpenInit> for RawMsgConnectionOpenInit {
 #[trusted]
     fn from(ics_msg: MsgConnectionOpenInit) -> Self {
-        RawMsgConnectionOpenInit {
-            client_id: ics_msg.client_id.as_str().to_string(),
-            counterparty: Some(ics_msg.counterparty.into()),
-            version: Some(ics_msg.version.into()),
-            delay_period: ics_msg.delay_period.as_nanos() as u64,
-            signer: ics_msg.signer.to_string(),
-        }
+panic!("No") //         RawMsgConnectionOpenInit {
+//             client_id: ics_msg.client_id.as_str().to_string(),
+//             counterparty: Some(ics_msg.counterparty.into()),
+//             version: Some(ics_msg.version.into()),
+//             delay_period: ics_msg.delay_period.as_nanos() as u64,
+//             signer: ics_msg.signer.to_string(),
+//         }
     }
 }
 

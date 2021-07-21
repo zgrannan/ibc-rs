@@ -29,19 +29,19 @@ impl ClientDef for TendermintClient {
         client_state: Self::ClientState,
         header: Self::Header,
     ) -> Result<(Self::ClientState, Self::ConsensusState), Box<dyn std::error::Error>> {
-        if client_state.latest_height() >= header.height() {
-            return Err(
-                format!("received header height ({:?}) is lower than (or equal to) client latest height ({:?})",
-                    header.height(), client_state.latest_height).into(),
-            );
-        }
-
-        // TODO: Additional verifications should be implemented here.
-
-        Ok((
-            client_state.with_header(header.clone()),
-            ConsensusState::from(header),
-        ))
+panic!("No") //         if client_state.latest_height() >= header.height() {
+//             return Err(
+//                 format!("received header height ({:?}) is lower than (or equal to) client latest height ({:?})",
+//                     header.height(), client_state.latest_height).into(),
+//             );
+//         }
+// 
+//         // TODO: Additional verifications should be implemented here.
+// 
+//         Ok((
+//             client_state.with_header(header.clone()),
+//             ConsensusState::from(header),
+//         ))
     }
 
 #[trusted]
@@ -68,7 +68,7 @@ impl ClientDef for TendermintClient {
         _connection_id: Option<&ConnectionId>,
         _expected_connection_end: &ConnectionEnd,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        todo!()
+panic!("No") //         todo!()
     }
 
     fn verify_channel_state(

@@ -70,12 +70,12 @@ impl Msg for MsgConnectionOpenAck {
 
 #[trusted]
     fn route(&self) -> String {
-        crate::keys::ROUTER_KEY.to_string()
+panic!("No") //         crate::keys::ROUTER_KEY.to_string()
     }
 
 #[trusted]
     fn type_url(&self) -> String {
-        TYPE_URL.to_string()
+panic!("No") //         TYPE_URL.to_string()
     }
 }
 
@@ -86,83 +86,83 @@ impl TryFrom<RawMsgConnectionOpenAck> for MsgConnectionOpenAck {
 
 #[trusted]
     fn try_from(msg: RawMsgConnectionOpenAck) -> Result<Self, Self::Error> {
-        let consensus_height = msg
-            .consensus_height
-            .ok_or(Kind::MissingConsensusHeight)?
-            .try_into() // Cast from the raw height type into the domain type.
-            .map_err(|e| Kind::InvalidProof.context(e))?;
-        let consensus_proof_obj = ConsensusProof::new(msg.proof_consensus.into(), consensus_height)
-            .map_err(|e| Kind::InvalidProof.context(e))?;
-
-        let proof_height = msg
-            .proof_height
-            .ok_or(Kind::MissingProofHeight)?
-            .try_into()
-            .map_err(|e| Kind::InvalidProof.context(e))?;
-
-        let client_proof = Some(msg.proof_client)
-            .filter(|x| !x.is_empty())
-            .map(CommitmentProofBytes::from);
-
-        Ok(Self {
-            connection_id: msg
-                .connection_id
-                .parse()
-                .map_err(|e| Kind::IdentifierError.context(e))?,
-            counterparty_connection_id: msg
-                .counterparty_connection_id
-                .parse()
-                .map_err(|e| Kind::IdentifierError.context(e))?,
-            client_state: msg
-                .client_state
-                .map(AnyClientState::try_from)
-                .transpose()
-                .map_err(|e| Kind::InvalidProof.context(e))?,
-            version: msg
-                .version
-                .ok_or(Kind::InvalidVersion)?
-                .try_into()
-                .map_err(|e| Kind::InvalidVersion.context(e))?,
-            proofs: Proofs::new(
-                msg.proof_try.into(),
-                client_proof,
-                Option::from(consensus_proof_obj),
-                None,
-                proof_height,
-            )
-            .map_err(|e| Kind::InvalidProof.context(e))?,
-            signer: msg.signer.into(),
-        })
+panic!("No") // panic!("No") //         let consensus_height = msg
+// //             .consensus_height
+// //             .ok_or(Kind::MissingConsensusHeight)?
+// //             .try_into() // Cast from the raw height type into the domain type.
+// //             .map_err(|e| Kind::InvalidProof.context(e))?;
+// //         let consensus_proof_obj = ConsensusProof::new(msg.proof_consensus.into(), consensus_height)
+// //             .map_err(|e| Kind::InvalidProof.context(e))?;
+// // 
+// //         let proof_height = msg
+// //             .proof_height
+// //             .ok_or(Kind::MissingProofHeight)?
+// //             .try_into()
+// //             .map_err(|e| Kind::InvalidProof.context(e))?;
+// // 
+// //         let client_proof = Some(msg.proof_client)
+// //             .filter(|x| !x.is_empty())
+// //             .map(CommitmentProofBytes::from);
+// // 
+// //         Ok(Self {
+// //             connection_id: msg
+// //                 .connection_id
+// //                 .parse()
+// //                 .map_err(|e| Kind::IdentifierError.context(e))?,
+// //             counterparty_connection_id: msg
+// //                 .counterparty_connection_id
+// //                 .parse()
+// //                 .map_err(|e| Kind::IdentifierError.context(e))?,
+// //             client_state: msg
+// //                 .client_state
+// //                 .map(AnyClientState::try_from)
+// //                 .transpose()
+// //                 .map_err(|e| Kind::InvalidProof.context(e))?,
+// //             version: msg
+// //                 .version
+// //                 .ok_or(Kind::InvalidVersion)?
+// //                 .try_into()
+// //                 .map_err(|e| Kind::InvalidVersion.context(e))?,
+// //             proofs: Proofs::new(
+// //                 msg.proof_try.into(),
+// //                 client_proof,
+// //                 Option::from(consensus_proof_obj),
+// //                 None,
+// //                 proof_height,
+// //             )
+// //             .map_err(|e| Kind::InvalidProof.context(e))?,
+// //             signer: msg.signer.into(),
+// //         })
     }
 }
 
 impl From<MsgConnectionOpenAck> for RawMsgConnectionOpenAck {
 #[trusted]
     fn from(ics_msg: MsgConnectionOpenAck) -> Self {
-        RawMsgConnectionOpenAck {
-            connection_id: ics_msg.connection_id.as_str().to_string(),
-            counterparty_connection_id: ics_msg.counterparty_connection_id.as_str().to_string(),
-            client_state: ics_msg
-                .client_state
-                .map_or_else(|| None, |v| Some(v.into())),
-            proof_height: Some(ics_msg.proofs.height().into()),
-            proof_try: ics_msg.proofs.object_proof().clone().into(),
-            proof_client: ics_msg
-                .proofs
-                .client_proof()
-                .clone()
-                .map_or_else(Vec::new, |v| v.into()),
-            proof_consensus: ics_msg
-                .proofs
-                .consensus_proof()
-                .map_or_else(Vec::new, |v| v.proof().clone().into()),
-            consensus_height: ics_msg
-                .proofs
-                .consensus_proof()
-                .map_or_else(|| None, |h| Some(h.height().into())),
-            version: Some(ics_msg.version.into()),
-            signer: ics_msg.signer.to_string(),
-        }
+panic!("No") // panic!("No") //         RawMsgConnectionOpenAck {
+// //             connection_id: ics_msg.connection_id.as_str().to_string(),
+// //             counterparty_connection_id: ics_msg.counterparty_connection_id.as_str().to_string(),
+// //             client_state: ics_msg
+// //                 .client_state
+// //                 .map_or_else(|| None, |v| Some(v.into())),
+// //             proof_height: Some(ics_msg.proofs.height().into()),
+// //             proof_try: ics_msg.proofs.object_proof().clone().into(),
+// //             proof_client: ics_msg
+// //                 .proofs
+// //                 .client_proof()
+// //                 .clone()
+// //                 .map_or_else(Vec::new, |v| v.into()),
+// //             proof_consensus: ics_msg
+// //                 .proofs
+// //                 .consensus_proof()
+// //                 .map_or_else(Vec::new, |v| v.proof().clone().into()),
+// //             consensus_height: ics_msg
+// //                 .proofs
+// //                 .consensus_proof()
+// //                 .map_or_else(|| None, |h| Some(h.height().into())),
+// //             version: Some(ics_msg.version.into()),
+// //             signer: ics_msg.signer.to_string(),
+// //         }
     }
 }
 

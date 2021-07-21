@@ -54,12 +54,12 @@ impl Msg for MsgAcknowledgement {
 
 #[trusted]
     fn route(&self) -> String {
-        crate::keys::ROUTER_KEY.to_string()
+panic!("No") //         crate::keys::ROUTER_KEY.to_string()
     }
 
 #[trusted]
     fn type_url(&self) -> String {
-        TYPE_URL.to_string()
+panic!("No") //         TYPE_URL.to_string()
     }
 }
 
@@ -99,13 +99,13 @@ impl TryFrom<RawMsgAcknowledgement> for MsgAcknowledgement {
 impl From<MsgAcknowledgement> for RawMsgAcknowledgement {
 #[trusted]
     fn from(domain_msg: MsgAcknowledgement) -> Self {
-        RawMsgAcknowledgement {
-            packet: Some(domain_msg.packet.into()),
-            acknowledgement: domain_msg.acknowledgement,
-            signer: domain_msg.signer.to_string(),
-            proof_height: Some(domain_msg.proofs.height().into()),
-            proof_acked: domain_msg.proofs.object_proof().clone().into(),
-        }
+panic!("No") //         RawMsgAcknowledgement {
+//             packet: Some(domain_msg.packet.into()),
+//             acknowledgement: domain_msg.acknowledgement,
+//             signer: domain_msg.signer.to_string(),
+//             proof_height: Some(domain_msg.proofs.height().into()),
+//             proof_acked: domain_msg.proofs.object_proof().clone().into(),
+//         }
     }
 }
 
