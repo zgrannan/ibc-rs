@@ -77,11 +77,11 @@ impl IbcTestRunner {
 
     /// Returns a mutable reference to the `MockContext` of a given `chain_id`.
     /// Panic if the context for `chain_id` is not found.
-    pub fn chain_context_mut(&mut self, chain_id: String) -> &mut MockContext {
-        self.contexts
-            .get_mut(&Self::chain_id(chain_id))
-            .expect("chain context should have been initialized")
-    }
+    // pub fn chain_context_mut(&mut self, chain_id: String) -> &mut MockContext {
+    //     self.contexts
+    //         .get_mut(&Self::chain_id(chain_id))
+    //         .expect("chain context should have been initialized")
+    // }
 
     pub fn extract_handler_error_kind<K>(ics18_result: Result<(), Ics18Error>) -> K
     where

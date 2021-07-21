@@ -67,7 +67,7 @@ where
                 .map_err(|e| Kind::KeeperRaisedError.context(e))?;
 
             HandlerOutput::builder()
-                .with_log(handler_output.log)
+                // .with_log(handler_output.log)
                 .with_events(handler_output.events)
                 .with_result(())
         }
@@ -81,7 +81,7 @@ where
                 .map_err(|e| Kind::KeeperRaisedError.context(e))?;
 
             HandlerOutput::builder()
-                .with_log(handler_output.log)
+                // .with_log(handler_output.log)
                 .with_events(handler_output.events)
                 .with_result(())
         }
@@ -95,7 +95,7 @@ where
                 .map_err(|e| Kind::KeeperRaisedError.context(e))?;
 
             HandlerOutput::builder()
-                .with_log(handler_output.log)
+                // .with_log(handler_output.log)
                 .with_events(handler_output.events)
                 .with_result(())
         }
@@ -109,7 +109,7 @@ where
                 .map_err(|e| Kind::KeeperRaisedError.context(e))?;
 
             HandlerOutput::builder()
-                .with_log(handler_output.log)
+                // .with_log(handler_output.log)
                 .with_events(handler_output.events)
                 .with_result(())
         }
@@ -123,7 +123,7 @@ where
                 .map_err(|e| Kind::KeeperRaisedError.context(e))?;
 
             HandlerOutput::builder()
-                .with_log(handler_output.log)
+                // .with_log(handler_output.log)
                 .with_events(handler_output.events)
                 .with_result(())
         }

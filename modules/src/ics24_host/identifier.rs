@@ -44,10 +44,10 @@ panic!("No") //         Self {
     }
 
     /// Get a reference to the underlying string.
-#[trusted]
-    pub fn as_str(&self) -> &str {
-panic!("No") //         &self.id
-    }
+// #[trusted]
+//     pub fn as_str(&self) -> &str {
+// panic!("No") //         &self.id
+//     }
 
     // TODO: this should probably be named epoch_number.
     /// Extract the version from this chain identifier.
@@ -179,10 +179,10 @@ panic!("No") //         let prefix = Self::prefix(ctype);
     }
 
     /// Get this identifier as a borrowed `&str`
-#[trusted]
-    pub fn as_str(&self) -> &str {
-panic!("No") //         &self.0
-    }
+// #[trusted]
+//     pub fn as_str(&self) -> &str {
+// panic!("No") //         &self.0
+//     }
 
     /// Returns one of the prefixes that should be present in any client identifiers.
     /// The prefix is deterministic for a given chain type, hence all clients for a Tendermint-type
@@ -270,10 +270,10 @@ panic!("No") //         "connection"
     }
 
     /// Get this identifier as a borrowed `&str`
-#[trusted]
-    pub fn as_str(&self) -> &str {
-panic!("No") //         &self.0
-    }
+// #[trusted]
+//     pub fn as_str(&self) -> &str {
+// panic!("No") //         &self.0
+//     }
 
     /// Get this identifier as a borrowed byte slice
 #[trusted]
@@ -340,10 +340,10 @@ impl std::fmt::Debug for ChannelId {
 
 impl PortId {
     /// Get this identifier as a borrowed `&str`
-#[trusted]
-    pub fn as_str(&self) -> &str {
-panic!("No") //         &self.0
-    }
+// #[trusted]
+//     pub fn as_str(&self) -> &str {
+// panic!("No") //         &self.0
+//     }
 
     /// Get this identifier as a borrowed byte slice
 #[trusted]
@@ -402,17 +402,16 @@ panic!("No") //         let id = format!("{}-{}", Self::prefix(), counter);
 panic!("No") //         "channel"
     }
 
-    /// Get this identifier as a borrowed `&str`
-#[trusted]
-    pub fn as_str(&self) -> &str {
-panic!("No") //         &self.0
-    }
+// #[trusted]
+//     pub fn as_str(&self) -> &str {
+// panic!("No") //         &self.0
+//     }
 
-    /// Get this identifier as a borrowed byte slice
-#[trusted]
-    pub fn as_bytes(&self) -> &[u8] {
-panic!("No") //         self.0.as_bytes()
-    }
+//     /// Get this identifier as a borrowed byte slice
+// #[trusted]
+//     pub fn as_bytes(&self) -> &[u8] {
+// panic!("No") //         self.0.as_bytes()
+//     }
 }
 
 /// This implementation provides a `to_string` method.
