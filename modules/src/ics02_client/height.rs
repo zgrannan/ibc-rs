@@ -1,5 +1,6 @@
 use std::cmp::Ordering;
 use std::convert::{Infallible, TryFrom};
+use prusti_contracts::*;
 use std::str::FromStr;
 
 use serde_derive::{Deserialize, Serialize};
@@ -48,6 +49,7 @@ impl Height {
         self.add(1)
     }
 
+#[trusted]
     pub fn sub(&self, delta: u64) -> Result<Height, Error> {
         if self.revision_height <= delta {
             return Err(Kind::InvalidHeightResult
@@ -124,6 +126,7 @@ impl From<Height> for RawHeight {
 }
 
 impl std::fmt::Debug for Height {
+#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         f.debug_struct("Height")
             .field("revision", &self.revision_number)
@@ -134,6 +137,7 @@ impl std::fmt::Debug for Height {
 
 /// Custom debug output to omit the packet data
 impl std::fmt::Display for Height {
+#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "{}-{}", self.revision_number, self.revision_height)
     }
@@ -142,6 +146,7 @@ impl std::fmt::Display for Height {
 impl TryFrom<&str> for Height {
     type Error = Kind;
 
+#[trusted]
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         let split: Vec<&str> = value.split('-').collect();
         Ok(Height {
@@ -156,6 +161,7 @@ impl TryFrom<&str> for Height {
 }
 
 impl From<Height> for String {
+#[trusted]
     fn from(height: Height) -> Self {
         format!("{}-{}", height.revision_number, height.revision_number)
     }

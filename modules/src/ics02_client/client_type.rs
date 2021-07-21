@@ -1,5 +1,6 @@
 use std::fmt;
 
+use prusti_contracts::*;
 use serde_derive::{Deserialize, Serialize};
 
 use super::error;
@@ -20,6 +21,7 @@ impl ClientType {
     const MOCK_STR: &'static str = "9999-mock";
 
     /// Yields the identifier of this client type as a string
+#[trusted]
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::Tendermint => Self::TENDERMINT_STR,
@@ -31,6 +33,7 @@ impl ClientType {
 }
 
 impl fmt::Display for ClientType {
+#[trusted]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "ClientType({})", self.as_str())
     }
@@ -39,6 +42,7 @@ impl fmt::Display for ClientType {
 impl std::str::FromStr for ClientType {
     type Err = error::Error;
 
+#[trusted]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             Self::TENDERMINT_STR => Ok(Self::Tendermint),

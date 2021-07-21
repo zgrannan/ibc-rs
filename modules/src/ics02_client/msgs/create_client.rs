@@ -1,5 +1,6 @@
 //! Definition of domain type message `MsgCreateAnyClient`.
 
+use prusti_contracts::*;
 use std::convert::TryFrom;
 
 use tendermint_proto::Protobuf;
@@ -56,10 +57,12 @@ impl Msg for MsgCreateAnyClient {
     type ValidationError = crate::ics24_host::error::ValidationError;
     type Raw = RawMsgCreateClient;
 
+#[trusted]
     fn route(&self) -> String {
         crate::keys::ROUTER_KEY.to_string()
     }
 
+#[trusted]
     fn type_url(&self) -> String {
         TYPE_URL.to_string()
     }

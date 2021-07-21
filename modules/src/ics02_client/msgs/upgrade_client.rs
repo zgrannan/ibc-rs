@@ -1,5 +1,6 @@
 //! Definition of domain type msg `MsgUpgradeAnyClient`.
 
+use prusti_contracts::*;
 use std::convert::TryFrom;
 use std::str::FromStr;
 
@@ -52,10 +53,12 @@ impl Msg for MsgUpgradeAnyClient {
     type ValidationError = crate::ics24_host::error::ValidationError;
     type Raw = RawMsgUpgradeClient;
 
+#[trusted]
     fn route(&self) -> String {
         crate::keys::ROUTER_KEY.to_string()
     }
 
+#[trusted]
     fn type_url(&self) -> String {
         TYPE_URL.to_string()
     }
@@ -99,9 +102,9 @@ impl TryFrom<RawMsgUpgradeClient> for MsgUpgradeAnyClient {
             consensus_state: AnyConsensusState::try_from(raw_consensus_state)
                 .map_err(|_| Kind::InvalidRawConsensusState)?,
             proof_upgrade_client: RawMerkleProof::try_from(c_bytes)
-                .map_err(Kind::InvalidUpgradeClientProof)?,
+                .map_err(|e| Kind::InvalidUpgradeClientProof(e))?,
             proof_upgrade_consensus_state: RawMerkleProof::try_from(cs_bytes)
-                .map_err(Kind::InvalidUpgradeConsensusStateProof)?,
+                .map_err(|e| Kind::InvalidUpgradeConsensusStateProof(e))?,
             signer: proto_msg.signer.into(),
         })
     }

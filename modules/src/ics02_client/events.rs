@@ -130,6 +130,7 @@ impl Default for Attributes {
 }
 
 impl std::fmt::Display for Attributes {
+#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(
             f,
@@ -163,6 +164,7 @@ impl From<Attributes> for CreateClient {
 
 impl TryFrom<RawObject> for CreateClient {
     type Error = BoxError;
+#[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
         let consensus_height_str: String = attribute!(obj, "create_client.consensus_height");
         Ok(CreateClient(Attributes {
@@ -181,6 +183,7 @@ impl From<CreateClient> for IbcEvent {
 }
 
 impl std::fmt::Display for CreateClient {
+#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "{}", self.0)
     }
@@ -215,6 +218,7 @@ impl UpdateClient {
 }
 
 impl From<Attributes> for UpdateClient {
+#[trusted]
     fn from(attrs: Attributes) -> Self {
         UpdateClient {
             common: attrs,
@@ -225,6 +229,7 @@ impl From<Attributes> for UpdateClient {
 
 impl TryFrom<RawObject> for UpdateClient {
     type Error = BoxError;
+#[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
         let header_str: Option<String> = some_attribute!(obj, "update_client.header");
         let header: Option<AnyHeader> = match header_str {
@@ -248,12 +253,14 @@ impl TryFrom<RawObject> for UpdateClient {
 }
 
 impl From<UpdateClient> for IbcEvent {
+#[trusted]
     fn from(v: UpdateClient) -> Self {
         IbcEvent::UpdateClient(v)
     }
 }
 
 impl std::fmt::Display for UpdateClient {
+#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "{}", self.common)
     }
@@ -271,6 +278,7 @@ impl ClientMisbehaviour {
     pub fn height(&self) -> Height {
         self.0.height
     }
+#[trusted]
     pub fn set_height(&mut self, height: Height) {
         self.0.height = height;
     }
@@ -278,6 +286,7 @@ impl ClientMisbehaviour {
 
 impl TryFrom<RawObject> for ClientMisbehaviour {
     type Error = BoxError;
+#[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
         let consensus_height_str: String = attribute!(obj, "client_misbehaviour.consensus_height");
         Ok(ClientMisbehaviour(Attributes {

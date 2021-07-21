@@ -1,5 +1,6 @@
 //! Definition of domain type message `MsgUpdateAnyClient`.
 
+use prusti_contracts::*;
 use std::convert::TryFrom;
 
 use tendermint_proto::Protobuf;
@@ -37,10 +38,12 @@ impl Msg for MsgUpdateAnyClient {
     type ValidationError = ValidationError;
     type Raw = RawMsgUpdateClient;
 
+#[trusted]
     fn route(&self) -> String {
         crate::keys::ROUTER_KEY.to_string()
     }
 
+#[trusted]
     fn type_url(&self) -> String {
         TYPE_URL.to_string()
     }
@@ -51,6 +54,7 @@ impl Protobuf<RawMsgUpdateClient> for MsgUpdateAnyClient {}
 impl TryFrom<RawMsgUpdateClient> for MsgUpdateAnyClient {
     type Error = Error;
 
+#[trusted]
     fn try_from(raw: RawMsgUpdateClient) -> Result<Self, Self::Error> {
         let raw_header = raw.header.ok_or(Kind::InvalidRawHeader)?;
 

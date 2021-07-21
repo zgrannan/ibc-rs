@@ -1,5 +1,6 @@
 use std::convert::TryFrom;
 
+use prusti_contracts::*;
 use prost_types::Any;
 use serde_derive::{Deserialize, Serialize};
 use tendermint_proto::Protobuf;
@@ -65,6 +66,7 @@ impl Protobuf<Any> for AnyHeader {}
 impl TryFrom<Any> for AnyHeader {
     type Error = Error;
 
+#[trusted]
     fn try_from(raw: Any) -> Result<Self, Self::Error> {
         match raw.type_url.as_str() {
             TENDERMINT_HEADER_TYPE_URL => Ok(AnyHeader::Tendermint(
@@ -84,6 +86,7 @@ impl TryFrom<Any> for AnyHeader {
 }
 
 impl From<AnyHeader> for Any {
+#[trusted]
     fn from(value: AnyHeader) -> Self {
         match value {
             AnyHeader::Tendermint(header) => Any {

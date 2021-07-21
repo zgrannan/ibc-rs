@@ -1,5 +1,6 @@
 use std::convert::TryFrom;
 
+use prusti_contracts::*;
 use prost_types::Any;
 use tendermint_proto::Protobuf;
 
@@ -40,6 +41,7 @@ pub enum AnyMisbehaviour {
 }
 
 impl Misbehaviour for AnyMisbehaviour {
+#[trusted]
     fn client_id(&self) -> &ClientId {
         match self {
             Self::Tendermint(misbehaviour) => misbehaviour.client_id(),
@@ -68,6 +70,7 @@ impl Protobuf<Any> for AnyMisbehaviour {}
 impl TryFrom<Any> for AnyMisbehaviour {
     type Error = Error;
 
+#[trusted]
     fn try_from(raw: Any) -> Result<Self, Self::Error> {
         match raw.type_url.as_str() {
             TENDERMINT_MISBEHAVIOR_TYPE_URL => Ok(AnyMisbehaviour::Tendermint(
@@ -86,6 +89,7 @@ impl TryFrom<Any> for AnyMisbehaviour {
 }
 
 impl From<AnyMisbehaviour> for Any {
+#[trusted]
     fn from(value: AnyMisbehaviour) -> Self {
         match value {
             AnyMisbehaviour::Tendermint(misbehaviour) => Any {
@@ -107,6 +111,7 @@ impl From<AnyMisbehaviour> for Any {
 }
 
 impl std::fmt::Display for AnyMisbehaviour {
+#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         match self {
             AnyMisbehaviour::Tendermint(tm) => write!(f, "{}", tm),

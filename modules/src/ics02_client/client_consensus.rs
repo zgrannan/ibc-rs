@@ -1,5 +1,6 @@
 use core::marker::{Send, Sync};
 use std::convert::{TryFrom, TryInto};
+use prusti_contracts::*;
 
 use chrono::{DateTime, Utc};
 use prost_types::Any;
@@ -78,6 +79,7 @@ impl Protobuf<Any> for AnyConsensusState {}
 impl TryFrom<Any> for AnyConsensusState {
     type Error = Error;
 
+#[trusted]
     fn try_from(value: Any) -> Result<Self, Self::Error> {
         match value.type_url.as_str() {
             "" => Err(Kind::EmptyConsensusStateResponse.into()),
@@ -99,6 +101,7 @@ impl TryFrom<Any> for AnyConsensusState {
 }
 
 impl From<AnyConsensusState> for Any {
+#[trusted]
     fn from(value: AnyConsensusState) -> Self {
         match value {
             AnyConsensusState::Tendermint(value) => Any {
@@ -129,6 +132,7 @@ impl Protobuf<ConsensusStateWithHeight> for AnyConsensusStateWithHeight {}
 impl TryFrom<ConsensusStateWithHeight> for AnyConsensusStateWithHeight {
     type Error = Kind;
 
+#[trusted]
     fn try_from(value: ConsensusStateWithHeight) -> Result<Self, Self::Error> {
         let state = value
             .consensus_state

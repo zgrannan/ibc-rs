@@ -1,5 +1,6 @@
 use core::marker::{Send, Sync};
 use std::convert::{TryFrom, TryInto};
+use prusti_contracts::*;
 use std::time::Duration;
 
 use prost_types::Any;
@@ -101,6 +102,7 @@ impl Protobuf<Any> for AnyClientState {}
 impl TryFrom<Any> for AnyClientState {
     type Error = Error;
 
+#[trusted]
     fn try_from(raw: Any) -> Result<Self, Self::Error> {
         match raw.type_url.as_str() {
             "" => Err(Kind::EmptyClientStateResponse.into()),
@@ -122,6 +124,7 @@ impl TryFrom<Any> for AnyClientState {
 }
 
 impl From<AnyClientState> for Any {
+#[trusted]
     fn from(value: AnyClientState) -> Self {
         match value {
             AnyClientState::Tendermint(value) => Any {
@@ -181,6 +184,7 @@ pub struct IdentifiedAnyClientState {
 }
 
 impl IdentifiedAnyClientState {
+#[trusted]
     pub fn new(client_id: ClientId, client_state: AnyClientState) -> Self {
         IdentifiedAnyClientState {
             client_id,
@@ -194,6 +198,7 @@ impl Protobuf<IdentifiedClientState> for IdentifiedAnyClientState {}
 impl TryFrom<IdentifiedClientState> for IdentifiedAnyClientState {
     type Error = Error;
 
+#[trusted]
     fn try_from(raw: IdentifiedClientState) -> Result<Self, Self::Error> {
         Ok(IdentifiedAnyClientState {
             client_id: raw.client_id.parse().map_err(|e: ValidationError| {
