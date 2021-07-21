@@ -318,6 +318,7 @@ pub struct PortId(String);
 
 impl PortId {
     /// Get this identifier as a borrowed `&str`
+#[trusted]
     pub fn as_str(&self) -> &str {
         &self.0
     }
@@ -385,6 +386,7 @@ impl ChannelId {
     }
 
     /// Get this identifier as a borrowed byte slice
+#[trusted]
     pub fn as_bytes(&self) -> &[u8] {
         self.0.as_bytes()
     }
@@ -430,6 +432,7 @@ pub struct PortChannelId {
 }
 
 impl std::fmt::Display for PortChannelId {
+#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "{}/{}", self.port_id, self.channel_id)
     }

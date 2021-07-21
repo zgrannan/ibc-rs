@@ -64,7 +64,7 @@ def parse_arg(arg):
     args = arg.split(":")
     if len(args) != 3:
         raise Exception(f"Can't parse argument {arg}")
-    return (args[0], int(args[1]))
+    return (args[0], int(args[1]) - 1)
 
 def panic(arg: str):
     (filename, line_number) = parse_arg(arg)
@@ -89,14 +89,26 @@ def trust(arg: str):
         line_number += 1
     fn_line_number = get_enclosing_fn_line_number(line_number, lines)
     if fn_line_number is None:
-        raise Exception(f"Couldn't find enclosing function for {filename} at line {line_number}")
+        print(f"Couldn't find enclosing function for {filename} at line {line_number}")
+        return
     if lines[fn_line_number -1].find("#[trusted]") != -1:
         return
     lines = lines[0:fn_line_number] + [ "#[trusted]" ] + lines[fn_line_number:]
     output = "\n".join(lines) + "\n"
     open(filename, 'w').write(output)
 
-if argv[1] == "trust":
-    trust(argv[2])
-if argv[1] == "panic":
-    panic(argv[2])
+action = trust
+
+if len(argv) > 1 and argv[1] == "panic":
+    action = panic
+
+chunks = stdin.read().split("\nerror:")
+for chunk in chunks[1:]:
+    chunk_lines = chunk.splitlines()
+    if len(chunk_lines) < 2:
+        continue # Last Chunk
+        #  raise Exception(f"Chunk {chunk} doesn't have enough lines!")
+    loc_chunks = chunk_lines[1].split("--> ")
+    if len(loc_chunks) <= 1:
+        raise Exception(f"Chunk {chunk} doesn't have a location")
+    action(loc_chunks[1])

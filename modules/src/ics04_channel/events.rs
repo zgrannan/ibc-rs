@@ -667,6 +667,7 @@ impl From<ReceivePacket> for IbcEvent {
 }
 
 impl std::fmt::Display for ReceivePacket {
+#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "ReceivePacket - h:{}, {}", self.height, self.packet)
     }
@@ -773,6 +774,7 @@ impl From<AcknowledgePacket> for IbcEvent {
 }
 
 impl std::fmt::Display for AcknowledgePacket {
+#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "h:{}, {}", self.height, self.packet)
     }
@@ -823,6 +825,7 @@ impl From<TimeoutPacket> for IbcEvent {
 }
 
 impl std::fmt::Display for TimeoutPacket {
+#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "TimeoutPacket - h:{}, {}", self.height, self.packet)
     }

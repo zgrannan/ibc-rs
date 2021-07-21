@@ -213,6 +213,7 @@ impl ConnectionEnd {
         self.state_matches(&State::Open)
     }
 
+#[trusted]
     pub fn is_uninitialized(&self) -> bool {
         self.state_matches(&State::Uninitialized)
     }
@@ -295,6 +296,7 @@ impl TryFrom<RawCounterparty> for Counterparty {
 }
 
 impl From<Counterparty> for RawCounterparty {
+#[trusted]
     fn from(value: Counterparty) -> Self {
         RawCounterparty {
             client_id: value.client_id.as_str().to_string(),
@@ -390,6 +392,7 @@ impl State {
     /// assert!(State::TryOpen.less_or_equal_progress(State::TryOpen));
     /// assert!(!State::Open.less_or_equal_progress(State::Uninitialized));
     /// ```
+#[trusted]
     pub fn less_or_equal_progress(self, other: Self) -> bool {
         self as u32 <= other as u32
     }
