@@ -14,6 +14,7 @@ pub struct CommitmentRoot {
 }
 
 impl fmt::Debug for CommitmentRoot {
+#[trusted]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let hex = Hex::upper_case().encode_to_string(&self.bytes).unwrap();
         f.debug_tuple("CommitmentRoot").field(&hex).finish()
@@ -27,6 +28,7 @@ impl CommitmentRoot {
         }
     }
 
+#[trusted]
     pub fn as_bytes(&self) -> &[u8] {
         &self.bytes
     }
@@ -112,6 +114,7 @@ impl CommitmentPrefix {
         }
     }
 
+#[trusted]
     pub fn is_empty(&self) -> bool {
         self.bytes.len() == 0
     }
@@ -126,6 +129,7 @@ impl CommitmentPrefix {
 }
 
 impl From<Vec<u8>> for CommitmentPrefix {
+#[trusted]
     fn from(bytes: Vec<u8>) -> Self {
         Self { bytes }
     }
@@ -142,6 +146,7 @@ impl fmt::Debug for CommitmentPrefix {
 }
 
 impl Serialize for CommitmentPrefix {
+#[trusted]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,

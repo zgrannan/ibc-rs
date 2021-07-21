@@ -1,5 +1,6 @@
 use std::convert::{TryFrom, TryInto};
 use std::str::FromStr;
+use prusti_contracts::*;
 use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
@@ -43,6 +44,7 @@ impl Protobuf<RawClientState> for ClientState {}
 
 impl ClientState {
     #[allow(clippy::too_many_arguments)]
+#[trusted]
     pub fn new(
         chain_id: ChainId,
         trust_level: TrustThreshold,
@@ -113,6 +115,7 @@ impl ClientState {
 
     /// Helper function to verify the upgrade client procedure.
     /// Resets all fields except the blockchain-specific ones.
+#[trusted]
     pub fn zero_custom_fields(mut client_state: Self) -> Self {
         client_state.trusting_period = ZERO_DURATION;
         client_state.trust_level = TrustThresholdFraction {
@@ -156,6 +159,7 @@ impl crate::ics02_client::client_state::ClientState for ClientState {
         !self.frozen_height.is_zero()
     }
 
+#[trusted]
     fn wrap_any(self) -> AnyClientState {
         AnyClientState::Tendermint(self)
     }

@@ -1,5 +1,6 @@
 use anomaly::{BoxError, Context};
 use thiserror::Error;
+use prusti_contracts::*;
 
 use crate::ics24_host::error::ValidationKind;
 
@@ -42,6 +43,7 @@ pub enum Kind {
 }
 
 impl Kind {
+#[trusted]
     pub fn context(self, source: impl Into<BoxError>) -> Context<Self> {
         Context::new(self, Some(source.into()))
     }

@@ -1,5 +1,6 @@
 use anomaly::{BoxError, Context};
 use thiserror::Error;
+use prusti_contracts::*;
 
 pub type Error = anomaly::Error<Kind>;
 
@@ -19,6 +20,7 @@ pub enum Kind {
 }
 
 impl Kind {
+#[trusted]
     pub fn context(self, source: impl Into<BoxError>) -> Context<Self> {
         Context::new(self, Some(source.into()))
     }

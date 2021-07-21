@@ -1,5 +1,6 @@
 use std::convert::TryFrom;
 use std::str::FromStr;
+use prusti_contracts::*;
 
 use serde::{Deserialize, Serialize};
 
@@ -34,6 +35,7 @@ impl ChainId {
     /// let id = ChainId::new("chainA".to_string(), epoch_number);
     /// assert_eq!(id.version(), epoch_number);
     /// ```
+#[trusted]
     pub fn new(name: String, version: u64) -> Self {
         Self {
             id: format!("{}-{}", name, version),
@@ -48,6 +50,7 @@ impl ChainId {
 
     // TODO: this should probably be named epoch_number.
     /// Extract the version from this chain identifier.
+#[trusted]
     pub fn version(&self) -> u64 {
         self.version
     }
@@ -61,6 +64,7 @@ impl ChainId {
     /// assert_eq!(ChainId::chain_version("cosmos-hub-97"), 97);
     /// assert_eq!(ChainId::chain_version("testnet-helloworld-2"), 2);
     /// ```
+#[trusted]
     pub fn chain_version(chain_id: &str) -> u64 {
         if !ChainId::is_epoch_format(chain_id) {
             return 0;
@@ -91,6 +95,7 @@ impl ChainId {
 impl FromStr for ChainId {
     type Err = ValidationError;
 
+#[trusted]
     fn from_str(id: &str) -> Result<Self, Self::Err> {
         let version = if Self::is_epoch_format(id) {
             Self::chain_version(id)
@@ -106,24 +111,28 @@ impl FromStr for ChainId {
 }
 
 impl std::fmt::Display for ChainId {
+#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "{}", self.id)
     }
 }
 
 impl From<ChainId> for tendermint::chain::Id {
+#[trusted]
     fn from(id: ChainId) -> Self {
         tendermint::chain::Id::from_str(id.as_str()).unwrap()
     }
 }
 
 impl From<tendermint::chain::Id> for ChainId {
+#[trusted]
     fn from(id: tendermint::chain::Id) -> Self {
         ChainId::from_str(id.as_str()).unwrap()
     }
 }
 
 impl Default for ChainId {
+#[trusted]
     fn default() -> Self {
         "defaultChainId".to_string().parse().unwrap()
     }
@@ -132,6 +141,7 @@ impl Default for ChainId {
 impl TryFrom<String> for ChainId {
     type Error = ValidationKind;
 
+#[trusted]
     fn try_from(value: String) -> Result<Self, Self::Error> {
         Self::from_str(value.as_str()).map_err(|e| e.kind().clone())
     }
@@ -159,6 +169,7 @@ impl ClientId {
     }
 
     /// Get this identifier as a borrowed `&str`
+#[trusted]
     pub fn as_str(&self) -> &str {
         &self.0
     }
@@ -166,6 +177,7 @@ impl ClientId {
     /// Returns one of the prefixes that should be present in any client identifiers.
     /// The prefix is deterministic for a given chain type, hence all clients for a Tendermint-type
     /// chain, for example, will have the prefix '07-tendermint'.
+#[trusted]
     pub fn prefix(client_type: ClientType) -> &'static str {
         match client_type {
             ClientType::Tendermint => ClientType::Tendermint.as_str(),
@@ -197,6 +209,7 @@ impl FromStr for ClientId {
 }
 
 impl Default for ClientId {
+#[trusted]
     fn default() -> Self {
         Self::new(ClientType::Tendermint, 0).unwrap()
     }
@@ -211,6 +224,7 @@ impl Default for ClientId {
 /// client_id.map(|id| {assert_eq!(&id, "clientidtwo")});
 /// ```
 impl PartialEq<str> for ClientId {
+#[trusted]
     fn eq(&self, other: &str) -> bool {
         self.as_str().eq(other)
     }
@@ -230,12 +244,14 @@ impl ConnectionId {
     /// let conn_id = ConnectionId::new(11);
     /// assert_eq!(&conn_id, "connection-11");
     /// ```
+#[trusted]
     pub fn new(counter: u64) -> Self {
         let id = format!("{}-{}", Self::prefix(), counter);
         Self::from_str(id.as_str()).unwrap()
     }
 
     /// Returns the static prefix to be used across all connection identifiers.
+#[trusted]
     pub fn prefix() -> &'static str {
         "connection"
     }
@@ -261,12 +277,14 @@ impl std::fmt::Display for ConnectionId {
 impl FromStr for ConnectionId {
     type Err = ValidationError;
 
+#[trusted]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         validate_connection_identifier(s).map(|_| Self(s.to_string()))
     }
 }
 
 impl Default for ConnectionId {
+#[trusted]
     fn default() -> Self {
         Self::new(0)
     }
@@ -281,6 +299,7 @@ impl Default for ConnectionId {
 /// conn_id.map(|id| {assert_eq!(&id, "connectionId-0")});
 /// ```
 impl PartialEq<str> for ConnectionId {
+#[trusted]
     fn eq(&self, other: &str) -> bool {
         self.as_str().eq(other)
     }
@@ -296,6 +315,7 @@ impl PortId {
     }
 
     /// Get this identifier as a borrowed byte slice
+#[trusted]
     pub fn as_bytes(&self) -> &[u8] {
         self.0.as_bytes()
     }
@@ -317,6 +337,7 @@ impl FromStr for PortId {
 }
 
 impl Default for PortId {
+#[trusted]
     fn default() -> Self {
         "defaultPort".to_string().parse().unwrap()
     }
@@ -337,6 +358,7 @@ impl ChannelId {
     /// let chan_id = ChannelId::new(27);
     /// assert_eq!(&chan_id, "channel-27");
     /// ```
+#[trusted]
     pub fn new(counter: u64) -> Self {
         let id = format!("{}-{}", Self::prefix(), counter);
         Self::from_str(id.as_str()).unwrap()
@@ -359,6 +381,7 @@ impl ChannelId {
 
 /// This implementation provides a `to_string` method.
 impl std::fmt::Display for ChannelId {
+#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "{}", self.0)
     }
@@ -367,6 +390,7 @@ impl std::fmt::Display for ChannelId {
 impl FromStr for ChannelId {
     type Err = ValidationError;
 
+#[trusted]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         validate_channel_identifier(s).map(|_| Self(s.to_string()))
     }

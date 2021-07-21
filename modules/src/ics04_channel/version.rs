@@ -37,6 +37,7 @@ impl From<Version> for RawVersion {
 }
 
 impl Default for Version {
+#[trusted]
     fn default() -> Self {
         Version {
             identifier: "1".to_string(),
@@ -54,6 +55,7 @@ impl FromStr for Version {
 }
 
 impl std::fmt::Display for Version {
+#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(
             f,

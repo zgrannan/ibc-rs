@@ -1,5 +1,6 @@
 use ibc_proto::ibc::core::commitment::v1::MerkleProof;
 
+use prusti_contracts::*;
 use crate::ics02_client::client_consensus::AnyConsensusState;
 use crate::ics02_client::client_def::ClientDef;
 use crate::ics02_client::client_state::AnyClientState;
@@ -22,6 +23,7 @@ impl ClientDef for TendermintClient {
     type ClientState = ClientState;
     type ConsensusState = ConsensusState;
 
+#[trusted]
     fn check_header_and_update_state(
         &self,
         client_state: Self::ClientState,
@@ -42,6 +44,7 @@ impl ClientDef for TendermintClient {
         ))
     }
 
+#[trusted]
     fn verify_client_consensus_state(
         &self,
         _client_state: &Self::ClientState,

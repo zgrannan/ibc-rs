@@ -1,5 +1,6 @@
 use std::convert::{TryFrom, TryInto};
 
+use prusti_contracts::*;
 use serde_derive::{Deserialize, Serialize};
 use tendermint::block::signed_header::SignedHeader;
 use tendermint::validator::Set as ValidatorSet;
@@ -25,6 +26,7 @@ pub struct Header {
 }
 
 impl std::fmt::Debug for Header {
+#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, " Header {{...}}")
     }

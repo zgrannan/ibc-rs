@@ -1,5 +1,6 @@
 /// Path-space as listed in ICS-024
 /// https://github.com/cosmos/ics/tree/master/spec/ics-024-host-requirements#path-space
+use prusti_contracts::*;
 /// Some of these are implemented in other ICSs, but ICS-024 has a nice summary table.
 ///
 use std::fmt::{Display, Formatter, Result};
@@ -79,6 +80,7 @@ impl Path {
 /// The Display trait adds the `.to_string()` method to the Path struct
 /// This is where the different path strings are constructed
 impl Display for Path {
+#[trusted]
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         match &self {
             Path::ClientType(client_id) => write!(f, "clients/{}/clientType", client_id),

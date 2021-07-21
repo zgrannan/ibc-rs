@@ -1,5 +1,6 @@
 use anomaly::{BoxError, Context};
 use thiserror::Error;
+use prusti_contracts::*;
 
 pub type ValidationError = anomaly::Error<ValidationKind>;
 
@@ -55,6 +56,7 @@ impl ValidationKind {
         Self::ChainIdInvalidFormat { id }
     }
 
+#[trusted]
     pub fn context(self, source: impl Into<BoxError>) -> Context<Self> {
         Context::new(self, Some(source.into()))
     }

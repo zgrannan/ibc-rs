@@ -1,5 +1,6 @@
 use std::convert::{TryFrom, TryInto};
 use std::str::FromStr;
+use prusti_contracts::*;
 
 use serde_derive::{Deserialize, Serialize};
 
@@ -165,6 +166,7 @@ impl Default for Packet {
 impl TryFrom<RawPacket> for Packet {
     type Error = anomaly::Error<Kind>;
 
+#[trusted]
     fn try_from(raw_pkt: RawPacket) -> Result<Self, Self::Error> {
         if Sequence::from(raw_pkt.sequence).is_zero() {
             return Err(Kind::ZeroPacketSequence.into());

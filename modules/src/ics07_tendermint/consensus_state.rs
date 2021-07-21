@@ -1,5 +1,6 @@
 use std::convert::TryFrom;
 use std::time::SystemTime;
+use prusti_contracts::*;
 
 use chrono::{TimeZone, Utc};
 use prost_types::Timestamp;
@@ -55,6 +56,7 @@ impl Protobuf<RawConsensusState> for ConsensusState {}
 impl TryFrom<RawConsensusState> for ConsensusState {
     type Error = Error;
 
+#[trusted]
     fn try_from(raw: RawConsensusState) -> Result<Self, Self::Error> {
         let proto_timestamp = raw
             .timestamp
@@ -76,6 +78,7 @@ impl TryFrom<RawConsensusState> for ConsensusState {
 }
 
 impl From<ConsensusState> for RawConsensusState {
+#[trusted]
     fn from(value: ConsensusState) -> Self {
         RawConsensusState {
             timestamp: Some(Timestamp::from(SystemTime::from(value.timestamp))),

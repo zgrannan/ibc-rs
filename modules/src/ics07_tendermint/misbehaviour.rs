@@ -1,5 +1,6 @@
 use std::convert::{TryFrom, TryInto};
 
+use prusti_contracts::*;
 use tendermint_proto::Protobuf;
 
 use ibc_proto::ibc::lightclients::tendermint::v1::Misbehaviour as RawMisbehaviour;
@@ -62,6 +63,7 @@ impl From<Misbehaviour> for RawMisbehaviour {
 }
 
 impl std::fmt::Display for Misbehaviour {
+#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(
             f,
