@@ -6,7 +6,7 @@ use serde_derive::{Deserialize, Serialize};
 use super::error;
 
 /// Type of the client, depending on the specific consensus algorithm.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ClientType {
     Tendermint = 1,
 

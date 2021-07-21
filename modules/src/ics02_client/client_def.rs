@@ -134,6 +134,7 @@ pub trait ClientDef: Clone {
 
     /// Verify a `proof` that a packet has not been received.
     #[allow(clippy::too_many_arguments)]
+#[trusted]
     fn verify_packet_receipt_absence(
         &self,
         client_state: &Self::ClientState,

@@ -174,6 +174,7 @@ impl ConsensusState for AnyConsensusState {
         todo!()
     }
 
+#[trusted]
     fn wrap_any(self) -> AnyConsensusState {
         self
     }

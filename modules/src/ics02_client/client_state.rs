@@ -22,7 +22,7 @@ use crate::Height;
 pub const TENDERMINT_CLIENT_STATE_TYPE_URL: &str = "/ibc.lightclients.tendermint.v1.ClientState";
 pub const MOCK_CLIENT_STATE_TYPE_URL: &str = "/ibc.mock.ClientState";
 
-#[dyn_clonable::clonable]
+// #[dyn_clonable::clonable]
 pub trait ClientState: Clone + std::fmt::Debug + Send + Sync {
     /// Return the chain identifier which this client is serving (i.e., the client is verifying
     /// consensus states from this chain).
@@ -38,6 +38,7 @@ pub trait ClientState: Clone + std::fmt::Debug + Send + Sync {
     fn is_frozen(&self) -> bool;
 
     /// Wrap into an `AnyClientState`
+#[trusted]
     fn wrap_any(self) -> AnyClientState;
 }
 
@@ -171,6 +172,7 @@ impl ClientState for AnyClientState {
         }
     }
 
+#[trusted]
     fn wrap_any(self) -> AnyClientState {
         self
     }

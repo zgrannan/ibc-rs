@@ -72,7 +72,7 @@ def panic(arg: str):
     lines = contents.splitlines()
     fn_line_number = get_enclosing_fn_line_number(line_number, lines)
     if fn_line_number is None:
-        raise Exception(f"Couldn't find enclosing function for {filename} at line {line_number_str}")
+        raise Exception(f"Couldn't find enclosing function for {filename} at line {line_number}")
     (start, end) = get_fn_body_lines(fn_line_number, lines)
     commented = ["// " + line for line in lines[start:end] ]
     commented[0] = 'panic!("No") ' + commented[0]
@@ -89,7 +89,7 @@ def trust(arg: str):
         line_number += 1
     fn_line_number = get_enclosing_fn_line_number(line_number, lines)
     if fn_line_number is None:
-        raise Exception(f"Couldn't find enclosing function for {filename} at line {line_number_str}")
+        raise Exception(f"Couldn't find enclosing function for {filename} at line {line_number}")
     if lines[fn_line_number -1].find("#[trusted]") != -1:
         return
     lines = lines[0:fn_line_number] + [ "#[trusted]" ] + lines[fn_line_number:]
