@@ -258,6 +258,7 @@ impl ChannelEnd {
         self.connection_hops.eq(other)
     }
 
+#[trusted]
     pub fn counterparty_matches(&self, other: &Counterparty) -> bool {
         self.counterparty().eq(other)
     }
@@ -356,6 +357,7 @@ impl Default for Order {
 }
 
 impl fmt::Display for Order {
+#[trusted]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.as_str())
     }
@@ -456,6 +458,7 @@ impl State {
 
 /// Provides a `to_string` method.
 impl std::fmt::Display for State {
+#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "{}", self.as_string())
     }

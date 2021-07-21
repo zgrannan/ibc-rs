@@ -199,6 +199,7 @@ impl ClientId {
 
 /// This implementation provides a `to_string` method.
 impl std::fmt::Display for ClientId {
+#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "{}", self.0)
     }
@@ -275,6 +276,7 @@ impl ConnectionId {
 
 /// This implementation provides a `to_string` method.
 impl std::fmt::Display for ConnectionId {
+#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "{}", self.0)
     }
@@ -329,6 +331,7 @@ impl PortId {
 
 /// This implementation provides a `to_string` method.
 impl std::fmt::Display for PortId {
+#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "{}", self.0)
     }
@@ -376,6 +379,7 @@ impl ChannelId {
     }
 
     /// Get this identifier as a borrowed `&str`
+#[trusted]
     pub fn as_str(&self) -> &str {
         &self.0
     }

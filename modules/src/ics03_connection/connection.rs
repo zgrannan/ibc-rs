@@ -66,6 +66,7 @@ impl TryFrom<RawIdentifiedConnection> for IdentifiedConnectionEnd {
 }
 
 impl From<IdentifiedConnectionEnd> for RawIdentifiedConnection {
+#[trusted]
     fn from(value: IdentifiedConnectionEnd) -> Self {
         RawIdentifiedConnection {
             id: value.connection_id.to_string(),
@@ -141,6 +142,7 @@ impl TryFrom<RawConnectionEnd> for ConnectionEnd {
 }
 
 impl From<ConnectionEnd> for RawConnectionEnd {
+#[trusted]
     fn from(value: ConnectionEnd) -> Self {
         RawConnectionEnd {
             client_id: value.client_id.to_string(),
@@ -190,6 +192,7 @@ impl ConnectionEnd {
     }
 
     /// Setter for the `version` field.
+#[trusted]
     pub fn set_version(&mut self, new_version: Version) {
         self.versions = vec![new_version];
     }
@@ -320,6 +323,7 @@ impl Counterparty {
     }
 
     /// Getter for the client id.
+#[trusted]
     pub fn client_id(&self) -> &ClientId {
         &self.client_id
     }
@@ -349,6 +353,7 @@ pub enum State {
 
 impl State {
     /// Yields the State as a string.
+#[trusted]
     pub fn as_string(&self) -> &'static str {
         match self {
             Self::Uninitialized => "UNINITIALIZED",

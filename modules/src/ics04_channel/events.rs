@@ -367,6 +367,7 @@ impl OpenConfirm {
     pub fn attributes(&self) -> &Attributes {
         &self.0
     }
+#[trusted]
     pub fn channel_id(&self) -> Option<&ChannelId> {
         self.0.channel_id.as_ref()
     }
@@ -436,6 +437,7 @@ impl CloseInit {
         &self.0.counterparty_port_id
     }
 
+#[trusted]
     pub fn counterparty_channel_id(&self) -> Option<&ChannelId> {
         self.0.counterparty_channel_id.as_ref()
     }
@@ -613,6 +615,7 @@ impl From<SendPacket> for IbcEvent {
 }
 
 impl std::fmt::Display for SendPacket {
+#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "SendPacket - h:{}, {}", self.height, self.packet)
     }
@@ -870,6 +873,7 @@ impl From<TimeoutOnClosePacket> for IbcEvent {
 }
 
 impl std::fmt::Display for TimeoutOnClosePacket {
+#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(
             f,
