@@ -71,36 +71,36 @@ pub trait ChannelReader {
 pub trait ChannelKeeper {
     #[trusted]
     fn store_channel_result(&mut self, result: ChannelResult) -> Result<(), Error> {
-        // The handler processed this channel & some modifications occurred, store the new end.
-        self.store_channel(
-            (result.port_id.clone(), result.channel_id.clone()),
-            &result.channel_end,
-        )?;
-
-        // The channel identifier was freshly brewed.
-        // Increase counter & initialize seq. nrs.
-        if matches!(result.channel_id_state, ChannelIdState::Generated) {
-            self.increase_channel_counter();
-
-            // Associate also the channel end to its connection.
-            self.store_connection_channels(
-                result.channel_end.connection_hops()[0].clone(),
-                &(result.port_id.clone(), result.channel_id.clone()),
-            )?;
-
-            // Initialize send, recv, and ack sequence numbers.
-            self.store_next_sequence_send(
-                (result.port_id.clone(), result.channel_id.clone()),
-                1.into(),
-            )?;
-            self.store_next_sequence_recv(
-                (result.port_id.clone(), result.channel_id.clone()),
-                1.into(),
-            )?;
-            self.store_next_sequence_ack((result.port_id, result.channel_id), 1.into())?;
-        }
-
-        Ok(())
+panic!("No") //         // The handler processed this channel & some modifications occurred, store the new end.
+//         self.store_channel(
+//             (result.port_id.clone(), result.channel_id.clone()),
+//             &result.channel_end,
+//         )?;
+// 
+//         // The channel identifier was freshly brewed.
+//         // Increase counter & initialize seq. nrs.
+//         if matches!(result.channel_id_state, ChannelIdState::Generated) {
+//             self.increase_channel_counter();
+// 
+//             // Associate also the channel end to its connection.
+//             self.store_connection_channels(
+//                 result.channel_end.connection_hops()[0].clone(),
+//                 &(result.port_id.clone(), result.channel_id.clone()),
+//             )?;
+// 
+//             // Initialize send, recv, and ack sequence numbers.
+//             self.store_next_sequence_send(
+//                 (result.port_id.clone(), result.channel_id.clone()),
+//                 1.into(),
+//             )?;
+//             self.store_next_sequence_recv(
+//                 (result.port_id.clone(), result.channel_id.clone()),
+//                 1.into(),
+//             )?;
+//             self.store_next_sequence_ack((result.port_id, result.channel_id), 1.into())?;
+//         }
+// 
+//         Ok(())
     }
 
     fn store_packet_result(&mut self, general_result: PacketResult) -> Result<(), Error> {

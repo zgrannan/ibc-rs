@@ -72,68 +72,71 @@ pub enum IbcEvent {
 /// For use in debug messages
 pub struct PrettyEvents<'a>(pub &'a [IbcEvent]);
 impl<'a> fmt::Display for PrettyEvents<'a> {
+#[trusted]
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        writeln!(f, "events:")?;
-        for v in self.0 {
-            writeln!(f, "\t{}", v)?;
-        }
-        Ok(())
+panic!("No") //         writeln!(f, "events:")?;
+//         for v in self.0 {
+//             writeln!(f, "\t{}", v)?;
+//         }
+//         Ok(())
     }
 }
 
 impl fmt::Display for IbcEvent {
+#[trusted]
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        match self {
-            IbcEvent::NewBlock(ev) => write!(f, "NewBlock({})", ev.height),
-
-            IbcEvent::CreateClient(ev) => write!(f, "CreateClientEv({})", ev),
-            IbcEvent::UpdateClient(ev) => write!(f, "UpdateClientEv({})", ev),
-            IbcEvent::UpgradeClient(ev) => write!(f, "UpgradeClientEv({:?})", ev),
-            IbcEvent::ClientMisbehaviour(ev) => write!(f, "ClientMisbehaviourEv({:?})", ev),
-
-            IbcEvent::OpenInitConnection(ev) => write!(f, "OpenInitConnectionEv({:?})", ev),
-            IbcEvent::OpenTryConnection(ev) => write!(f, "OpenTryConnectionEv({:?})", ev),
-            IbcEvent::OpenAckConnection(ev) => write!(f, "OpenAckConnectionEv({:?})", ev),
-            IbcEvent::OpenConfirmConnection(ev) => write!(f, "OpenConfirmConnectionEv({:?})", ev),
-
-            IbcEvent::OpenInitChannel(ev) => write!(f, "OpenInitChannelEv({:?})", ev),
-            IbcEvent::OpenTryChannel(ev) => write!(f, "OpenTryChannelEv({:?})", ev),
-            IbcEvent::OpenAckChannel(ev) => write!(f, "OpenAckChannelEv({:?})", ev),
-            IbcEvent::OpenConfirmChannel(ev) => write!(f, "OpenConfirmChannelEv({:?})", ev),
-            IbcEvent::CloseInitChannel(ev) => write!(f, "CloseInitChannelEv({})", ev),
-            IbcEvent::CloseConfirmChannel(ev) => write!(f, "CloseConfirmChannelEv({:?})", ev),
-
-            IbcEvent::SendPacket(ev) => write!(f, "SendPacketEv({})", ev),
-            IbcEvent::ReceivePacket(ev) => write!(f, "ReceivePacketEv({})", ev),
-            IbcEvent::WriteAcknowledgement(ev) => write!(f, "WriteAcknowledgementEv({})", ev),
-            IbcEvent::AcknowledgePacket(ev) => write!(f, "AcknowledgePacketEv({})", ev),
-            IbcEvent::TimeoutPacket(ev) => write!(f, "TimeoutPacketEv({})", ev),
-            IbcEvent::TimeoutOnClosePacket(ev) => write!(f, "TimeoutOnClosePacketEv({})", ev),
-
-            IbcEvent::Empty(ev) => write!(f, "EmptyEv({})", ev),
-            IbcEvent::ChainError(ev) => write!(f, "ChainErrorEv({})", ev),
-        }
+panic!("No") //         match self {
+//             IbcEvent::NewBlock(ev) => write!(f, "NewBlock({})", ev.height),
+// 
+//             IbcEvent::CreateClient(ev) => write!(f, "CreateClientEv({})", ev),
+//             IbcEvent::UpdateClient(ev) => write!(f, "UpdateClientEv({})", ev),
+//             IbcEvent::UpgradeClient(ev) => write!(f, "UpgradeClientEv({:?})", ev),
+//             IbcEvent::ClientMisbehaviour(ev) => write!(f, "ClientMisbehaviourEv({:?})", ev),
+// 
+//             IbcEvent::OpenInitConnection(ev) => write!(f, "OpenInitConnectionEv({:?})", ev),
+//             IbcEvent::OpenTryConnection(ev) => write!(f, "OpenTryConnectionEv({:?})", ev),
+//             IbcEvent::OpenAckConnection(ev) => write!(f, "OpenAckConnectionEv({:?})", ev),
+//             IbcEvent::OpenConfirmConnection(ev) => write!(f, "OpenConfirmConnectionEv({:?})", ev),
+// 
+//             IbcEvent::OpenInitChannel(ev) => write!(f, "OpenInitChannelEv({:?})", ev),
+//             IbcEvent::OpenTryChannel(ev) => write!(f, "OpenTryChannelEv({:?})", ev),
+//             IbcEvent::OpenAckChannel(ev) => write!(f, "OpenAckChannelEv({:?})", ev),
+//             IbcEvent::OpenConfirmChannel(ev) => write!(f, "OpenConfirmChannelEv({:?})", ev),
+//             IbcEvent::CloseInitChannel(ev) => write!(f, "CloseInitChannelEv({})", ev),
+//             IbcEvent::CloseConfirmChannel(ev) => write!(f, "CloseConfirmChannelEv({:?})", ev),
+// 
+//             IbcEvent::SendPacket(ev) => write!(f, "SendPacketEv({})", ev),
+//             IbcEvent::ReceivePacket(ev) => write!(f, "ReceivePacketEv({})", ev),
+//             IbcEvent::WriteAcknowledgement(ev) => write!(f, "WriteAcknowledgementEv({})", ev),
+//             IbcEvent::AcknowledgePacket(ev) => write!(f, "AcknowledgePacketEv({})", ev),
+//             IbcEvent::TimeoutPacket(ev) => write!(f, "TimeoutPacketEv({})", ev),
+//             IbcEvent::TimeoutOnClosePacket(ev) => write!(f, "TimeoutOnClosePacketEv({})", ev),
+// 
+//             IbcEvent::Empty(ev) => write!(f, "EmptyEv({})", ev),
+//             IbcEvent::ChainError(ev) => write!(f, "ChainErrorEv({})", ev),
+//         }
     }
 }
 
 // This is tendermint specific
 pub fn from_tx_response_event(height: Height, event: &tendermint::abci::Event) -> Option<IbcEvent> {
-    // Return the first hit we find
-    if let Some(mut client_res) = ClientEvents::try_from_tx(event) {
-        client_res.set_height(height);
-        Some(client_res)
-    } else if let Some(mut conn_res) = ConnectionEvents::try_from_tx(event) {
-        conn_res.set_height(height);
-        Some(conn_res)
-    } else if let Some(mut chan_res) = ChannelEvents::try_from_tx(event) {
-        chan_res.set_height(height);
-        Some(chan_res)
-    } else {
-        None
-    }
+panic!("No") //     // Return the first hit we find
+//     if let Some(mut client_res) = ClientEvents::try_from_tx(event) {
+//         client_res.set_height(height);
+//         Some(client_res)
+//     } else if let Some(mut conn_res) = ConnectionEvents::try_from_tx(event) {
+//         conn_res.set_height(height);
+//         Some(conn_res)
+//     } else if let Some(mut chan_res) = ChannelEvents::try_from_tx(event) {
+//         chan_res.set_height(height);
+//         Some(chan_res)
+//     } else {
+//         None
+//     }
 }
 
 impl IbcEvent {
+#[trusted]
     pub fn to_json(&self) -> String {
         format!("{:?}", self) // Fallback to debug printing
         // match serde_json::to_string(self) {
@@ -193,23 +196,25 @@ impl IbcEvent {
         }
     }
 
+#[trusted]
     pub fn channel_attributes(&self) -> Option<&ChannelAttributes> {
-        match self {
-            IbcEvent::OpenInitChannel(ev) => Some(ev.attributes()),
-            IbcEvent::OpenTryChannel(ev) => Some(ev.attributes()),
-            IbcEvent::OpenAckChannel(ev) => Some(ev.attributes()),
-            IbcEvent::OpenConfirmChannel(ev) => Some(ev.attributes()),
-            _ => None,
-        }
+panic!("No") //         match self {
+//             IbcEvent::OpenInitChannel(ev) => Some(ev.attributes()),
+//             IbcEvent::OpenTryChannel(ev) => Some(ev.attributes()),
+//             IbcEvent::OpenAckChannel(ev) => Some(ev.attributes()),
+//             IbcEvent::OpenConfirmChannel(ev) => Some(ev.attributes()),
+//             _ => None,
+//         }
     }
+#[trusted]
     pub fn connection_attributes(&self) -> Option<&ConnectionAttributes> {
-        match self {
-            IbcEvent::OpenInitConnection(ev) => Some(ev.attributes()),
-            IbcEvent::OpenTryConnection(ev) => Some(ev.attributes()),
-            IbcEvent::OpenAckConnection(ev) => Some(ev.attributes()),
-            IbcEvent::OpenConfirmConnection(ev) => Some(ev.attributes()),
-            _ => None,
-        }
+panic!("No") //         match self {
+//             IbcEvent::OpenInitConnection(ev) => Some(ev.attributes()),
+//             IbcEvent::OpenTryConnection(ev) => Some(ev.attributes()),
+//             IbcEvent::OpenAckConnection(ev) => Some(ev.attributes()),
+//             IbcEvent::OpenConfirmConnection(ev) => Some(ev.attributes()),
+//             _ => None,
+//         }
     }
 }
 

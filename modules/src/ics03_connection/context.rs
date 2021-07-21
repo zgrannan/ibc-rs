@@ -68,21 +68,21 @@ pub trait ConnectionReader {
 pub trait ConnectionKeeper {
     #[trusted]
     fn store_connection_result(&mut self, result: ConnectionResult) -> Result<(), Error> {
-        self.store_connection(result.connection_id.clone(), &result.connection_end)?;
-
-        // If we generated an identifier, increase the counter & associate this new identifier
-        // with the client id.
-        if matches!(result.connection_id_state, ConnectionIdState::Generated) {
-            self.increase_connection_counter();
-
-            // Also associate the connection end to its client identifier.
-            self.store_connection_to_client(
-                result.connection_id.clone(),
-                result.connection_end.client_id(),
-            )?;
-        }
-
-        Ok(())
+panic!("No") //         self.store_connection(result.connection_id.clone(), &result.connection_end)?;
+// 
+//         // If we generated an identifier, increase the counter & associate this new identifier
+//         // with the client id.
+//         if matches!(result.connection_id_state, ConnectionIdState::Generated) {
+//             self.increase_connection_counter();
+// 
+//             // Also associate the connection end to its client identifier.
+//             self.store_connection_to_client(
+//                 result.connection_id.clone(),
+//                 result.connection_end.client_id(),
+//             )?;
+//         }
+// 
+//         Ok(())
     }
 
     /// Stores the given connection_end at a path associated with the connection_id.

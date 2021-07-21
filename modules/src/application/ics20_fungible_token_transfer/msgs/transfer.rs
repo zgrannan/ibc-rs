@@ -1,5 +1,6 @@
 //! This is the definition of a transfer messages that an application submits to a chain.
 
+use prusti_contracts::*;
 use std::convert::{TryFrom, TryInto};
 
 use tendermint_proto::Protobuf;
@@ -42,12 +43,14 @@ impl Msg for MsgTransfer {
     type ValidationError = Error;
     type Raw = RawMsgTransfer;
 
+#[trusted]
     fn route(&self) -> String {
-        crate::keys::ROUTER_KEY.to_string()
+panic!("No") // panic!("No") //         crate::keys::ROUTER_KEY.to_string()
     }
 
+#[trusted]
     fn type_url(&self) -> String {
-        TYPE_URL.to_string()
+panic!("No") //         TYPE_URL.to_string()
     }
 }
 
@@ -56,6 +59,7 @@ impl Protobuf<RawMsgTransfer> for MsgTransfer {}
 impl TryFrom<RawMsgTransfer> for MsgTransfer {
     type Error = Kind;
 
+    #[trusted]
     fn try_from(raw_msg: RawMsgTransfer) -> Result<Self, Self::Error> {
         let timeout_timestamp = Timestamp::from_nanoseconds(raw_msg.timeout_timestamp)
             .map_err(|_| Kind::InvalidPacketTimeoutTimestamp(raw_msg.timeout_timestamp))?;

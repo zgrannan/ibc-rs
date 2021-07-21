@@ -1,5 +1,6 @@
 use serde::Serialize;
 
+use prusti_contracts::*;
 use crate::ics23_commitment::commitment::CommitmentProofBytes;
 use crate::Height;
 
@@ -19,6 +20,7 @@ pub struct Proofs {
 }
 
 impl Proofs {
+#[trusted]
     pub fn new(
         object_proof: CommitmentProofBytes,
         client_proof: Option<CommitmentProofBytes>,
@@ -26,21 +28,21 @@ impl Proofs {
         other_proof: Option<CommitmentProofBytes>,
         height: Height,
     ) -> Result<Self, String> {
-        if height.is_zero() {
-            return Err("Proofs height cannot be zero".to_string());
-        }
-
-        if object_proof.is_empty() {
-            return Err("Object proof cannot be empty".to_string());
-        }
-
-        Ok(Self {
-            object_proof,
-            client_proof,
-            consensus_proof,
-            other_proof,
-            height,
-        })
+panic!("No") //         if height.is_zero() {
+//             return Err("Proofs height cannot be zero".to_string());
+//         }
+// 
+//         if object_proof.is_empty() {
+//             return Err("Object proof cannot be empty".to_string());
+//         }
+// 
+//         Ok(Self {
+//             object_proof,
+//             client_proof,
+//             consensus_proof,
+//             other_proof,
+//             height,
+//         })
     }
 
     /// Getter for the consensus_proof field of this proof. Intuitively, this is a proof that a
@@ -73,21 +75,22 @@ pub struct ConsensusProof {
 }
 
 impl ConsensusProof {
+#[trusted]
     pub fn new(
         consensus_proof: CommitmentProofBytes,
         consensus_height: Height,
     ) -> Result<Self, String> {
-        if consensus_height.is_zero() {
-            return Err("Consensus height cannot be zero".to_string());
-        }
-        if consensus_proof.is_empty() {
-            return Err("Proof cannot be empty".to_string());
-        }
-
-        Ok(Self {
-            proof: consensus_proof,
-            height: consensus_height,
-        })
+panic!("No") //         if consensus_height.is_zero() {
+//             return Err("Consensus height cannot be zero".to_string());
+//         }
+//         if consensus_proof.is_empty() {
+//             return Err("Proof cannot be empty".to_string());
+//         }
+// 
+//         Ok(Self {
+//             proof: consensus_proof,
+//             height: consensus_height,
+//         })
     }
 
     /// Getter for the height field of this consensus proof.

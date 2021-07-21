@@ -1,5 +1,6 @@
 use std::convert::TryInto;
 use std::fmt::Display;
+use prusti_contracts::*;
 use std::num::{ParseIntError, TryFromIntError};
 use std::ops::{Add, Sub};
 use std::str::FromStr;
@@ -47,15 +48,16 @@ impl Timestamp {
     /// from an `i64` value. In practice, `i64` still have sufficient precision for our purpose.
     /// However we have to handle the case of `u64` overflowing in `i64`, to prevent
     /// malicious packets from crashing the relayer.
+#[trusted]
     pub fn from_nanoseconds(nanoseconds: u64) -> Result<Timestamp, TryFromIntError> {
-        if nanoseconds == 0 {
-            Ok(Timestamp { time: None })
-        } else {
-            let nanoseconds = nanoseconds.try_into()?;
-            Ok(Timestamp {
-                time: Some(Utc.timestamp_nanos(nanoseconds)),
-            })
-        }
+panic!("No") //         if nanoseconds == 0 {
+//             Ok(Timestamp { time: None })
+//         } else {
+//             let nanoseconds = nanoseconds.try_into()?;
+//             Ok(Timestamp {
+//                 time: Some(Utc.timestamp_nanos(nanoseconds)),
+//             })
+//         }
     }
 
     /// Returns a `Timestamp` representation of the current time.
@@ -115,13 +117,14 @@ impl Timestamp {
 }
 
 impl Display for Timestamp {
+#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "Timestamp({})",
-            self.time
-                .map_or("NoTimestamp".to_string(), |time| time.to_rfc3339())
-        )
+panic!("No") //         write!(
+//             f,
+//             "Timestamp({})",
+//             self.time
+//                 .map_or("NoTimestamp".to_string(), |time| time.to_rfc3339())
+//         )
     }
 }
 
@@ -147,27 +150,44 @@ impl Add<Duration> for Timestamp {
 impl Sub<Duration> for Timestamp {
     type Output = Result<Timestamp, TimestampOverflowError>;
 
+#[trusted]
     fn sub(self, duration: Duration) -> Result<Timestamp, TimestampOverflowError> {
-        match self.as_datetime() {
-            Some(datetime) => {
-                let duration2 =
-                    chrono::Duration::from_std(duration).map_err(|_| TimestampOverflowError)?;
-                Ok(Self::from_datetime(datetime - duration2))
-            }
-            None => Ok(self),
-        }
+panic!("No") //         match self.as_datetime() {
+//             Some(datetime) => {
+//                 let duration2 =
+//                     chrono::Duration::from_std(duration).map_err(|_| TimestampOverflowError)?;
+//                 Ok(Self::from_datetime(datetime - duration2))
+//             }
+//             None => Ok(self),
+//         }
     }
 }
 
 pub type ParseTimestampError = anomaly::Error<ParseTimestampErrorKind>;
 
-#[derive(Clone, Debug, Error, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ParseTimestampErrorKind {
-    #[error("Error parsing integer from string: {0}")]
     ParseIntError(ParseIntError),
 
-    #[error("Error converting from u64 to i64: {0}")]
     TryFromIntError(TryFromIntError),
+}
+
+impl Display for ParseTimestampErrorKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        todo!()
+    }
+}
+
+impl std::error::Error for ParseTimestampErrorKind {
+    #[trusted]
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        None
+    }
+
+    #[trusted]
+    fn cause(&self) -> Option<&dyn std::error::Error> {
+        None
+    }
 }
 
 impl FromStr for Timestamp {
