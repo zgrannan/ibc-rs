@@ -129,9 +129,14 @@ panic!("No") //         write!(
 }
 
 #[derive(Clone, Error, PartialEq, Eq)]
-#[error("Timestamp overflow when modifying with duration")]
+// #[error("Timestamp overflow when modifying with duration")]
 pub struct TimestampOverflowError;
 
+impl std::fmt::Display for TimestampOverflowError {
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("No")
+    }
+}
 impl std::fmt::Debug for TimestampOverflowError {
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         panic!("No")

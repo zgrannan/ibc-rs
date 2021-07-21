@@ -5,7 +5,16 @@ use prusti_contracts::*;
 
 pub type Error = anomaly::Error<Kind>;
 
+
 impl std::fmt::Debug for Kind {
+#[trusted]
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("No")
+    }
+}
+
+impl std::fmt::Display for Kind {
+#[trusted]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         panic!("No")
     }
@@ -13,16 +22,16 @@ impl std::fmt::Debug for Kind {
 
 #[derive(Clone, Error, PartialEq, Eq)]
 pub enum Kind {
-    #[error("error raised by message handler")]
+//     #[error("error raised by message handler")]
     HandlerRaisedError,
 
-    #[error("error raised by the keeper functionality in message handler")]
+//     #[error("error raised by the keeper functionality in message handler")]
     KeeperRaisedError,
 
-    #[error("unknown type URL {0}")]
+//     #[error("unknown type URL {0}")]
     UnknownMessageTypeUrl(String),
 
-    #[error("the message is malformed and cannot be decoded")]
+//     #[error("the message is malformed and cannot be decoded")]
     MalformedMessageBytes,
 }
 

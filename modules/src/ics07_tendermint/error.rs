@@ -6,6 +6,12 @@ use crate::ics24_host::error::ValidationKind;
 
 pub type Error = anomaly::Error<Kind>;
 
+impl std::fmt::Display for Kind {
+#[trusted]
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("No")
+    }
+}
 impl std::fmt::Debug for Kind {
 #[trusted]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -16,37 +22,37 @@ impl std::fmt::Debug for Kind {
 
 #[derive(Clone, Error)]
 pub enum Kind {
-    #[error("invalid trusting period")]
+//     #[error("invalid trusting period")]
     InvalidTrustingPeriod,
 
-    #[error("invalid unbonding period")]
+//     #[error("invalid unbonding period")]
     InvalidUnboundingPeriod,
 
-    #[error("invalid address")]
+//     #[error("invalid address")]
     InvalidAddress,
 
-    #[error("invalid header, failed basic validation")]
+//     #[error("invalid header, failed basic validation")]
     InvalidHeader,
 
-    #[error("validation error")]
+//     #[error("validation error")]
     ValidationError,
 
-    #[error("invalid raw client state")]
+//     #[error("invalid raw client state")]
     InvalidRawClientState,
 
-    #[error("invalid chain identifier: raw value {0} with underlying validation error: {1}")]
+//     #[error("invalid chain identifier: raw value {0} with underlying validation error: {1}")]
     InvalidChainId(String, ValidationKind),
 
-    #[error("invalid raw height")]
+//     #[error("invalid raw height")]
     InvalidRawHeight,
 
-    #[error("invalid raw client consensus state")]
+//     #[error("invalid raw client consensus state")]
     InvalidRawConsensusState,
 
-    #[error("invalid raw header")]
+//     #[error("invalid raw header")]
     InvalidRawHeader,
 
-    #[error("invalid raw misbehaviour")]
+//     #[error("invalid raw misbehaviour")]
     InvalidRawMisbehaviour,
 }
 

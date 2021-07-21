@@ -11,13 +11,20 @@ impl std::fmt::Debug for ValidationKind {
     }
 }
 
+impl std::fmt::Display for ValidationKind {
+#[trusted]
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("No")
+    }
+}
+
 
 #[derive(Clone, Error, PartialEq, Eq)]
 pub enum ValidationKind {
-    #[error("identifier {id} cannot contain separator '/'")]
+//     #[error("identifier {id} cannot contain separator '/'")]
     ContainsSeparator { id: String },
 
-    #[error("identifier {id} has invalid length {length} must be between {min}-{max} characters")]
+//     #[error("identifier {id} has invalid length {length} must be between {min}-{max} characters")]
     InvalidLength {
         id: String,
         length: usize,
@@ -25,16 +32,16 @@ pub enum ValidationKind {
         max: usize,
     },
 
-    #[error("identifier {id} must only contain alphanumeric characters or `.`, `_`, `+`, `-`, `#`, - `[`, `]`, `<`, `>`")]
+//     #[error("identifier {id} must only contain alphanumeric characters or `.`, `_`, `+`, `-`, `#`, - `[`, `]`, `<`, `>`")]
     InvalidCharacter { id: String },
 
-    #[error("identifier cannot be empty")]
+//     #[error("identifier cannot be empty")]
     Empty,
 
-    #[error("chain identifiers are expected to be in epoch format {id}")]
+//     #[error("chain identifiers are expected to be in epoch format {id}")]
     ChainIdInvalidFormat { id: String },
 
-    #[error("Invalid channel id in counterparty")]
+//     #[error("Invalid channel id in counterparty")]
     InvalidCounterpartyChannelId,
 }
 

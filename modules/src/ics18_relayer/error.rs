@@ -13,19 +13,27 @@ impl std::fmt::Debug for Kind {
     }
 }
 
+impl std::fmt::Display for Kind {
+#[trusted]
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("No")
+    }
+}
+
+
 
 #[derive(Clone, Error, PartialEq, Eq)]
 pub enum Kind {
-    #[error("client state on destination chain not found, (client id: {0})")]
+//     #[error("client state on destination chain not found, (client id: {0})")]
     ClientStateNotFound(ClientId),
 
-    #[error("the client on destination chain is already up-to-date (client id: {0}, source height: {1}, dest height: {2})")]
+//     #[error("the client on destination chain is already up-to-date (client id: {0}, source height: {1}, dest height: {2})")]
     ClientAlreadyUpToDate(ClientId, Height, Height),
 
-    #[error("the client on destination chain is at a higher height (client id: {0}, source height: {1}, dest height: {2})")]
+//     #[error("the client on destination chain is at a higher height (client id: {0}, source height: {1}, dest height: {2})")]
     ClientAtHigherHeight(ClientId, Height, Height),
 
-    #[error("transaction processing by modules failed")]
+//     #[error("transaction processing by modules failed")]
     TransactionFailed,
 }
 
