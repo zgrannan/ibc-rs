@@ -1,5 +1,6 @@
 //! Protocol logic specific to processing ICS2 messages of type `MsgUpdateAnyClient`.
 
+use prusti_contracts::*;
 use crate::events::IbcEvent;
 use crate::handler::{HandlerOutput, HandlerResult};
 use crate::ics02_client::client_consensus::AnyConsensusState;
@@ -21,6 +22,7 @@ pub struct Result {
     pub consensus_state: AnyConsensusState,
 }
 
+#[trusted]
 pub fn process(
     ctx: &dyn ClientReader,
     msg: MsgUpdateAnyClient,

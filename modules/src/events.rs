@@ -274,6 +274,7 @@ macro_rules! make_event {
         impl ::std::convert::TryFrom<$crate::events::RawObject> for $a {
             type Error = ::anomaly::BoxError;
 
+#[trusted]
             fn try_from(result: $crate::events::RawObject) -> Result<Self, Self::Error> {
                 match $crate::events::extract_events(&result.events, $b) {
                     Ok(()) => Ok($a {

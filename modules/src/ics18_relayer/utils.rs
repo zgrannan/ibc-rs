@@ -1,5 +1,6 @@
 use crate::ics02_client::header::{AnyHeader, Header};
 use crate::ics02_client::msgs::update_client::MsgUpdateAnyClient;
+use prusti_contracts::*;
 use crate::ics02_client::msgs::ClientMsg;
 use crate::ics18_relayer::context::Ics18Context;
 use crate::ics18_relayer::error::{Error, Kind};
@@ -7,6 +8,7 @@ use crate::ics24_host::identifier::ClientId;
 
 /// Builds a `ClientMsg::UpdateClient` for a client with id `client_id` running on the `dest`
 /// context, assuming that the latest header on the source context is `src_header`.
+#[trusted]
 pub fn build_client_update_datagram<Ctx>(
     dest: &Ctx,
     client_id: &ClientId,

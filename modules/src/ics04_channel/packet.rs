@@ -73,6 +73,7 @@ impl Default for Sequence {
 impl FromStr for Sequence {
     type Err = anomaly::Error<Kind>;
 
+#[trusted]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(Self::from(s.parse::<u64>().map_err(|_e| {
             Kind::InvalidStringAsSequence(s.to_string())
@@ -161,6 +162,7 @@ impl std::fmt::Display for Packet {
 }
 
 impl Default for Packet {
+#[trusted]
     fn default() -> Self {
         Packet {
             sequence: Sequence(0),

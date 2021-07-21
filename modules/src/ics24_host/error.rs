@@ -5,6 +5,7 @@ use prusti_contracts::*;
 pub type ValidationError = anomaly::Error<ValidationKind>;
 
 impl std::fmt::Debug for ValidationKind {
+#[trusted]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         panic!("No")
     }

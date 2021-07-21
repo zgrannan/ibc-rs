@@ -44,6 +44,7 @@ impl Protobuf<RawMisbehaviour> for Misbehaviour {}
 impl TryFrom<RawMisbehaviour> for Misbehaviour {
     type Error = Error;
 
+#[trusted]
     fn try_from(raw: RawMisbehaviour) -> Result<Self, Self::Error> {
         Ok(Self {
             client_id: Default::default(),

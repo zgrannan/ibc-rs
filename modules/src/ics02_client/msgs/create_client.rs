@@ -73,6 +73,7 @@ impl Protobuf<RawMsgCreateClient> for MsgCreateAnyClient {}
 impl TryFrom<RawMsgCreateClient> for MsgCreateAnyClient {
     type Error = Error;
 
+#[trusted]
     fn try_from(raw: RawMsgCreateClient) -> Result<Self, Self::Error> {
         let raw_client_state = raw
             .client_state

@@ -89,6 +89,7 @@ impl Protobuf<RawHeader> for Header {}
 impl TryFrom<RawHeader> for Header {
     type Error = Error;
 
+#[trusted]
     fn try_from(raw: RawHeader) -> Result<Self, Self::Error> {
         Ok(Self {
             signed_header: raw

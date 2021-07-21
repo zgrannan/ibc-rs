@@ -215,6 +215,7 @@ impl std::fmt::Display for ClientId {
 impl FromStr for ClientId {
     type Err = ValidationError;
 
+#[trusted]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         validate_client_identifier(s).map(|_| Self(s.to_string()))
     }
@@ -330,6 +331,7 @@ impl std::fmt::Debug for PortId {
 }
 
 impl std::fmt::Debug for ChannelId {
+#[trusted]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         panic!("No")
     }
@@ -361,6 +363,7 @@ impl std::fmt::Display for PortId {
 impl FromStr for PortId {
     type Err = ValidationError;
 
+#[trusted]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         validate_port_identifier(s).map(|_| Self(s.to_string()))
     }

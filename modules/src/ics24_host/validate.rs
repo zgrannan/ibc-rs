@@ -1,5 +1,6 @@
 use super::error::{ValidationError, ValidationKind};
 
+use prusti_contracts::*;
 /// Bails from the current function with the given error kind.
 macro_rules! bail {
     ($kind:expr) => {
@@ -15,6 +16,7 @@ const VALID_SPECIAL_CHARS: &str = "._+-#[]<>";
 ///
 /// A valid identifier only contain lowercase alphabetic characters, and be of a given min and max
 /// length.
+#[trusted]
 pub fn validate_identifier(id: &str, min: usize, max: usize) -> Result<(), ValidationError> {
     assert!(max >= min);
 

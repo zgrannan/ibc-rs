@@ -7,6 +7,7 @@ use crate::ics24_host::error::ValidationKind;
 pub type Error = anomaly::Error<Kind>;
 
 impl std::fmt::Debug for Kind {
+#[trusted]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         panic!("No")
     }

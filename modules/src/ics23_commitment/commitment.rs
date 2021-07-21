@@ -39,6 +39,7 @@ impl CommitmentRoot {
 }
 
 impl From<Vec<u8>> for CommitmentRoot {
+#[trusted]
     fn from(bytes: Vec<u8>) -> Self {
         Self { bytes }
     }
