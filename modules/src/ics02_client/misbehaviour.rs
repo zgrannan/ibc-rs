@@ -31,13 +31,19 @@ pub trait Misbehaviour: Clone + std::fmt::Debug + Send + Sync {
     fn wrap_any(self) -> AnyMisbehaviour;
 }
 
-#[derive(Clone, Debug, PartialEq)] // TODO: Add Eq bound once possible
+#[derive(Clone, PartialEq)] // TODO: Add Eq bound once possible
 #[allow(clippy::large_enum_variant)]
 pub enum AnyMisbehaviour {
     Tendermint(TmMisbehaviour),
 
     #[cfg(any(test, feature = "mocks"))]
     Mock(MockMisbehaviour),
+}
+
+impl std::fmt::Debug for AnyMisbehaviour {
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("No")
+    }
 }
 
 impl Misbehaviour for AnyMisbehaviour {
@@ -122,7 +128,7 @@ impl std::fmt::Display for AnyMisbehaviour {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct MisbehaviourEvidence {
     pub misbehaviour: AnyMisbehaviour,
     pub supporting_headers: Vec<AnyHeader>,

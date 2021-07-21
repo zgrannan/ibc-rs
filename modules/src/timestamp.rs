@@ -19,7 +19,7 @@ pub const ZERO_DURATION: Duration = Duration::from_secs(0);
 /// a `u64` value and a raw timestamp. In protocol buffer, the timestamp is
 /// represented as a `u64` Unix timestamp in nanoseconds, with 0 representing the absence
 /// of timestamp.
-#[derive(PartialEq, Eq, Copy, Clone, Debug, Deserialize, Serialize, Hash)]
+#[derive(PartialEq, Eq, Copy, Clone, Hash)]
 pub struct Timestamp {
     time: Option<DateTime<Utc>>,
 }
@@ -31,7 +31,7 @@ pub struct Timestamp {
 ///
 /// User of this result may want to determine whether error should be raised,
 /// when either of the timestamp being compared is invalid.
-#[derive(PartialEq, Eq, Copy, Clone, Debug, Deserialize, Serialize, Hash)]
+#[derive(PartialEq, Eq, Copy, Clone, Hash)]
 pub enum Expiry {
     Expired,
     NotExpired,
@@ -128,9 +128,15 @@ panic!("No") //         write!(
     }
 }
 
-#[derive(Clone, Debug, Error, PartialEq, Eq)]
+#[derive(Clone, Error, PartialEq, Eq)]
 #[error("Timestamp overflow when modifying with duration")]
 pub struct TimestampOverflowError;
+
+impl std::fmt::Debug for TimestampOverflowError {
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("No")
+    }
+}
 
 impl Add<Duration> for Timestamp {
     type Output = Result<Timestamp, TimestampOverflowError>;
@@ -165,12 +171,19 @@ panic!("No") //         match self.as_datetime() {
 
 pub type ParseTimestampError = anomaly::Error<ParseTimestampErrorKind>;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub enum ParseTimestampErrorKind {
     ParseIntError,
 
     TryFromIntError,
 }
+
+impl std::fmt::Debug for ParseTimestampErrorKind {
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("No")
+    }
+}
+
 
 impl Display for ParseTimestampErrorKind {
 #[trusted]

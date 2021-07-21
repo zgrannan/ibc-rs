@@ -7,7 +7,13 @@ use crate::Height;
 
 pub type Error = anomaly::Error<Kind>;
 
-#[derive(Clone, Debug, Error, Eq, PartialEq)]
+impl std::fmt::Debug for Kind {
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("No")
+    }
+}
+
+#[derive(Clone, Error, Eq, PartialEq)]
 pub enum Kind {
     #[error("connection state unknown")]
     InvalidState(i32),

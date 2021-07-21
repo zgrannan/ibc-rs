@@ -66,21 +66,7 @@ def parse_arg(arg):
         raise Exception(f"Can't parse argument {arg}")
     return (args[0], int(args[1]) - 1)
 
-def panic(arg: str):
-    (filename, line_number) = parse_arg(arg)
-    contents = open(filename).read()
-    lines = contents.splitlines()
-    fn_line_number = get_enclosing_fn_line_number(line_number, lines)
-    if fn_line_number is None:
-        raise Exception(f"Couldn't find enclosing function for {filename} at line {line_number}")
-    (start, end) = get_fn_body_lines(fn_line_number, lines)
-    commented = ["// " + line for line in lines[start:end] ]
-    commented[0] = 'panic!("No") ' + commented[0]
-    result = lines[:start] + commented + lines[end:]
-    output = "\n".join(result) + "\n"
-    open(filename, 'w').write(output)
-
-def trust(arg: str):
+def fixup(arg: str, panic: bool):
     (filename, line_number) = parse_arg(arg)
     contents = open(filename).read()
     lines = contents.splitlines()
@@ -91,17 +77,19 @@ def trust(arg: str):
     if fn_line_number is None:
         print(f"Couldn't find enclosing function for {filename} at line {line_number}")
         return
-    if lines[fn_line_number -1].find("#[trusted]") != -1:
-        return
-    lines = lines[0:fn_line_number] + [ "#[trusted]" ] + lines[fn_line_number:]
+    if panic:
+        (start, end) = get_fn_body_lines(fn_line_number, lines)
+        commented = ["// " + line for line in lines[start:end] ]
+        commented[0] = 'panic!("No") ' + commented[0]
+        lines = lines[:start] + commented + lines[end:]
+    else:
+        if lines[fn_line_number -1].find("#[trusted]") != -1:
+            return
+        lines = lines[0:fn_line_number] + [ "#[trusted]" ] + lines[fn_line_number:]
     output = "\n".join(lines) + "\n"
     open(filename, 'w').write(output)
 
-action = trust
-
-if len(argv) > 1 and argv[1] == "panic":
-    action = panic
-
+should_panic = len(argv) > 1 and argv[1] == "panic"
 chunks = stdin.read().split("\nerror:")
 for chunk in chunks[1:]:
     chunk_lines = chunk.splitlines()
@@ -111,4 +99,4 @@ for chunk in chunks[1:]:
     loc_chunks = chunk_lines[1].split("--> ")
     if len(loc_chunks) <= 1:
         raise Exception(f"Chunk {chunk} doesn't have a location")
-    action(loc_chunks[1])
+    fixup(loc_chunks[1], should_panic)

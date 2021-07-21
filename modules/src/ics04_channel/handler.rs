@@ -26,7 +26,7 @@ pub mod verify;
 pub mod write_acknowledgement;
 
 /// Defines the possible states of a channel identifier in a `ChannelResult`.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub enum ChannelIdState {
     /// Specifies that the channel handshake handler allocated a new channel identifier. This
     /// happens during the processing of either the `MsgChannelOpenInit` or `MsgChannelOpenTry`.
@@ -36,7 +36,7 @@ pub enum ChannelIdState {
     Reused,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct ChannelResult {
     pub port_id: PortId,
     pub channel_id: ChannelId,

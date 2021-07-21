@@ -4,7 +4,14 @@ use prusti_contracts::*;
 
 pub type ValidationError = anomaly::Error<ValidationKind>;
 
-#[derive(Clone, Debug, Error, PartialEq, Eq)]
+impl std::fmt::Debug for ValidationKind {
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("No")
+    }
+}
+
+
+#[derive(Clone, Error, PartialEq, Eq)]
 pub enum ValidationKind {
     #[error("identifier {id} cannot contain separator '/'")]
     ContainsSeparator { id: String },

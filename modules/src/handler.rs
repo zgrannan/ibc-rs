@@ -4,7 +4,7 @@ use prusti_contracts::*;
 
 pub type HandlerResult<T, E> = Result<HandlerOutput<T>, E>;
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct HandlerOutput<T> {
     pub result: T,
     pub log: Vec<String>,
@@ -18,7 +18,7 @@ impl<T> HandlerOutput<T> {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Default)]
 pub struct HandlerOutputBuilder<T> {
     log: Vec<String>,
     events: Vec<IbcEvent>,

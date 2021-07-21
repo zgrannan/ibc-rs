@@ -16,7 +16,7 @@ pub mod conn_open_try;
 pub mod verify;
 
 /// Defines the possible states of a connection identifier in a `ConnectionResult`.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub enum ConnectionIdState {
     /// Specifies that the handler allocated a new connection identifier. This happens during the
     /// processing of either the `MsgConnectionOpenInit` or `MsgConnectionOpenTry` message.
@@ -26,7 +26,7 @@ pub enum ConnectionIdState {
     Reused,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct ConnectionResult {
     /// The identifier for the connection which the handler processed. Typically this represents the
     /// newly-generated connection id (e.g., when processing `MsgConnectionOpenInit`) or

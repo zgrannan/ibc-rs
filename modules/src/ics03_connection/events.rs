@@ -63,7 +63,7 @@ panic!("No") //     let mut attr = Attributes::default();
 //     attr
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Attributes {
     pub height: Height,
     pub connection_id: Option<ConnectionId>,
@@ -84,7 +84,7 @@ impl Default for Attributes {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Clone)]
 pub struct OpenInit(Attributes);
 
 impl OpenInit {
@@ -131,7 +131,7 @@ impl From<OpenInit> for IbcEvent {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Clone)]
 pub struct OpenTry(Attributes);
 
 impl OpenTry {
@@ -178,7 +178,7 @@ impl From<OpenTry> for IbcEvent {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Clone)]
 pub struct OpenAck(Attributes);
 
 impl OpenAck {
@@ -225,7 +225,7 @@ impl From<OpenAck> for IbcEvent {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Clone)]
 pub struct OpenConfirm(Attributes);
 
 impl OpenConfirm {

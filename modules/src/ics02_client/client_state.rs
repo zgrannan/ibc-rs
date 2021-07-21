@@ -4,7 +4,7 @@ use prusti_contracts::*;
 use std::time::Duration;
 
 use prost_types::Any;
-use serde::{Deserialize, Serialize};
+// use serde::{Deserialize, Serialize};
 use tendermint::trust_threshold::TrustThresholdFraction;
 use tendermint_proto::Protobuf;
 
@@ -23,7 +23,7 @@ pub const TENDERMINT_CLIENT_STATE_TYPE_URL: &str = "/ibc.lightclients.tendermint
 pub const MOCK_CLIENT_STATE_TYPE_URL: &str = "/ibc.mock.ClientState";
 
 // #[dyn_clonable::clonable]
-pub trait ClientState: Clone + std::fmt::Debug + Send + Sync {
+pub trait ClientState: Clone + Send + Sync {
     /// Return the chain identifier which this client is serving (i.e., the client is verifying
     /// consensus states from this chain).
     fn chain_id(&self) -> ChainId;
@@ -42,8 +42,8 @@ pub trait ClientState: Clone + std::fmt::Debug + Send + Sync {
     fn wrap_any(self) -> AnyClientState;
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(tag = "type")]
+#[derive(Clone, PartialEq, Eq)]
+// #[serde(tag = "type")]
 pub enum AnyClientState {
     Tendermint(client_state::ClientState),
 
@@ -178,8 +178,8 @@ impl ClientState for AnyClientState {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(tag = "type")]
+#[derive(Clone, PartialEq, Eq)]
+// #[serde(tag = "type")]
 pub struct IdentifiedAnyClientState {
     pub client_id: ClientId,
     pub client_state: AnyClientState,

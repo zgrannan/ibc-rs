@@ -6,7 +6,14 @@ use thiserror::Error;
 
 pub type Error = anomaly::Error<Kind>;
 
-#[derive(Clone, Debug, Error, PartialEq, Eq)]
+impl std::fmt::Debug for Kind {
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("No")
+    }
+}
+
+
+#[derive(Clone, Error, PartialEq, Eq)]
 pub enum Kind {
     #[error("client state on destination chain not found, (client id: {0})")]
     ClientStateNotFound(ClientId),

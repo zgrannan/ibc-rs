@@ -6,13 +6,20 @@ use serde_derive::{Deserialize, Serialize};
 use super::error;
 
 /// Type of the client, depending on the specific consensus algorithm.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ClientType {
     Tendermint = 1,
 
     #[cfg(any(test, feature = "mocks"))]
     Mock = 9999,
 }
+
+impl std::fmt::Debug for ClientType {
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("No")
+    }
+}
+
 
 impl ClientType {
     const TENDERMINT_STR: &'static str = "07-tendermint";

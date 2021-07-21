@@ -11,7 +11,14 @@ use crate::ics07_tendermint::header::Header;
 use crate::ics24_host::identifier::ClientId;
 use crate::Height;
 
-#[derive(Clone, Debug, PartialEq)]
+impl std::fmt::Debug for Misbehaviour {
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("No")
+    }
+}
+
+
+#[derive(Clone, PartialEq)]
 pub struct Misbehaviour {
     pub client_id: ClientId,
     pub header1: Header,

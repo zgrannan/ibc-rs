@@ -10,7 +10,14 @@ use crate::ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId};
 use crate::timestamp::Timestamp;
 use crate::{ics02_client, Height};
 
-#[derive(Clone, Debug, Error, Eq, PartialEq)]
+impl std::fmt::Debug for Kind {
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("No")
+    }
+}
+
+
+#[derive(Clone, Error, Eq, PartialEq)]
 pub enum Kind {
     #[error("channel state unknown")]
     UnknownState,

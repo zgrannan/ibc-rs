@@ -4,7 +4,7 @@ use prusti_contracts::*;
 
 use chrono::{TimeZone, Utc};
 use prost_types::Timestamp;
-use serde::Serialize;
+// use serde::Serialize;
 use tendermint::{hash::Algorithm, time::Time, Hash};
 use tendermint_proto::Protobuf;
 
@@ -16,7 +16,14 @@ use crate::ics07_tendermint::error::{Error, Kind};
 use crate::ics07_tendermint::header::Header;
 use crate::ics23_commitment::commitment::CommitmentRoot;
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+impl std::fmt::Debug for ConsensusState {
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("No")
+    }
+}
+
+
+#[derive(Clone, PartialEq, Eq)]
 pub struct ConsensusState {
     pub timestamp: Time,
     pub root: CommitmentRoot,

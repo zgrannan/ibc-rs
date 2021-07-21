@@ -87,7 +87,7 @@ panic!("No") //     for tag in &event.attributes {
 
 /// NewBlock event signals the committing & execution of a new block.
 // TODO - find a better place for NewBlock
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy)]
 pub struct NewBlock {
     pub height: Height,
 }
@@ -111,7 +111,7 @@ impl From<NewBlock> for IbcEvent {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Attributes {
     pub height: Height,
     pub client_id: ClientId,
@@ -142,7 +142,7 @@ impl std::fmt::Display for Attributes {
 }
 
 /// CreateClient event signals the creation of a new on-chain client (IBC client).
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct CreateClient(pub Attributes);
 
 impl CreateClient {
@@ -191,7 +191,7 @@ impl std::fmt::Display for CreateClient {
 }
 
 /// UpdateClient event signals a recent update of an on-chain client (IBC Client).
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct UpdateClient {
     pub common: Attributes,
     pub header: Option<AnyHeader>,
@@ -269,7 +269,7 @@ impl std::fmt::Display for UpdateClient {
 
 /// ClientMisbehaviour event signals the update of an on-chain client (IBC Client) with evidence of
 /// misbehaviour.
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct ClientMisbehaviour(Attributes);
 
 impl ClientMisbehaviour {
@@ -307,7 +307,7 @@ impl From<ClientMisbehaviour> for IbcEvent {
 }
 
 /// Signals a recent upgrade of an on-chain client (IBC Client).
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct UpgradeClient(Attributes);
 
 impl UpgradeClient {

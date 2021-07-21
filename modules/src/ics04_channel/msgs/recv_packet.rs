@@ -16,7 +16,7 @@ pub const TYPE_URL: &str = "/ibc.core.channel.v1.MsgRecvPacket";
 ///
 /// Message definition for the "packet receiving" datagram.
 ///
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct MsgRecvPacket {
     pub packet: Packet,
     pub proofs: Proofs,

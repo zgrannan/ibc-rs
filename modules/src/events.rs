@@ -16,7 +16,7 @@ use prost::alloc::fmt::Formatter;
 use std::fmt;
 
 /// Events types
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum IbcEventType {
     CreateClient,
     UpdateClient,
@@ -37,7 +37,7 @@ impl IbcEventType {
 }
 
 /// Events created by the IBC component of a chain, destined for a relayer.
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum IbcEvent {
     NewBlock(NewBlock),
 
@@ -79,6 +79,13 @@ panic!("No") //         writeln!(f, "events:")?;
 //             writeln!(f, "\t{}", v)?;
 //         }
 //         Ok(())
+    }
+}
+
+
+impl std::fmt::Debug for IbcEvent {
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("No")
     }
 }
 
@@ -219,7 +226,7 @@ panic!("No") //         match self {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Clone)]
 pub struct RawObject {
     pub height: Height,
     pub action: String,
@@ -260,7 +267,7 @@ panic!("No") //     if let Some(message_action) = events.get("message.action") {
 #[macro_export]
 macro_rules! make_event {
     ($a:ident, $b:literal) => {
-        #[derive(Debug, Deserialize, Serialize, Clone)]
+        #[derive(Clone)]
         pub struct $a {
             pub data: ::std::collections::HashMap<String, Vec<String>>,
         }

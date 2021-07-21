@@ -12,7 +12,7 @@ use crate::Height;
 
 pub type Error = anomaly::Error<Kind>;
 
-#[derive(Clone, Debug, Error, PartialEq, Eq)]
+#[derive(Clone, Error, PartialEq, Eq)]
 pub enum Kind {
     #[error("unknown client type: {0}")]
     UnknownClientType(String),
@@ -113,6 +113,13 @@ pub enum Kind {
     #[error("upgraded client height {0} must be at greater than current client height {1}")]
     LowUpgradeHeight(Height, Height),
 }
+
+impl std::fmt::Debug for Kind {
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("No")
+    }
+}
+
 
 impl Kind {
 #[trusted]

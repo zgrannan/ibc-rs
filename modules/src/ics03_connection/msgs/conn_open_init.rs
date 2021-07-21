@@ -17,7 +17,7 @@ pub const TYPE_URL: &str = "/ibc.core.connection.v1.MsgConnectionOpenInit";
 ///
 /// Message definition `MsgConnectionOpenInit`  (i.e., the `ConnOpenInit` datagram).
 ///
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct MsgConnectionOpenInit {
     pub client_id: ClientId,
     pub counterparty: Counterparty,
@@ -138,7 +138,7 @@ mod tests {
 
     #[test]
     fn parse_connection_open_init_msg() {
-        #[derive(Clone, Debug, PartialEq)]
+        #[derive(Clone, PartialEq)]
         struct Test {
             name: String,
             raw: RawMsgConnectionOpenInit,

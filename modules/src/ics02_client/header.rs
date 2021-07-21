@@ -29,7 +29,13 @@ pub trait Header: Clone + std::fmt::Debug + Send + Sync {
     fn wrap_any(self) -> AnyHeader;
 }
 
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)] // TODO: Add Eq bound once possible
+impl std::fmt::Debug for AnyHeader {
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("No")
+    }
+}
+
+#[derive(Clone, PartialEq)] // TODO: Add Eq bound once possible
 #[allow(clippy::large_enum_variant)]
 pub enum AnyHeader {
     Tendermint(TendermintHeader),

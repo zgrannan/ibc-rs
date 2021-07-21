@@ -4,7 +4,7 @@ use prusti_contracts::*;
 
 use chrono::{DateTime, Utc};
 use prost_types::Any;
-use serde::Serialize;
+// use serde::Serialize;
 use tendermint_proto::Protobuf;
 
 use ibc_proto::ibc::core::client::v1::ConsensusStateWithHeight;
@@ -43,8 +43,14 @@ pub trait ConsensusState: Clone + std::fmt::Debug + Send + Sync {
     fn wrap_any(self) -> AnyConsensusState;
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
-#[serde(tag = "type")]
+impl std::fmt::Debug for AnyConsensusState {
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("No")
+    }
+}
+
+#[derive(Clone, PartialEq, Eq)]
+// #[serde(tag = "type")]
 pub enum AnyConsensusState {
     Tendermint(consensus_state::ConsensusState),
 
@@ -122,7 +128,7 @@ impl From<AnyConsensusState> for Any {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct AnyConsensusStateWithHeight {
     pub height: Height,
     pub consensus_state: AnyConsensusState,
@@ -182,7 +188,7 @@ impl ConsensusState for AnyConsensusState {
 }
 
 /// Query request for a single client event, identified by `event_id`, for `client_id`.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct QueryClientEventRequest {
     pub height: crate::Height,
     pub event_id: IbcEventType,

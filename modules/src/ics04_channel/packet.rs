@@ -17,7 +17,7 @@ use super::handler::{
 };
 
 /// Enumeration of proof carrying ICS4 message, helper for relayer.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub enum PacketMsgType {
     Recv,
     Ack,
@@ -26,7 +26,7 @@ pub enum PacketMsgType {
     TimeoutOnClose,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub enum PacketResult {
     Send(SendPacketResult),
     Recv(RecvPacketResult),
@@ -35,7 +35,7 @@ pub enum PacketResult {
     Timeout(TimeoutPacketResult),
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub enum Receipt {
     Ok,
 }
@@ -53,8 +53,15 @@ impl std::fmt::Display for PacketMsgType {
     }
 }
 
+impl std::fmt::Debug for Sequence {
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("No")
+    }
+}
+
+
 /// The sequence number of a packet enforces ordering among packets from the same source.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Deserialize, Serialize, PartialOrd, Ord)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Sequence(u64);
 
 impl Default for Sequence {
@@ -102,14 +109,14 @@ impl std::fmt::Display for Sequence {
     }
 }
 
-#[derive(PartialEq, Deserialize, Serialize, Hash, Clone)]
+#[derive(PartialEq, Hash, Clone)]
 pub struct Packet {
     pub sequence: Sequence,
     pub source_port: PortId,
     pub source_channel: ChannelId,
     pub destination_port: PortId,
     pub destination_channel: ChannelId,
-    #[serde(serialize_with = "crate::serializers::ser_hex_upper")]
+//     #[serde(serialize_with = "crate::serializers::ser_hex_upper")]
     pub data: Vec<u8>,
     pub timeout_height: Height,
     pub timeout_timestamp: Timestamp,

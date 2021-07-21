@@ -1,7 +1,7 @@
 use std::convert::TryFrom;
 
 use prusti_contracts::*;
-use serde::{Deserialize, Serialize};
+// use serde::{Deserialize, Serialize};
 use tendermint_proto::Protobuf;
 
 use ibc_proto::ibc::core::connection::v1::Version as RawVersion;
@@ -9,7 +9,7 @@ use ibc_proto::ibc::core::connection::v1::Version as RawVersion;
 use crate::ics03_connection::error::Kind;
 
 /// Stores the identifier and the features supported by a version
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub struct Version {
     /// unique version identifier
     identifier: String,

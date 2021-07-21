@@ -12,7 +12,7 @@ use crate::ics04_channel::packet::{PacketResult, Sequence};
 use crate::ics04_channel::{context::ChannelReader, error::Error, error::Kind};
 use crate::ics24_host::identifier::{ChannelId, PortId};
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct AckPacketResult {
     pub port_id: PortId,
     pub channel_id: ChannelId,

@@ -5,7 +5,7 @@ use std::time::Duration;
 use std::u64;
 
 use anomaly::fail;
-use serde::{Deserialize, Serialize};
+// use serde::{Deserialize, Serialize};
 use tendermint_proto::Protobuf;
 
 use ibc_proto::ibc::core::connection::v1::{
@@ -20,7 +20,7 @@ use crate::ics24_host::error::ValidationError;
 use crate::ics24_host::identifier::{ClientId, ConnectionId};
 use crate::timestamp::ZERO_DURATION;
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub struct IdentifiedConnectionEnd {
     pub connection_id: ConnectionId,
     pub connection_end: ConnectionEnd,
@@ -84,7 +84,7 @@ impl From<IdentifiedConnectionEnd> for RawIdentifiedConnection {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub struct ConnectionEnd {
     pub state: State,
     client_id: ClientId,
@@ -250,7 +250,7 @@ impl ConnectionEnd {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub struct Counterparty {
     client_id: ClientId,
     pub connection_id: Option<ConnectionId>,
@@ -325,12 +325,13 @@ impl Counterparty {
     }
 
     /// Getter for the client id.
-#[trusted]
+    #[trusted]
     pub fn client_id(&self) -> &ClientId {
         &self.client_id
     }
 
     /// Getter for connection id.
+    #[trusted]
     pub fn connection_id(&self) -> Option<&ConnectionId> {
         self.connection_id.as_ref()
     }
@@ -339,13 +340,13 @@ impl Counterparty {
         &self.prefix
     }
 
-#[trusted]
+    #[trusted]
     pub fn validate_basic(&self) -> Result<(), ValidationError> {
         Ok(())
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
 pub enum State {
     Uninitialized = 0,
     Init = 1,

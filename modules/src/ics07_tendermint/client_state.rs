@@ -3,7 +3,7 @@ use std::str::FromStr;
 use prusti_contracts::*;
 use std::time::Duration;
 
-use serde::{Deserialize, Serialize};
+// use serde::{Deserialize, Serialize};
 use tendermint::trust_threshold::{
     TrustThresholdFraction as TrustThreshold, TrustThresholdFraction,
 };
@@ -20,7 +20,7 @@ use crate::ics24_host::identifier::ChainId;
 use crate::timestamp::ZERO_DURATION;
 use crate::Height;
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct ClientState {
     pub chain_id: ChainId,
     pub trust_level: TrustThreshold,
@@ -34,7 +34,7 @@ pub struct ClientState {
     pub allow_update: AllowUpdate,
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub struct AllowUpdate {
     pub after_expiry: bool,
     pub after_misbehaviour: bool,
@@ -268,7 +268,7 @@ mod tests {
 
     #[test]
     fn client_state_new() {
-        #[derive(Clone, Debug, PartialEq)]
+        #[derive(Clone, PartialEq)]
         struct ClientStateParams {
             id: ChainId,
             trust_level: TrustThreshold,
