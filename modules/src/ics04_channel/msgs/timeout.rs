@@ -1,5 +1,6 @@
 use std::convert::{TryFrom, TryInto};
 
+use prusti_contracts::*;
 use tendermint_proto::Protobuf;
 
 use ibc_proto::ibc::core::channel::v1::MsgTimeout as RawMsgTimeout;
@@ -43,10 +44,12 @@ impl Msg for MsgTimeout {
     type ValidationError = Error;
     type Raw = RawMsgTimeout;
 
+#[trusted]
     fn route(&self) -> String {
         crate::keys::ROUTER_KEY.to_string()
     }
 
+#[trusted]
     fn type_url(&self) -> String {
         TYPE_URL.to_string()
     }
@@ -57,6 +60,7 @@ impl Protobuf<RawMsgTimeout> for MsgTimeout {}
 impl TryFrom<RawMsgTimeout> for MsgTimeout {
     type Error = anomaly::Error<Kind>;
 
+#[trusted]
     fn try_from(raw_msg: RawMsgTimeout) -> Result<Self, Self::Error> {
         let proofs = Proofs::new(
             raw_msg.proof_unreceived.into(),

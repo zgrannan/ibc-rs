@@ -478,6 +478,7 @@ impl From<CloseInit> for IbcEvent {
 }
 
 impl std::fmt::Display for CloseInit {
+#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(
             f,
@@ -513,6 +514,7 @@ impl From<Attributes> for CloseConfirm {
 
 impl TryFrom<RawObject> for CloseConfirm {
     type Error = BoxError;
+#[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
         Ok(CloseConfirm(Attributes {
             height: obj.height,
@@ -529,6 +531,7 @@ impl TryFrom<RawObject> for CloseConfirm {
 }
 
 impl From<CloseConfirm> for IbcEvent {
+#[trusted]
     fn from(v: CloseConfirm) -> Self {
         IbcEvent::CloseConfirmChannel(v)
     }
@@ -599,6 +602,7 @@ impl TryFrom<RawObject> for SendPacket {
 }
 
 impl From<SendPacket> for IbcEvent {
+#[trusted]
     fn from(v: SendPacket) -> Self {
         IbcEvent::SendPacket(v)
     }
@@ -649,6 +653,7 @@ impl TryFrom<RawObject> for ReceivePacket {
 }
 
 impl From<ReceivePacket> for IbcEvent {
+#[trusted]
     fn from(v: ReceivePacket) -> Self {
         IbcEvent::ReceivePacket(v)
     }
@@ -706,6 +711,7 @@ impl TryFrom<RawObject> for WriteAcknowledgement {
 }
 
 impl From<WriteAcknowledgement> for IbcEvent {
+#[trusted]
     fn from(v: WriteAcknowledgement) -> Self {
         IbcEvent::WriteAcknowledgement(v)
     }
@@ -752,6 +758,7 @@ impl TryFrom<RawObject> for AcknowledgePacket {
 }
 
 impl From<AcknowledgePacket> for IbcEvent {
+#[trusted]
     fn from(v: AcknowledgePacket) -> Self {
         IbcEvent::AcknowledgePacket(v)
     }
@@ -801,6 +808,7 @@ impl TryFrom<RawObject> for TimeoutPacket {
 }
 
 impl From<TimeoutPacket> for IbcEvent {
+#[trusted]
     fn from(v: TimeoutPacket) -> Self {
         IbcEvent::TimeoutPacket(v)
     }
@@ -850,6 +858,7 @@ impl TryFrom<RawObject> for TimeoutOnClosePacket {
 }
 
 impl From<TimeoutOnClosePacket> for IbcEvent {
+#[trusted]
     fn from(v: TimeoutOnClosePacket) -> Self {
         IbcEvent::TimeoutOnClosePacket(v)
     }

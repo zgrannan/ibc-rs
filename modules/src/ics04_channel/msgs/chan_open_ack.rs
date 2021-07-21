@@ -1,5 +1,6 @@
 use crate::ics04_channel::channel::validate_version;
 use crate::ics04_channel::error::{Error, Kind};
+use prusti_contracts::*;
 use crate::ics24_host::identifier::{ChannelId, PortId};
 use crate::proofs::Proofs;
 use crate::signer::Signer;
@@ -69,10 +70,12 @@ impl Msg for MsgChannelOpenAck {
     type ValidationError = Error;
     type Raw = RawMsgChannelOpenAck;
 
+#[trusted]
     fn route(&self) -> String {
         crate::keys::ROUTER_KEY.to_string()
     }
 
+#[trusted]
     fn type_url(&self) -> String {
         TYPE_URL.to_string()
     }
@@ -83,6 +86,7 @@ impl Protobuf<RawMsgChannelOpenAck> for MsgChannelOpenAck {}
 impl TryFrom<RawMsgChannelOpenAck> for MsgChannelOpenAck {
     type Error = anomaly::Error<Kind>;
 
+#[trusted]
     fn try_from(raw_msg: RawMsgChannelOpenAck) -> Result<Self, Self::Error> {
         let proofs = Proofs::new(
             raw_msg.proof_try.into(),

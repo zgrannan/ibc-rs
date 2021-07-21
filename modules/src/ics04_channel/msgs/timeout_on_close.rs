@@ -1,5 +1,6 @@
 use std::convert::{TryFrom, TryInto};
 
+use prusti_contracts::*;
 use tendermint_proto::Protobuf;
 
 use ibc_proto::ibc::core::channel::v1::MsgTimeoutOnClose as RawMsgTimeoutOnClose;
@@ -43,10 +44,12 @@ impl Msg for MsgTimeoutOnClose {
     type ValidationError = Error;
     type Raw = RawMsgTimeoutOnClose;
 
+#[trusted]
     fn route(&self) -> String {
         crate::keys::ROUTER_KEY.to_string()
     }
 
+#[trusted]
     fn type_url(&self) -> String {
         TYPE_URL.to_string()
     }

@@ -1,5 +1,6 @@
 use std::convert::{TryFrom, TryInto};
 
+use prusti_contracts::*;
 use tendermint_proto::Protobuf;
 
 use ibc_proto::ibc::core::channel::v1::MsgAcknowledgement as RawMsgAcknowledgement;
@@ -51,10 +52,12 @@ impl Msg for MsgAcknowledgement {
     type ValidationError = Error;
     type Raw = RawMsgAcknowledgement;
 
+#[trusted]
     fn route(&self) -> String {
         crate::keys::ROUTER_KEY.to_string()
     }
 
+#[trusted]
     fn type_url(&self) -> String {
         TYPE_URL.to_string()
     }
@@ -65,6 +68,7 @@ impl Protobuf<RawMsgAcknowledgement> for MsgAcknowledgement {}
 impl TryFrom<RawMsgAcknowledgement> for MsgAcknowledgement {
     type Error = anomaly::Error<Kind>;
 
+#[trusted]
     fn try_from(raw_msg: RawMsgAcknowledgement) -> Result<Self, Self::Error> {
         let proofs = Proofs::new(
             raw_msg.proof_acked.into(),

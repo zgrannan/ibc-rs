@@ -1,5 +1,6 @@
 use crate::ics04_channel::channel::{validate_version, ChannelEnd};
 use crate::ics04_channel::error::{Error, Kind};
+use prusti_contracts::*;
 use crate::ics24_host::error::ValidationError;
 use crate::ics24_host::error::ValidationKind;
 use crate::ics24_host::identifier::{ChannelId, PortId};
@@ -68,10 +69,12 @@ impl Msg for MsgChannelOpenTry {
     type ValidationError = Error;
     type Raw = RawMsgChannelOpenTry;
 
+#[trusted]
     fn route(&self) -> String {
         crate::keys::ROUTER_KEY.to_string()
     }
 
+#[trusted]
     fn type_url(&self) -> String {
         TYPE_URL.to_string()
     }
@@ -89,6 +92,7 @@ impl Protobuf<RawMsgChannelOpenTry> for MsgChannelOpenTry {}
 impl TryFrom<RawMsgChannelOpenTry> for MsgChannelOpenTry {
     type Error = anomaly::Error<Kind>;
 
+#[trusted]
     fn try_from(raw_msg: RawMsgChannelOpenTry) -> Result<Self, Self::Error> {
         let proofs = Proofs::new(
             raw_msg.proof_init.into(),

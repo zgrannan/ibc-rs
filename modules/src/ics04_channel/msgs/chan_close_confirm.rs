@@ -1,5 +1,6 @@
 use std::convert::{TryFrom, TryInto};
 
+use prusti_contracts::*;
 use tendermint_proto::Protobuf;
 
 use ibc_proto::ibc::core::channel::v1::MsgChannelCloseConfirm as RawMsgChannelCloseConfirm;
@@ -50,10 +51,12 @@ impl Msg for MsgChannelCloseConfirm {
     type ValidationError = Error;
     type Raw = RawMsgChannelCloseConfirm;
 
+#[trusted]
     fn route(&self) -> String {
         crate::keys::ROUTER_KEY.to_string()
     }
 
+#[trusted]
     fn type_url(&self) -> String {
         TYPE_URL.to_string()
     }
@@ -64,6 +67,7 @@ impl Protobuf<RawMsgChannelCloseConfirm> for MsgChannelCloseConfirm {}
 impl TryFrom<RawMsgChannelCloseConfirm> for MsgChannelCloseConfirm {
     type Error = anomaly::Error<Kind>;
 
+#[trusted]
     fn try_from(raw_msg: RawMsgChannelCloseConfirm) -> Result<Self, Self::Error> {
         let proofs = Proofs::new(
             raw_msg.proof_init.into(),

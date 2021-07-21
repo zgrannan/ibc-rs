@@ -1,5 +1,6 @@
 use crate::ics04_channel::channel::ChannelEnd;
 use crate::ics04_channel::error::{Error, Kind};
+use prusti_contracts::*;
 use crate::ics24_host::identifier::PortId;
 use crate::signer::Signer;
 use crate::tx_msg::Msg;
@@ -45,10 +46,12 @@ impl Msg for MsgChannelOpenInit {
     type ValidationError = Error;
     type Raw = RawMsgChannelOpenInit;
 
+#[trusted]
     fn route(&self) -> String {
         crate::keys::ROUTER_KEY.to_string()
     }
 
+#[trusted]
     fn type_url(&self) -> String {
         TYPE_URL.to_string()
     }

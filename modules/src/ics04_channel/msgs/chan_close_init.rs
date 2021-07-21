@@ -1,5 +1,6 @@
 use std::convert::TryFrom;
 
+use prusti_contracts::*;
 use tendermint_proto::Protobuf;
 
 use ibc_proto::ibc::core::channel::v1::MsgChannelCloseInit as RawMsgChannelCloseInit;
@@ -43,10 +44,12 @@ impl Msg for MsgChannelCloseInit {
     type ValidationError = Error;
     type Raw = RawMsgChannelCloseInit;
 
+#[trusted]
     fn route(&self) -> String {
         crate::keys::ROUTER_KEY.to_string()
     }
 
+#[trusted]
     fn type_url(&self) -> String {
         TYPE_URL.to_string()
     }
