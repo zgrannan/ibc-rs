@@ -167,9 +167,9 @@ pub type ParseTimestampError = anomaly::Error<ParseTimestampErrorKind>;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ParseTimestampErrorKind {
-    ParseIntError(ParseIntError),
+    ParseIntError,
 
-    TryFromIntError(TryFromIntError),
+    TryFromIntError,
 }
 
 impl Display for ParseTimestampErrorKind {
@@ -194,10 +194,10 @@ impl FromStr for Timestamp {
     type Err = ParseTimestampError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let seconds = u64::from_str(s).map_err(ParseTimestampErrorKind::ParseIntError)?;
+        let seconds = u64::from_str(s).map_err(|_| ParseTimestampErrorKind::ParseIntError)?;
 
         Timestamp::from_nanoseconds(seconds)
-            .map_err(|err| ParseTimestampErrorKind::TryFromIntError(err).into())
+            .map_err(|err| ParseTimestampErrorKind::TryFromIntError.into())
     }
 }
 
