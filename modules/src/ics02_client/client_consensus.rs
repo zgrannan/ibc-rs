@@ -27,7 +27,7 @@ pub const TENDERMINT_CONSENSUS_STATE_TYPE_URL: &str =
 
 pub const MOCK_CONSENSUS_STATE_TYPE_URL: &str = "/ibc.mock.ConsensusState";
 
-#[dyn_clonable::clonable]
+// #[dyn_clonable::clonable]
 pub trait ConsensusState: Clone + std::fmt::Debug + Send + Sync {
     /// Type of client associated with this consensus state (eg. Tendermint)
     fn client_type(&self) -> ClientType;

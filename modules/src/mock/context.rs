@@ -40,7 +40,7 @@ use crate::timestamp::Timestamp;
 use crate::Height;
 
 /// A context implementing the dependencies necessary for testing any IBC module.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct MockContext {
     /// The type of host chain underlying this mock context.
     host_chain_type: HostType,

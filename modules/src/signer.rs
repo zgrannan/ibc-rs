@@ -3,7 +3,7 @@ use std::{convert::Infallible, fmt::Display, str::FromStr};
 use prusti_contracts::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Signer(String);
 
 impl Signer {

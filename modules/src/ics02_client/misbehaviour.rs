@@ -20,7 +20,7 @@ pub const TENDERMINT_MISBEHAVIOR_TYPE_URL: &str = "/ibc.lightclients.tendermint.
 #[cfg(any(test, feature = "mocks"))]
 pub const MOCK_MISBEHAVIOUR_TYPE_URL: &str = "/ibc.mock.Misbehavior";
 
-#[dyn_clonable::clonable]
+// #[dyn_clonable::clonable]
 pub trait Misbehaviour: Clone + std::fmt::Debug + Send + Sync {
     /// The type of client (eg. Tendermint)
     fn client_id(&self) -> &ClientId;

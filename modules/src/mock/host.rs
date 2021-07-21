@@ -20,7 +20,7 @@ use crate::Height;
 /// - `Mock` defines that the context history consists of `MockHeader` blocks.
 /// - `SyntheticTendermint`: the context has synthetically-generated Tendermint (light) blocks.
 /// See also the `HostBlock` enum to get more insights into the underlying block type.
-#[derive(Clone, Debug, Copy)]
+#[derive(Clone, Copy)]
 pub enum HostType {
     Mock,
     SyntheticTendermint,
@@ -28,7 +28,7 @@ pub enum HostType {
 
 /// Depending on `HostType` (the type of host chain underlying a context mock), this enum defines
 /// the type of blocks composing the history of the host chain.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub enum HostBlock {
     Mock(MockHeader),
     SyntheticTendermint(Box<TmLightBlock>),

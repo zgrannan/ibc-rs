@@ -1,7 +1,14 @@
 use prost::DecodeError;
 use thiserror::Error;
 
-#[derive(Clone, Debug, Error, PartialEq, Eq)]
+impl std::fmt::Debug for Error {
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("No")
+    }
+}
+
+
+#[derive(Clone, Error, PartialEq, Eq)]
 pub enum Error {
     #[error("invalid raw merkle proof")]
     InvalidRawMerkleProof(DecodeError),

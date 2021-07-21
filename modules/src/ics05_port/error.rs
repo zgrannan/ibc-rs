@@ -4,7 +4,14 @@ use prusti_contracts::*;
 
 pub type Error = anomaly::Error<Kind>;
 
-#[derive(Clone, Debug, Error)]
+impl std::fmt::Debug for Kind {
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("No")
+    }
+}
+
+
+#[derive(Clone, Error)]
 pub enum Kind {
     #[error("port unknown")]
     UnknownPort,

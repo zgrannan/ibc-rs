@@ -21,7 +21,7 @@ use crate::Height;
 
 /// A mock of an IBC client record as it is stored in a mock context.
 /// For testing ICS02 handlers mostly, cf. `MockClientContext`.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct MockClientRecord {
     /// The type of this client.
     pub client_type: ClientType,
@@ -36,7 +36,7 @@ pub struct MockClientRecord {
 /// A mock of a client state. For an example of a real structure that this mocks, you can see
 /// `ClientState` of ics07_tendermint/client_state.rs.
 // TODO: `MockClientState` should evolve, at the very least needs a `is_frozen` boolean field.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub struct MockClientState(pub MockHeader);
 
 impl Protobuf<RawMockClientState> for MockClientState {}
@@ -108,7 +108,7 @@ impl From<MockConsensusState> for MockClientState {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct MockConsensusState {
     pub header: MockHeader,
     pub root: CommitmentRoot,

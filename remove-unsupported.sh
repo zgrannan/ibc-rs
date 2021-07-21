@@ -19,7 +19,7 @@ function remove_derive {
     sed -i "s/#\[derive($1, \(.*\))/#\[derive(\1)/" "$FILENAME"
 }
 
-comment "use serde::"
+comment "#\[dyn_clonable::clonable\]"
 
 remove_derive Debug
 remove_derive Deserialize

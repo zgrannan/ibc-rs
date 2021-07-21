@@ -1,6 +1,6 @@
 //! Capabilities: this is a placeholder.
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct Capability {
     index: u64,
 }

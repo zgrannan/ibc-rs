@@ -1,10 +1,17 @@
+
 use anomaly::{BoxError, Context};
 use thiserror::Error;
 use prusti_contracts::*;
 
 pub type Error = anomaly::Error<Kind>;
 
-#[derive(Clone, Debug, Error, PartialEq, Eq)]
+impl std::fmt::Debug for Kind {
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("No")
+    }
+}
+
+#[derive(Clone, Error, PartialEq, Eq)]
 pub enum Kind {
     #[error("error raised by message handler")]
     HandlerRaisedError,

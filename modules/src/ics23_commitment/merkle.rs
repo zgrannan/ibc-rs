@@ -22,7 +22,7 @@ panic!("No") //     if prefix.is_empty() {
 //     Ok(MerklePath { key_path: result })
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct MerkleProof {
     pub proof: Vec<CommitmentProofBytes>,
 }
@@ -33,7 +33,7 @@ pub struct MerkleProof {
 // - RawProofOps: in tendermint-proto/tendermint.cyrpto.rs:ProofOps
 // - RawMerkleProof: in ibc-proto/ibc.core.commitment.v1.rs:MerkleProof
 //     - structure that includes a RawProofOps in its only `proof` field.
-//         #[derive(Clone, PartialEq, ::prost::Message)]
+//         #[derive(Clone, PartialEq)]
 //         pub struct MerkleProof {
 //             #[prost(message, optional, tag="1")]
 //             pub proof: ::std::option::Option<::tendermint_proto::crypto::ProofOps>,
