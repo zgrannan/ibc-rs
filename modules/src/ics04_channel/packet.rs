@@ -41,6 +41,7 @@ pub enum Receipt {
 }
 
 impl std::fmt::Display for PacketMsgType {
+#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             PacketMsgType::Recv => write!(f, "(PacketMsgType::Recv)"),
@@ -95,6 +96,7 @@ impl From<Sequence> for u64 {
 }
 
 impl std::fmt::Display for Sequence {
+#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "{}", self.0)
     }
@@ -114,6 +116,7 @@ pub struct Packet {
 }
 
 impl Packet {
+#[trusted]
     pub fn timed_out(&self, dst_chain_height: Height) -> bool {
         (self.timeout_height != Height::zero() && self.timeout_height < dst_chain_height)
             || (self.timeout_timestamp != Timestamp::none()
@@ -122,6 +125,7 @@ impl Packet {
 }
 
 impl std::fmt::Debug for Packet {
+#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(
             f,
@@ -133,6 +137,7 @@ impl std::fmt::Debug for Packet {
 
 /// Custom debug output to omit the packet data
 impl std::fmt::Display for Packet {
+#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(
             f,

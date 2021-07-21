@@ -97,6 +97,7 @@ impl TryFrom<RawMsgAcknowledgement> for MsgAcknowledgement {
 }
 
 impl From<MsgAcknowledgement> for RawMsgAcknowledgement {
+#[trusted]
     fn from(domain_msg: MsgAcknowledgement) -> Self {
         RawMsgAcknowledgement {
             packet: Some(domain_msg.packet.into()),

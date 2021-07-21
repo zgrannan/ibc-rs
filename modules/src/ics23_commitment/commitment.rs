@@ -119,6 +119,7 @@ impl CommitmentPrefix {
         self.bytes.len() == 0
     }
 
+#[trusted]
     pub fn as_bytes(&self) -> &[u8] {
         &self.bytes
     }
@@ -136,6 +137,7 @@ impl From<Vec<u8>> for CommitmentPrefix {
 }
 
 impl fmt::Debug for CommitmentPrefix {
+#[trusted]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let converted = std::str::from_utf8(self.as_bytes());
         match converted {

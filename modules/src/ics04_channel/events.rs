@@ -251,6 +251,7 @@ impl OpenTry {
     pub fn attributes(&self) -> &Attributes {
         &self.0
     }
+#[trusted]
     pub fn channel_id(&self) -> Option<&ChannelId> {
         self.0.channel_id.as_ref()
     }
@@ -304,6 +305,7 @@ impl OpenAck {
     pub fn attributes(&self) -> &Attributes {
         &self.0
     }
+#[trusted]
     pub fn channel_id(&self) -> Option<&ChannelId> {
         self.0.channel_id.as_ref()
     }
@@ -361,6 +363,7 @@ impl From<OpenAck> for IbcEvent {
 pub struct OpenConfirm(Attributes);
 
 impl OpenConfirm {
+#[trusted]
     pub fn attributes(&self) -> &Attributes {
         &self.0
     }
@@ -428,6 +431,7 @@ impl CloseInit {
             .expect("CloseInit should always have a channel_id")
     }
 
+#[trusted]
     pub fn counterparty_port_id(&self) -> &PortId {
         &self.0.counterparty_port_id
     }
@@ -718,6 +722,7 @@ impl From<WriteAcknowledgement> for IbcEvent {
 }
 
 impl std::fmt::Display for WriteAcknowledgement {
+#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(
             f,

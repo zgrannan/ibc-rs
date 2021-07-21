@@ -44,6 +44,7 @@ impl ChainId {
     }
 
     /// Get a reference to the underlying string.
+#[trusted]
     pub fn as_str(&self) -> &str {
         &self.id
     }
@@ -86,6 +87,7 @@ impl ChainId {
     /// assert_eq!(ChainId::is_epoch_format("chainA"), false);
     /// assert_eq!(ChainId::is_epoch_format("chainA-1"), true);
     /// ```
+#[trusted]
     pub fn is_epoch_format(chain_id: &str) -> bool {
         let re = regex::Regex::new(r"^.+[^-]-{1}[1-9][0-9]*$").unwrap();
         re.is_match(chain_id)
@@ -162,6 +164,7 @@ impl ClientId {
     /// assert!(tm_client_id.is_ok());
     /// tm_client_id.map(|id| { assert_eq!(&id, "07-tendermint-0") });
     /// ```
+#[trusted]
     pub fn new(ctype: ClientType, counter: u64) -> Result<Self, ValidationError> {
         let prefix = Self::prefix(ctype);
         let id = format!("{}-{}", prefix, counter);
@@ -188,6 +191,7 @@ impl ClientId {
     }
 
     /// Get this identifier as a borrowed byte slice
+#[trusted]
     pub fn as_bytes(&self) -> &[u8] {
         self.0.as_bytes()
     }
@@ -257,11 +261,13 @@ impl ConnectionId {
     }
 
     /// Get this identifier as a borrowed `&str`
+#[trusted]
     pub fn as_str(&self) -> &str {
         &self.0
     }
 
     /// Get this identifier as a borrowed byte slice
+#[trusted]
     pub fn as_bytes(&self) -> &[u8] {
         self.0.as_bytes()
     }
@@ -364,6 +370,7 @@ impl ChannelId {
         Self::from_str(id.as_str()).unwrap()
     }
 
+#[trusted]
     pub fn prefix() -> &'static str {
         "channel"
     }
@@ -397,6 +404,7 @@ impl FromStr for ChannelId {
 }
 
 impl Default for ChannelId {
+#[trusted]
     fn default() -> Self {
         Self::new(0)
     }
@@ -404,6 +412,7 @@ impl Default for ChannelId {
 
 /// Equality check against string literal (satisfies &ChannelId == &str).
 impl PartialEq<str> for ChannelId {
+#[trusted]
     fn eq(&self, other: &str) -> bool {
         self.as_str().eq(other)
     }

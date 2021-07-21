@@ -1,5 +1,6 @@
 use crate::events::IbcEvent;
 use std::marker::PhantomData;
+use prusti_contracts::*;
 
 pub type HandlerResult<T, E> = Result<HandlerOutput<T>, E>;
 
@@ -11,6 +12,7 @@ pub struct HandlerOutput<T> {
 }
 
 impl<T> HandlerOutput<T> {
+#[trusted]
     pub fn builder() -> HandlerOutputBuilder<T> {
         HandlerOutputBuilder::new()
     }

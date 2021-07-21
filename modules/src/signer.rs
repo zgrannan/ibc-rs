@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 pub struct Signer(String);
 
 impl Signer {
+#[trusted]
     pub fn new(s: impl ToString) -> Self {
 panic!("No") //         Self(s.to_string())
     }

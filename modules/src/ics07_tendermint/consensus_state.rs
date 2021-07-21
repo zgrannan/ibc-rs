@@ -91,6 +91,7 @@ impl From<ConsensusState> for RawConsensusState {
 }
 
 impl From<tendermint::block::Header> for ConsensusState {
+#[trusted]
     fn from(header: tendermint::block::Header) -> Self {
         Self {
             root: CommitmentRoot::from_bytes(header.app_hash.as_ref()),

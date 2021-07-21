@@ -60,6 +60,7 @@ impl Protobuf<RawMsgChannelCloseInit> for MsgChannelCloseInit {}
 impl TryFrom<RawMsgChannelCloseInit> for MsgChannelCloseInit {
     type Error = anomaly::Error<Kind>;
 
+#[trusted]
     fn try_from(raw_msg: RawMsgChannelCloseInit) -> Result<Self, Self::Error> {
         Ok(MsgChannelCloseInit {
             port_id: raw_msg

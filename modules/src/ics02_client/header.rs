@@ -25,6 +25,7 @@ pub trait Header: Clone + std::fmt::Debug + Send + Sync {
     fn height(&self) -> Height;
 
     /// Wrap into an `AnyHeader`
+#[trusted]
     fn wrap_any(self) -> AnyHeader;
 }
 

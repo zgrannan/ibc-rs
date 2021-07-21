@@ -1,5 +1,6 @@
 use std::convert::{TryFrom, TryInto};
 use std::str::FromStr;
+use prusti_contracts::*;
 use std::time::Duration;
 use std::u64;
 
@@ -47,6 +48,7 @@ impl Protobuf<RawIdentifiedConnection> for IdentifiedConnectionEnd {}
 impl TryFrom<RawIdentifiedConnection> for IdentifiedConnectionEnd {
     type Error = anomaly::Error<Kind>;
 
+#[trusted]
     fn try_from(value: RawIdentifiedConnection) -> Result<Self, Self::Error> {
         let raw_connection_end = RawConnectionEnd {
             client_id: value.client_id.to_string(),
@@ -91,6 +93,7 @@ pub struct ConnectionEnd {
 }
 
 impl Default for ConnectionEnd {
+#[trusted]
     fn default() -> Self {
         Self {
             state: State::Uninitialized,
@@ -106,6 +109,7 @@ impl Protobuf<RawConnectionEnd> for ConnectionEnd {}
 
 impl TryFrom<RawConnectionEnd> for ConnectionEnd {
     type Error = anomaly::Error<Kind>;
+#[trusted]
     fn try_from(value: RawConnectionEnd) -> Result<Self, Self::Error> {
         let state = value.state.try_into()?;
         if state == State::Uninitialized {
@@ -180,6 +184,7 @@ impl ConnectionEnd {
     }
 
     /// Setter for the `counterparty` field.
+#[trusted]
     pub fn set_counterparty(&mut self, new_cparty: Counterparty) {
         self.counterparty = new_cparty;
     }
@@ -195,10 +200,12 @@ impl ConnectionEnd {
     }
 
     /// Helper function to compare the client id of this end with another client identifier.
+#[trusted]
     pub fn client_id_matches(&self, other: &ClientId) -> bool {
         self.client_id.eq(other)
     }
 
+#[trusted]
     pub fn is_open(&self) -> bool {
         self.state_matches(&State::Open)
     }
@@ -247,6 +254,7 @@ pub struct Counterparty {
 }
 
 impl Default for Counterparty {
+#[trusted]
     fn default() -> Self {
         Counterparty {
             client_id: Default::default(),
@@ -261,6 +269,7 @@ impl Default for Counterparty {
 impl TryFrom<RawCounterparty> for Counterparty {
     type Error = anomaly::Error<Kind>;
 
+#[trusted]
     fn try_from(value: RawCounterparty) -> Result<Self, Self::Error> {
         let connection_id = Some(value.connection_id)
             .filter(|x| !x.is_empty())
@@ -297,6 +306,7 @@ impl From<Counterparty> for RawCounterparty {
 }
 
 impl Counterparty {
+#[trusted]
     pub fn new(
         client_id: ClientId,
         connection_id: Option<ConnectionId>,
@@ -323,6 +333,7 @@ impl Counterparty {
         &self.prefix
     }
 
+#[trusted]
     pub fn validate_basic(&self) -> Result<(), ValidationError> {
         Ok(())
     }
@@ -348,6 +359,7 @@ impl State {
     }
 
     /// Parses the State out from a i32.
+#[trusted]
     pub fn from_i32(s: i32) -> Result<Self, Error> {
         match s {
             0 => Ok(Self::Uninitialized),
@@ -359,6 +371,7 @@ impl State {
     }
 
     /// Returns whether or not this connection state is `Open`.
+#[trusted]
     pub fn is_open(self) -> bool {
         self == State::Open
     }

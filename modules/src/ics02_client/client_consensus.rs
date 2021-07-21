@@ -39,6 +39,7 @@ pub trait ConsensusState: Clone + std::fmt::Debug + Send + Sync {
     fn validate_basic(&self) -> Result<(), Box<dyn std::error::Error>>;
 
     /// Wrap into an `AnyConsensusState`
+#[trusted]
     fn wrap_any(self) -> AnyConsensusState;
 }
 

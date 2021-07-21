@@ -91,6 +91,7 @@ impl TryFrom<RawMsgTimeout> for MsgTimeout {
 }
 
 impl From<MsgTimeout> for RawMsgTimeout {
+#[trusted]
     fn from(domain_msg: MsgTimeout) -> Self {
         RawMsgTimeout {
             packet: Some(domain_msg.packet.into()),

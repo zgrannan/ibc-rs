@@ -168,6 +168,7 @@ impl crate::ics02_client::client_state::ClientState for ClientState {
 impl TryFrom<RawClientState> for ClientState {
     type Error = Error;
 
+#[trusted]
     fn try_from(raw: RawClientState) -> Result<Self, Self::Error> {
         let trust_level = raw
             .trust_level

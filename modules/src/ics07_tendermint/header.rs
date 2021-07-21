@@ -33,6 +33,7 @@ impl std::fmt::Debug for Header {
 }
 
 impl Header {
+#[trusted]
     pub fn height(&self) -> Height {
         Height::new(
             ChainId::chain_version(self.signed_header.header.chain_id.as_str()),

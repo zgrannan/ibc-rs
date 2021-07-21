@@ -1,5 +1,6 @@
 use core::convert::TryFrom;
 use prost_types::Any;
+use prusti_contracts::*;
 
 use crate::application::ics20_fungible_token_transfer::msgs::{transfer, transfer::MsgTransfer};
 use crate::ics02_client::msgs::{create_client, update_client, upgrade_client, ClientMsg};
@@ -26,6 +27,7 @@ pub enum Ics26Envelope {
 impl TryFrom<Any> for Ics26Envelope {
     type Error = Error;
 
+#[trusted]
     fn try_from(any_msg: Any) -> Result<Self, Self::Error> {
         match any_msg.type_url.as_str() {
             // ICS2 messages

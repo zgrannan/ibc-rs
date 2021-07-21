@@ -148,6 +148,7 @@ impl TryFrom<RawChannel> for ChannelEnd {
 }
 
 impl From<ChannelEnd> for RawChannel {
+#[trusted]
     fn from(value: ChannelEnd) -> Self {
         RawChannel {
             state: value.state as i32,
@@ -196,6 +197,7 @@ impl ChannelEnd {
     }
 
     /// Returns `true` if this `ChannelEnd` is in state [`State::Open`].
+#[trusted]
     pub fn is_open(&self) -> bool {
         self.state_matches(&State::Open)
     }
@@ -223,6 +225,7 @@ impl ChannelEnd {
         self.version.parse().unwrap()
     }
 
+#[trusted]
     pub fn validate_basic(&self) -> Result<(), Error> {
         if self.connection_hops.len() != 1 {
             return Err(
@@ -250,6 +253,7 @@ impl ChannelEnd {
     }
 
     #[allow(clippy::ptr_arg)]
+#[trusted]
     pub fn connection_hops_matches(&self, other: &Vec<ConnectionId>) -> bool {
         self.connection_hops.eq(other)
     }
@@ -444,6 +448,7 @@ impl State {
     /// assert!(State::TryOpen.less_or_equal_progress(State::TryOpen));
     /// assert!(!State::Closed.less_or_equal_progress(State::Open));
     /// ```
+#[trusted]
     pub fn less_or_equal_progress(self, other: Self) -> bool {
         self as u32 <= other as u32
     }

@@ -81,6 +81,7 @@ impl TryFrom<RawMsgRecvPacket> for MsgRecvPacket {
 }
 
 impl From<MsgRecvPacket> for RawMsgRecvPacket {
+#[trusted]
     fn from(domain_msg: MsgRecvPacket) -> Self {
         RawMsgRecvPacket {
             packet: Some(domain_msg.packet.into()),

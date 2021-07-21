@@ -173,6 +173,7 @@ pub enum ParseTimestampErrorKind {
 }
 
 impl Display for ParseTimestampErrorKind {
+#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         todo!()
     }
@@ -193,6 +194,7 @@ impl std::error::Error for ParseTimestampErrorKind {
 impl FromStr for Timestamp {
     type Err = ParseTimestampError;
 
+#[trusted]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let seconds = u64::from_str(s).map_err(|_| ParseTimestampErrorKind::ParseIntError)?;
 

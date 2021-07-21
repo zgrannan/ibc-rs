@@ -119,6 +119,7 @@ panic!("No") //         match self {
 }
 
 // This is tendermint specific
+#[trusted]
 pub fn from_tx_response_event(height: Height, event: &tendermint::abci::Event) -> Option<IbcEvent> {
 panic!("No") //     // Return the first hit we find
 //     if let Some(mut client_res) = ClientEvents::try_from_tx(event) {

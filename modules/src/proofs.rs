@@ -63,6 +63,7 @@ panic!("No") //         if height.is_zero() {
     }
 
     /// Getter for the client_proof.
+#[trusted]
     pub fn client_proof(&self) -> &Option<CommitmentProofBytes> {
         &self.client_proof
     }

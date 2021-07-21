@@ -58,6 +58,7 @@ impl ClientDef for TendermintClient {
         todo!()
     }
 
+#[trusted]
     fn verify_connection_state(
         &self,
         _client_state: &Self::ClientState,

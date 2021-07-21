@@ -90,6 +90,7 @@ impl TryFrom<RawMsgTimeoutOnClose> for MsgTimeoutOnClose {
 }
 
 impl From<MsgTimeoutOnClose> for RawMsgTimeoutOnClose {
+#[trusted]
     fn from(domain_msg: MsgTimeoutOnClose) -> Self {
         RawMsgTimeoutOnClose {
             packet: Some(domain_msg.packet.into()),

@@ -85,6 +85,7 @@ impl From<MsgUpgradeAnyClient> for RawMsgUpgradeClient {
 impl TryFrom<RawMsgUpgradeClient> for MsgUpgradeAnyClient {
     type Error = Kind;
 
+#[trusted]
     fn try_from(proto_msg: RawMsgUpgradeClient) -> Result<Self, Self::Error> {
         let raw_client_state = proto_msg.client_state.ok_or(Kind::InvalidRawClientState)?;
         let raw_consensus_state = proto_msg

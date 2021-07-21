@@ -79,6 +79,7 @@ impl Msg for MsgChannelOpenTry {
         TYPE_URL.to_string()
     }
 
+#[trusted]
     fn validate_basic(&self) -> Result<(), ValidationError> {
         match self.channel().counterparty().channel_id() {
             None => Err(ValidationKind::InvalidCounterpartyChannelId.into()),
@@ -133,6 +134,7 @@ impl TryFrom<RawMsgChannelOpenTry> for MsgChannelOpenTry {
 }
 
 impl From<MsgChannelOpenTry> for RawMsgChannelOpenTry {
+#[trusted]
     fn from(domain_msg: MsgChannelOpenTry) -> Self {
         RawMsgChannelOpenTry {
             port_id: domain_msg.port_id.to_string(),

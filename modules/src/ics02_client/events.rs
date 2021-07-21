@@ -105,6 +105,7 @@ impl NewBlock {
 }
 
 impl From<NewBlock> for IbcEvent {
+#[trusted]
     fn from(v: NewBlock) -> Self {
         IbcEvent::NewBlock(v)
     }
@@ -299,6 +300,7 @@ impl TryFrom<RawObject> for ClientMisbehaviour {
 }
 
 impl From<ClientMisbehaviour> for IbcEvent {
+#[trusted]
     fn from(v: ClientMisbehaviour) -> Self {
         IbcEvent::ClientMisbehaviour(v)
     }
