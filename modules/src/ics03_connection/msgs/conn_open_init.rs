@@ -1,5 +1,6 @@
 use std::convert::{TryFrom, TryInto};
 use std::time::Duration;
+use prusti_contracts::*;
 
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenInit as RawMsgConnectionOpenInit;
 use tendermint_proto::Protobuf;
@@ -41,10 +42,12 @@ impl Msg for MsgConnectionOpenInit {
     type ValidationError = Error;
     type Raw = RawMsgConnectionOpenInit;
 
+#[trusted]
     fn route(&self) -> String {
         crate::keys::ROUTER_KEY.to_string()
     }
 
+#[trusted]
     fn type_url(&self) -> String {
         TYPE_URL.to_string()
     }
@@ -55,6 +58,7 @@ impl Protobuf<RawMsgConnectionOpenInit> for MsgConnectionOpenInit {}
 impl TryFrom<RawMsgConnectionOpenInit> for MsgConnectionOpenInit {
     type Error = anomaly::Error<Kind>;
 
+#[trusted]
     fn try_from(msg: RawMsgConnectionOpenInit) -> Result<Self, Self::Error> {
         Ok(Self {
             client_id: msg

@@ -110,6 +110,7 @@ impl From<Attributes> for OpenInit {
 
 impl TryFrom<RawObject> for OpenInit {
     type Error = BoxError;
+#[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
         Ok(OpenInit(Attributes {
             height: obj.height,
@@ -156,6 +157,7 @@ impl From<Attributes> for OpenTry {
 
 impl TryFrom<RawObject> for OpenTry {
     type Error = BoxError;
+#[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
         Ok(OpenTry(Attributes {
             height: obj.height,
@@ -202,6 +204,7 @@ impl From<Attributes> for OpenAck {
 
 impl TryFrom<RawObject> for OpenAck {
     type Error = BoxError;
+#[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
         Ok(OpenAck(Attributes {
             height: obj.height,
@@ -248,6 +251,7 @@ impl From<Attributes> for OpenConfirm {
 
 impl TryFrom<RawObject> for OpenConfirm {
     type Error = BoxError;
+#[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
         Ok(OpenConfirm(Attributes {
             height: obj.height,

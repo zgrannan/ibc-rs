@@ -1,5 +1,6 @@
 use std::convert::{TryFrom, TryInto};
 use std::fmt;
+use prusti_contracts::*;
 use std::str::FromStr;
 
 use anomaly::fail;
@@ -27,6 +28,7 @@ pub struct IdentifiedChannelEnd {
 }
 
 impl IdentifiedChannelEnd {
+#[trusted]
     pub fn new(port_id: PortId, channel_id: ChannelId, channel_end: ChannelEnd) -> Self {
         IdentifiedChannelEnd {
             port_id,
@@ -41,6 +43,7 @@ impl Protobuf<RawIdentifiedChannel> for IdentifiedChannelEnd {}
 impl TryFrom<RawIdentifiedChannel> for IdentifiedChannelEnd {
     type Error = anomaly::Error<Kind>;
 
+#[trusted]
     fn try_from(value: RawIdentifiedChannel) -> Result<Self, Self::Error> {
         let raw_channel_end = RawChannel {
             state: value.state,
@@ -62,6 +65,7 @@ impl TryFrom<RawIdentifiedChannel> for IdentifiedChannelEnd {
 }
 
 impl From<IdentifiedChannelEnd> for RawIdentifiedChannel {
+#[trusted]
     fn from(value: IdentifiedChannelEnd) -> Self {
         RawIdentifiedChannel {
             state: value.channel_end.state as i32,
@@ -90,6 +94,7 @@ pub struct ChannelEnd {
 }
 
 impl Default for ChannelEnd {
+#[trusted]
     fn default() -> Self {
         ChannelEnd {
             state: State::Uninitialized,
@@ -106,6 +111,7 @@ impl Protobuf<RawChannel> for ChannelEnd {}
 impl TryFrom<RawChannel> for ChannelEnd {
     type Error = anomaly::Error<Kind>;
 
+#[trusted]
     fn try_from(value: RawChannel) -> Result<Self, Self::Error> {
         let chan_state: State = State::from_i32(value.state)?;
 
@@ -184,6 +190,7 @@ impl ChannelEnd {
         self.version = v;
     }
 
+#[trusted]
     pub fn set_counterparty_channel_id(&mut self, c: ChannelId) {
         self.remote.channel_id = Some(c);
     }
@@ -201,14 +208,17 @@ impl ChannelEnd {
         &self.ordering
     }
 
+#[trusted]
     pub fn counterparty(&self) -> &Counterparty {
         &self.remote
     }
 
+#[trusted]
     pub fn connection_hops(&self) -> &Vec<ConnectionId> {
         &self.connection_hops
     }
 
+#[trusted]
     pub fn version(&self) -> String {
         self.version.parse().unwrap()
     }
@@ -228,11 +238,13 @@ impl ChannelEnd {
     }
 
     /// Helper function to compare the state of this end with another state.
+#[trusted]
     pub fn state_matches(&self, other: &State) -> bool {
         self.state.eq(other)
     }
 
     /// Helper function to compare the order of this end with another order.
+#[trusted]
     pub fn order_matches(&self, other: &Order) -> bool {
         self.ordering.eq(other)
     }
@@ -258,6 +270,7 @@ pub struct Counterparty {
 }
 
 impl Default for Counterparty {
+#[trusted]
     fn default() -> Self {
         Counterparty {
             port_id: Default::default(),
@@ -267,6 +280,7 @@ impl Default for Counterparty {
 }
 
 impl Counterparty {
+#[trusted]
     pub fn new(port_id: PortId, channel_id: Option<ChannelId>) -> Self {
         Self {
             port_id,
@@ -278,10 +292,12 @@ impl Counterparty {
         &self.port_id
     }
 
+#[trusted]
     pub fn channel_id(&self) -> Option<&ChannelId> {
         self.channel_id.as_ref()
     }
 
+#[trusted]
     pub fn validate_basic(&self) -> Result<(), Error> {
         Ok(())
     }
@@ -292,6 +308,7 @@ impl Protobuf<RawCounterparty> for Counterparty {}
 impl TryFrom<RawCounterparty> for Counterparty {
     type Error = anomaly::Error<Kind>;
 
+#[trusted]
     fn try_from(value: RawCounterparty) -> Result<Self, Self::Error> {
         let channel_id = Some(value.channel_id)
             .filter(|x| !x.is_empty())
@@ -309,6 +326,7 @@ impl TryFrom<RawCounterparty> for Counterparty {
 }
 
 impl From<Counterparty> for RawCounterparty {
+#[trusted]
     fn from(value: Counterparty) -> Self {
         RawCounterparty {
             port_id: value.port_id.as_str().to_string(),
@@ -327,6 +345,7 @@ pub enum Order {
 }
 
 impl Default for Order {
+#[trusted]
     fn default() -> Self {
         Order::Unordered
     }
@@ -340,6 +359,7 @@ impl fmt::Display for Order {
 
 impl Order {
     /// Yields the Order as a string
+#[trusted]
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::None => "UNINITIALIZED",
@@ -349,6 +369,7 @@ impl Order {
     }
 
     // Parses the Order out from a i32.
+#[trusted]
     pub fn from_i32(nr: i32) -> Result<Self, Error> {
         match nr {
             0 => Ok(Self::None),
@@ -362,6 +383,7 @@ impl Order {
 impl FromStr for Order {
     type Err = Error;
 
+#[trusted]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
             "uninitialized" => Ok(Self::None),
@@ -383,6 +405,7 @@ pub enum State {
 
 impl State {
     /// Yields the state as a string
+#[trusted]
     pub fn as_string(&self) -> &'static str {
         match self {
             Self::Uninitialized => "UNINITIALIZED",
@@ -394,6 +417,7 @@ impl State {
     }
 
     /// Parses the State out from a i32.
+#[trusted]
     pub fn from_i32(s: i32) -> Result<Self, Error> {
         match s {
             0 => Ok(Self::Uninitialized),
@@ -406,6 +430,7 @@ impl State {
     }
 
     /// Returns whether or not this channel state is `Open`.
+#[trusted]
     pub fn is_open(self) -> bool {
         self == State::Open
     }

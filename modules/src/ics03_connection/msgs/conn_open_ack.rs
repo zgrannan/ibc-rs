@@ -1,5 +1,6 @@
 use std::convert::{TryFrom, TryInto};
 
+use prusti_contracts::*;
 use tendermint_proto::Protobuf;
 
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenAck as RawMsgConnectionOpenAck;
@@ -67,10 +68,12 @@ impl Msg for MsgConnectionOpenAck {
     type ValidationError = Error;
     type Raw = RawMsgConnectionOpenAck;
 
+#[trusted]
     fn route(&self) -> String {
         crate::keys::ROUTER_KEY.to_string()
     }
 
+#[trusted]
     fn type_url(&self) -> String {
         TYPE_URL.to_string()
     }
@@ -81,6 +84,7 @@ impl Protobuf<RawMsgConnectionOpenAck> for MsgConnectionOpenAck {}
 impl TryFrom<RawMsgConnectionOpenAck> for MsgConnectionOpenAck {
     type Error = anomaly::Error<Kind>;
 
+#[trusted]
     fn try_from(msg: RawMsgConnectionOpenAck) -> Result<Self, Self::Error> {
         let consensus_height = msg
             .consensus_height
@@ -133,6 +137,7 @@ impl TryFrom<RawMsgConnectionOpenAck> for MsgConnectionOpenAck {
 }
 
 impl From<MsgConnectionOpenAck> for RawMsgConnectionOpenAck {
+#[trusted]
     fn from(ics_msg: MsgConnectionOpenAck) -> Self {
         RawMsgConnectionOpenAck {
             connection_id: ics_msg.connection_id.as_str().to_string(),

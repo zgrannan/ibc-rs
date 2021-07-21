@@ -3,6 +3,7 @@ use std::{
     str::FromStr,
     time::Duration,
 };
+use prusti_contracts::*;
 
 use tendermint_proto::Protobuf;
 
@@ -81,10 +82,12 @@ impl Msg for MsgConnectionOpenTry {
     type ValidationError = Error;
     type Raw = RawMsgConnectionOpenTry;
 
+#[trusted]
     fn route(&self) -> String {
         crate::keys::ROUTER_KEY.to_string()
     }
 
+#[trusted]
     fn type_url(&self) -> String {
         TYPE_URL.to_string()
     }
@@ -95,6 +98,7 @@ impl Protobuf<RawMsgConnectionOpenTry> for MsgConnectionOpenTry {}
 impl TryFrom<RawMsgConnectionOpenTry> for MsgConnectionOpenTry {
     type Error = Error;
 
+#[trusted]
     fn try_from(msg: RawMsgConnectionOpenTry) -> Result<Self, Self::Error> {
         let previous_connection_id = Some(msg.previous_connection_id)
             .filter(|x| !x.is_empty())

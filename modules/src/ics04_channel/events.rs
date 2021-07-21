@@ -170,6 +170,7 @@ impl Attributes {
     pub fn port_id(&self) -> &PortId {
         &self.port_id
     }
+#[trusted]
     pub fn channel_id(&self) -> Option<&ChannelId> {
         self.channel_id.as_ref()
     }
@@ -192,9 +193,11 @@ impl Default for Attributes {
 pub struct OpenInit(Attributes);
 
 impl OpenInit {
+#[trusted]
     pub fn attributes(&self) -> &Attributes {
         &self.0
     }
+#[trusted]
     pub fn channel_id(&self) -> Option<&ChannelId> {
         self.0.channel_id.as_ref()
     }
@@ -217,6 +220,7 @@ impl From<Attributes> for OpenInit {
 
 impl TryFrom<RawObject> for OpenInit {
     type Error = BoxError;
+#[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
         Ok(OpenInit(Attributes {
             height: obj.height,
@@ -233,6 +237,7 @@ impl TryFrom<RawObject> for OpenInit {
 }
 
 impl From<OpenInit> for IbcEvent {
+#[trusted]
     fn from(v: OpenInit) -> Self {
         IbcEvent::OpenInitChannel(v)
     }
@@ -242,6 +247,7 @@ impl From<OpenInit> for IbcEvent {
 pub struct OpenTry(Attributes);
 
 impl OpenTry {
+#[trusted]
     pub fn attributes(&self) -> &Attributes {
         &self.0
     }
@@ -260,6 +266,7 @@ impl OpenTry {
 }
 
 impl From<Attributes> for OpenTry {
+#[trusted]
     fn from(attrs: Attributes) -> Self {
         OpenTry(attrs)
     }
@@ -267,6 +274,7 @@ impl From<Attributes> for OpenTry {
 
 impl TryFrom<RawObject> for OpenTry {
     type Error = BoxError;
+#[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
         Ok(OpenTry(Attributes {
             height: obj.height,
@@ -283,6 +291,7 @@ impl TryFrom<RawObject> for OpenTry {
 }
 
 impl From<OpenTry> for IbcEvent {
+#[trusted]
     fn from(v: OpenTry) -> Self {
         IbcEvent::OpenTryChannel(v)
     }
@@ -298,9 +307,11 @@ impl OpenAck {
     pub fn channel_id(&self) -> Option<&ChannelId> {
         self.0.channel_id.as_ref()
     }
+#[trusted]
     pub fn port_id(&self) -> &PortId {
         &self.0.port_id
     }
+#[trusted]
     pub fn height(&self) -> Height {
         self.0.height
     }
@@ -308,12 +319,14 @@ impl OpenAck {
         self.0.height = height;
     }
 
+#[trusted]
     pub fn counterparty_channel_id(&self) -> Option<&ChannelId> {
         self.0.counterparty_channel_id.as_ref()
     }
 }
 
 impl From<Attributes> for OpenAck {
+#[trusted]
     fn from(attrs: Attributes) -> Self {
         OpenAck(attrs)
     }
@@ -321,6 +334,7 @@ impl From<Attributes> for OpenAck {
 
 impl TryFrom<RawObject> for OpenAck {
     type Error = BoxError;
+#[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
         Ok(OpenAck(Attributes {
             height: obj.height,
@@ -337,6 +351,7 @@ impl TryFrom<RawObject> for OpenAck {
 }
 
 impl From<OpenAck> for IbcEvent {
+#[trusted]
     fn from(v: OpenAck) -> Self {
         IbcEvent::OpenAckChannel(v)
     }
@@ -358,12 +373,14 @@ impl OpenConfirm {
     pub fn height(&self) -> Height {
         self.0.height
     }
+#[trusted]
     pub fn set_height(&mut self, height: Height) {
         self.0.height = height;
     }
 }
 
 impl From<Attributes> for OpenConfirm {
+#[trusted]
     fn from(attrs: Attributes) -> Self {
         OpenConfirm(attrs)
     }
@@ -371,6 +388,7 @@ impl From<Attributes> for OpenConfirm {
 
 impl TryFrom<RawObject> for OpenConfirm {
     type Error = BoxError;
+#[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
         Ok(OpenConfirm(Attributes {
             height: obj.height,
@@ -387,6 +405,7 @@ impl TryFrom<RawObject> for OpenConfirm {
 }
 
 impl From<OpenConfirm> for IbcEvent {
+#[trusted]
     fn from(v: OpenConfirm) -> Self {
         IbcEvent::OpenConfirmChannel(v)
     }
@@ -400,6 +419,7 @@ impl CloseInit {
         &self.0.port_id
     }
 
+#[trusted]
     pub fn channel_id(&self) -> &ChannelId {
         // FIXME(romac): Rework encoding of IbcEvents which use `Attributes`
         self.0
@@ -416,6 +436,7 @@ impl CloseInit {
         self.0.counterparty_channel_id.as_ref()
     }
 
+#[trusted]
     pub fn height(&self) -> Height {
         self.0.height
     }
@@ -433,6 +454,7 @@ impl From<Attributes> for CloseInit {
 
 impl TryFrom<RawObject> for CloseInit {
     type Error = BoxError;
+#[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
         Ok(CloseInit(Attributes {
             height: obj.height,
@@ -449,6 +471,7 @@ impl TryFrom<RawObject> for CloseInit {
 }
 
 impl From<CloseInit> for IbcEvent {
+#[trusted]
     fn from(v: CloseInit) -> Self {
         IbcEvent::CloseInitChannel(v)
     }
@@ -470,6 +493,7 @@ impl std::fmt::Display for CloseInit {
 pub struct CloseConfirm(Attributes);
 
 impl CloseConfirm {
+#[trusted]
     pub fn channel_id(&self) -> Option<&ChannelId> {
         self.0.channel_id.as_ref()
     }

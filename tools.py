@@ -60,11 +60,16 @@ def get_enclosing_fn_line_number(line_number, lines):
     else:
         return None
 
-def panic(args: list):
-    [filename, line_number_str, _] = args
+def parse_arg(arg):
+    args = arg.split(":")
+    if len(args) != 3:
+        raise Exception(f"Can't parse argument {arg}")
+    return (args[0], int(args[1]))
+
+def panic(arg: str):
+    (filename, line_number) = parse_arg(arg)
     contents = open(filename).read()
     lines = contents.splitlines()
-    line_number = int(line_number_str)
     fn_line_number = get_enclosing_fn_line_number(line_number, lines)
     if fn_line_number is None:
         raise Exception(f"Couldn't find enclosing function for {filename} at line {line_number_str}")
@@ -75,12 +80,10 @@ def panic(args: list):
     output = "\n".join(result) + "\n"
     open(filename, 'w').write(output)
 
-
-def trust(args):
-    [filename, line_number_str, _] = args
+def trust(arg: str):
+    (filename, line_number) = parse_arg(arg)
     contents = open(filename).read()
     lines = contents.splitlines()
-    line_number = int(line_number_str)
     if contents.find("use prusti_contracts") == -1:
         lines = lines[0:2] + [ "use prusti_contracts::*;" ] + lines[2:]
         line_number += 1
@@ -94,6 +97,6 @@ def trust(args):
     open(filename, 'w').write(output)
 
 if argv[1] == "trust":
-    trust(argv[2].split(":"))
+    trust(argv[2])
 if argv[1] == "panic":
-    panic(argv[2].split(":"))
+    panic(argv[2])
