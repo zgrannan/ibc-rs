@@ -54,6 +54,7 @@ unreachable!() //         match self {
 }
 
 impl std::fmt::Debug for Sequence {
+    #[trusted]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         unreachable!()
     }

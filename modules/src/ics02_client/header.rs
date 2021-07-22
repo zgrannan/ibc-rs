@@ -30,6 +30,7 @@ pub trait Header: Clone + std::fmt::Debug + Send + Sync {
 }
 
 impl std::fmt::Debug for AnyHeader {
+    #[trusted]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         unreachable!()
     }

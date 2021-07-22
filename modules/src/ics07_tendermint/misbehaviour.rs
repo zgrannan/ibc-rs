@@ -12,6 +12,7 @@ use crate::ics24_host::identifier::ClientId;
 use crate::Height;
 
 impl std::fmt::Debug for Misbehaviour {
+    #[trusted]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         unreachable!()
     }

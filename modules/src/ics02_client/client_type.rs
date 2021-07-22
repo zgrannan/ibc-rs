@@ -22,6 +22,7 @@ impl PartialEq for ClientType {
 }
 
 impl std::fmt::Debug for ClientType {
+    #[trusted]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         unreachable!()
     }

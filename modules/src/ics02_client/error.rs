@@ -115,11 +115,13 @@ pub enum Kind {
 }
 
 impl std::fmt::Display for Kind {
+    #[trusted]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         unreachable!()
     }
 }
 impl std::fmt::Debug for Kind {
+    #[trusted]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         unreachable!()
     }

@@ -39,6 +39,7 @@ pub enum AnyMisbehaviour {
 }
 
 impl std::fmt::Debug for AnyMisbehaviour {
+    #[trusted]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         unreachable!()
     }

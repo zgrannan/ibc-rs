@@ -44,6 +44,7 @@ pub trait ConsensusState: Clone + std::fmt::Debug + Send + Sync {
 }
 
 impl std::fmt::Debug for AnyConsensusState {
+    #[trusted]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         unreachable!()
     }

@@ -150,6 +150,7 @@ unreachable!() // panic!("No") //         Self::from_str(value.as_str()).map_err
 }
 
 impl std::fmt::Debug for ClientId {
+    #[trusted]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         unreachable!()
     }
@@ -338,6 +339,7 @@ unreachable!() //         self.as_str().eq(other)
 pub struct PortId(String);
 
 impl std::fmt::Debug for PortId {
+    #[trusted]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         unreachable!()
     }

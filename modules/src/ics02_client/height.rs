@@ -27,6 +27,7 @@ impl PartialEq for Height {
 }
 
 impl PartialOrd for Height {
+    #[trusted]
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         unreachable!()
     }

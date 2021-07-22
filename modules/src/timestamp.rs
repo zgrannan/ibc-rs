@@ -186,6 +186,7 @@ pub enum ParseTimestampErrorKind {
 }
 
 impl std::fmt::Debug for ParseTimestampErrorKind {
+    #[trusted]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         unreachable!()
     }
