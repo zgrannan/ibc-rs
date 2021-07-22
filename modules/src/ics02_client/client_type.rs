@@ -6,12 +6,19 @@ use serde_derive::{Deserialize, Serialize};
 use super::error;
 
 /// Type of the client, depending on the specific consensus algorithm.
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, Hash)]
 pub enum ClientType {
     Tendermint = 1,
 
     #[cfg(any(test, feature = "mocks"))]
     Mock = 9999,
+}
+
+impl PartialEq for ClientType {
+    #[trusted]
+    fn eq(&self, other: &Self) -> bool {
+       unreachable!()
+    }
 }
 
 impl std::fmt::Debug for ClientType {

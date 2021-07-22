@@ -24,6 +24,10 @@ comment "#\[dyn_clonable::clonable\]"
 remove_derive Debug
 remove_derive Deserialize
 remove_derive Serialize
+remove_derive PartialEq
+remove_derive Ord
+remove_derive PartialOrd
+remove_derive Eq
 
 sed -i 's/r#type.try_into/0.try_into/' "$1"
 

@@ -17,7 +17,7 @@ pub const TYPE_URL: &str = "/ibc.core.channel.v1.MsgChannelCloseConfirm";
 /// Message definition for the second step in the channel close handshake (the `ChanCloseConfirm`
 /// datagram).
 ///
-#[derive(Clone, PartialEq)]
+#[derive(Clone)]
 pub struct MsgChannelCloseConfirm {
     pub port_id: PortId,
     pub channel_id: ChannelId,

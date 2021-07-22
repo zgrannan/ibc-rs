@@ -19,7 +19,7 @@ pub const ZERO_DURATION: Duration = Duration::from_secs(0);
 /// a `u64` value and a raw timestamp. In protocol buffer, the timestamp is
 /// represented as a `u64` Unix timestamp in nanoseconds, with 0 representing the absence
 /// of timestamp.
-#[derive(PartialEq, Eq, Copy, Clone, Hash)]
+#[derive(Copy, Clone, Hash)]
 pub struct Timestamp {
     time: Option<DateTime<Utc>>,
 }
@@ -31,7 +31,7 @@ pub struct Timestamp {
 ///
 /// User of this result may want to determine whether error should be raised,
 /// when either of the timestamp being compared is invalid.
-#[derive(PartialEq, Eq, Copy, Clone, Hash)]
+#[derive(Copy, Clone, Hash)]
 pub enum Expiry {
     Expired,
     NotExpired,
@@ -128,7 +128,7 @@ unreachable!() //         write!(
     }
 }
 
-#[derive(Clone, Error, PartialEq, Eq)]
+#[derive(Clone, Error)]
 // #[error("Timestamp overflow when modifying with duration")]
 pub struct TimestampOverflowError;
 
@@ -178,7 +178,7 @@ unreachable!() //         match self.as_datetime() {
 
 pub type ParseTimestampError = anomaly::Error<ParseTimestampErrorKind>;
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone)]
 pub enum ParseTimestampErrorKind {
     ParseIntError,
 

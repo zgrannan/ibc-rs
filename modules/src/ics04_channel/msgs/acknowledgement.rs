@@ -16,7 +16,7 @@ pub const TYPE_URL: &str = "/ibc.core.channel.v1.MsgAcknowledgement";
 ///
 /// Message definition for packet acknowledgements.
 ///
-#[derive(Clone, PartialEq)]
+#[derive(Clone)]
 pub struct MsgAcknowledgement {
     pub packet: Packet,
     pub acknowledgement: Vec<u8>, // TODO(romac): Introduce a newtype for this

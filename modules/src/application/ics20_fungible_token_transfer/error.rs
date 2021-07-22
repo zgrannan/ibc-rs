@@ -20,7 +20,7 @@ impl std::fmt::Debug for Kind {
 }
 
 
-#[derive(Clone, Error, PartialEq, Eq)]
+#[derive(Clone, Error)]
 pub enum Kind {
 //     #[error("unrecognized ICS-20 transfer message type URL {0}")]
     UnknownMessageTypeUrl(String),

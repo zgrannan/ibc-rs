@@ -19,7 +19,7 @@ pub const TYPE_URL: &str = "/ibc.core.channel.v1.MsgChannelOpenTry";
 ///
 /// Message definition for the second step in the channel open handshake (`ChanOpenTry` datagram).
 ///
-#[derive(Clone, PartialEq)]
+#[derive(Clone)]
 pub struct MsgChannelOpenTry {
     pub port_id: PortId,
     pub previous_channel_id: Option<ChannelId>,

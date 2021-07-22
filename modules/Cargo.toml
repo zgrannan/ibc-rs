@@ -36,7 +36,6 @@ dyn-clonable = "0.9.0"
 regex = "1"
 subtle-encoding = "0.5"
 sha2 = { version = "0.9.3", optional = true }
-prusti-contracts = { path = "../../prusti-dev/prusti-contracts" }
 
 [dependencies.tendermint]
 version = "=0.20.0"

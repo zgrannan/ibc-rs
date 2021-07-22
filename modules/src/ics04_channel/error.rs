@@ -24,7 +24,7 @@ impl std::fmt::Debug for Kind {
 }
 
 
-#[derive(Clone, Error, Eq, PartialEq)]
+#[derive(Clone, Error)]
 pub enum Kind {
 //     #[error("channel state unknown")]
     UnknownState,

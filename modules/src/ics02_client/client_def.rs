@@ -146,7 +146,7 @@ pub trait ClientDef: Clone {
     ) -> Result<(), Box<dyn std::error::Error>>;
 }
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone)]
 pub enum AnyClient {
     Tendermint(TendermintClient),
 

@@ -111,7 +111,7 @@ impl From<NewBlock> for IbcEvent {
     }
 }
 
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Hash)]
 pub struct Attributes {
     pub height: Height,
     pub client_id: ClientId,
@@ -307,7 +307,7 @@ impl From<ClientMisbehaviour> for IbcEvent {
 }
 
 /// Signals a recent upgrade of an on-chain client (IBC Client).
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Hash)]
 pub struct UpgradeClient(Attributes);
 
 impl UpgradeClient {

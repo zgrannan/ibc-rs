@@ -17,7 +17,7 @@ use super::handler::{
 };
 
 /// Enumeration of proof carrying ICS4 message, helper for relayer.
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone)]
 pub enum PacketMsgType {
     Recv,
     Ack,
@@ -61,7 +61,7 @@ impl std::fmt::Debug for Sequence {
 
 
 /// The sequence number of a packet enforces ordering among packets from the same source.
-#[derive(Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Copy, Clone, Hash)]
 pub struct Sequence(u64);
 
 impl Default for Sequence {
@@ -110,7 +110,7 @@ unreachable!() //         write!(f, "{}", self.0)
     }
 }
 
-#[derive(PartialEq, Hash, Clone)]
+#[derive(Hash, Clone)]
 pub struct Packet {
     pub sequence: Sequence,
     pub source_port: PortId,

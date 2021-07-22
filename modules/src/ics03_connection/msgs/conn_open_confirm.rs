@@ -16,7 +16,7 @@ pub const TYPE_URL: &str = "/ibc.core.connection.v1.MsgConnectionOpenConfirm";
 ///
 /// Message definition for `MsgConnectionOpenConfirm` (i.e., `ConnOpenConfirm` datagram).
 ///
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone)]
 pub struct MsgConnectionOpenConfirm {
     pub connection_id: ConnectionId,
     pub proofs: Proofs,
@@ -119,7 +119,7 @@ mod tests {
 
     #[test]
     fn parse_connection_open_confirm_msg() {
-        #[derive(Clone, PartialEq)]
+        #[derive(Clone)]
         struct Test {
             name: String,
             raw: RawMsgConnectionOpenConfirm,

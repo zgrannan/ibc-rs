@@ -49,7 +49,7 @@ impl std::fmt::Debug for AnyConsensusState {
     }
 }
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone)]
 // #[serde(tag = "type")]
 pub enum AnyConsensusState {
     Tendermint(consensus_state::ConsensusState),
@@ -128,7 +128,7 @@ unreachable!() //         match value {
     }
 }
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone)]
 pub struct AnyConsensusStateWithHeight {
     pub height: Height,
     pub consensus_state: AnyConsensusState,

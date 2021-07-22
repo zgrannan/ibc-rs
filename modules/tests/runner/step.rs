@@ -3,110 +3,110 @@ use serde::{Deserialize, Deserializer};
 use std::collections::HashMap;
 use std::fmt::Debug;
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Clone)]
 pub struct Step {
     pub action: Action,
 
-    #[serde(alias = "actionOutcome")]
+//     #[serde(alias = "actionOutcome")]
     pub action_outcome: ActionOutcome,
 
     pub chains: HashMap<String, Chain>,
 }
 
-#[derive(Debug, Clone, PartialEq, Deserialize)]
-#[serde(tag = "type")]
+#[derive(Clone)]
+// #[serde(tag = "type")]
 pub enum Action {
     None,
     Ics02CreateClient {
-        #[serde(alias = "chainId")]
+//         #[serde(alias = "chainId")]
         chain_id: String,
 
-        #[serde(alias = "clientState")]
+//         #[serde(alias = "clientState")]
         client_state: u64,
 
-        #[serde(alias = "consensusState")]
+//         #[serde(alias = "consensusState")]
         consensus_state: u64,
     },
     Ics02UpdateClient {
-        #[serde(alias = "chainId")]
+//         #[serde(alias = "chainId")]
         chain_id: String,
 
-        #[serde(alias = "clientId")]
+//         #[serde(alias = "clientId")]
         client_id: u64,
 
         header: u64,
     },
     Ics03ConnectionOpenInit {
-        #[serde(alias = "chainId")]
+//         #[serde(alias = "chainId")]
         chain_id: String,
 
-        #[serde(alias = "clientId")]
+//         #[serde(alias = "clientId")]
         client_id: u64,
 
-        #[serde(alias = "counterpartyChainId")]
+//         #[serde(alias = "counterpartyChainId")]
         counterparty_chain_id: String,
 
-        #[serde(alias = "counterpartyClientId")]
+//         #[serde(alias = "counterpartyClientId")]
         counterparty_client_id: u64,
     },
     Ics03ConnectionOpenTry {
-        #[serde(alias = "chainId")]
+//         #[serde(alias = "chainId")]
         chain_id: String,
 
-        #[serde(alias = "previousConnectionId")]
-        #[serde(default, deserialize_with = "deserialize_id")]
+//         #[serde(alias = "previousConnectionId")]
+//         #[serde(default, deserialize_with = "deserialize_id")]
         previous_connection_id: Option<u64>,
 
-        #[serde(alias = "clientId")]
+//         #[serde(alias = "clientId")]
         client_id: u64,
 
-        #[serde(alias = "clientState")]
+//         #[serde(alias = "clientState")]
         client_state: u64,
 
-        #[serde(alias = "counterpartyChainId")]
+//         #[serde(alias = "counterpartyChainId")]
         counterparty_chain_id: String,
 
-        #[serde(alias = "counterpartyClientId")]
+//         #[serde(alias = "counterpartyClientId")]
         counterparty_client_id: u64,
 
-        #[serde(alias = "counterpartyConnectionId")]
+//         #[serde(alias = "counterpartyConnectionId")]
         counterparty_connection_id: u64,
     },
     Ics03ConnectionOpenAck {
-        #[serde(alias = "chainId")]
+//         #[serde(alias = "chainId")]
         chain_id: String,
 
-        #[serde(alias = "connectionId")]
+//         #[serde(alias = "connectionId")]
         connection_id: u64,
 
-        #[serde(alias = "clientState")]
+//         #[serde(alias = "clientState")]
         client_state: u64,
 
-        #[serde(alias = "counterpartyChainId")]
+//         #[serde(alias = "counterpartyChainId")]
         counterparty_chain_id: String,
 
-        #[serde(alias = "counterpartyConnectionId")]
+//         #[serde(alias = "counterpartyConnectionId")]
         counterparty_connection_id: u64,
     },
     Ics03ConnectionOpenConfirm {
-        #[serde(alias = "chainId")]
+//         #[serde(alias = "chainId")]
         chain_id: String,
 
-        #[serde(alias = "connectionId")]
+//         #[serde(alias = "connectionId")]
         connection_id: u64,
 
-        #[serde(alias = "clientState")]
+//         #[serde(alias = "clientState")]
         client_state: u64,
 
-        #[serde(alias = "counterpartyChainId")]
+//         #[serde(alias = "counterpartyChainId")]
         counterparty_chain_id: String,
 
-        #[serde(alias = "counterpartyConnectionId")]
+//         #[serde(alias = "counterpartyConnectionId")]
         counterparty_connection_id: u64,
     },
 }
 
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Clone)]
 pub enum ActionOutcome {
     None,
     Ics02CreateOk,
@@ -126,7 +126,7 @@ pub enum ActionOutcome {
     Ics03ConnectionOpenConfirmOk,
 }
 
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Clone)]
 pub struct Chain {
     pub height: u64,
 
@@ -135,27 +135,27 @@ pub struct Chain {
     pub connections: HashMap<u64, Connection>,
 }
 
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Clone)]
 pub struct Client {
     pub heights: Vec<u64>,
 }
 
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Clone)]
 pub struct Connection {
-    #[serde(alias = "clientId")]
-    #[serde(default, deserialize_with = "deserialize_id")]
+//     #[serde(alias = "clientId")]
+//     #[serde(default, deserialize_with = "deserialize_id")]
     pub client_id: Option<u64>,
 
-    #[serde(alias = "connectionId")]
-    #[serde(default, deserialize_with = "deserialize_id")]
+//     #[serde(alias = "connectionId")]
+//     #[serde(default, deserialize_with = "deserialize_id")]
     pub connection_id: Option<u64>,
 
-    #[serde(alias = "counterpartyClientId")]
-    #[serde(default, deserialize_with = "deserialize_id")]
+//     #[serde(alias = "counterpartyClientId")]
+//     #[serde(default, deserialize_with = "deserialize_id")]
     pub counterparty_client_id: Option<u64>,
 
-    #[serde(alias = "counterpartyConnectionId")]
-    #[serde(default, deserialize_with = "deserialize_id")]
+//     #[serde(alias = "counterpartyConnectionId")]
+//     #[serde(default, deserialize_with = "deserialize_id")]
     pub counterparty_connection_id: Option<u64>,
 
     pub state: ConnectionState,

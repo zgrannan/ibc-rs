@@ -9,7 +9,7 @@ use ibc_proto::ibc::core::connection::v1::Version as RawVersion;
 use crate::ics03_connection::error::Kind;
 
 /// Stores the identifier and the features supported by a version
-#[derive(Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, Hash)]
 pub struct Version {
     /// unique version identifier
     identifier: String,

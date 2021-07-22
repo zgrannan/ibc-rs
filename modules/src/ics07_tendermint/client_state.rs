@@ -20,7 +20,7 @@ use crate::ics24_host::identifier::ChainId;
 use crate::timestamp::ZERO_DURATION;
 use crate::Height;
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone)]
 pub struct ClientState {
     pub chain_id: ChainId,
     pub trust_level: TrustThreshold,
@@ -34,7 +34,7 @@ pub struct ClientState {
     pub allow_update: AllowUpdate,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone)]
 pub struct AllowUpdate {
     pub after_expiry: bool,
     pub after_misbehaviour: bool,
@@ -268,7 +268,7 @@ mod tests {
 
     #[test]
     fn client_state_new() {
-        #[derive(Clone, PartialEq)]
+        #[derive(Clone)]
         struct ClientStateParams {
             id: ChainId,
             trust_level: TrustThreshold,

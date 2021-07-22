@@ -16,7 +16,7 @@ impl std::fmt::Debug for Error {
 }
 
 
-#[derive(Clone, Error, PartialEq, Eq)]
+#[derive(Clone, Error)]
 pub enum Error {
 //     #[error("invalid raw merkle proof")]
     InvalidRawMerkleProof(DecodeError),

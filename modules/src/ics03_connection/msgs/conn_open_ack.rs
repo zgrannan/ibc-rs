@@ -18,7 +18,7 @@ use crate::Height;
 pub const TYPE_URL: &str = "/ibc.core.connection.v1.MsgConnectionOpenAck";
 
 /// Message definition `MsgConnectionOpenAck`  (i.e., `ConnOpenAck` datagram).
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone)]
 pub struct MsgConnectionOpenAck {
     pub connection_id: ConnectionId,
     pub counterparty_connection_id: ConnectionId,
@@ -213,7 +213,7 @@ mod tests {
 
     #[test]
     fn parse_connection_open_ack_msg() {
-        #[derive(Clone, PartialEq)]
+        #[derive(Clone)]
         struct Test {
             name: String,
             raw: RawMsgConnectionOpenAck,

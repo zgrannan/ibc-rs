@@ -63,7 +63,7 @@ unreachable!() //     let mut attr = Attributes::default();
 //     attr
 }
 
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Hash)]
 pub struct Attributes {
     pub height: Height,
     pub connection_id: Option<ConnectionId>,

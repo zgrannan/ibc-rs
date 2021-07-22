@@ -15,7 +15,7 @@ use crate::ics24_host::identifier::ClientId;
 
 /// The result following the successful processing of a `MsgUpdateAnyClient` message. Preferably
 /// this data type should be used with a qualified name `update_client::Result` to avoid ambiguity.
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone)]
 pub struct Result {
     pub client_id: ClientId,
     pub client_state: AnyClientState,

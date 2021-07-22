@@ -14,7 +14,7 @@ use crate::mock::client_state::{MockClientState, MockConsensusState};
 use crate::mock::header::MockHeader;
 use crate::Height;
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone)]
 pub struct MockClient;
 
 impl ClientDef for MockClient {

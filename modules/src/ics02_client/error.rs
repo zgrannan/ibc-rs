@@ -12,7 +12,7 @@ use crate::Height;
 
 pub type Error = anomaly::Error<Kind>;
 
-#[derive(Clone, Error, PartialEq, Eq)]
+#[derive(Clone, Error)]
 pub enum Kind {
 //     #[error("unknown client type: {0}")]
     UnknownClientType(String),

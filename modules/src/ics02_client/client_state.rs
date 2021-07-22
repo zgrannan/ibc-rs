@@ -42,7 +42,7 @@ pub trait ClientState: Clone + Send + Sync {
     fn wrap_any(self) -> AnyClientState;
 }
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone)]
 // #[serde(tag = "type")]
 pub enum AnyClientState {
     Tendermint(client_state::ClientState),
@@ -178,7 +178,7 @@ impl ClientState for AnyClientState {
     }
 }
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone)]
 // #[serde(tag = "type")]
 pub struct IdentifiedAnyClientState {
     pub client_id: ClientId,

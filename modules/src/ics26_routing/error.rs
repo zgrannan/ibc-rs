@@ -20,7 +20,7 @@ impl std::fmt::Display for Kind {
     }
 }
 
-#[derive(Clone, Error, PartialEq, Eq)]
+#[derive(Clone, Error)]
 pub enum Kind {
 //     #[error("error raised by message handler")]
     HandlerRaisedError,

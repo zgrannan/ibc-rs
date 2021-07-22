@@ -20,7 +20,7 @@ use crate::ics24_host::error::ValidationError;
 use crate::ics24_host::identifier::{ClientId, ConnectionId};
 use crate::timestamp::ZERO_DURATION;
 
-#[derive(Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, Hash)]
 pub struct IdentifiedConnectionEnd {
     pub connection_id: ConnectionId,
     pub connection_end: ConnectionEnd,
@@ -84,7 +84,7 @@ unreachable!() //         RawIdentifiedConnection {
     }
 }
 
-#[derive(Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, Hash)]
 pub struct ConnectionEnd {
     pub state: State,
     client_id: ClientId,
@@ -250,11 +250,18 @@ unreachable!() //         self.state_matches(&State::Uninitialized)
     }
 }
 
-#[derive(Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, Hash)]
 pub struct Counterparty {
     client_id: ClientId,
     pub connection_id: Option<ConnectionId>,
     prefix: CommitmentPrefix,
+}
+
+impl PartialEq for Counterparty {
+    #[trusted]
+    fn eq(&self, other: &Self) -> bool {
+       unreachable!()
+    }
 }
 
 impl Default for Counterparty {
@@ -346,12 +353,19 @@ unreachable!() //         self.connection_id.as_ref()
     }
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, Hash)]
 pub enum State {
     Uninitialized = 0,
     Init = 1,
     TryOpen = 2,
     Open = 3,
+}
+
+impl PartialEq for State {
+    #[trusted]
+    fn eq(&self, other: &Self) -> bool {
+       unreachable!()
+    }
 }
 
 impl State {

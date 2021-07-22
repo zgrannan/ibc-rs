@@ -24,7 +24,7 @@ const UPGRADED_CLIENT_STATE: &str = "upgradedClient";
 const UPGRADED_CLIENT_CONSENSUS_STATE: &str = "upgradedConsState";
 
 /// The Path enum abstracts out the different sub-paths
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Hash)]
 pub enum Path {
     ClientType(ClientId),
     ClientState(ClientId),
@@ -59,7 +59,7 @@ pub enum Path {
 }
 
 /// Paths that are specific for client upgrades.
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Hash)]
 pub enum ClientUpgradePath {
     UpgradedClientState(u64),
     UpgradedClientConsensusState(u64),

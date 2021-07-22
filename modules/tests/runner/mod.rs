@@ -39,7 +39,7 @@ use ibc::timestamp::ZERO_DURATION;
 use ibc::Height;
 use step::{Action, ActionOutcome, Chain, Step};
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct IbcTestRunner {
     // mapping from chain identifier to its context
     contexts: HashMap<ChainId, MockContext>,

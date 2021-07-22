@@ -10,13 +10,26 @@ use ibc_proto::ibc::core::client::v1::Height as RawHeight;
 
 use crate::ics02_client::error::{Error, Kind};
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, Hash)]
 pub struct Height {
     /// Previously known as "epoch"
     pub revision_number: u64,
 
     /// The height of a block
     pub revision_height: u64,
+}
+
+impl PartialEq for Height {
+    #[trusted]
+    fn eq(&self, other: &Self) -> bool {
+       unreachable!()
+    }
+}
+
+impl PartialOrd for Height {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        unreachable!()
+    }
 }
 
 impl Height {
@@ -81,27 +94,27 @@ impl Default for Height {
     }
 }
 
-impl PartialOrd for Height {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
+// impl PartialOrd for Height {
+//     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+//         Some(self.cmp(other))
+//     }
+// }
 
-impl Ord for Height {
-    fn cmp(&self, other: &Self) -> Ordering {
-        if self.revision_number < other.revision_number {
-            Ordering::Less
-        } else if self.revision_number > other.revision_number {
-            Ordering::Greater
-        } else if self.revision_height < other.revision_height {
-            Ordering::Less
-        } else if self.revision_height > other.revision_height {
-            Ordering::Greater
-        } else {
-            Ordering::Equal
-        }
-    }
-}
+// impl Ord for Height {
+//     fn cmp(&self, other: &Self) -> Ordering {
+//         if self.revision_number < other.revision_number {
+//             Ordering::Less
+//         } else if self.revision_number > other.revision_number {
+//             Ordering::Greater
+//         } else if self.revision_height < other.revision_height {
+//             Ordering::Less
+//         } else if self.revision_height > other.revision_height {
+//             Ordering::Greater
+//         } else {
+//             Ordering::Equal
+//         }
+//     }
+// }
 
 impl Protobuf<RawHeight> for Height {}
 

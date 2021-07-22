@@ -15,7 +15,7 @@ use crate::ics24_host::identifier::ConnectionId;
 use crate::ics24_host::identifier::{ChannelId, ClientId, PortId};
 use crate::Height;
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone)]
 pub struct TendermintClient;
 
 impl ClientDef for TendermintClient {

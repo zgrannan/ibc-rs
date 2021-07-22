@@ -20,7 +20,7 @@ use crate::ics04_channel::{
 };
 use crate::ics24_host::identifier::{ChannelId, ConnectionId, PortId};
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone)]
 pub struct IdentifiedChannelEnd {
     pub port_id: PortId,
     pub channel_id: ChannelId,
@@ -84,7 +84,7 @@ unreachable!() // panic!("No") //         RawIdentifiedChannel {
     }
 }
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone)]
 pub struct ChannelEnd {
     pub state: State,
     pub ordering: Order,
@@ -268,7 +268,7 @@ unreachable!() //         self.counterparty().eq(other)
     }
 }
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone)]
 pub struct Counterparty {
     pub port_id: PortId,
     pub channel_id: Option<ChannelId>,
@@ -342,11 +342,19 @@ unreachable!() // panic!("No") // panic!("No") //         RawCounterparty {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy)]
 pub enum Order {
     None = 0,
     Unordered,
     Ordered,
+}
+
+
+impl PartialEq for Order {
+    #[trusted]
+    fn eq(&self, other: &Self) -> bool {
+       unreachable!()
+    }
 }
 
 impl Default for Order {
@@ -400,7 +408,14 @@ unreachable!() //         match s.to_lowercase().as_str() {
     }
 }
 
-#[derive(Copy, Clone, PartialEq, Eq)]
+impl PartialEq for State {
+    #[trusted]
+    fn eq(&self, other: &Self) -> bool {
+       unreachable!()
+    }
+}
+
+#[derive(Copy, Clone)]
 pub enum State {
     Uninitialized = 0,
     Init = 1,

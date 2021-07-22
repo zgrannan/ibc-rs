@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use std::{convert::TryFrom, fmt};
 use subtle_encoding::{Encoding, Hex};
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone)]
 // #[serde(transparent)]
 pub struct CommitmentRoot {
 //     #[serde(serialize_with = "crate::serializers::ser_hex_upper")]
@@ -45,10 +45,10 @@ impl From<Vec<u8>> for CommitmentRoot {
     }
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone)]
 pub struct CommitmentPath;
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone)]
 // #[serde(transparent)]
 pub struct CommitmentProofBytes {
 //     #[serde(serialize_with = "crate::serializers::ser_hex_upper")]
@@ -103,7 +103,7 @@ impl TryFrom<CommitmentProofBytes> for RawMerkleProof {
     }
 }
 
-#[derive(Clone, PartialEq, Eq, Hash, Default)]
+#[derive(Clone, Hash, Default)]
 pub struct CommitmentPrefix {
     bytes: Vec<u8>,
 }

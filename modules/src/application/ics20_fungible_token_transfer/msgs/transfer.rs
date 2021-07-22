@@ -19,7 +19,7 @@ pub const TYPE_URL: &str = "/ibc.applications.transfer.v1.MsgTransfer";
 ///
 /// Message definition for the "packet receiving" datagram.
 ///
-#[derive(Clone, PartialEq)]
+#[derive(Clone)]
 pub struct MsgTransfer {
     /// the port on which the packet will be sent
     pub source_port: PortId,

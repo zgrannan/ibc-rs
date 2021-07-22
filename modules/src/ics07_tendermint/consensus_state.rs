@@ -23,7 +23,7 @@ impl std::fmt::Debug for ConsensusState {
 }
 
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone)]
 pub struct ConsensusState {
     pub timestamp: Time,
     pub root: CommitmentRoot,

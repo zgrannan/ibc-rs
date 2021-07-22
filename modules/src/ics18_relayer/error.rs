@@ -22,7 +22,7 @@ impl std::fmt::Display for Kind {
 
 
 
-#[derive(Clone, Error, PartialEq, Eq)]
+#[derive(Clone, Error)]
 pub enum Kind {
 //     #[error("client state on destination chain not found, (client id: {0})")]
     ClientStateNotFound(ClientId),

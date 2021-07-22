@@ -17,7 +17,7 @@ use super::validate::*;
 ///       See: https://github.com/informalsystems/ibc-rs/pull/304#discussion_r503917283.
 ///
 /// Also, contrast with tendermint-rs `ChainId` type.
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Hash)]
 // #[serde(from = "tendermint::chain::Id", into = "tendermint::chain::Id")]
 pub struct ChainId {
     id: String,
@@ -156,8 +156,15 @@ impl std::fmt::Debug for ClientId {
 }
 
 
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Hash)]
 pub struct ClientId(String);
+
+impl PartialEq for ClientId {
+    #[trusted]
+    fn eq(&self, other: &Self) -> bool {
+       unreachable!()
+    }
+}
 
 impl ClientId {
     /// Builds a new client identifier. Client identifiers are deterministically formed from two
@@ -243,8 +250,16 @@ unreachable!() //         self.as_str().eq(other)
     }
 }
 
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Hash)]
 pub struct ConnectionId(String);
+
+impl PartialEq for ConnectionId {
+    #[trusted]
+    fn eq(&self, other: &Self) -> bool {
+       unreachable!()
+    }
+}
+
 
 impl ConnectionId {
     /// Builds a new connection identifier. Connection identifiers are deterministically formed from
@@ -319,7 +334,7 @@ unreachable!() //         self.as_str().eq(other)
     }
 }
 
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Hash)]
 pub struct PortId(String);
 
 impl std::fmt::Debug for PortId {
@@ -373,7 +388,7 @@ unreachable!() //         "defaultPort".to_string().parse().unwrap()
     }
 }
 
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Hash)]
 pub struct ChannelId(String);
 
 impl ChannelId {
@@ -444,7 +459,7 @@ unreachable!() //         self.as_str().eq(other)
 }
 
 /// A pair of [`PortId`] and [`ChannelId`] are used together for sending IBC packets.
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Hash)]
 pub struct PortChannelId {
     pub channel_id: ChannelId,
     pub port_id: PortId,

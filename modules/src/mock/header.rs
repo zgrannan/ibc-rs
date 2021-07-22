@@ -14,7 +14,7 @@ use crate::mock::client_state::MockConsensusState;
 use crate::timestamp::Timestamp;
 use crate::Height;
 
-#[derive(Copy, Clone, Default, PartialEq, Eq)]
+#[derive(Copy, Clone, Default)]
 pub struct MockHeader {
     pub height: Height,
     pub timestamp: Timestamp,

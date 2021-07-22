@@ -35,7 +35,7 @@ impl std::fmt::Debug for AnyHeader {
     }
 }
 
-#[derive(Clone, PartialEq)] // TODO: Add Eq bound once possible
+#[derive(Clone)] // TODO: Add Eq bound once possible
 #[allow(clippy::large_enum_variant)]
 pub enum AnyHeader {
     Tendermint(TendermintHeader),

@@ -15,7 +15,7 @@ pub const TYPE_URL: &str = "/ibc.core.channel.v1.MsgChannelOpenInit";
 ///
 /// Message definition for the first step in the channel open handshake (`ChanOpenInit` datagram).
 ///
-#[derive(Clone, PartialEq)]
+#[derive(Clone)]
 pub struct MsgChannelOpenInit {
     pub port_id: PortId,
     pub channel: ChannelEnd,

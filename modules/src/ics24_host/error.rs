@@ -19,7 +19,7 @@ impl std::fmt::Display for ValidationKind {
 }
 
 
-#[derive(Clone, Error, PartialEq, Eq)]
+#[derive(Clone, Error)]
 pub enum ValidationKind {
 //     #[error("identifier {id} cannot contain separator '/'")]
     ContainsSeparator { id: String },

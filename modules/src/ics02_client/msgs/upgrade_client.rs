@@ -20,7 +20,7 @@ use crate::tx_msg::Msg;
 pub(crate) const TYPE_URL: &str = "/ibc.core.client.v1.MsgUpgradeClient";
 
 /// A type of message that triggers the upgrade of an on-chain (IBC) client.
-#[derive(Clone, PartialEq)]
+#[derive(Clone)]
 pub struct MsgUpgradeAnyClient {
     pub client_id: ClientId,
     pub client_state: AnyClientState,

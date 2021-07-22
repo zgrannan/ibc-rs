@@ -20,7 +20,7 @@ impl std::fmt::Debug for Kind {
     }
 }
 
-#[derive(Clone, Error, Eq, PartialEq)]
+#[derive(Clone, Error)]
 pub enum Kind {
 //     #[error("connection state unknown")]
     InvalidState(i32),

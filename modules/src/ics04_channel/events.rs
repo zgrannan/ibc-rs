@@ -163,7 +163,7 @@ impl std::fmt::Debug for Attributes {
 }
 
 
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Hash)]
 pub struct Attributes {
     pub height: Height,
     pub port_id: PortId,

@@ -18,7 +18,7 @@ impl std::fmt::Debug for Misbehaviour {
 }
 
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone)]
 pub struct Misbehaviour {
     pub client_id: ClientId,
     pub header1: Header,
