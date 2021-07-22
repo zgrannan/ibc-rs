@@ -17,6 +17,7 @@
 //! [`unwrap-infallible`]: [https://crates.io/crates/unwrap-infallible
 
 use std::convert::Infallible;
+use prusti_contracts::*;
 
 // TODO: Remove this trait and its associated impl once `into_ok` stabilizes:
 //  https://github.com/rust-lang/rust/issues/61695
@@ -29,6 +30,7 @@ pub trait UnwrapInfallible {
 impl<A> UnwrapInfallible for Result<A, Infallible> {
     type Output = A;
 
+    #[trusted]
     fn unwrap_infallible(self) -> Self::Output {
         match self {
             Ok(a) => a,

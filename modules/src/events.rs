@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use anomaly::BoxError;
-use prusti_contracts::trusted;
+use prusti_contracts::*;
 use serde_derive::{Deserialize, Serialize};
 
 use crate::ics02_client::events as ClientEvents;
@@ -84,6 +84,7 @@ unreachable!() //         writeln!(f, "events:")?;
 
 
 impl std::fmt::Debug for IbcEvent {
+    #[trusted]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         unreachable!()
     }
@@ -153,6 +154,10 @@ unreachable!() //         format!("{:?}", self) // Fallback to debug printing
 //         // }
     }
 
+    #[requires(!matches!(*self, IbcEvent::ChainError(_)))]
+    #[requires(!matches!(*self, IbcEvent::UpgradeClient(_)))]
+    #[requires(!matches!(*self, IbcEvent::Empty(_)))]
+    #[requires(!matches!(*self, IbcEvent::TimeoutOnClosePacket(_)))]
     pub fn height(&self) -> Height {
         match self {
             IbcEvent::NewBlock(bl) => bl.height(),
@@ -174,10 +179,13 @@ unreachable!() //         format!("{:?}", self) // Fallback to debug printing
             IbcEvent::WriteAcknowledgement(ev) => ev.height(),
             IbcEvent::AcknowledgePacket(ev) => ev.height(),
             IbcEvent::TimeoutPacket(ev) => ev.height(),
-            _ => unimplemented!(),
+            _ => unimplemented!()
         }
     }
 
+    #[requires(!matches!(*self, IbcEvent::ChainError(_)))]
+    #[requires(!matches!(*self, IbcEvent::Empty(_)))]
+    #[requires(!matches!(*self, IbcEvent::TimeoutOnClosePacket(_)))]
     pub fn set_height(&mut self, height: Height) {
         match self {
             IbcEvent::NewBlock(ev) => ev.set_height(height),
@@ -200,7 +208,7 @@ unreachable!() //         format!("{:?}", self) // Fallback to debug printing
             IbcEvent::WriteAcknowledgement(ev) => ev.set_height(height),
             IbcEvent::AcknowledgePacket(ev) => ev.set_height(height),
             IbcEvent::TimeoutPacket(ev) => ev.set_height(height),
-            _ => unimplemented!(),
+            _ => unimplemented!()
         }
     }
 

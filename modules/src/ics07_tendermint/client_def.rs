@@ -71,6 +71,7 @@ unreachable!() //         if client_state.latest_height() >= header.height() {
 unreachable!() //         todo!()
     }
 
+#[trusted]
     fn verify_channel_state(
         &self,
         _client_state: &Self::ClientState,
@@ -84,6 +85,7 @@ unreachable!() //         todo!()
         todo!()
     }
 
+#[trusted]
     fn verify_client_full_state(
         &self,
         _client_state: &Self::ClientState,
@@ -97,6 +99,7 @@ unreachable!() //         todo!()
         unimplemented!()
     }
 
+#[trusted]
     fn verify_packet_data(
         &self,
         _client_state: &Self::ClientState,
@@ -110,6 +113,7 @@ unreachable!() //         todo!()
         todo!()
     }
 
+#[trusted]
     fn verify_packet_acknowledgement(
         &self,
         _client_state: &Self::ClientState,
@@ -123,6 +127,7 @@ unreachable!() //         todo!()
         todo!()
     }
 
+#[trusted]
     fn verify_next_sequence_recv(
         &self,
         _client_state: &Self::ClientState,
@@ -135,6 +140,7 @@ unreachable!() //         todo!()
         todo!()
     }
 
+#[trusted]
     fn verify_packet_receipt_absence(
         &self,
         _client_state: &Self::ClientState,
@@ -147,6 +153,7 @@ unreachable!() //         todo!()
         todo!()
     }
 
+#[trusted]
     fn verify_upgrade_and_update_state(
         &self,
         _client_state: &Self::ClientState,

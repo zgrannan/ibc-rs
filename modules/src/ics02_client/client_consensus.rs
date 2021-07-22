@@ -178,6 +178,7 @@ impl ConsensusState for AnyConsensusState {
     //     todo!()
     // }
 
+    #[trusted]
     fn validate_basic(&self) -> Result<(), Box<dyn std::error::Error>> {
         todo!()
     }
