@@ -16,7 +16,7 @@ pub enum ClientType {
 
 impl std::fmt::Debug for ClientType {
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        panic!("No")
+        unreachable!()
     }
 }
 
@@ -30,7 +30,7 @@ impl ClientType {
     /// Yields the identifier of this client type as a string
 #[trusted]
     pub fn as_str(&self) -> &'static str {
-panic!("No") //         match self {
+unreachable!() //         match self {
 //             Self::Tendermint => Self::TENDERMINT_STR,
 // 
 //             #[cfg(any(test, feature = "mocks"))]
@@ -42,7 +42,7 @@ panic!("No") //         match self {
 impl fmt::Display for ClientType {
 #[trusted]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-panic!("No") //         write!(f, "ClientType({})", self.as_str())
+unreachable!() //         write!(f, "ClientType({})", self.as_str())
     }
 }
 
@@ -51,7 +51,7 @@ impl std::str::FromStr for ClientType {
 
 #[trusted]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-panic!("No") //         match s {
+unreachable!() //         match s {
 //             Self::TENDERMINT_STR => Ok(Self::Tendermint),
 // 
 //             #[cfg(any(test, feature = "mocks"))]

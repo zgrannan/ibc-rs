@@ -29,7 +29,7 @@ pub fn process(
     ctx: &dyn ClientReader,
     msg: MsgCreateAnyClient,
 ) -> HandlerResult<ClientResult, Error> {
-panic!("No") //     let mut output = HandlerOutput::builder();
+unreachable!() //     let mut output = HandlerOutput::builder();
 // 
 //     // Construct this client's identifier
 //     let id_counter = ctx.client_counter();

@@ -30,12 +30,12 @@ impl Msg for MsgSubmitAnyMisbehaviour {
 
 #[trusted]
     fn route(&self) -> String {
-panic!("No") //         crate::keys::ROUTER_KEY.to_string()
+unreachable!() //         crate::keys::ROUTER_KEY.to_string()
     }
 
 #[trusted]
     fn type_url(&self) -> String {
-panic!("No") //         TYPE_URL.to_string()
+unreachable!() //         TYPE_URL.to_string()
     }
 }
 
@@ -46,7 +46,7 @@ impl TryFrom<RawMsgSubmitMisbehaviour> for MsgSubmitAnyMisbehaviour {
 
 #[trusted]
     fn try_from(raw: RawMsgSubmitMisbehaviour) -> Result<Self, Self::Error> {
-panic!("No") //         let raw_misbehaviour = raw.misbehaviour.ok_or(Kind::InvalidRawMisbehaviour)?;
+unreachable!() //         let raw_misbehaviour = raw.misbehaviour.ok_or(Kind::InvalidRawMisbehaviour)?;
 // 
 //         Ok(MsgSubmitAnyMisbehaviour {
 //             client_id: raw

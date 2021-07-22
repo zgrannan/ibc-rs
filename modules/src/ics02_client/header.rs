@@ -31,7 +31,7 @@ pub trait Header: Clone + std::fmt::Debug + Send + Sync {
 
 impl std::fmt::Debug for AnyHeader {
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        panic!("No")
+        unreachable!()
     }
 }
 
@@ -75,7 +75,7 @@ impl TryFrom<Any> for AnyHeader {
 
 #[trusted]
     fn try_from(raw: Any) -> Result<Self, Self::Error> {
-panic!("No") //         match raw.type_url.as_str() {
+unreachable!() //         match raw.type_url.as_str() {
 //             TENDERMINT_HEADER_TYPE_URL => Ok(AnyHeader::Tendermint(
 //                 TendermintHeader::decode_vec(&raw.value)
 //                     .map_err(|e| Kind::InvalidRawHeader.context(e))?,
@@ -95,7 +95,7 @@ panic!("No") //         match raw.type_url.as_str() {
 impl From<AnyHeader> for Any {
 #[trusted]
     fn from(value: AnyHeader) -> Self {
-panic!("No") //         match value {
+unreachable!() //         match value {
 //             AnyHeader::Tendermint(header) => Any {
 //                 type_url: TENDERMINT_HEADER_TYPE_URL.to_string(),
 //                 value: header

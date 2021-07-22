@@ -41,12 +41,12 @@ impl Msg for MsgConnectionOpenConfirm {
 
 #[trusted]
     fn route(&self) -> String {
-panic!("No") //         crate::keys::ROUTER_KEY.to_string()
+unreachable!() //         crate::keys::ROUTER_KEY.to_string()
     }
 
 #[trusted]
     fn type_url(&self) -> String {
-panic!("No") //         TYPE_URL.to_string()
+unreachable!() //         TYPE_URL.to_string()
     }
 }
 
@@ -57,7 +57,7 @@ impl TryFrom<RawMsgConnectionOpenConfirm> for MsgConnectionOpenConfirm {
 
 #[trusted]
     fn try_from(msg: RawMsgConnectionOpenConfirm) -> Result<Self, Self::Error> {
-panic!("No") //         let proof_height = msg
+unreachable!() //         let proof_height = msg
 //             .proof_height
 //             .ok_or(Kind::MissingProofHeight)?
 //             .try_into() // Cast from the raw height type into the domain type.
@@ -77,7 +77,7 @@ panic!("No") //         let proof_height = msg
 impl From<MsgConnectionOpenConfirm> for RawMsgConnectionOpenConfirm {
 #[trusted]
     fn from(ics_msg: MsgConnectionOpenConfirm) -> Self {
-panic!("No") //         RawMsgConnectionOpenConfirm {
+unreachable!() //         RawMsgConnectionOpenConfirm {
 //             connection_id: ics_msg.connection_id.as_str().to_string(),
 //             proof_ack: ics_msg.proofs.object_proof().clone().into(),
 //             proof_height: Some(ics_msg.proofs.height().into()),

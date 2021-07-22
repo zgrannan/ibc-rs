@@ -43,7 +43,7 @@ pub enum Receipt {
 impl std::fmt::Display for PacketMsgType {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-panic!("No") //         match self {
+unreachable!() //         match self {
 //             PacketMsgType::Recv => write!(f, "(PacketMsgType::Recv)"),
 //             PacketMsgType::Ack => write!(f, "(PacketMsgType::Ack)"),
 //             PacketMsgType::TimeoutUnordered => write!(f, "(PacketMsgType::TimeoutUnordered)"),
@@ -55,7 +55,7 @@ panic!("No") //         match self {
 
 impl std::fmt::Debug for Sequence {
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        panic!("No")
+        unreachable!()
     }
 }
 
@@ -75,7 +75,7 @@ impl FromStr for Sequence {
 
 #[trusted]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-panic!("No") //         Ok(Self::from(s.parse::<u64>().map_err(|_e| {
+unreachable!() //         Ok(Self::from(s.parse::<u64>().map_err(|_e| {
 //             Kind::InvalidStringAsSequence(s.to_string())
 //         })?))
     }
@@ -106,7 +106,7 @@ impl From<Sequence> for u64 {
 impl std::fmt::Display for Sequence {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-panic!("No") //         write!(f, "{}", self.0)
+unreachable!() //         write!(f, "{}", self.0)
     }
 }
 
@@ -126,7 +126,7 @@ pub struct Packet {
 impl Packet {
 #[trusted]
     pub fn timed_out(&self, dst_chain_height: Height) -> bool {
-panic!("No") //         (self.timeout_height != Height::zero() && self.timeout_height < dst_chain_height)
+unreachable!() //         (self.timeout_height != Height::zero() && self.timeout_height < dst_chain_height)
 //             || (self.timeout_timestamp != Timestamp::none()
 //                 && Timestamp::now().check_expiry(&self.timeout_timestamp) == Expired)
     }
@@ -135,7 +135,7 @@ panic!("No") //         (self.timeout_height != Height::zero() && self.timeout_h
 impl std::fmt::Debug for Packet {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-panic!("No") //         write!(
+unreachable!() //         write!(
 //             f,
 //             "{:?} {:?} {:?}",
 //             self.source_port, self.source_channel, self.sequence
@@ -147,7 +147,7 @@ panic!("No") //         write!(
 impl std::fmt::Display for Packet {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-panic!("No") //         write!(
+unreachable!() //         write!(
 //             f,
 //             "seq:{}, path:{}/{}->{}/{}, toh:{}, tos:{})",
 //             self.sequence,
@@ -182,7 +182,7 @@ impl TryFrom<RawPacket> for Packet {
 
 #[trusted]
     fn try_from(raw_pkt: RawPacket) -> Result<Self, Self::Error> {
-panic!("No") //         if Sequence::from(raw_pkt.sequence).is_zero() {
+unreachable!() //         if Sequence::from(raw_pkt.sequence).is_zero() {
 //             return Err(Kind::ZeroPacketSequence.into());
 //         }
 //         let packet_timeout_height: Height = raw_pkt

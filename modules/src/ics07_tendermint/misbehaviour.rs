@@ -13,7 +13,7 @@ use crate::Height;
 
 impl std::fmt::Debug for Misbehaviour {
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        panic!("No")
+        unreachable!()
     }
 }
 
@@ -46,7 +46,7 @@ impl TryFrom<RawMisbehaviour> for Misbehaviour {
 
 #[trusted]
     fn try_from(raw: RawMisbehaviour) -> Result<Self, Self::Error> {
-panic!("No") // panic!("No") //         Ok(Self {
+unreachable!() // panic!("No") //         Ok(Self {
 // //             client_id: Default::default(),
 // //             header1: raw
 // //                 .header_1
@@ -73,7 +73,7 @@ impl From<Misbehaviour> for RawMisbehaviour {
 impl std::fmt::Display for Misbehaviour {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-panic!("No") //         write!(
+unreachable!() //         write!(
 //             f,
 //             "{:?} h1: {:?}-{:?} h2: {:?}-{:?}",
 //             self.client_id,

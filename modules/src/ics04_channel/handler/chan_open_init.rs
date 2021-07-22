@@ -16,7 +16,7 @@ pub(crate) fn process(
     ctx: &dyn ChannelReader,
     msg: MsgChannelOpenInit,
 ) -> HandlerResult<ChannelResult, Error> {
-panic!("No") //     let mut output = HandlerOutput::builder();
+unreachable!() //     let mut output = HandlerOutput::builder();
 // 
 //     // Channel capabilities
 //     let channel_cap = ctx.authenticated_capability(&msg.port_id().clone())?;

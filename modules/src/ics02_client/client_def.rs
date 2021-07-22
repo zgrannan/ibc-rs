@@ -224,7 +224,7 @@ impl ClientDef for AnyClient {
         consensus_height: Height,
         expected_consensus_state: &AnyConsensusState,
     ) -> Result<(), Box<dyn std::error::Error>> {
-panic!("No") //         match self {
+unreachable!() //         match self {
 //             Self::Tendermint(client) => {
 //                 let client_state = downcast!(
 //                     client_state => AnyClientState::Tendermint
@@ -272,7 +272,7 @@ panic!("No") //         match self {
         connection_id: Option<&ConnectionId>,
         expected_connection_end: &ConnectionEnd,
     ) -> Result<(), Box<dyn std::error::Error>> {
-panic!("No") //         match self {
+unreachable!() //         match self {
 //             Self::Tendermint(client) => {
 //                 let client_state = downcast!(client_state => AnyClientState::Tendermint)
 //                     .ok_or_else(|| Kind::ClientArgsTypeMismatch(ClientType::Tendermint))?;
@@ -315,7 +315,7 @@ panic!("No") //         match self {
         channel_id: &ChannelId,
         expected_channel_end: &ChannelEnd,
     ) -> Result<(), Box<dyn std::error::Error>> {
-panic!("No") //         match self {
+unreachable!() //         match self {
 //             Self::Tendermint(client) => {
 //                 let client_state = downcast!(client_state => AnyClientState::Tendermint)
 //                     .ok_or_else(|| Kind::ClientArgsTypeMismatch(ClientType::Tendermint))?;
@@ -360,7 +360,7 @@ panic!("No") //         match self {
         proof: &CommitmentProofBytes,
         client_state_on_counterparty: &AnyClientState,
     ) -> Result<(), Box<dyn std::error::Error>> {
-panic!("No") //         match self {
+unreachable!() //         match self {
 //             Self::Tendermint(client) => {
 //                 let client_state = downcast!(
 //                     client_state => AnyClientState::Tendermint
@@ -408,7 +408,7 @@ panic!("No") //         match self {
         seq: &Sequence,
         commitment: String,
     ) -> Result<(), Box<dyn std::error::Error>> {
-panic!("No") //         match self {
+unreachable!() //         match self {
 //             Self::Tendermint(client) => {
 //                 let client_state = downcast!(
 //                     client_state => AnyClientState::Tendermint
@@ -457,7 +457,7 @@ panic!("No") //         match self {
         seq: &Sequence,
         ack: Vec<u8>,
     ) -> Result<(), Box<dyn std::error::Error>> {
-panic!("No") //         match self {
+unreachable!() //         match self {
 //             Self::Tendermint(client) => {
 //                 let client_state = downcast!(
 //                     client_state => AnyClientState::Tendermint
@@ -505,7 +505,7 @@ panic!("No") //         match self {
         channel_id: &ChannelId,
         seq: &Sequence,
     ) -> Result<(), Box<dyn std::error::Error>> {
-panic!("No") //         match self {
+unreachable!() //         match self {
 //             Self::Tendermint(client) => {
 //                 let client_state = downcast!(
 //                     client_state => AnyClientState::Tendermint
@@ -550,7 +550,7 @@ panic!("No") //         match self {
         channel_id: &ChannelId,
         seq: &Sequence,
     ) -> Result<(), Box<dyn std::error::Error>> {
-panic!("No") //         match self {
+unreachable!() //         match self {
 //             Self::Tendermint(client) => {
 //                 let client_state = downcast!(
 //                     client_state => AnyClientState::Tendermint
@@ -594,7 +594,7 @@ panic!("No") //         match self {
         proof_upgrade_client: MerkleProof,
         proof_upgrade_consensus_state: MerkleProof,
     ) -> Result<(Self::ClientState, Self::ConsensusState), Box<dyn std::error::Error>> {
-panic!("No") //         match self {
+unreachable!() //         match self {
 //             Self::Tendermint(client) => {
 //                 let (client_state, consensus_state) = downcast!(
 //                     client_state => AnyClientState::Tendermint,

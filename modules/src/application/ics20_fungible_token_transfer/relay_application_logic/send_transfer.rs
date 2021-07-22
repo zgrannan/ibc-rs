@@ -16,7 +16,7 @@ pub(crate) fn send_transfer<Ctx>(
 where
     Ctx: Ics20Context,
 {
-panic!("No") //     let source_channel_end = ctx
+unreachable!() //     let source_channel_end = ctx
 //         .channel_end(&(msg.source_port.clone(), msg.source_channel.clone()))
 //         .ok_or_else(|| {
 //             Kind::ChannelNotFound(msg.source_port.clone(), msg.source_channel.clone())

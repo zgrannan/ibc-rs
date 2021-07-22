@@ -39,7 +39,7 @@ impl From<Version> for RawVersion {
 impl Default for Version {
 #[trusted]
     fn default() -> Self {
-panic!("No") //         Version {
+unreachable!() //         Version {
 //             identifier: "1".to_string(),
 //             features: vec!["TOKEN_TRANSFER".to_string()],
 //         }
@@ -57,7 +57,7 @@ impl FromStr for Version {
 impl std::fmt::Display for Version {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-panic!("No") //         write!(
+unreachable!() //         write!(
 //             f,
 //             "{}",
 //             String::from_utf8(Version::encode_vec(self).unwrap()).unwrap()
@@ -71,7 +71,7 @@ pub fn default_version_string() -> String {
 
 #[trusted]
 pub fn get_compatible_versions() -> Vec<String> {
-panic!("No") //     vec![default_version_string()]
+unreachable!() //     vec![default_version_string()]
 }
 
 #[trusted]
@@ -79,7 +79,7 @@ pub fn pick_version(
     supported_versions: Vec<String>,
     counterparty_versions: Vec<String>,
 ) -> Result<String, Error> {
-panic!("No") //     let mut intersection: Vec<Version> = vec![];
+unreachable!() //     let mut intersection: Vec<Version> = vec![];
 //     for s in supported_versions.iter() {
 //         let supported_version =
 //             Version::decode(s.as_bytes()).map_err(|e| Kind::InvalidVersion.context(e))?;
@@ -101,7 +101,7 @@ panic!("No") //     let mut intersection: Vec<Version> = vec![];
 
 #[trusted]
 pub fn validate_versions(versions: Vec<String>) -> Result<Vec<String>, Error> {
-panic!("No") //     if versions.is_empty() {
+unreachable!() //     if versions.is_empty() {
 //         return Err(Kind::InvalidVersion
 //             .context("no versions".to_string())
 //             .into());
@@ -114,7 +114,7 @@ panic!("No") //     if versions.is_empty() {
 
 #[trusted]
 pub fn validate_version(raw_version: String) -> Result<String, Error> {
-panic!("No") //     let version =
+unreachable!() //     let version =
 //         Version::from_str(raw_version.as_ref()).map_err(|e| Kind::InvalidVersion.context(e))?;
 // 
 //     if version.identifier.trim().is_empty() {

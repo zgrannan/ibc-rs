@@ -9,14 +9,14 @@ pub type Error = anomaly::Error<Kind>;
 impl std::fmt::Debug for Kind {
 #[trusted]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        panic!("No")
+        unreachable!()
     }
 }
 
 impl std::fmt::Display for Kind {
 #[trusted]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        panic!("No")
+        unreachable!()
     }
 }
 
@@ -40,6 +40,6 @@ pub enum Kind {
 impl Kind {
 #[trusted]
     pub fn context(self, source: impl Into<BoxError>) -> Context<Self> {
-panic!("No") //         Context::new(self, Some(source.into()))
+unreachable!() //         Context::new(self, Some(source.into()))
     }
 }

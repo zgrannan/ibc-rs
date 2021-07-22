@@ -34,7 +34,7 @@ const HEADER: &str = "header";
 
 #[trusted]
 pub fn try_from_tx(event: &tendermint::abci::Event) -> Option<IbcEvent> {
-panic!("No") //     match event.type_str.as_ref() {
+unreachable!() //     match event.type_str.as_ref() {
 //         CREATE_EVENT_TYPE => Some(IbcEvent::CreateClient(CreateClient(
 //             extract_attributes_from_tx(event),
 //         ))),
@@ -54,7 +54,7 @@ panic!("No") //     match event.type_str.as_ref() {
 
 #[trusted]
 fn extract_attributes_from_tx(event: &tendermint::abci::Event) -> Attributes {
-panic!("No") //     let mut attr = Attributes::default();
+unreachable!() //     let mut attr = Attributes::default();
 // 
 //     for tag in &event.attributes {
 //         let key = tag.key.as_ref();
@@ -73,7 +73,7 @@ panic!("No") //     let mut attr = Attributes::default();
 
 #[trusted]
 pub fn extract_header_from_tx(event: &tendermint::abci::Event) -> Option<AnyHeader> {
-panic!("No") //     for tag in &event.attributes {
+unreachable!() //     for tag in &event.attributes {
 //         let key = tag.key.as_ref();
 //         let value = tag.value.as_ref();
 //         if let HEADER = key {
@@ -133,7 +133,7 @@ impl Default for Attributes {
 impl std::fmt::Display for Attributes {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-panic!("No") //         write!(
+unreachable!() //         write!(
 //             f,
 //             "h: {}, cs_h: {}({})",
 //             self.height, self.client_id, self.consensus_height
@@ -167,7 +167,7 @@ impl TryFrom<RawObject> for CreateClient {
     type Error = BoxError;
 #[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
-panic!("No") //         let consensus_height_str: String = attribute!(obj, "create_client.consensus_height");
+unreachable!() //         let consensus_height_str: String = attribute!(obj, "create_client.consensus_height");
 //         Ok(CreateClient(Attributes {
 //             height: obj.height,
 //             client_id: attribute!(obj, "create_client.client_id"),
@@ -186,7 +186,7 @@ impl From<CreateClient> for IbcEvent {
 impl std::fmt::Display for CreateClient {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-panic!("No") //         write!(f, "{}", self.0)
+unreachable!() //         write!(f, "{}", self.0)
     }
 }
 
@@ -232,7 +232,7 @@ impl TryFrom<RawObject> for UpdateClient {
     type Error = BoxError;
 #[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
-panic!("No") //         let header_str: Option<String> = some_attribute!(obj, "update_client.header");
+unreachable!() //         let header_str: Option<String> = some_attribute!(obj, "update_client.header");
 //         let header: Option<AnyHeader> = match header_str {
 //             Some(str) => {
 //                 let header_bytes = hex::decode(str)?;
@@ -263,7 +263,7 @@ impl From<UpdateClient> for IbcEvent {
 impl std::fmt::Display for UpdateClient {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-panic!("No") //         write!(f, "{}", self.common)
+unreachable!() //         write!(f, "{}", self.common)
     }
 }
 
@@ -289,7 +289,7 @@ impl TryFrom<RawObject> for ClientMisbehaviour {
     type Error = BoxError;
 #[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
-panic!("No") //         let consensus_height_str: String = attribute!(obj, "client_misbehaviour.consensus_height");
+unreachable!() //         let consensus_height_str: String = attribute!(obj, "client_misbehaviour.consensus_height");
 //         Ok(ClientMisbehaviour(Attributes {
 //             height: obj.height,
 //             client_id: attribute!(obj, "client_misbehaviour.client_id"),

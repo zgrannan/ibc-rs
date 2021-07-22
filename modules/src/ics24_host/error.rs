@@ -7,14 +7,14 @@ pub type ValidationError = anomaly::Error<ValidationKind>;
 impl std::fmt::Debug for ValidationKind {
 #[trusted]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        panic!("No")
+        unreachable!()
     }
 }
 
 impl std::fmt::Display for ValidationKind {
 #[trusted]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        panic!("No")
+        unreachable!()
     }
 }
 
@@ -73,6 +73,6 @@ impl ValidationKind {
 
 #[trusted]
     pub fn context(self, source: impl Into<BoxError>) -> Context<Self> {
-panic!("No") //         Context::new(self, Some(source.into()))
+unreachable!() //         Context::new(self, Some(source.into()))
     }
 }

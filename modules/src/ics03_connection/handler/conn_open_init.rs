@@ -16,7 +16,7 @@ pub(crate) fn process(
     ctx: &dyn ConnectionReader,
     msg: MsgConnectionOpenInit,
 ) -> HandlerResult<ConnectionResult, Error> {
-panic!("No") //     let mut output = HandlerOutput::builder();
+unreachable!() //     let mut output = HandlerOutput::builder();
 // 
 //     // An IBC client running on the local (host) chain should exist.
 //     if ctx.client_state(msg.client_id()).is_none() {

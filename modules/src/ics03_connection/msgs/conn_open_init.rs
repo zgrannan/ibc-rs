@@ -44,12 +44,12 @@ impl Msg for MsgConnectionOpenInit {
 
 #[trusted]
     fn route(&self) -> String {
-panic!("No") //         crate::keys::ROUTER_KEY.to_string()
+unreachable!() //         crate::keys::ROUTER_KEY.to_string()
     }
 
 #[trusted]
     fn type_url(&self) -> String {
-panic!("No") //         TYPE_URL.to_string()
+unreachable!() //         TYPE_URL.to_string()
     }
 }
 
@@ -60,7 +60,7 @@ impl TryFrom<RawMsgConnectionOpenInit> for MsgConnectionOpenInit {
 
 #[trusted]
     fn try_from(msg: RawMsgConnectionOpenInit) -> Result<Self, Self::Error> {
-panic!("No") //         Ok(Self {
+unreachable!() //         Ok(Self {
 //             client_id: msg
 //                 .client_id
 //                 .parse()
@@ -83,7 +83,7 @@ panic!("No") //         Ok(Self {
 impl From<MsgConnectionOpenInit> for RawMsgConnectionOpenInit {
 #[trusted]
     fn from(ics_msg: MsgConnectionOpenInit) -> Self {
-panic!("No") //         RawMsgConnectionOpenInit {
+unreachable!() //         RawMsgConnectionOpenInit {
 //             client_id: ics_msg.client_id.as_str().to_string(),
 //             counterparty: Some(ics_msg.counterparty.into()),
 //             version: Some(ics_msg.version.into()),

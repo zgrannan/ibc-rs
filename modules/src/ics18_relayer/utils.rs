@@ -17,7 +17,7 @@ pub fn build_client_update_datagram<Ctx>(
 where
     Ctx: Ics18Context,
 {
-panic!("No") //     // Check if client for ibc0 on ibc1 has been updated to latest height:
+unreachable!() //     // Check if client for ibc0 on ibc1 has been updated to latest height:
 //     // - query client state on destination chain
 //     let dest_client_state = dest
 //         .query_client_full_state(client_id)

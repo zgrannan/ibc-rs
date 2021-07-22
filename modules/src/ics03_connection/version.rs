@@ -21,7 +21,7 @@ impl Version {
     /// Checks whether or not the given feature is supported in this versin
 #[trusted]
     pub fn is_supported_feature(&self, feature: String) -> bool {
-panic!("No") //         self.features.contains(&feature)
+unreachable!() //         self.features.contains(&feature)
     }
 }
 
@@ -31,7 +31,7 @@ impl TryFrom<RawVersion> for Version {
     type Error = anomaly::Error<Kind>;
 #[trusted]
     fn try_from(value: RawVersion) -> Result<Self, Self::Error> {
-panic!("No") //         if value.identifier.trim().is_empty() {
+unreachable!() //         if value.identifier.trim().is_empty() {
 //             return Err(Kind::InvalidVersion
 //                 .context("empty version string".to_string())
 //                 .into());
@@ -62,7 +62,7 @@ impl From<Version> for RawVersion {
 impl Default for Version {
 #[trusted]
     fn default() -> Self {
-panic!("No") //         Version {
+unreachable!() //         Version {
 //             identifier: "1".to_string(),
 //             features: vec!["ORDER_ORDERED".to_string(), "ORDER_UNORDERED".to_string()],
 //         }
@@ -72,7 +72,7 @@ panic!("No") //         Version {
 /// Returns the lists of supported versions
 #[trusted]
 pub fn get_compatible_versions() -> Vec<Version> {
-panic!("No") //     vec![Version::default()]
+unreachable!() //     vec![Version::default()]
 }
 
 /// Selects a version from the intersection of locally supported and counterparty versions.
@@ -81,7 +81,7 @@ pub fn pick_version(
     supported_versions: Vec<Version>,
     counterparty_versions: Vec<Version>,
 ) -> Option<Version> {
-panic!("No") //     let mut intersection: Vec<Version> = vec![];
+unreachable!() //     let mut intersection: Vec<Version> = vec![];
 //     for s in supported_versions.iter() {
 //         for c in counterparty_versions.iter() {
 //             if c.identifier != s.identifier {

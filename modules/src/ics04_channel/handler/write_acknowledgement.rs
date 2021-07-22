@@ -24,7 +24,7 @@ pub fn process(
     packet: Packet,
     ack: Vec<u8>,
 ) -> HandlerResult<PacketResult, Error> {
-panic!("No") //     let mut output = HandlerOutput::builder();
+unreachable!() //     let mut output = HandlerOutput::builder();
 // 
 //     let dest_channel_end = ctx
 //         .channel_end(&(

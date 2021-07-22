@@ -46,12 +46,12 @@ impl Msg for MsgTimeoutOnClose {
 
 #[trusted]
     fn route(&self) -> String {
-panic!("No") //         crate::keys::ROUTER_KEY.to_string()
+unreachable!() //         crate::keys::ROUTER_KEY.to_string()
     }
 
 #[trusted]
     fn type_url(&self) -> String {
-panic!("No") //         TYPE_URL.to_string()
+unreachable!() //         TYPE_URL.to_string()
     }
 }
 
@@ -92,7 +92,7 @@ impl TryFrom<RawMsgTimeoutOnClose> for MsgTimeoutOnClose {
 impl From<MsgTimeoutOnClose> for RawMsgTimeoutOnClose {
 #[trusted]
     fn from(domain_msg: MsgTimeoutOnClose) -> Self {
-panic!("No") //         RawMsgTimeoutOnClose {
+unreachable!() //         RawMsgTimeoutOnClose {
 //             packet: Some(domain_msg.packet.into()),
 //             proof_unreceived: domain_msg.proofs.object_proof().clone().into(),
 //             proof_close: domain_msg

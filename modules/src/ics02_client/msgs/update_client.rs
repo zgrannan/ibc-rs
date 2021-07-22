@@ -40,12 +40,12 @@ impl Msg for MsgUpdateAnyClient {
 
 #[trusted]
     fn route(&self) -> String {
-panic!("No") //         crate::keys::ROUTER_KEY.to_string()
+unreachable!() //         crate::keys::ROUTER_KEY.to_string()
     }
 
 #[trusted]
     fn type_url(&self) -> String {
-panic!("No") //         TYPE_URL.to_string()
+unreachable!() //         TYPE_URL.to_string()
     }
 }
 
@@ -56,7 +56,7 @@ impl TryFrom<RawMsgUpdateClient> for MsgUpdateAnyClient {
 
 #[trusted]
     fn try_from(raw: RawMsgUpdateClient) -> Result<Self, Self::Error> {
-panic!("No") //         let raw_header = raw.header.ok_or(Kind::InvalidRawHeader)?;
+unreachable!() //         let raw_header = raw.header.ok_or(Kind::InvalidRawHeader)?;
 // 
 //         Ok(MsgUpdateAnyClient {
 //             client_id: raw

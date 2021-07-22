@@ -22,7 +22,7 @@ const COUNTERPARTY_CLIENT_ID_ATTRIBUTE_KEY: &str = "counterparty_client_id";
 
 #[trusted]
 pub fn try_from_tx(event: &tendermint::abci::Event) -> Option<IbcEvent> {
-panic!("No") //     match event.type_str.as_ref() {
+unreachable!() //     match event.type_str.as_ref() {
 //         INIT_EVENT_TYPE => Some(IbcEvent::OpenInitConnection(OpenInit::from(
 //             extract_attributes_from_tx(event),
 //         ))),
@@ -41,7 +41,7 @@ panic!("No") //     match event.type_str.as_ref() {
 
 #[trusted]
 fn extract_attributes_from_tx(event: &tendermint::abci::Event) -> Attributes {
-panic!("No") //     let mut attr = Attributes::default();
+unreachable!() //     let mut attr = Attributes::default();
 // 
 //     for tag in &event.attributes {
 //         let key = tag.key.as_ref();
@@ -112,7 +112,7 @@ impl TryFrom<RawObject> for OpenInit {
     type Error = BoxError;
 #[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
-panic!("No") //         Ok(OpenInit(Attributes {
+unreachable!() //         Ok(OpenInit(Attributes {
 //             height: obj.height,
 //             connection_id: some_attribute!(obj, "connection_open_init.connection_id"),
 //             client_id: attribute!(obj, "connection_open_init.client_id"),
@@ -159,7 +159,7 @@ impl TryFrom<RawObject> for OpenTry {
     type Error = BoxError;
 #[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
-panic!("No") //         Ok(OpenTry(Attributes {
+unreachable!() //         Ok(OpenTry(Attributes {
 //             height: obj.height,
 //             connection_id: some_attribute!(obj, "connection_open_try.connection_id"),
 //             client_id: attribute!(obj, "connection_open_try.client_id"),
@@ -206,7 +206,7 @@ impl TryFrom<RawObject> for OpenAck {
     type Error = BoxError;
 #[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
-panic!("No") //         Ok(OpenAck(Attributes {
+unreachable!() //         Ok(OpenAck(Attributes {
 //             height: obj.height,
 //             connection_id: some_attribute!(obj, "connection_open_ack.connection_id"),
 //             client_id: attribute!(obj, "connection_open_ack.client_id"),
@@ -253,7 +253,7 @@ impl TryFrom<RawObject> for OpenConfirm {
     type Error = BoxError;
 #[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
-panic!("No") //         Ok(OpenConfirm(Attributes {
+unreachable!() //         Ok(OpenConfirm(Attributes {
 //             height: obj.height,
 //             connection_id: some_attribute!(obj, "connection_open_confirm.connection_id"),
 //             client_id: attribute!(obj, "connection_open_confirm.client_id"),

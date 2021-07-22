@@ -16,7 +16,7 @@ pub(crate) fn process(
     ctx: &dyn ConnectionReader,
     msg: MsgConnectionOpenConfirm,
 ) -> HandlerResult<ConnectionResult, Error> {
-panic!("No") //     let mut output = HandlerOutput::builder();
+unreachable!() //     let mut output = HandlerOutput::builder();
 // 
 //     // Unwrap the old connection end & validate it.
 //     let mut new_conn_end = match ctx.connection_end(msg.connection_id()) {

@@ -28,7 +28,7 @@ impl Proofs {
         other_proof: Option<CommitmentProofBytes>,
         height: Height,
     ) -> Result<Self, String> {
-panic!("No") //         if height.is_zero() {
+unreachable!() //         if height.is_zero() {
 //             return Err("Proofs height cannot be zero".to_string());
 //         }
 // 
@@ -81,7 +81,7 @@ impl ConsensusProof {
         consensus_proof: CommitmentProofBytes,
         consensus_height: Height,
     ) -> Result<Self, String> {
-panic!("No") //         if consensus_height.is_zero() {
+unreachable!() //         if consensus_height.is_zero() {
 //             return Err("Consensus height cannot be zero".to_string());
 //         }
 //         if consensus_proof.is_empty() {

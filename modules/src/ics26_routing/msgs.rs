@@ -29,7 +29,7 @@ impl TryFrom<Any> for Ics26Envelope {
 
 #[trusted]
     fn try_from(any_msg: Any) -> Result<Self, Self::Error> {
-panic!("No") //         match any_msg.type_url.as_str() {
+unreachable!() //         match any_msg.type_url.as_str() {
 //             // ICS2 messages
 //             create_client::TYPE_URL => {
 //                 // Pop out the message and then wrap it in the corresponding type.

@@ -18,7 +18,7 @@ impl ProofSpecs {
     /// Returns the specification for Cosmos-SDK proofs
 #[trusted]
     pub fn cosmos() -> Self {
-panic!("No") //         Self {
+unreachable!() //         Self {
 //             specs: vec![
 //                 ics23::iavl_spec(),       // Format of proofs-iavl (iavl merkle proofs)
 //                 ics23::tendermint_spec(), // Format of proofs-tendermint (crypto/ merkle SimpleProof)
@@ -33,7 +33,7 @@ panic!("No") //         Self {
 impl From<ProofSpecs> for Vec<ProtoProofSpec> {
 #[trusted]
     fn from(domain_specs: ProofSpecs) -> Self {
-panic!("No") //         let raw_specs = vec![];
+unreachable!() //         let raw_specs = vec![];
 //         for ds in domain_specs.specs.iter() {
 //             // Both `ProofSpec` types implement trait `prost::Message`. Convert by encoding, then
 //             // decoding into the destination type.

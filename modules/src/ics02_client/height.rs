@@ -51,7 +51,7 @@ impl Height {
 
 #[trusted]
     pub fn sub(&self, delta: u64) -> Result<Height, Error> {
-panic!("No") //         if self.revision_height <= delta {
+unreachable!() //         if self.revision_height <= delta {
 //             return Err(Kind::InvalidHeightResult
 //                 .context("height cannot end up zero or negative")
 //                 .into());
@@ -128,7 +128,7 @@ impl From<Height> for RawHeight {
 impl std::fmt::Debug for Height {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-panic!("No") //         f.debug_struct("Height")
+unreachable!() //         f.debug_struct("Height")
 //             .field("revision", &self.revision_number)
 //             .field("height", &self.revision_height)
 //             .finish()
@@ -139,7 +139,7 @@ panic!("No") //         f.debug_struct("Height")
 impl std::fmt::Display for Height {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-panic!("No") //         write!(f, "{}-{}", self.revision_number, self.revision_height)
+unreachable!() //         write!(f, "{}-{}", self.revision_number, self.revision_height)
     }
 }
 
@@ -148,7 +148,7 @@ impl TryFrom<&str> for Height {
 
 #[trusted]
     fn try_from(value: &str) -> Result<Self, Self::Error> {
-panic!("No") // panic!("No") //         let split: Vec<&str> = value.split('-').collect();
+unreachable!() // panic!("No") //         let split: Vec<&str> = value.split('-').collect();
 // //         Ok(Height {
 // //             revision_number: split[0]
 // //                 .parse::<u64>()
@@ -163,7 +163,7 @@ panic!("No") // panic!("No") //         let split: Vec<&str> = value.split('-').
 impl From<Height> for String {
 #[trusted]
     fn from(height: Height) -> Self {
-panic!("No") //         format!("{}-{}", height.revision_number, height.revision_number)
+unreachable!() //         format!("{}-{}", height.revision_number, height.revision_number)
     }
 }
 

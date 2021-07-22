@@ -44,7 +44,7 @@ const PKT_ACK_ATTRIBUTE_KEY: &str = "packet_ack";
 
 #[trusted]
 pub fn try_from_tx(event: &tendermint::abci::Event) -> Option<IbcEvent> {
-panic!("No") //     match event.type_str.as_str() {
+unreachable!() //     match event.type_str.as_str() {
 //         OPEN_INIT_EVENT_TYPE => Some(IbcEvent::OpenInitChannel(OpenInit::from(
 //             extract_attributes_from_tx(event),
 //         ))),
@@ -106,7 +106,7 @@ panic!("No") //     match event.type_str.as_str() {
 
 #[trusted]
 fn extract_attributes_from_tx(event: &tendermint::abci::Event) -> Attributes {
-panic!("No") //     let mut attr = Attributes::default();
+unreachable!() //     let mut attr = Attributes::default();
 // 
 //     for tag in &event.attributes {
 //         let key = tag.key.as_ref();
@@ -132,7 +132,7 @@ panic!("No") //     let mut attr = Attributes::default();
 fn extract_packet_and_write_ack_from_tx(
     event: &tendermint::abci::Event,
 ) -> (Packet, Option<Vec<u8>>) {
-panic!("No") //     let mut packet = Packet::default();
+unreachable!() //     let mut packet = Packet::default();
 //     let mut write_ack = None;
 //     for tag in &event.attributes {
 //         let key = tag.key.as_ref();
@@ -158,7 +158,7 @@ panic!("No") //     let mut packet = Packet::default();
 
 impl std::fmt::Debug for Attributes {
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        panic!("No")
+        unreachable!()
     }
 }
 
@@ -179,7 +179,7 @@ impl Attributes {
     }
 #[trusted]
     pub fn channel_id(&self) -> Option<&ChannelId> {
-panic!("No") //         self.channel_id.as_ref()
+unreachable!() //         self.channel_id.as_ref()
     }
 }
 
@@ -206,7 +206,7 @@ impl OpenInit {
     }
 #[trusted]
     pub fn channel_id(&self) -> Option<&ChannelId> {
-panic!("No") //         self.0.channel_id.as_ref()
+unreachable!() //         self.0.channel_id.as_ref()
     }
     pub fn port_id(&self) -> &PortId {
         &self.0.port_id
@@ -229,7 +229,7 @@ impl TryFrom<RawObject> for OpenInit {
     type Error = BoxError;
 #[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
-panic!("No") //         Ok(OpenInit(Attributes {
+unreachable!() //         Ok(OpenInit(Attributes {
 //             height: obj.height,
 //             port_id: attribute!(obj, "channel_open_init.port_id"),
 //             channel_id: some_attribute!(obj, "channel_open_init.channel_id"),
@@ -260,7 +260,7 @@ impl OpenTry {
     }
 #[trusted]
     pub fn channel_id(&self) -> Option<&ChannelId> {
-panic!("No") //         self.0.channel_id.as_ref()
+unreachable!() //         self.0.channel_id.as_ref()
     }
     pub fn port_id(&self) -> &PortId {
         &self.0.port_id
@@ -284,7 +284,7 @@ impl TryFrom<RawObject> for OpenTry {
     type Error = BoxError;
 #[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
-panic!("No") //         Ok(OpenTry(Attributes {
+unreachable!() //         Ok(OpenTry(Attributes {
 //             height: obj.height,
 //             port_id: attribute!(obj, "channel_open_try.port_id"),
 //             channel_id: some_attribute!(obj, "channel_open_try.channel_id"),
@@ -314,7 +314,7 @@ impl OpenAck {
     }
 #[trusted]
     pub fn channel_id(&self) -> Option<&ChannelId> {
-panic!("No") //         self.0.channel_id.as_ref()
+unreachable!() //         self.0.channel_id.as_ref()
     }
 #[trusted]
     pub fn port_id(&self) -> &PortId {
@@ -330,7 +330,7 @@ panic!("No") //         self.0.channel_id.as_ref()
 
 #[trusted]
     pub fn counterparty_channel_id(&self) -> Option<&ChannelId> {
-panic!("No") //         self.0.counterparty_channel_id.as_ref()
+unreachable!() //         self.0.counterparty_channel_id.as_ref()
     }
 }
 
@@ -345,7 +345,7 @@ impl TryFrom<RawObject> for OpenAck {
     type Error = BoxError;
 #[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
-panic!("No") //         Ok(OpenAck(Attributes {
+unreachable!() //         Ok(OpenAck(Attributes {
 //             height: obj.height,
 //             port_id: attribute!(obj, "channel_open_ack.port_id"),
 //             channel_id: some_attribute!(obj, "channel_open_ack.channel_id"),
@@ -376,7 +376,7 @@ impl OpenConfirm {
     }
 #[trusted]
     pub fn channel_id(&self) -> Option<&ChannelId> {
-panic!("No") //         self.0.channel_id.as_ref()
+unreachable!() //         self.0.channel_id.as_ref()
     }
     pub fn port_id(&self) -> &PortId {
         &self.0.port_id
@@ -401,7 +401,7 @@ impl TryFrom<RawObject> for OpenConfirm {
     type Error = BoxError;
 #[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
-panic!("No") //         Ok(OpenConfirm(Attributes {
+unreachable!() //         Ok(OpenConfirm(Attributes {
 //             height: obj.height,
 //             port_id: attribute!(obj, "channel_open_confirm.port_id"),
 //             channel_id: some_attribute!(obj, "channel_open_confirm.channel_id"),
@@ -432,7 +432,7 @@ impl CloseInit {
 
 // #[trusted]
 //     pub fn channel_id(&self) -> &ChannelId {
-// panic!("No") //         // FIXME(romac): Rework encoding of IbcEvents which use `Attributes`
+// unreachable!() //         // FIXME(romac): Rework encoding of IbcEvents which use `Attributes`
 // //         self.0
 // //             .channel_id
 // //             .as_ref()
@@ -446,7 +446,7 @@ impl CloseInit {
 
 #[trusted]
     pub fn counterparty_channel_id(&self) -> Option<&ChannelId> {
-panic!("No") //         self.0.counterparty_channel_id.as_ref()
+unreachable!() //         self.0.counterparty_channel_id.as_ref()
     }
 
 #[trusted]
@@ -469,7 +469,7 @@ impl TryFrom<RawObject> for CloseInit {
     type Error = BoxError;
 #[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
-panic!("No") //         Ok(CloseInit(Attributes {
+unreachable!() //         Ok(CloseInit(Attributes {
 //             height: obj.height,
 //             port_id: attribute!(obj, "channel_close_init.port_id"),
 //             channel_id: some_attribute!(obj, "channel_close_init.channel_id"),
@@ -493,7 +493,7 @@ impl From<CloseInit> for IbcEvent {
 impl std::fmt::Display for CloseInit {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-panic!("No") //         write!(
+unreachable!() //         write!(
 //             f,
 //             "{} {} {:?}",
 //             self.height(),
@@ -509,7 +509,7 @@ pub struct CloseConfirm(Attributes);
 impl CloseConfirm {
 #[trusted]
     pub fn channel_id(&self) -> Option<&ChannelId> {
-panic!("No") //         self.0.channel_id.as_ref()
+unreachable!() //         self.0.channel_id.as_ref()
     }
     pub fn height(&self) -> Height {
         self.0.height
@@ -529,7 +529,7 @@ impl TryFrom<RawObject> for CloseConfirm {
     type Error = BoxError;
 #[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
-panic!("No") //         Ok(CloseConfirm(Attributes {
+unreachable!() //         Ok(CloseConfirm(Attributes {
 //             height: obj.height,
 //             port_id: attribute!(obj, "channel_close_confirm.port_id"),
 //             channel_id: some_attribute!(obj, "channel_close_confirm.channel_id"),
@@ -546,7 +546,7 @@ panic!("No") //         Ok(CloseConfirm(Attributes {
 impl From<CloseConfirm> for IbcEvent {
 #[trusted]
     fn from(v: CloseConfirm) -> Self {
-panic!("No") // panic!("No") // panic!("No") // panic!("No") //         IbcEvent::CloseConfirmChannel(v)
+unreachable!() // panic!("No") // panic!("No") // panic!("No") //         IbcEvent::CloseConfirmChannel(v)
     }
 }
 
@@ -562,7 +562,7 @@ impl TryFrom<RawObject> for Packet {
     type Error = BoxError;
     #[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
-        panic!("No")
+        unreachable!()
         // let height_str: String = p_attribute!(obj, "packet_timeout_height");
         // let sequence: u64 = p_attribute!(obj, "packet_sequence");
         // Ok(Packet {
@@ -628,7 +628,7 @@ impl From<SendPacket> for IbcEvent {
 impl std::fmt::Display for SendPacket {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-panic!("No") //         write!(f, "SendPacket - h:{}, {}", self.height, self.packet)
+unreachable!() //         write!(f, "SendPacket - h:{}, {}", self.height, self.packet)
     }
 }
 
@@ -682,7 +682,7 @@ impl From<ReceivePacket> for IbcEvent {
 impl std::fmt::Display for ReceivePacket {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-panic!("No") //         write!(f, "ReceivePacket - h:{}, {}", self.height, self.packet)
+unreachable!() //         write!(f, "ReceivePacket - h:{}, {}", self.height, self.packet)
     }
 }
 
@@ -743,7 +743,7 @@ impl From<WriteAcknowledgement> for IbcEvent {
 impl std::fmt::Display for WriteAcknowledgement {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-panic!("No") //         write!(
+unreachable!() //         write!(
 //             f,
 //             "WriteAcknowledgement - h:{}, {}",
 //             self.height, self.packet
@@ -791,7 +791,7 @@ impl From<AcknowledgePacket> for IbcEvent {
 impl std::fmt::Display for AcknowledgePacket {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-panic!("No") //         write!(f, "h:{}, {}", self.height, self.packet)
+unreachable!() //         write!(f, "h:{}, {}", self.height, self.packet)
     }
 }
 
@@ -842,7 +842,7 @@ impl From<TimeoutPacket> for IbcEvent {
 impl std::fmt::Display for TimeoutPacket {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-panic!("No") //         write!(f, "TimeoutPacket - h:{}, {}", self.height, self.packet)
+unreachable!() //         write!(f, "TimeoutPacket - h:{}, {}", self.height, self.packet)
     }
 }
 
@@ -893,7 +893,7 @@ impl From<TimeoutOnClosePacket> for IbcEvent {
 impl std::fmt::Display for TimeoutOnClosePacket {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-panic!("No") //         write!(
+unreachable!() //         write!(
 //             f,
 //             "TimeoutOnClosePacket - h:{}, {}",
 //             self.height, self.packet

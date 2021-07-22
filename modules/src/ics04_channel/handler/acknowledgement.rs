@@ -25,7 +25,7 @@ pub fn process(
     ctx: &dyn ChannelReader,
     msg: MsgAcknowledgement,
 ) -> HandlerResult<PacketResult, Error> {
-panic!("No") //     let mut output = HandlerOutput::builder();
+unreachable!() //     let mut output = HandlerOutput::builder();
 // 
 //     let packet = &msg.packet;
 // 

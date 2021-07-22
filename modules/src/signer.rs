@@ -9,19 +9,19 @@ pub struct Signer(String);
 impl Signer {
 #[trusted]
     pub fn new(s: impl ToString) -> Self {
-panic!("No") //         Self(s.to_string())
+unreachable!() //         Self(s.to_string())
     }
 
 // #[trusted]
 //     pub fn as_str(&self) -> &str {
-// panic!("No") //         &self.0
+// unreachable!() //         &self.0
 //     }
 }
 
 impl Display for Signer {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-panic!("No") //         write!(f, "{}", self.0)
+unreachable!() //         write!(f, "{}", self.0)
     }
 }
 

@@ -27,7 +27,7 @@ pub enum IbcEventType {
 impl IbcEventType {
     #[trusted]
     pub fn as_str(&self) -> &'static str {
-panic!("No") //         match *self {
+unreachable!() //         match *self {
 //             IbcEventType::CreateClient => "create_client",
 //             IbcEventType::UpdateClient => "update_client",
 //             IbcEventType::SendPacket => "send_packet",
@@ -74,7 +74,7 @@ pub struct PrettyEvents<'a>(pub &'a [IbcEvent]);
 impl<'a> fmt::Display for PrettyEvents<'a> {
 #[trusted]
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-panic!("No") //         writeln!(f, "events:")?;
+unreachable!() //         writeln!(f, "events:")?;
 //         for v in self.0 {
 //             writeln!(f, "\t{}", v)?;
 //         }
@@ -85,14 +85,14 @@ panic!("No") //         writeln!(f, "events:")?;
 
 impl std::fmt::Debug for IbcEvent {
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        panic!("No")
+        unreachable!()
     }
 }
 
 impl fmt::Display for IbcEvent {
 #[trusted]
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-panic!("No") //         match self {
+unreachable!() //         match self {
 //             IbcEvent::NewBlock(ev) => write!(f, "NewBlock({})", ev.height),
 // 
 //             IbcEvent::CreateClient(ev) => write!(f, "CreateClientEv({})", ev),
@@ -128,7 +128,7 @@ panic!("No") //         match self {
 // This is tendermint specific
 #[trusted]
 pub fn from_tx_response_event(height: Height, event: &tendermint::abci::Event) -> Option<IbcEvent> {
-panic!("No") //     // Return the first hit we find
+unreachable!() //     // Return the first hit we find
 //     if let Some(mut client_res) = ClientEvents::try_from_tx(event) {
 //         client_res.set_height(height);
 //         Some(client_res)
@@ -146,7 +146,7 @@ panic!("No") //     // Return the first hit we find
 impl IbcEvent {
 #[trusted]
     pub fn to_json(&self) -> String {
-panic!("No") //         format!("{:?}", self) // Fallback to debug printing
+unreachable!() //         format!("{:?}", self) // Fallback to debug printing
 //         // match serde_json::to_string(self) {
 //         //     Ok(value) => value,
 //         //     Err(_) => format!("{:?}", self), // Fallback to debug printing
@@ -206,7 +206,7 @@ panic!("No") //         format!("{:?}", self) // Fallback to debug printing
 
 #[trusted]
     pub fn channel_attributes(&self) -> Option<&ChannelAttributes> {
-panic!("No") // panic!("No") //         match self {
+unreachable!() // panic!("No") //         match self {
 // //             IbcEvent::OpenInitChannel(ev) => Some(ev.attributes()),
 // //             IbcEvent::OpenTryChannel(ev) => Some(ev.attributes()),
 // //             IbcEvent::OpenAckChannel(ev) => Some(ev.attributes()),
@@ -216,7 +216,7 @@ panic!("No") // panic!("No") //         match self {
     }
 #[trusted]
     pub fn connection_attributes(&self) -> Option<&ConnectionAttributes> {
-panic!("No") // panic!("No") //         match self {
+unreachable!() // panic!("No") //         match self {
 // //             IbcEvent::OpenInitConnection(ev) => Some(ev.attributes()),
 // //             IbcEvent::OpenTryConnection(ev) => Some(ev.attributes()),
 // //             IbcEvent::OpenAckConnection(ev) => Some(ev.attributes()),
@@ -255,7 +255,7 @@ pub fn extract_events<S: ::std::hash::BuildHasher>(
     events: &HashMap<String, Vec<String>, S>,
     action_string: &str,
 ) -> Result<(), BoxError> {
-panic!("No") //     if let Some(message_action) = events.get("message.action") {
+unreachable!() //     if let Some(message_action) = events.get("message.action") {
 //         if message_action.contains(&action_string.to_owned()) {
 //             return Ok(());
 //         }
@@ -276,7 +276,7 @@ macro_rules! make_event {
 
 #[trusted]
             fn try_from(result: $crate::events::RawObject) -> Result<Self, Self::Error> {
-panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") //                 match $crate::events::extract_events(&result.events, $b) {
+unreachable!() // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") //                 match $crate::events::extract_events(&result.events, $b) {
 // // // // // // // // // // // // // // // // // // // // //                     Ok(()) => Ok($a {
 // // // // // // // // // // // // // // // // // // // // //                         data: result.events.clone(),
 // // // // // // // // // // // // // // // // // // // // //                     }),

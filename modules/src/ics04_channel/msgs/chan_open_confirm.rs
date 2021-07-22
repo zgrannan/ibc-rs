@@ -54,12 +54,12 @@ impl Msg for MsgChannelOpenConfirm {
 
 #[trusted]
     fn route(&self) -> String {
-panic!("No") //         crate::keys::ROUTER_KEY.to_string()
+unreachable!() //         crate::keys::ROUTER_KEY.to_string()
     }
 
 #[trusted]
     fn type_url(&self) -> String {
-panic!("No") //         TYPE_URL.to_string()
+unreachable!() //         TYPE_URL.to_string()
     }
 }
 
@@ -70,7 +70,7 @@ impl TryFrom<RawMsgChannelOpenConfirm> for MsgChannelOpenConfirm {
 
 #[trusted]
     fn try_from(raw_msg: RawMsgChannelOpenConfirm) -> Result<Self, Self::Error> {
-panic!("No") //         let proofs = Proofs::new(
+unreachable!() //         let proofs = Proofs::new(
 //             raw_msg.proof_ack.into(),
 //             None,
 //             None,
@@ -101,7 +101,7 @@ panic!("No") //         let proofs = Proofs::new(
 impl From<MsgChannelOpenConfirm> for RawMsgChannelOpenConfirm {
 #[trusted]
     fn from(domain_msg: MsgChannelOpenConfirm) -> Self {
-panic!("No") //         RawMsgChannelOpenConfirm {
+unreachable!() //         RawMsgChannelOpenConfirm {
 //             port_id: domain_msg.port_id.to_string(),
 //             channel_id: domain_msg.channel_id.to_string(),
 //             proof_ack: domain_msg.proofs.object_proof().clone().into(),

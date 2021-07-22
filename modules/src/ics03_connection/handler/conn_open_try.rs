@@ -17,7 +17,7 @@ pub(crate) fn process(
     ctx: &dyn ConnectionReader,
     msg: MsgConnectionOpenTry,
 ) -> HandlerResult<ConnectionResult, Error> {
-panic!("No") //     let mut output = HandlerOutput::builder();
+unreachable!() //     let mut output = HandlerOutput::builder();
 // 
 //     // Check that consensus height (for client proof) in message is not too advanced nor too old.
 //     check_client_consensus_height(ctx, msg.consensus_height())?;

@@ -19,7 +19,7 @@ pub(crate) fn process(
     ctx: &dyn ChannelReader,
     msg: MsgChannelOpenTry,
 ) -> HandlerResult<ChannelResult, Error> {
-panic!("No") //     let mut output = HandlerOutput::builder();
+unreachable!() //     let mut output = HandlerOutput::builder();
 // 
 //     // Unwrap the old channel end (if any) and validate it against the message.
 //     let (mut new_channel_end, channel_id) = match msg.previous_channel_id() {

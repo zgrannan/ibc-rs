@@ -55,12 +55,12 @@ impl Msg for MsgUpgradeAnyClient {
 
 #[trusted]
     fn route(&self) -> String {
-panic!("No") //         crate::keys::ROUTER_KEY.to_string()
+unreachable!() //         crate::keys::ROUTER_KEY.to_string()
     }
 
 #[trusted]
     fn type_url(&self) -> String {
-panic!("No") //         TYPE_URL.to_string()
+unreachable!() //         TYPE_URL.to_string()
     }
 }
 
@@ -87,7 +87,7 @@ impl TryFrom<RawMsgUpgradeClient> for MsgUpgradeAnyClient {
 
 #[trusted]
     fn try_from(proto_msg: RawMsgUpgradeClient) -> Result<Self, Self::Error> {
-panic!("No") // panic!("No") //         let raw_client_state = proto_msg.client_state.ok_or(Kind::InvalidRawClientState)?;
+unreachable!() // panic!("No") //         let raw_client_state = proto_msg.client_state.ok_or(Kind::InvalidRawClientState)?;
 // //         let raw_consensus_state = proto_msg
 // //             .consensus_state
 // //             .ok_or(Kind::InvalidRawConsensusState)?;

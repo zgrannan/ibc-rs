@@ -50,7 +50,7 @@ impl Timestamp {
     /// malicious packets from crashing the relayer.
 #[trusted]
     pub fn from_nanoseconds(nanoseconds: u64) -> Result<Timestamp, TryFromIntError> {
-panic!("No") //         if nanoseconds == 0 {
+unreachable!() //         if nanoseconds == 0 {
 //             Ok(Timestamp { time: None })
 //         } else {
 //             let nanoseconds = nanoseconds.try_into()?;
@@ -119,7 +119,7 @@ panic!("No") //         if nanoseconds == 0 {
 impl Display for Timestamp {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-panic!("No") //         write!(
+unreachable!() //         write!(
 //             f,
 //             "Timestamp({})",
 //             self.time
@@ -135,13 +135,13 @@ pub struct TimestampOverflowError;
 impl std::fmt::Display for TimestampOverflowError {
     #[trusted]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        panic!("No")
+        unreachable!()
     }
 }
 impl std::fmt::Debug for TimestampOverflowError {
     #[trusted]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        panic!("No")
+        unreachable!()
     }
 }
 
@@ -165,7 +165,7 @@ impl Sub<Duration> for Timestamp {
 
 #[trusted]
     fn sub(self, duration: Duration) -> Result<Timestamp, TimestampOverflowError> {
-panic!("No") //         match self.as_datetime() {
+unreachable!() //         match self.as_datetime() {
 //             Some(datetime) => {
 //                 let duration2 =
 //                     chrono::Duration::from_std(duration).map_err(|_| TimestampOverflowError)?;
@@ -187,7 +187,7 @@ pub enum ParseTimestampErrorKind {
 
 impl std::fmt::Debug for ParseTimestampErrorKind {
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        panic!("No")
+        unreachable!()
     }
 }
 
@@ -202,12 +202,12 @@ impl Display for ParseTimestampErrorKind {
 impl std::error::Error for ParseTimestampErrorKind {
     #[trusted]
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-panic!("No") //         None
+unreachable!() //         None
     }
 
     #[trusted]
     fn cause(&self) -> Option<&dyn std::error::Error> {
-panic!("No") //         None
+unreachable!() //         None
     }
 }
 

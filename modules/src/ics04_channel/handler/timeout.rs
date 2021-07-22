@@ -24,7 +24,7 @@ pub struct TimeoutPacketResult {
 
 #[trusted]
 pub fn process(ctx: &dyn ChannelReader, msg: MsgTimeout) -> HandlerResult<PacketResult, Error> {
-panic!("No") //     let mut output = HandlerOutput::builder();
+unreachable!() //     let mut output = HandlerOutput::builder();
 // 
 //     let packet = &msg.packet;
 // 

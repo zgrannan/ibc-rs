@@ -56,7 +56,7 @@ impl ClientState {
         upgrade_path: Vec<String>,
         allow_update: AllowUpdate,
     ) -> Result<ClientState, Error> {
-panic!("No") //         // Basic validation of trusting period and unbonding period: each should be non-zero.
+unreachable!() //         // Basic validation of trusting period and unbonding period: each should be non-zero.
 //         if trusting_period <= Duration::new(0, 0) {
 //             return Err(Kind::InvalidTrustingPeriod
 //                 .context("ClientState trusting period must be greater than zero")
@@ -117,7 +117,7 @@ panic!("No") //         // Basic validation of trusting period and unbonding per
     /// Resets all fields except the blockchain-specific ones.
 #[trusted]
     pub fn zero_custom_fields(mut client_state: Self) -> Self {
-panic!("No") //         client_state.trusting_period = ZERO_DURATION;
+unreachable!() //         client_state.trusting_period = ZERO_DURATION;
 //         client_state.trust_level = TrustThresholdFraction {
 //             numerator: 0,
 //             denominator: 0,
@@ -170,7 +170,7 @@ impl TryFrom<RawClientState> for ClientState {
 
 #[trusted]
     fn try_from(raw: RawClientState) -> Result<Self, Self::Error> {
-panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") //         let trust_level = raw
+unreachable!() // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") //         let trust_level = raw
 // // // // // // // // // // //             .trust_level
 // // // // // // // // // // //             .clone()
 // // // // // // // // // // //             .ok_or_else(|| Kind::InvalidRawClientState.context("missing trusting period"))?;

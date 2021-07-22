@@ -50,7 +50,7 @@ impl TryFrom<RawIdentifiedConnection> for IdentifiedConnectionEnd {
 
 #[trusted]
     fn try_from(value: RawIdentifiedConnection) -> Result<Self, Self::Error> {
-panic!("No") //         let raw_connection_end = RawConnectionEnd {
+unreachable!() //         let raw_connection_end = RawConnectionEnd {
 //             client_id: value.client_id.to_string(),
 //             versions: value.versions,
 //             state: value.state,
@@ -68,7 +68,7 @@ panic!("No") //         let raw_connection_end = RawConnectionEnd {
 impl From<IdentifiedConnectionEnd> for RawIdentifiedConnection {
 #[trusted]
     fn from(value: IdentifiedConnectionEnd) -> Self {
-panic!("No") //         RawIdentifiedConnection {
+unreachable!() //         RawIdentifiedConnection {
 //             id: value.connection_id.to_string(),
 //             client_id: value.connection_end.client_id.to_string(),
 //             versions: value
@@ -96,7 +96,7 @@ pub struct ConnectionEnd {
 impl Default for ConnectionEnd {
 #[trusted]
     fn default() -> Self {
-panic!("No") //         Self {
+unreachable!() //         Self {
 //             state: State::Uninitialized,
 //             client_id: Default::default(),
 //             counterparty: Default::default(),
@@ -112,7 +112,7 @@ impl TryFrom<RawConnectionEnd> for ConnectionEnd {
     type Error = anomaly::Error<Kind>;
 #[trusted]
     fn try_from(value: RawConnectionEnd) -> Result<Self, Self::Error> {
-panic!("No") //         let state = value.state.try_into()?;
+unreachable!() //         let state = value.state.try_into()?;
 //         if state == State::Uninitialized {
 //             return Ok(ConnectionEnd::default());
 //         }
@@ -144,7 +144,7 @@ panic!("No") //         let state = value.state.try_into()?;
 impl From<ConnectionEnd> for RawConnectionEnd {
 #[trusted]
     fn from(value: ConnectionEnd) -> Self {
-panic!("No") //         RawConnectionEnd {
+unreachable!() //         RawConnectionEnd {
 //             client_id: value.client_id.to_string(),
 //             versions: value
 //                 .versions
@@ -194,7 +194,7 @@ impl ConnectionEnd {
     /// Setter for the `version` field.
 #[trusted]
     pub fn set_version(&mut self, new_version: Version) {
-panic!("No") //         self.versions = vec![new_version];
+unreachable!() //         self.versions = vec![new_version];
     }
 
     /// Helper function to compare the counterparty of this end with another counterparty.
@@ -210,12 +210,12 @@ panic!("No") //         self.versions = vec![new_version];
 
 #[trusted]
     pub fn is_open(&self) -> bool {
-panic!("No") //         self.state_matches(&State::Open)
+unreachable!() //         self.state_matches(&State::Open)
     }
 
 #[trusted]
     pub fn is_uninitialized(&self) -> bool {
-panic!("No") //         self.state_matches(&State::Uninitialized)
+unreachable!() //         self.state_matches(&State::Uninitialized)
     }
 
     /// Helper function to compare the state of this end with another state.
@@ -275,7 +275,7 @@ impl TryFrom<RawCounterparty> for Counterparty {
 
 #[trusted]
     fn try_from(value: RawCounterparty) -> Result<Self, Self::Error> {
-panic!("No") // panic!("No") // panic!("No") //         let connection_id = Some(value.connection_id)
+unreachable!() // panic!("No") // panic!("No") //         let connection_id = Some(value.connection_id)
 // // //             .filter(|x| !x.is_empty())
 // // //             .map(|v| FromStr::from_str(v.as_str()))
 // // //             .transpose()
@@ -298,7 +298,7 @@ panic!("No") // panic!("No") // panic!("No") //         let connection_id = Some
 impl From<Counterparty> for RawCounterparty {
 #[trusted]
     fn from(value: Counterparty) -> Self {
-panic!("No") // panic!("No") // panic!("No") //         RawCounterparty {
+unreachable!() // panic!("No") // panic!("No") //         RawCounterparty {
 // // //             client_id: value.client_id.as_str().to_string(),
 // // //             connection_id: value
 // // //                 .connection_id
@@ -333,7 +333,7 @@ impl Counterparty {
     /// Getter for connection id.
     #[trusted]
     pub fn connection_id(&self) -> Option<&ConnectionId> {
-panic!("No") //         self.connection_id.as_ref()
+unreachable!() //         self.connection_id.as_ref()
     }
 
     pub fn prefix(&self) -> &CommitmentPrefix {
@@ -358,7 +358,7 @@ impl State {
     /// Yields the State as a string.
 #[trusted]
     pub fn as_string(&self) -> &'static str {
-panic!("No") //         match self {
+unreachable!() //         match self {
 //             Self::Uninitialized => "UNINITIALIZED",
 //             Self::Init => "INIT",
 //             Self::TryOpen => "TRYOPEN",
@@ -381,7 +381,7 @@ panic!("No") //         match self {
     /// Returns whether or not this connection state is `Open`.
 #[trusted]
     pub fn is_open(self) -> bool {
-panic!("No") //         self == State::Open
+unreachable!() //         self == State::Open
     }
 
     /// Returns whether or not this connection with this state
@@ -395,7 +395,7 @@ panic!("No") //         self == State::Open
     /// ```
 #[trusted]
     pub fn less_or_equal_progress(self, other: Self) -> bool {
-panic!("No") //         self as u32 <= other as u32
+unreachable!() //         self as u32 <= other as u32
     }
 }
 

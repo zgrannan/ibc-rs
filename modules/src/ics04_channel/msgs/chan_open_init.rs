@@ -48,12 +48,12 @@ impl Msg for MsgChannelOpenInit {
 
 #[trusted]
     fn route(&self) -> String {
-panic!("No") //         crate::keys::ROUTER_KEY.to_string()
+unreachable!() //         crate::keys::ROUTER_KEY.to_string()
     }
 
 #[trusted]
     fn type_url(&self) -> String {
-panic!("No") //         TYPE_URL.to_string()
+unreachable!() //         TYPE_URL.to_string()
     }
 }
 
@@ -64,7 +64,7 @@ impl TryFrom<RawMsgChannelOpenInit> for MsgChannelOpenInit {
 
 #[trusted]
     fn try_from(raw_msg: RawMsgChannelOpenInit) -> Result<Self, Self::Error> {
-panic!("No") //         Ok(MsgChannelOpenInit {
+unreachable!() //         Ok(MsgChannelOpenInit {
 //             port_id: raw_msg
 //                 .port_id
 //                 .parse()

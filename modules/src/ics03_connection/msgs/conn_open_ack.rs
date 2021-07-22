@@ -70,12 +70,12 @@ impl Msg for MsgConnectionOpenAck {
 
 #[trusted]
     fn route(&self) -> String {
-panic!("No") //         crate::keys::ROUTER_KEY.to_string()
+unreachable!() //         crate::keys::ROUTER_KEY.to_string()
     }
 
 #[trusted]
     fn type_url(&self) -> String {
-panic!("No") //         TYPE_URL.to_string()
+unreachable!() //         TYPE_URL.to_string()
     }
 }
 
@@ -86,7 +86,7 @@ impl TryFrom<RawMsgConnectionOpenAck> for MsgConnectionOpenAck {
 
 #[trusted]
     fn try_from(msg: RawMsgConnectionOpenAck) -> Result<Self, Self::Error> {
-panic!("No") // panic!("No") //         let consensus_height = msg
+unreachable!() // panic!("No") //         let consensus_height = msg
 // //             .consensus_height
 // //             .ok_or(Kind::MissingConsensusHeight)?
 // //             .try_into() // Cast from the raw height type into the domain type.
@@ -139,7 +139,7 @@ panic!("No") // panic!("No") //         let consensus_height = msg
 impl From<MsgConnectionOpenAck> for RawMsgConnectionOpenAck {
 #[trusted]
     fn from(ics_msg: MsgConnectionOpenAck) -> Self {
-panic!("No") // panic!("No") //         RawMsgConnectionOpenAck {
+unreachable!() // panic!("No") //         RawMsgConnectionOpenAck {
 // //             connection_id: ics_msg.connection_id.as_str().to_string(),
 // //             counterparty_connection_id: ics_msg.counterparty_connection_id.as_str().to_string(),
 // //             client_state: ics_msg

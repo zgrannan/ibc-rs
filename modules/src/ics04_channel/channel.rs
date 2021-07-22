@@ -45,7 +45,7 @@ impl TryFrom<RawIdentifiedChannel> for IdentifiedChannelEnd {
 
 #[trusted]
     fn try_from(value: RawIdentifiedChannel) -> Result<Self, Self::Error> {
-panic!("No") //         let raw_channel_end = RawChannel {
+unreachable!() //         let raw_channel_end = RawChannel {
 //             state: value.state,
 //             ordering: value.ordering,
 //             counterparty: value.counterparty,
@@ -67,7 +67,7 @@ panic!("No") //         let raw_channel_end = RawChannel {
 impl From<IdentifiedChannelEnd> for RawIdentifiedChannel {
 #[trusted]
     fn from(value: IdentifiedChannelEnd) -> Self {
-panic!("No") // panic!("No") //         RawIdentifiedChannel {
+unreachable!() // panic!("No") //         RawIdentifiedChannel {
 // //             state: value.channel_end.state as i32,
 // //             ordering: value.channel_end.ordering as i32,
 // //             counterparty: Some(value.channel_end.counterparty().clone().into()),
@@ -96,7 +96,7 @@ pub struct ChannelEnd {
 impl Default for ChannelEnd {
 #[trusted]
     fn default() -> Self {
-panic!("No") //         ChannelEnd {
+unreachable!() //         ChannelEnd {
 //             state: State::Uninitialized,
 //             ordering: Default::default(),
 //             remote: Counterparty::default(),
@@ -113,7 +113,7 @@ impl TryFrom<RawChannel> for ChannelEnd {
 
 #[trusted]
     fn try_from(value: RawChannel) -> Result<Self, Self::Error> {
-panic!("No") // panic!("No") //         let chan_state: State = State::from_i32(value.state)?;
+unreachable!() // panic!("No") //         let chan_state: State = State::from_i32(value.state)?;
 // // 
 // //         if chan_state == State::Uninitialized {
 // //             return Ok(ChannelEnd::default());
@@ -150,7 +150,7 @@ panic!("No") // panic!("No") //         let chan_state: State = State::from_i32(
 impl From<ChannelEnd> for RawChannel {
 #[trusted]
     fn from(value: ChannelEnd) -> Self {
-panic!("No") // panic!("No") //         RawChannel {
+unreachable!() // panic!("No") //         RawChannel {
 // //             state: value.state as i32,
 // //             ordering: value.ordering as i32,
 // //             counterparty: Some(value.counterparty().clone().into()),
@@ -199,7 +199,7 @@ impl ChannelEnd {
     /// Returns `true` if this `ChannelEnd` is in state [`State::Open`].
 #[trusted]
     pub fn is_open(&self) -> bool {
-panic!("No") //         self.state_matches(&State::Open)
+unreachable!() //         self.state_matches(&State::Open)
     }
 
     pub fn state(&self) -> &State {
@@ -222,12 +222,12 @@ panic!("No") //         self.state_matches(&State::Open)
 
 #[trusted]
     pub fn version(&self) -> String {
-panic!("No") //         self.version.parse().unwrap()
+unreachable!() //         self.version.parse().unwrap()
     }
 
 #[trusted]
     pub fn validate_basic(&self) -> Result<(), Error> {
-panic!("No") //         if self.connection_hops.len() != 1 {
+unreachable!() //         if self.connection_hops.len() != 1 {
 //             return Err(
 //                 Kind::InvalidConnectionHopsLength(1, self.connection_hops.len())
 //                     .context("validate channel")
@@ -260,7 +260,7 @@ panic!("No") //         if self.connection_hops.len() != 1 {
 
 #[trusted]
     pub fn counterparty_matches(&self, other: &Counterparty) -> bool {
-panic!("No") //         self.counterparty().eq(other)
+unreachable!() //         self.counterparty().eq(other)
     }
 
     pub fn version_matches(&self, other: &str) -> bool {
@@ -299,7 +299,7 @@ impl Counterparty {
 
 #[trusted]
     pub fn channel_id(&self) -> Option<&ChannelId> {
-panic!("No") //         self.channel_id.as_ref()
+unreachable!() //         self.channel_id.as_ref()
     }
 
 #[trusted]
@@ -315,7 +315,7 @@ impl TryFrom<RawCounterparty> for Counterparty {
 
 #[trusted]
     fn try_from(value: RawCounterparty) -> Result<Self, Self::Error> {
-panic!("No") // panic!("No") // panic!("No") //         let channel_id = Some(value.channel_id)
+unreachable!() // panic!("No") // panic!("No") //         let channel_id = Some(value.channel_id)
 // // //             .filter(|x| !x.is_empty())
 // // //             .map(|v| FromStr::from_str(v.as_str()))
 // // //             .transpose()
@@ -333,7 +333,7 @@ panic!("No") // panic!("No") // panic!("No") //         let channel_id = Some(va
 impl From<Counterparty> for RawCounterparty {
 #[trusted]
     fn from(value: Counterparty) -> Self {
-panic!("No") // panic!("No") // panic!("No") //         RawCounterparty {
+unreachable!() // panic!("No") // panic!("No") //         RawCounterparty {
 // // //             port_id: value.port_id.as_str().to_string(),
 // // //             channel_id: value
 // // //                 .channel_id
@@ -359,7 +359,7 @@ impl Default for Order {
 impl fmt::Display for Order {
 #[trusted]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-panic!("No") //         write!(f, "{}", self.as_str())
+unreachable!() //         write!(f, "{}", self.as_str())
     }
 }
 
@@ -367,7 +367,7 @@ impl Order {
     /// Yields the Order as a string
 #[trusted]
     pub fn as_str(&self) -> &'static str {
-panic!("No") //         match self {
+unreachable!() //         match self {
 //             Self::None => "UNINITIALIZED",
 //             Self::Unordered => "ORDER_UNORDERED",
 //             Self::Ordered => "ORDER_ORDERED",
@@ -391,7 +391,7 @@ impl FromStr for Order {
 
 #[trusted]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-panic!("No") //         match s.to_lowercase().as_str() {
+unreachable!() //         match s.to_lowercase().as_str() {
 //             "uninitialized" => Ok(Self::None),
 //             "unordered" => Ok(Self::Unordered),
 //             "ordered" => Ok(Self::Ordered),
@@ -413,7 +413,7 @@ impl State {
     /// Yields the state as a string
 #[trusted]
     pub fn as_string(&self) -> &'static str {
-panic!("No") //         match self {
+unreachable!() //         match self {
 //             Self::Uninitialized => "UNINITIALIZED",
 //             Self::Init => "INIT",
 //             Self::TryOpen => "TRYOPEN",
@@ -438,7 +438,7 @@ panic!("No") //         match self {
     /// Returns whether or not this channel state is `Open`.
 #[trusted]
     pub fn is_open(self) -> bool {
-panic!("No") //         self == State::Open
+unreachable!() //         self == State::Open
     }
 
     /// Returns whether or not the channel with this state
@@ -452,7 +452,7 @@ panic!("No") //         self == State::Open
     /// ```
 #[trusted]
     pub fn less_or_equal_progress(self, other: Self) -> bool {
-panic!("No") //         self as u32 <= other as u32
+unreachable!() //         self as u32 <= other as u32
     }
 }
 
@@ -460,7 +460,7 @@ panic!("No") //         self as u32 <= other as u32
 impl std::fmt::Display for State {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-panic!("No") //         write!(f, "{}", self.as_string())
+unreachable!() //         write!(f, "{}", self.as_string())
     }
 }
 

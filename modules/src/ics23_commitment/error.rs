@@ -5,13 +5,13 @@ use prusti_contracts::*;
 impl std::fmt::Display for Error {
 #[trusted]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        panic!("No")
+        unreachable!()
     }
 }
 impl std::fmt::Debug for Error {
 #[trusted]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        panic!("No")
+        unreachable!()
     }
 }
 

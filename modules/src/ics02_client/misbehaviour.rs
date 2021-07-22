@@ -40,14 +40,14 @@ pub enum AnyMisbehaviour {
 
 impl std::fmt::Debug for AnyMisbehaviour {
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        panic!("No")
+        unreachable!()
     }
 }
 
 impl Misbehaviour for AnyMisbehaviour {
 // #[trusted]
 //     fn client_id(&self) -> &ClientId {
-// panic!("No") //         match self {
+// unreachable!() //         match self {
 // //             Self::Tendermint(misbehaviour) => misbehaviour.client_id(),
 // //
 // //             #[cfg(any(test, feature = "mocks"))]
@@ -76,7 +76,7 @@ impl TryFrom<Any> for AnyMisbehaviour {
 
 #[trusted]
     fn try_from(raw: Any) -> Result<Self, Self::Error> {
-panic!("No") //         match raw.type_url.as_str() {
+unreachable!() //         match raw.type_url.as_str() {
 //             TENDERMINT_MISBEHAVIOR_TYPE_URL => Ok(AnyMisbehaviour::Tendermint(
 //                 TmMisbehaviour::decode_vec(&raw.value)
 //                     .map_err(|e| Kind::InvalidRawMisbehaviour.context(e))?,
@@ -95,7 +95,7 @@ panic!("No") //         match raw.type_url.as_str() {
 impl From<AnyMisbehaviour> for Any {
 #[trusted]
     fn from(value: AnyMisbehaviour) -> Self {
-panic!("No") //         match value {
+unreachable!() //         match value {
 //             AnyMisbehaviour::Tendermint(misbehaviour) => Any {
 //                 type_url: TENDERMINT_MISBEHAVIOR_TYPE_URL.to_string(),
 //                 value: misbehaviour
@@ -117,7 +117,7 @@ panic!("No") //         match value {
 impl std::fmt::Display for AnyMisbehaviour {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-panic!("No") //         match self {
+unreachable!() //         match self {
 //             AnyMisbehaviour::Tendermint(tm) => write!(f, "{}", tm),
 // 
 //             #[cfg(any(test, feature = "mocks"))]

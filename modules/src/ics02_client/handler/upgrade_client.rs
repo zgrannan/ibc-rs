@@ -28,7 +28,7 @@ pub fn process(
     ctx: &dyn ClientReader,
     msg: MsgUpgradeAnyClient,
 ) -> HandlerResult<ClientResult, Error> {
-panic!("No") // panic!("No") //     let mut output = HandlerOutput::builder();
+unreachable!() // panic!("No") //     let mut output = HandlerOutput::builder();
 // //     let MsgUpgradeAnyClient { client_id, .. } = msg;
 // // 
 // //     // Read client state from the host chain store.

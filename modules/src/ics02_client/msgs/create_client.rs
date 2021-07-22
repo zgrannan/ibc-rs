@@ -59,12 +59,12 @@ impl Msg for MsgCreateAnyClient {
 
 #[trusted]
     fn route(&self) -> String {
-panic!("No") //         crate::keys::ROUTER_KEY.to_string()
+unreachable!() //         crate::keys::ROUTER_KEY.to_string()
     }
 
 #[trusted]
     fn type_url(&self) -> String {
-panic!("No") //         TYPE_URL.to_string()
+unreachable!() //         TYPE_URL.to_string()
     }
 }
 
@@ -75,7 +75,7 @@ impl TryFrom<RawMsgCreateClient> for MsgCreateAnyClient {
 
 #[trusted]
     fn try_from(raw: RawMsgCreateClient) -> Result<Self, Self::Error> {
-panic!("No") // panic!("No") //         let raw_client_state = raw
+unreachable!() // panic!("No") //         let raw_client_state = raw
 // //             .client_state
 // //             .ok_or_else(|| Kind::InvalidRawClientState.context("missing client state"))?;
 // // 

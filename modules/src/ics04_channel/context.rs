@@ -71,7 +71,7 @@ pub trait ChannelReader {
 pub trait ChannelKeeper {
     #[trusted]
     fn store_channel_result(&mut self, result: ChannelResult) -> Result<(), Error> {
-panic!("No") //         // The handler processed this channel & some modifications occurred, store the new end.
+unreachable!() //         // The handler processed this channel & some modifications occurred, store the new end.
 //         self.store_channel(
 //             (result.port_id.clone(), result.channel_id.clone()),
 //             &result.channel_end,

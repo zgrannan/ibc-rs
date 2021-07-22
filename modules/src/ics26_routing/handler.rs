@@ -24,7 +24,7 @@ pub fn deliver<Ctx>(ctx: &mut Ctx, messages: Vec<Any>) -> Result<Vec<IbcEvent>, 
 where
     Ctx: Ics26Context,
 {
-panic!("No") //     // Create a clone, which will store each intermediary stage of applying txs.
+unreachable!() //     // Create a clone, which will store each intermediary stage of applying txs.
 //     let mut ctx_interim = ctx.clone();
 // 
 //     // A buffer for all the events, to be used as return value.

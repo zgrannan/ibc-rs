@@ -45,7 +45,7 @@ pub trait ConsensusState: Clone + std::fmt::Debug + Send + Sync {
 
 impl std::fmt::Debug for AnyConsensusState {
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        panic!("No")
+        unreachable!()
     }
 }
 
@@ -88,7 +88,7 @@ impl TryFrom<Any> for AnyConsensusState {
 
 #[trusted]
     fn try_from(value: Any) -> Result<Self, Self::Error> {
-panic!("No") //         match value.type_url.as_str() {
+unreachable!() //         match value.type_url.as_str() {
 //             "" => Err(Kind::EmptyConsensusStateResponse.into()),
 // 
 //             TENDERMINT_CONSENSUS_STATE_TYPE_URL => Ok(AnyConsensusState::Tendermint(
@@ -110,7 +110,7 @@ panic!("No") //         match value.type_url.as_str() {
 impl From<AnyConsensusState> for Any {
 #[trusted]
     fn from(value: AnyConsensusState) -> Self {
-panic!("No") //         match value {
+unreachable!() //         match value {
 //             AnyConsensusState::Tendermint(value) => Any {
 //                 type_url: TENDERMINT_CONSENSUS_STATE_TYPE_URL.to_string(),
 //                 value: value
@@ -141,7 +141,7 @@ impl TryFrom<ConsensusStateWithHeight> for AnyConsensusStateWithHeight {
 
 #[trusted]
     fn try_from(value: ConsensusStateWithHeight) -> Result<Self, Self::Error> {
-panic!("No") //         let state = value
+unreachable!() //         let state = value
 //             .consensus_state
 //             .map(AnyConsensusState::try_from)
 //             .transpose()

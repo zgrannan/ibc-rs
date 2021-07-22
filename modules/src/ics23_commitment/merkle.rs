@@ -12,7 +12,7 @@ pub fn apply_prefix(
     prefix: &CommitmentPrefix,
     mut path: Vec<String>,
 ) -> Result<MerklePath, Box<dyn std::error::Error>> {
-panic!("No") //     if prefix.is_empty() {
+unreachable!() //     if prefix.is_empty() {
 //         return Err("empty prefix".into());
 //     }
 // 
@@ -81,7 +81,7 @@ pub struct MerkleProof {
 
 #[trusted]
 pub fn convert_tm_to_ics_merkle_proof(tm_proof: &Proof) -> Result<RawMerkleProof, Error> {
-panic!("No") //     let mut proofs = vec![];
+unreachable!() //     let mut proofs = vec![];
 // 
 //     for _op in &tm_proof.ops {
 //         let parsed = ibc_proto::ics23::CommitmentProof { proof: None };

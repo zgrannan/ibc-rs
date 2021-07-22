@@ -19,7 +19,7 @@ pub fn verify_proofs(
     expected_conn: &ConnectionEnd,
     proofs: &Proofs,
 ) -> Result<(), Error> {
-panic!("No") //     verify_connection_proof(
+unreachable!() //     verify_connection_proof(
 //         ctx,
 //         connection_end,
 //         expected_conn,
@@ -65,7 +65,7 @@ pub fn verify_connection_proof(
    _proof_height: Height,
    _proof: &CommitmentProofBytes,
 ) -> Result<(), Error> {
-    panic!("No")
+    unreachable!()
     // Fetch the client state (IBC client on the local/host chain).
     // let client_state = ctx
     //     .client_state(connection_end.client_id())
@@ -161,7 +161,7 @@ pub fn verify_consensus_proof(
    _proof_height: Height,
    _proof: &ConsensusProof,
 ) -> Result<(), Error> {
-    panic!("No")
+    unreachable!()
     // // Fetch the client state (IBC client on the local chain).
     // let client_state = ctx
     //     .client_state(connection_end.client_id())

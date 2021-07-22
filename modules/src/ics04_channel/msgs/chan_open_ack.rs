@@ -72,12 +72,12 @@ impl Msg for MsgChannelOpenAck {
 
 #[trusted]
     fn route(&self) -> String {
-panic!("No") //         crate::keys::ROUTER_KEY.to_string()
+unreachable!() //         crate::keys::ROUTER_KEY.to_string()
     }
 
 #[trusted]
     fn type_url(&self) -> String {
-panic!("No") //         TYPE_URL.to_string()
+unreachable!() //         TYPE_URL.to_string()
     }
 }
 
@@ -88,7 +88,7 @@ impl TryFrom<RawMsgChannelOpenAck> for MsgChannelOpenAck {
 
 #[trusted]
     fn try_from(raw_msg: RawMsgChannelOpenAck) -> Result<Self, Self::Error> {
-panic!("No") //         let proofs = Proofs::new(
+unreachable!() //         let proofs = Proofs::new(
 //             raw_msg.proof_try.into(),
 //             None,
 //             None,
@@ -124,7 +124,7 @@ panic!("No") //         let proofs = Proofs::new(
 impl From<MsgChannelOpenAck> for RawMsgChannelOpenAck {
 #[trusted]
     fn from(domain_msg: MsgChannelOpenAck) -> Self {
-panic!("No") //         RawMsgChannelOpenAck {
+unreachable!() //         RawMsgChannelOpenAck {
 //             port_id: domain_msg.port_id.to_string(),
 //             channel_id: domain_msg.channel_id.to_string(),
 //             counterparty_channel_id: domain_msg.counterparty_channel_id.to_string(),

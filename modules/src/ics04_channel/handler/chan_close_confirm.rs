@@ -16,7 +16,7 @@ pub(crate) fn process(
     ctx: &dyn ChannelReader,
     msg: MsgChannelCloseConfirm,
 ) -> HandlerResult<ChannelResult, Error> {
-panic!("No") //     let mut output = HandlerOutput::builder();
+unreachable!() //     let mut output = HandlerOutput::builder();
 // 
 //     // Retrieve the old channel end and validate it against the message.
 //     let mut channel_end = ctx

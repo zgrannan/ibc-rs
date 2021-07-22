@@ -18,7 +18,7 @@ use crate::ics23_commitment::commitment::CommitmentRoot;
 
 impl std::fmt::Debug for ConsensusState {
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        panic!("No")
+        unreachable!()
     }
 }
 
@@ -65,7 +65,7 @@ impl TryFrom<RawConsensusState> for ConsensusState {
 
 #[trusted]
     fn try_from(raw: RawConsensusState) -> Result<Self, Self::Error> {
-panic!("No") // panic!("No") // panic!("No") //         let proto_timestamp = raw
+unreachable!() // panic!("No") // panic!("No") //         let proto_timestamp = raw
 // // //             .timestamp
 // // //             .ok_or_else(|| Kind::InvalidRawConsensusState.context("missing timestamp"))?;
 // // // 
@@ -87,7 +87,7 @@ panic!("No") // panic!("No") // panic!("No") //         let proto_timestamp = ra
 impl From<ConsensusState> for RawConsensusState {
 #[trusted]
     fn from(value: ConsensusState) -> Self {
-panic!("No") //         RawConsensusState {
+unreachable!() //         RawConsensusState {
 //             timestamp: Some(Timestamp::from(SystemTime::from(value.timestamp))),
 //             root: Some(ibc_proto::ibc::core::commitment::v1::MerkleRoot {
 //                 hash: value.root.into_vec(),
@@ -100,7 +100,7 @@ panic!("No") //         RawConsensusState {
 impl From<tendermint::block::Header> for ConsensusState {
 #[trusted]
     fn from(header: tendermint::block::Header) -> Self {
-panic!("No") //         Self {
+unreachable!() //         Self {
 //             root: CommitmentRoot::from_bytes(header.app_hash.as_ref()),
 //             timestamp: header.time,
 //             next_validators_hash: header.next_validators_hash,

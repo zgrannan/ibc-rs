@@ -16,7 +16,7 @@ pub struct CommitmentRoot {
 impl fmt::Debug for CommitmentRoot {
 #[trusted]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-panic!("No") //         let hex = Hex::upper_case().encode_to_string(&self.bytes).unwrap();
+unreachable!() //         let hex = Hex::upper_case().encode_to_string(&self.bytes).unwrap();
 //         f.debug_tuple("CommitmentRoot").field(&hex).finish()
     }
 }
@@ -30,7 +30,7 @@ impl CommitmentRoot {
 
 // #[trusted]
 //     pub fn as_bytes(&self) -> &[u8] {
-// panic!("No") //         &self.bytes
+// unreachable!() //         &self.bytes
 //     }
 
     pub fn into_vec(self) -> Vec<u8> {
@@ -95,7 +95,7 @@ impl TryFrom<CommitmentProofBytes> for RawMerkleProof {
 
     #[trusted]
     fn try_from(_value: CommitmentProofBytes) -> Result<Self, Self::Error> {
-        panic!("No")
+        unreachable!()
         // let value: Vec<u8> = value.into();
         // let res: RawMerkleProof =
         //     prost::Message::decode(value.as_ref()).map_err(Error::InvalidRawMerkleProof)?;
@@ -122,7 +122,7 @@ impl CommitmentPrefix {
 
 // #[trusted]
 //     pub fn as_bytes(&self) -> &[u8] {
-// panic!("No") //         &self.bytes
+// unreachable!() //         &self.bytes
 //     }
 
     pub fn into_vec(self) -> Vec<u8> {
@@ -140,7 +140,7 @@ impl From<Vec<u8>> for CommitmentPrefix {
 impl fmt::Debug for CommitmentPrefix {
 #[trusted]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-panic!("No") //         let converted = std::str::from_utf8(self.as_bytes());
+unreachable!() //         let converted = std::str::from_utf8(self.as_bytes());
 //         match converted {
 //             Ok(s) => write!(f, "{}", s),
 //             Err(_e) => write!(f, "<not valid UTF8: {:?}>", self.as_bytes()),
@@ -154,7 +154,7 @@ impl Serialize for CommitmentPrefix {
     where
         S: serde::Serializer,
     {
-panic!("No") //         format!("{:?}", self).serialize(serializer)
+unreachable!() //         format!("{:?}", self).serialize(serializer)
     }
 }
 

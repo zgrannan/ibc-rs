@@ -84,12 +84,12 @@ impl Msg for MsgConnectionOpenTry {
 
 #[trusted]
     fn route(&self) -> String {
-panic!("No") //         crate::keys::ROUTER_KEY.to_string()
+unreachable!() //         crate::keys::ROUTER_KEY.to_string()
     }
 
 #[trusted]
     fn type_url(&self) -> String {
-panic!("No") //         TYPE_URL.to_string()
+unreachable!() //         TYPE_URL.to_string()
     }
 }
 
@@ -100,7 +100,7 @@ impl TryFrom<RawMsgConnectionOpenTry> for MsgConnectionOpenTry {
 
 #[trusted]
     fn try_from(msg: RawMsgConnectionOpenTry) -> Result<Self, Self::Error> {
-panic!("No") // panic!("No") // panic!("No") // panic!("No") //         let previous_connection_id = Some(msg.previous_connection_id)
+unreachable!() // panic!("No") // panic!("No") // panic!("No") //         let previous_connection_id = Some(msg.previous_connection_id)
 // // // //             .filter(|x| !x.is_empty())
 // // // //             .map(|v| FromStr::from_str(v.as_str()))
 // // // //             .transpose()
@@ -171,7 +171,7 @@ panic!("No") // panic!("No") // panic!("No") // panic!("No") //         let prev
 impl From<MsgConnectionOpenTry> for RawMsgConnectionOpenTry {
 #[trusted]
     fn from(ics_msg: MsgConnectionOpenTry) -> Self {
-panic!("No") // panic!("No") // panic!("No") // panic!("No") //         RawMsgConnectionOpenTry {
+unreachable!() // panic!("No") // panic!("No") // panic!("No") //         RawMsgConnectionOpenTry {
 // // // //             client_id: ics_msg.client_id.as_str().to_string(),
 // // // //             previous_connection_id: ics_msg
 // // // //                 .previous_connection_id

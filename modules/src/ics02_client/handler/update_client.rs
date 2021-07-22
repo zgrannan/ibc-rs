@@ -27,7 +27,7 @@ pub fn process(
     ctx: &dyn ClientReader,
     msg: MsgUpdateAnyClient,
 ) -> HandlerResult<ClientResult, Error> {
-panic!("No") // panic!("No") // panic!("No") //     let mut output = HandlerOutput::builder();
+unreachable!() // panic!("No") // panic!("No") //     let mut output = HandlerOutput::builder();
 // // // 
 // // //     let MsgUpdateAnyClient {
 // // //         client_id,

@@ -18,7 +18,7 @@ const VALID_SPECIAL_CHARS: &str = "._+-#[]<>";
 /// length.
 #[trusted]
 pub fn validate_identifier(id: &str, min: usize, max: usize) -> Result<(), ValidationError> {
-panic!("No") //     assert!(max >= min);
+unreachable!() //     assert!(max >= min);
 // 
 //     // Check identifier is not empty
 //     if id.is_empty() {

@@ -71,17 +71,17 @@ impl Msg for MsgChannelOpenTry {
 
 #[trusted]
     fn route(&self) -> String {
-panic!("No") //         crate::keys::ROUTER_KEY.to_string()
+unreachable!() //         crate::keys::ROUTER_KEY.to_string()
     }
 
 #[trusted]
     fn type_url(&self) -> String {
-panic!("No") //         TYPE_URL.to_string()
+unreachable!() //         TYPE_URL.to_string()
     }
 
 #[trusted]
     fn validate_basic(&self) -> Result<(), ValidationError> {
-panic!("No") //         match self.channel().counterparty().channel_id() {
+unreachable!() //         match self.channel().counterparty().channel_id() {
 //             None => Err(ValidationKind::InvalidCounterpartyChannelId.into()),
 //             Some(_c) => Ok(()),
 //         }
@@ -95,7 +95,7 @@ impl TryFrom<RawMsgChannelOpenTry> for MsgChannelOpenTry {
 
 #[trusted]
     fn try_from(raw_msg: RawMsgChannelOpenTry) -> Result<Self, Self::Error> {
-panic!("No") // panic!("No") // panic!("No") //         let proofs = Proofs::new(
+unreachable!() // panic!("No") // panic!("No") //         let proofs = Proofs::new(
 // // //             raw_msg.proof_init.into(),
 // // //             None,
 // // //             None,
@@ -136,7 +136,7 @@ panic!("No") // panic!("No") // panic!("No") //         let proofs = Proofs::new
 impl From<MsgChannelOpenTry> for RawMsgChannelOpenTry {
 #[trusted]
     fn from(domain_msg: MsgChannelOpenTry) -> Self {
-panic!("No") // panic!("No") // panic!("No") //         RawMsgChannelOpenTry {
+unreachable!() // panic!("No") // panic!("No") //         RawMsgChannelOpenTry {
 // // //             port_id: domain_msg.port_id.to_string(),
 // // //             previous_channel_id: domain_msg
 // // //                 .previous_channel_id

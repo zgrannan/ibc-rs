@@ -55,7 +55,7 @@ pub fn channel_dispatch<Ctx>(
 where
     Ctx: ChannelReader,
 {
-panic!("No") //     match msg {
+unreachable!() //     match msg {
 //         ChannelMsg::ChannelOpenInit(msg) => chan_open_init::process(ctx, msg),
 //         ChannelMsg::ChannelOpenTry(msg) => chan_open_try::process(ctx, msg),
 //         ChannelMsg::ChannelOpenAck(msg) => chan_open_ack::process(ctx, msg),
@@ -71,7 +71,7 @@ pub fn packet_dispatch<Ctx>(ctx: &Ctx, msg: PacketMsg) -> Result<HandlerOutput<P
 where
     Ctx: ChannelReader,
 {
-panic!("No") //     match msg {
+unreachable!() //     match msg {
 //         PacketMsg::RecvPacket(msg) => recv_packet::process(ctx, msg),
 //         PacketMsg::AckPacket(msg) => acknowledgement::process(ctx, msg),
 //         PacketMsg::ToPacket(msg) => timeout::process(ctx, msg),

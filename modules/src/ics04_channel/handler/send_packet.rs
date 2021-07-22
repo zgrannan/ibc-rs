@@ -25,7 +25,7 @@ pub struct SendPacketResult {
 
 #[trusted]
 pub fn send_packet(ctx: &dyn ChannelReader, packet: Packet) -> HandlerResult<PacketResult, Error> {
-panic!("No") //     let mut output = HandlerOutput::builder();
+unreachable!() //     let mut output = HandlerOutput::builder();
 // 
 //     let source_channel_end = ctx
 //         .channel_end(&(packet.source_port.clone(), packet.source_channel.clone()))

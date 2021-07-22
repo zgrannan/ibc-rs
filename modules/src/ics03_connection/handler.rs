@@ -50,7 +50,7 @@ pub fn dispatch<Ctx>(
 where
     Ctx: ConnectionReader,
 {
-panic!("No") //     match msg {
+unreachable!() //     match msg {
 //         ConnectionMsg::ConnectionOpenInit(msg) => conn_open_init::process(ctx, msg),
 //         ConnectionMsg::ConnectionOpenTry(msg) => conn_open_try::process(ctx, *msg),
 //         ConnectionMsg::ConnectionOpenAck(msg) => conn_open_ack::process(ctx, *msg),

@@ -29,7 +29,7 @@ impl ClientDef for TendermintClient {
         client_state: Self::ClientState,
         header: Self::Header,
     ) -> Result<(Self::ClientState, Self::ConsensusState), Box<dyn std::error::Error>> {
-panic!("No") //         if client_state.latest_height() >= header.height() {
+unreachable!() //         if client_state.latest_height() >= header.height() {
 //             return Err(
 //                 format!("received header height ({:?}) is lower than (or equal to) client latest height ({:?})",
 //                     header.height(), client_state.latest_height).into(),
@@ -68,7 +68,7 @@ panic!("No") //         if client_state.latest_height() >= header.height() {
         _connection_id: Option<&ConnectionId>,
         _expected_connection_end: &ConnectionEnd,
     ) -> Result<(), Box<dyn std::error::Error>> {
-panic!("No") //         todo!()
+unreachable!() //         todo!()
     }
 
     fn verify_channel_state(

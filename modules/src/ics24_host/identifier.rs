@@ -37,7 +37,7 @@ impl ChainId {
     /// ```
 #[trusted]
     pub fn new(name: String, version: u64) -> Self {
-panic!("No") //         Self {
+unreachable!() //         Self {
 //             id: format!("{}-{}", name, version),
 //             version,
 //         }
@@ -46,7 +46,7 @@ panic!("No") //         Self {
     /// Get a reference to the underlying string.
 // #[trusted]
 //     pub fn as_str(&self) -> &str {
-// panic!("No") //         &self.id
+// unreachable!() //         &self.id
 //     }
 
     // TODO: this should probably be named epoch_number.
@@ -67,7 +67,7 @@ panic!("No") //         Self {
     /// ```
 #[trusted]
     pub fn chain_version(chain_id: &str) -> u64 {
-panic!("No") //         if !ChainId::is_epoch_format(chain_id) {
+unreachable!() //         if !ChainId::is_epoch_format(chain_id) {
 //             return 0;
 //         }
 // 
@@ -89,7 +89,7 @@ panic!("No") //         if !ChainId::is_epoch_format(chain_id) {
     /// ```
 #[trusted]
     pub fn is_epoch_format(chain_id: &str) -> bool {
-panic!("No") //         let re = regex::Regex::new(r"^.+[^-]-{1}[1-9][0-9]*$").unwrap();
+unreachable!() //         let re = regex::Regex::new(r"^.+[^-]-{1}[1-9][0-9]*$").unwrap();
 //         re.is_match(chain_id)
     }
 }
@@ -115,28 +115,28 @@ impl FromStr for ChainId {
 impl std::fmt::Display for ChainId {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-panic!("No") //         write!(f, "{}", self.id)
+unreachable!() //         write!(f, "{}", self.id)
     }
 }
 
 impl From<ChainId> for tendermint::chain::Id {
 #[trusted]
     fn from(id: ChainId) -> Self {
-panic!("No") //         tendermint::chain::Id::from_str(id.as_str()).unwrap()
+unreachable!() //         tendermint::chain::Id::from_str(id.as_str()).unwrap()
     }
 }
 
 impl From<tendermint::chain::Id> for ChainId {
 #[trusted]
     fn from(id: tendermint::chain::Id) -> Self {
-panic!("No") //         ChainId::from_str(id.as_str()).unwrap()
+unreachable!() //         ChainId::from_str(id.as_str()).unwrap()
     }
 }
 
 impl Default for ChainId {
 #[trusted]
     fn default() -> Self {
-panic!("No") //         "defaultChainId".to_string().parse().unwrap()
+unreachable!() //         "defaultChainId".to_string().parse().unwrap()
     }
 }
 
@@ -145,13 +145,13 @@ impl TryFrom<String> for ChainId {
 
 #[trusted]
     fn try_from(value: String) -> Result<Self, Self::Error> {
-panic!("No") // panic!("No") //         Self::from_str(value.as_str()).map_err(|e| e.kind().clone())
+unreachable!() // panic!("No") //         Self::from_str(value.as_str()).map_err(|e| e.kind().clone())
     }
 }
 
 impl std::fmt::Debug for ClientId {
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        panic!("No")
+        unreachable!()
     }
 }
 
@@ -173,7 +173,7 @@ impl ClientId {
     /// ```
 #[trusted]
     pub fn new(ctype: ClientType, counter: u64) -> Result<Self, ValidationError> {
-panic!("No") //         let prefix = Self::prefix(ctype);
+unreachable!() //         let prefix = Self::prefix(ctype);
 //         let id = format!("{}-{}", prefix, counter);
 //         Self::from_str(id.as_str())
     }
@@ -181,7 +181,7 @@ panic!("No") //         let prefix = Self::prefix(ctype);
     /// Get this identifier as a borrowed `&str`
 // #[trusted]
 //     pub fn as_str(&self) -> &str {
-// panic!("No") //         &self.0
+// unreachable!() //         &self.0
 //     }
 
     /// Returns one of the prefixes that should be present in any client identifiers.
@@ -189,7 +189,7 @@ panic!("No") //         let prefix = Self::prefix(ctype);
     /// chain, for example, will have the prefix '07-tendermint'.
 #[trusted]
     pub fn prefix(client_type: ClientType) -> &'static str {
-panic!("No") //         match client_type {
+unreachable!() //         match client_type {
 //             ClientType::Tendermint => ClientType::Tendermint.as_str(),
 // 
 //             #[cfg(any(test, feature = "mocks"))]
@@ -200,7 +200,7 @@ panic!("No") //         match client_type {
 //     /// Get this identifier as a borrowed byte slice
 // #[trusted]
 //     pub fn as_bytes(&self) -> &[u8] {
-// panic!("No") //         self.0.as_bytes()
+// unreachable!() //         self.0.as_bytes()
 //     }
 }
 
@@ -208,7 +208,7 @@ panic!("No") //         match client_type {
 impl std::fmt::Display for ClientId {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-panic!("No") //         write!(f, "{}", self.0)
+unreachable!() //         write!(f, "{}", self.0)
     }
 }
 
@@ -217,7 +217,7 @@ impl FromStr for ClientId {
 
 #[trusted]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-panic!("No") //         validate_client_identifier(s).map(|_| Self(s.to_string()))
+unreachable!() //         validate_client_identifier(s).map(|_| Self(s.to_string()))
     }
 }
 
@@ -239,7 +239,7 @@ impl Default for ClientId {
 impl PartialEq<str> for ClientId {
 #[trusted]
     fn eq(&self, other: &str) -> bool {
-panic!("No") //         self.as_str().eq(other)
+unreachable!() //         self.as_str().eq(other)
     }
 }
 
@@ -259,24 +259,24 @@ impl ConnectionId {
     /// ```
 #[trusted]
     pub fn new(counter: u64) -> Self {
-panic!("No") //         let id = format!("{}-{}", Self::prefix(), counter);
+unreachable!() //         let id = format!("{}-{}", Self::prefix(), counter);
 //         Self::from_str(id.as_str()).unwrap()
     }
 
     /// Returns the static prefix to be used across all connection identifiers.
 #[trusted]
     pub fn prefix() -> &'static str {
-panic!("No") //         "connection"
+unreachable!() //         "connection"
     }
 
 // #[trusted]
 //     pub fn as_str(&self) -> &str {
-// panic!("No") //         &self.0
+// unreachable!() //         &self.0
 //     }
 
 // #[trusted]
 //     pub fn as_bytes(&self) -> &[u8] {
-// panic!("No") //         self.0.as_bytes()
+// unreachable!() //         self.0.as_bytes()
 //     }
 }
 
@@ -284,7 +284,7 @@ panic!("No") //         "connection"
 impl std::fmt::Display for ConnectionId {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-panic!("No") //         write!(f, "{}", self.0)
+unreachable!() //         write!(f, "{}", self.0)
     }
 }
 
@@ -293,7 +293,7 @@ impl FromStr for ConnectionId {
 
 #[trusted]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-panic!("No") //         validate_connection_identifier(s).map(|_| Self(s.to_string()))
+unreachable!() //         validate_connection_identifier(s).map(|_| Self(s.to_string()))
     }
 }
 
@@ -315,7 +315,7 @@ impl Default for ConnectionId {
 impl PartialEq<str> for ConnectionId {
 #[trusted]
     fn eq(&self, other: &str) -> bool {
-panic!("No") //         self.as_str().eq(other)
+unreachable!() //         self.as_str().eq(other)
     }
 }
 
@@ -324,14 +324,14 @@ pub struct PortId(String);
 
 impl std::fmt::Debug for PortId {
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        panic!("No")
+        unreachable!()
     }
 }
 
 impl std::fmt::Debug for ChannelId {
 #[trusted]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        panic!("No")
+        unreachable!()
     }
 }
 
@@ -339,13 +339,13 @@ impl std::fmt::Debug for ChannelId {
 impl PortId {
 // #[trusted]
 //     pub fn as_str(&self) -> &str {
-// panic!("No") //         &self.0
+// unreachable!() //         &self.0
 //     }
 
 //     /// Get this identifier as a borrowed byte slice
 // #[trusted]
 //     pub fn as_bytes(&self) -> &[u8] {
-// panic!("No") //         self.0.as_bytes()
+// unreachable!() //         self.0.as_bytes()
 //     }
 }
 
@@ -353,7 +353,7 @@ impl PortId {
 impl std::fmt::Display for PortId {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-panic!("No") //         write!(f, "{}", self.0)
+unreachable!() //         write!(f, "{}", self.0)
     }
 }
 
@@ -362,14 +362,14 @@ impl FromStr for PortId {
 
 #[trusted]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-panic!("No") //         validate_port_identifier(s).map(|_| Self(s.to_string()))
+unreachable!() //         validate_port_identifier(s).map(|_| Self(s.to_string()))
     }
 }
 
 impl Default for PortId {
 #[trusted]
     fn default() -> Self {
-panic!("No") //         "defaultPort".to_string().parse().unwrap()
+unreachable!() //         "defaultPort".to_string().parse().unwrap()
     }
 }
 
@@ -390,24 +390,24 @@ impl ChannelId {
     /// ```
 #[trusted]
     pub fn new(counter: u64) -> Self {
-panic!("No") //         let id = format!("{}-{}", Self::prefix(), counter);
+unreachable!() //         let id = format!("{}-{}", Self::prefix(), counter);
 //         Self::from_str(id.as_str()).unwrap()
     }
 
 #[trusted]
     pub fn prefix() -> &'static str {
-panic!("No") //         "channel"
+unreachable!() //         "channel"
     }
 
 // #[trusted]
 //     pub fn as_str(&self) -> &str {
-// panic!("No") //         &self.0
+// unreachable!() //         &self.0
 //     }
 
 //     /// Get this identifier as a borrowed byte slice
 // #[trusted]
 //     pub fn as_bytes(&self) -> &[u8] {
-// panic!("No") //         self.0.as_bytes()
+// unreachable!() //         self.0.as_bytes()
 //     }
 }
 
@@ -415,7 +415,7 @@ panic!("No") //         "channel"
 impl std::fmt::Display for ChannelId {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-panic!("No") //         write!(f, "{}", self.0)
+unreachable!() //         write!(f, "{}", self.0)
     }
 }
 
@@ -424,7 +424,7 @@ impl FromStr for ChannelId {
 
 #[trusted]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-panic!("No") //         validate_channel_identifier(s).map(|_| Self(s.to_string()))
+unreachable!() //         validate_channel_identifier(s).map(|_| Self(s.to_string()))
     }
 }
 
@@ -439,7 +439,7 @@ impl Default for ChannelId {
 impl PartialEq<str> for ChannelId {
 #[trusted]
     fn eq(&self, other: &str) -> bool {
-panic!("No") //         self.as_str().eq(other)
+unreachable!() //         self.as_str().eq(other)
     }
 }
 
@@ -453,6 +453,6 @@ pub struct PortChannelId {
 impl std::fmt::Display for PortChannelId {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-panic!("No") //         write!(f, "{}/{}", self.port_id, self.channel_id)
+unreachable!() //         write!(f, "{}/{}", self.port_id, self.channel_id)
     }
 }

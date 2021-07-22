@@ -68,7 +68,7 @@ pub trait ConnectionReader {
 pub trait ConnectionKeeper {
     #[trusted]
     fn store_connection_result(&mut self, result: ConnectionResult) -> Result<(), Error> {
-panic!("No") //         self.store_connection(result.connection_id.clone(), &result.connection_end)?;
+unreachable!() //         self.store_connection(result.connection_id.clone(), &result.connection_end)?;
 // 
 //         // If we generated an identifier, increase the counter & associate this new identifier
 //         // with the client id.

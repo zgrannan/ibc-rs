@@ -105,7 +105,7 @@ impl TryFrom<Any> for AnyClientState {
 
 #[trusted]
     fn try_from(raw: Any) -> Result<Self, Self::Error> {
-panic!("No") //         match raw.type_url.as_str() {
+unreachable!() //         match raw.type_url.as_str() {
 //             "" => Err(Kind::EmptyClientStateResponse.into()),
 // 
 //             TENDERMINT_CLIENT_STATE_TYPE_URL => Ok(AnyClientState::Tendermint(
@@ -127,7 +127,7 @@ panic!("No") //         match raw.type_url.as_str() {
 impl From<AnyClientState> for Any {
 #[trusted]
     fn from(value: AnyClientState) -> Self {
-panic!("No") //         match value {
+unreachable!() //         match value {
 //             AnyClientState::Tendermint(value) => Any {
 //                 type_url: TENDERMINT_CLIENT_STATE_TYPE_URL.to_string(),
 //                 value: value
@@ -202,7 +202,7 @@ impl TryFrom<IdentifiedClientState> for IdentifiedAnyClientState {
 
 #[trusted]
     fn try_from(raw: IdentifiedClientState) -> Result<Self, Self::Error> {
-panic!("No") // panic!("No") // panic!("No") //         Ok(IdentifiedAnyClientState {
+unreachable!() // panic!("No") // panic!("No") //         Ok(IdentifiedAnyClientState {
 // // //             client_id: raw.client_id.parse().map_err(|e: ValidationError| {
 // // //                 Kind::InvalidRawClientId(raw.client_id.clone(), e.kind().clone())
 // // //             })?,

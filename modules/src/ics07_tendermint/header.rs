@@ -28,14 +28,14 @@ pub struct Header {
 impl std::fmt::Debug for Header {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-panic!("No") //         write!(f, " Header {{...}}")
+unreachable!() //         write!(f, " Header {{...}}")
     }
 }
 
 impl Header {
 #[trusted]
     pub fn height(&self) -> Height {
-panic!("No") //         Height::new(
+unreachable!() //         Height::new(
 //             ChainId::chain_version(self.signed_header.header.chain_id.as_str()),
 //             u64::from(self.signed_header.header.height),
 //         )
@@ -91,7 +91,7 @@ impl TryFrom<RawHeader> for Header {
 
 #[trusted]
     fn try_from(raw: RawHeader) -> Result<Self, Self::Error> {
-panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") //         Ok(Self {
+unreachable!() // panic!("No") // panic!("No") // panic!("No") // panic!("No") //         Ok(Self {
 // // // // //             signed_header: raw
 // // // // //                 .signed_header
 // // // // //                 .ok_or_else(|| Kind::InvalidRawHeader.context("missing signed header"))?

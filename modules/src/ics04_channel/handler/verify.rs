@@ -30,7 +30,7 @@ pub fn verify_packet_recv_proofs(
     client_id: ClientId,
     proofs: &Proofs,
 ) -> Result<(), Error> {
-panic!("No") //     let client_state = ctx
+unreachable!() //     let client_state = ctx
 //         .client_state(&client_id)
 //         .ok_or_else(|| Kind::MissingClientState(client_id.clone()))?;
 // 

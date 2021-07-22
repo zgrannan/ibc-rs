@@ -54,12 +54,12 @@ impl Msg for MsgAcknowledgement {
 
 #[trusted]
     fn route(&self) -> String {
-panic!("No") //         crate::keys::ROUTER_KEY.to_string()
+unreachable!() //         crate::keys::ROUTER_KEY.to_string()
     }
 
 #[trusted]
     fn type_url(&self) -> String {
-panic!("No") //         TYPE_URL.to_string()
+unreachable!() //         TYPE_URL.to_string()
     }
 }
 
@@ -99,7 +99,7 @@ impl TryFrom<RawMsgAcknowledgement> for MsgAcknowledgement {
 impl From<MsgAcknowledgement> for RawMsgAcknowledgement {
 #[trusted]
     fn from(domain_msg: MsgAcknowledgement) -> Self {
-panic!("No") //         RawMsgAcknowledgement {
+unreachable!() //         RawMsgAcknowledgement {
 //             packet: Some(domain_msg.packet.into()),
 //             acknowledgement: domain_msg.acknowledgement,
 //             signer: domain_msg.signer.to_string(),

@@ -45,12 +45,12 @@ impl Msg for MsgTransfer {
 
 #[trusted]
     fn route(&self) -> String {
-panic!("No") // panic!("No") //         crate::keys::ROUTER_KEY.to_string()
+unreachable!() // panic!("No") //         crate::keys::ROUTER_KEY.to_string()
     }
 
 #[trusted]
     fn type_url(&self) -> String {
-panic!("No") //         TYPE_URL.to_string()
+unreachable!() //         TYPE_URL.to_string()
     }
 }
 
@@ -61,7 +61,7 @@ impl TryFrom<RawMsgTransfer> for MsgTransfer {
 
     #[trusted]
     fn try_from(raw_msg: RawMsgTransfer) -> Result<Self, Self::Error> {
-panic!("No") // panic!("No") // panic!("No") // panic!("No") // panic!("No") //         let timeout_timestamp = Timestamp::from_nanoseconds(raw_msg.timeout_timestamp)
+unreachable!() // panic!("No") // panic!("No") // panic!("No") // panic!("No") //         let timeout_timestamp = Timestamp::from_nanoseconds(raw_msg.timeout_timestamp)
 // // // // //             .map_err(|_| Kind::InvalidPacketTimeoutTimestamp(raw_msg.timeout_timestamp))?;
 // // // // // 
 // // // // //         let timeout_height = match raw_msg.timeout_height.clone() {

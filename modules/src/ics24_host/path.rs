@@ -82,7 +82,7 @@ impl Path {
 impl Display for Path {
 #[trusted]
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-panic!("No") //         match &self {
+unreachable!() //         match &self {
 //             Path::ClientType(client_id) => write!(f, "clients/{}/clientType", client_id),
 //             Path::ClientState(client_id) => write!(f, "clients/{}/clientState", client_id),
 //             Path::ClientConsensusState {
