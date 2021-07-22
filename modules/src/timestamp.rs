@@ -133,11 +133,13 @@ panic!("No") //         write!(
 pub struct TimestampOverflowError;
 
 impl std::fmt::Display for TimestampOverflowError {
+    #[trusted]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         panic!("No")
     }
 }
 impl std::fmt::Debug for TimestampOverflowError {
+    #[trusted]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         panic!("No")
     }

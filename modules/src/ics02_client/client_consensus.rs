@@ -33,7 +33,7 @@ pub trait ConsensusState: Clone + std::fmt::Debug + Send + Sync {
     fn client_type(&self) -> ClientType;
 
     /// Commitment root of the consensus state, which is used for key-value pair verification.
-    fn root(&self) -> &CommitmentRoot;
+    // fn root(&self) -> &CommitmentRoot;
 
     /// Performs basic validation of the consensus state
     fn validate_basic(&self) -> Result<(), Box<dyn std::error::Error>>;
@@ -173,9 +173,9 @@ impl ConsensusState for AnyConsensusState {
         self.client_type()
     }
 
-    fn root(&self) -> &CommitmentRoot {
-        todo!()
-    }
+    // fn root(&self) -> &CommitmentRoot {
+    //     todo!()
+    // }
 
     fn validate_basic(&self) -> Result<(), Box<dyn std::error::Error>> {
         todo!()

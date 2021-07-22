@@ -197,11 +197,11 @@ panic!("No") //         match client_type {
 //         }
     }
 
-    /// Get this identifier as a borrowed byte slice
-#[trusted]
-    pub fn as_bytes(&self) -> &[u8] {
-panic!("No") //         self.0.as_bytes()
-    }
+//     /// Get this identifier as a borrowed byte slice
+// #[trusted]
+//     pub fn as_bytes(&self) -> &[u8] {
+// panic!("No") //         self.0.as_bytes()
+//     }
 }
 
 /// This implementation provides a `to_string` method.
@@ -269,17 +269,15 @@ panic!("No") //         let id = format!("{}-{}", Self::prefix(), counter);
 panic!("No") //         "connection"
     }
 
-    /// Get this identifier as a borrowed `&str`
 // #[trusted]
 //     pub fn as_str(&self) -> &str {
 // panic!("No") //         &self.0
 //     }
 
-    /// Get this identifier as a borrowed byte slice
-#[trusted]
-    pub fn as_bytes(&self) -> &[u8] {
-panic!("No") //         self.0.as_bytes()
-    }
+// #[trusted]
+//     pub fn as_bytes(&self) -> &[u8] {
+// panic!("No") //         self.0.as_bytes()
+//     }
 }
 
 /// This implementation provides a `to_string` method.
@@ -339,17 +337,16 @@ impl std::fmt::Debug for ChannelId {
 
 
 impl PortId {
-    /// Get this identifier as a borrowed `&str`
 // #[trusted]
 //     pub fn as_str(&self) -> &str {
 // panic!("No") //         &self.0
 //     }
 
-    /// Get this identifier as a borrowed byte slice
-#[trusted]
-    pub fn as_bytes(&self) -> &[u8] {
-panic!("No") //         self.0.as_bytes()
-    }
+//     /// Get this identifier as a borrowed byte slice
+// #[trusted]
+//     pub fn as_bytes(&self) -> &[u8] {
+// panic!("No") //         self.0.as_bytes()
+//     }
 }
 
 /// This implementation provides a `to_string` method.

@@ -430,14 +430,14 @@ impl CloseInit {
         &self.0.port_id
     }
 
-#[trusted]
-    pub fn channel_id(&self) -> &ChannelId {
-panic!("No") //         // FIXME(romac): Rework encoding of IbcEvents which use `Attributes`
-//         self.0
-//             .channel_id
-//             .as_ref()
-//             .expect("CloseInit should always have a channel_id")
-    }
+// #[trusted]
+//     pub fn channel_id(&self) -> &ChannelId {
+// panic!("No") //         // FIXME(romac): Rework encoding of IbcEvents which use `Attributes`
+// //         self.0
+// //             .channel_id
+// //             .as_ref()
+// //             .expect("CloseInit should always have a channel_id")
+//     }
 
 #[trusted]
     pub fn counterparty_port_id(&self) -> &PortId {

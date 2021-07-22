@@ -22,8 +22,6 @@ pub const MOCK_MISBEHAVIOUR_TYPE_URL: &str = "/ibc.mock.Misbehavior";
 
 // #[dyn_clonable::clonable]
 pub trait Misbehaviour: Clone + std::fmt::Debug + Send + Sync {
-    /// The type of client (eg. Tendermint)
-    fn client_id(&self) -> &ClientId;
 
     /// The height of the consensus state
     fn height(&self) -> Height;
@@ -47,15 +45,15 @@ impl std::fmt::Debug for AnyMisbehaviour {
 }
 
 impl Misbehaviour for AnyMisbehaviour {
-#[trusted]
-    fn client_id(&self) -> &ClientId {
-panic!("No") //         match self {
-//             Self::Tendermint(misbehaviour) => misbehaviour.client_id(),
-// 
-//             #[cfg(any(test, feature = "mocks"))]
-//             Self::Mock(misbehaviour) => misbehaviour.client_id(),
-//         }
-    }
+// #[trusted]
+//     fn client_id(&self) -> &ClientId {
+// panic!("No") //         match self {
+// //             Self::Tendermint(misbehaviour) => misbehaviour.client_id(),
+// //
+// //             #[cfg(any(test, feature = "mocks"))]
+// //             Self::Mock(misbehaviour) => misbehaviour.client_id(),
+// //         }
+//     }
 
     fn height(&self) -> Height {
         match self {

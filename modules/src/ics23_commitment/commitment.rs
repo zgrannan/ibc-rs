@@ -120,10 +120,10 @@ impl CommitmentPrefix {
         self.bytes.len() == 0
     }
 
-#[trusted]
-    pub fn as_bytes(&self) -> &[u8] {
-panic!("No") //         &self.bytes
-    }
+// #[trusted]
+//     pub fn as_bytes(&self) -> &[u8] {
+// panic!("No") //         &self.bytes
+//     }
 
     pub fn into_vec(self) -> Vec<u8> {
         self.bytes

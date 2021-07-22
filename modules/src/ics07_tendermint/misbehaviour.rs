@@ -26,9 +26,9 @@ pub struct Misbehaviour {
 }
 
 impl crate::ics02_client::misbehaviour::Misbehaviour for Misbehaviour {
-    fn client_id(&self) -> &ClientId {
-        &self.client_id
-    }
+    // fn client_id(&self) -> &ClientId {
+    //     &self.client_id
+    // }
 
     fn height(&self) -> Height {
         self.header1.height()

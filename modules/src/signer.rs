@@ -12,10 +12,10 @@ impl Signer {
 panic!("No") //         Self(s.to_string())
     }
 
-#[trusted]
-    pub fn as_str(&self) -> &str {
-panic!("No") //         &self.0
-    }
+// #[trusted]
+//     pub fn as_str(&self) -> &str {
+// panic!("No") //         &self.0
+//     }
 }
 
 impl Display for Signer {
