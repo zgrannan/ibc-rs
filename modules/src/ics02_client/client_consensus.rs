@@ -17,7 +17,6 @@ use crate::ics07_tendermint::consensus_state;
 use crate::ics23_commitment::commitment::CommitmentRoot;
 use crate::ics24_host::identifier::ClientId;
 use crate::timestamp::Timestamp;
-use crate::utils::UnwrapInfallible;
 
 #[cfg(any(test, feature = "mocks"))]
 use crate::mock::client_state::MockConsensusState;
@@ -140,23 +139,22 @@ impl Protobuf<ConsensusStateWithHeight> for AnyConsensusStateWithHeight {}
 impl TryFrom<ConsensusStateWithHeight> for AnyConsensusStateWithHeight {
     type Error = Kind;
 
-#[trusted]
     fn try_from(value: ConsensusStateWithHeight) -> Result<Self, Self::Error> {
-unreachable!() //         let state = value
-//             .consensus_state
-//             .map(AnyConsensusState::try_from)
-//             .transpose()
-//             .map_err(|_| Kind::InvalidRawConsensusState)?
-//             .ok_or(Kind::EmptyConsensusStateResponse)?;
-// 
-//         Ok(AnyConsensusStateWithHeight {
-//             height: value
-//                 .height
-//                 .ok_or(Kind::MissingHeight)?
-//                 .try_into()
-//                 .unwrap_infallible(),
-//             consensus_state: state,
-//         })
+        let state = value
+            .consensus_state
+            .map(|cs| AnyConsensusState::try_from(cs))
+            .transpose()
+            .map_err(|_| Kind::InvalidRawConsensusState)?
+            .ok_or(Kind::EmptyConsensusStateResponse)?;
+
+        let height = value
+                .height
+                .ok_or(Kind::MissingHeight)?;
+
+        Ok(AnyConsensusStateWithHeight {
+            height: height.into(),
+            consensus_state: state,
+        })
     }
 }
 

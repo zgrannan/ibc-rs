@@ -119,14 +119,12 @@ impl Default for Height {
 
 impl Protobuf<RawHeight> for Height {}
 
-impl TryFrom<RawHeight> for Height {
-    type Error = Infallible;
-
-    fn try_from(raw: RawHeight) -> Result<Self, Self::Error> {
-        Ok(Height {
+impl From<RawHeight> for Height {
+    fn from(raw: RawHeight) -> Self {
+        Height {
             revision_number: raw.revision_number,
             revision_height: raw.revision_height,
-        })
+        }
     }
 }
 
