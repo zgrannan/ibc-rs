@@ -1,5 +1,6 @@
 use crate::ics02_client::client_state::ClientState;
 use crate::ics02_client::{client_def::AnyClient, client_def::ClientDef};
+use prusti_contracts::*;
 use crate::ics03_connection::connection::ConnectionEnd;
 use crate::ics04_channel::channel::ChannelEnd;
 use crate::ics04_channel::context::ChannelReader;
@@ -9,6 +10,7 @@ use crate::ics24_host::identifier::ClientId;
 use crate::proofs::Proofs;
 
 /// Entry point for verifying all proofs bundled in any ICS4 message for channel protocols.
+#[trusted]
 pub fn verify_channel_proofs(
     ctx: &dyn ChannelReader,
     channel_end: &ChannelEnd,
@@ -56,6 +58,7 @@ pub fn verify_channel_proofs(
 }
 
 /// Entry point for verifying all proofs bundled in a ICS4 packet recv. message.
+#[trusted]
 pub fn verify_packet_recv_proofs(
     ctx: &dyn ChannelReader,
     packet: &Packet,
@@ -106,6 +109,7 @@ pub fn verify_packet_recv_proofs(
 }
 
 /// Entry point for verifying all proofs bundled in an ICS4 packet ack message.
+#[trusted]
 pub fn verify_packet_acknowledgement_proofs(
     ctx: &dyn ChannelReader,
     packet: &Packet,
@@ -141,6 +145,7 @@ pub fn verify_packet_acknowledgement_proofs(
 }
 
 /// Entry point for verifying all timeout proofs.
+#[trusted]
 pub fn verify_next_sequence_recv(
     ctx: &dyn ChannelReader,
     client_id: ClientId,
@@ -174,6 +179,7 @@ pub fn verify_next_sequence_recv(
     Ok(())
 }
 
+#[trusted]
 pub fn verify_packet_receipt_absence(
     ctx: &dyn ChannelReader,
     client_id: ClientId,

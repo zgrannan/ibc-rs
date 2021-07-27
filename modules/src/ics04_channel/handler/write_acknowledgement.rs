@@ -1,5 +1,6 @@
 use crate::ics04_channel::channel::State;
 use crate::ics04_channel::events::WriteAcknowledgement;
+use prusti_contracts::*;
 use crate::ics04_channel::packet::{Packet, PacketResult, Sequence};
 use crate::ics04_channel::{context::ChannelReader, error::Error};
 use crate::ics24_host::identifier::{ChannelId, PortId};
@@ -16,6 +17,7 @@ pub struct WriteAckPacketResult {
     pub ack: Vec<u8>,
 }
 
+#[trusted]
 pub fn process(
     ctx: &dyn ChannelReader,
     packet: Packet,

@@ -1,5 +1,6 @@
 use std::convert::TryFrom;
 
+use prusti_contracts::*;
 use prost_types::Any;
 use tendermint_proto::Protobuf;
 
@@ -40,6 +41,7 @@ pub enum AnyMisbehaviour {
 }
 
 impl Misbehaviour for AnyMisbehaviour {
+#[trusted]
     fn client_id(&self) -> &ClientId {
         match self {
             Self::Tendermint(misbehaviour) => misbehaviour.client_id(),

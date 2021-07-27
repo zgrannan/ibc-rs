@@ -322,6 +322,7 @@ pub fn extract_events<S: ::std::hash::BuildHasher>(
     Err(Error::incorrect_event_type(action_string.to_string()))
 }
 
+#[trusted]
 pub fn extract_attribute(object: &RawObject, key: &str) -> Result<String, Error> {
     let value = object
         .events
@@ -332,6 +333,7 @@ pub fn extract_attribute(object: &RawObject, key: &str) -> Result<String, Error>
     Ok(value)
 }
 
+#[trusted]
 pub fn maybe_extract_attribute(object: &RawObject, key: &str) -> Option<String> {
     object.events.get(key).map(|tags| tags[object.idx].clone())
 }

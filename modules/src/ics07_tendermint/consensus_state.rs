@@ -89,6 +89,7 @@ impl TryFrom<RawConsensusState> for ConsensusState {
 }
 
 impl From<ConsensusState> for RawConsensusState {
+#[trusted]
     fn from(value: ConsensusState) -> Self {
         RawConsensusState {
             timestamp: Some(Timestamp::from(SystemTime::from(value.timestamp))),

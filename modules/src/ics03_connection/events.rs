@@ -1,5 +1,6 @@
 //! Types for the IBC events emitted from Tendermint Websocket by the connection module.
 use crate::events::{extract_attribute, maybe_extract_attribute, Error, IbcEvent, RawObject};
+use prusti_contracts::*;
 use crate::ics02_client::height::Height;
 use crate::ics24_host::identifier::{ClientId, ConnectionId};
 use serde_derive::{Deserialize, Serialize};
@@ -67,6 +68,7 @@ pub struct Attributes {
     pub counterparty_client_id: ClientId,
 }
 
+#[trusted]
 fn extract_attributes(object: &RawObject, namespace: &str) -> Result<Attributes, Error> {
     Ok(Attributes {
         height: object.height,

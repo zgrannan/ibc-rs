@@ -1,5 +1,6 @@
 use std::convert::{TryFrom, TryInto};
 
+use prusti_contracts::*;
 use bytes::Buf;
 use prost::Message;
 use serde_derive::{Deserialize, Serialize};
@@ -33,6 +34,7 @@ impl std::fmt::Debug for Header {
 }
 
 impl Header {
+#[trusted]
     pub fn height(&self) -> Height {
         Height::new(
             ChainId::chain_version(self.signed_header.header.chain_id.as_str()),

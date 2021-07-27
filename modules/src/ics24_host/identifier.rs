@@ -1,5 +1,6 @@
 use std::convert::TryFrom;
 use std::str::FromStr;
+use prusti_contracts::*;
 
 use serde::{Deserialize, Serialize};
 
@@ -41,6 +42,7 @@ impl ChainId {
     }
 
     /// Get a reference to the underlying string.
+#[trusted]
     pub fn as_str(&self) -> &str {
         &self.id
     }
@@ -105,12 +107,14 @@ impl FromStr for ChainId {
 }
 
 impl std::fmt::Display for ChainId {
+#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "{}", self.id)
     }
 }
 
 impl From<ChainId> for tendermint::chain::Id {
+#[trusted]
     fn from(id: ChainId) -> Self {
         tendermint::chain::Id::from_str(id.as_str()).unwrap()
     }
@@ -123,6 +127,7 @@ impl From<tendermint::chain::Id> for ChainId {
 }
 
 impl Default for ChainId {
+#[trusted]
     fn default() -> Self {
         "defaultChainId".to_string().parse().unwrap()
     }
@@ -151,6 +156,7 @@ impl ClientId {
     /// assert!(tm_client_id.is_ok());
     /// tm_client_id.map(|id| { assert_eq!(&id, "07-tendermint-0") });
     /// ```
+#[trusted]
     pub fn new(ctype: ClientType, counter: u64) -> Result<Self, ValidationError> {
         let prefix = Self::prefix(ctype);
         let id = format!("{}-{}", prefix, counter);
@@ -165,6 +171,7 @@ impl ClientId {
     /// Returns one of the prefixes that should be present in any client identifiers.
     /// The prefix is deterministic for a given chain type, hence all clients for a Tendermint-type
     /// chain, for example, will have the prefix '07-tendermint'.
+#[trusted]
     pub fn prefix(client_type: ClientType) -> &'static str {
         match client_type {
             ClientType::Tendermint => ClientType::Tendermint.as_str(),
@@ -182,6 +189,7 @@ impl ClientId {
 
 /// This implementation provides a `to_string` method.
 impl std::fmt::Display for ClientId {
+#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "{}", self.0)
     }
@@ -196,6 +204,7 @@ impl FromStr for ClientId {
 }
 
 impl Default for ClientId {
+#[trusted]
     fn default() -> Self {
         Self::new(ClientType::Tendermint, 0).unwrap()
     }
@@ -229,12 +238,14 @@ impl ConnectionId {
     /// let conn_id = ConnectionId::new(11);
     /// assert_eq!(&conn_id, "connection-11");
     /// ```
+#[trusted]
     pub fn new(counter: u64) -> Self {
         let id = format!("{}-{}", Self::prefix(), counter);
         Self::from_str(id.as_str()).unwrap()
     }
 
     /// Returns the static prefix to be used across all connection identifiers.
+#[trusted]
     pub fn prefix() -> &'static str {
         "connection"
     }
@@ -245,6 +256,7 @@ impl ConnectionId {
     }
 
     /// Get this identifier as a borrowed byte slice
+#[trusted]
     pub fn as_bytes(&self) -> &[u8] {
         self.0.as_bytes()
     }
@@ -266,6 +278,7 @@ impl FromStr for ConnectionId {
 }
 
 impl Default for ConnectionId {
+#[trusted]
     fn default() -> Self {
         Self::new(0)
     }
@@ -280,6 +293,7 @@ impl Default for ConnectionId {
 /// conn_id.map(|id| {assert_eq!(&id, "connectionId-0")});
 /// ```
 impl PartialEq<str> for ConnectionId {
+#[trusted]
     fn eq(&self, other: &str) -> bool {
         self.as_str().eq(other)
     }
@@ -295,6 +309,7 @@ impl PortId {
     }
 
     /// Get this identifier as a borrowed byte slice
+#[trusted]
     pub fn as_bytes(&self) -> &[u8] {
         self.0.as_bytes()
     }
@@ -316,6 +331,7 @@ impl FromStr for PortId {
 }
 
 impl Default for PortId {
+#[trusted]
     fn default() -> Self {
         "defaultPort".to_string().parse().unwrap()
     }
@@ -336,6 +352,7 @@ impl ChannelId {
     /// let chan_id = ChannelId::new(27);
     /// assert_eq!(&chan_id, "channel-27");
     /// ```
+#[trusted]
     pub fn new(counter: u64) -> Self {
         let id = format!("{}-{}", Self::prefix(), counter);
         Self::from_str(id.as_str()).unwrap()
@@ -346,6 +363,7 @@ impl ChannelId {
     }
 
     /// Get this identifier as a borrowed `&str`
+#[trusted]
     pub fn as_str(&self) -> &str {
         &self.0
     }
@@ -358,6 +376,7 @@ impl ChannelId {
 
 /// This implementation provides a `to_string` method.
 impl std::fmt::Display for ChannelId {
+#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "{}", self.0)
     }

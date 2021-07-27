@@ -1,5 +1,6 @@
 use crate::events::IbcEvent;
 use crate::handler::{HandlerOutput, HandlerResult};
+use prusti_contracts::*;
 use crate::ics02_client::height::Height;
 use crate::ics03_connection::connection::State as ConnectionState;
 use crate::ics04_channel::channel::{Counterparty, Order, State};
@@ -21,6 +22,7 @@ pub struct RecvPacketResult {
     pub receipt: Option<Receipt>,
 }
 
+#[trusted]
 pub fn process(ctx: &dyn ChannelReader, msg: MsgRecvPacket) -> HandlerResult<PacketResult, Error> {
     let mut output = HandlerOutput::builder();
 

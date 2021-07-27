@@ -1,5 +1,6 @@
 //! Definition of domain type msg `MsgUpgradeAnyClient`.
 
+use prusti_contracts::*;
 use std::convert::TryFrom;
 use std::str::FromStr;
 
@@ -82,6 +83,7 @@ impl From<MsgUpgradeAnyClient> for RawMsgUpgradeClient {
 impl TryFrom<RawMsgUpgradeClient> for MsgUpgradeAnyClient {
     type Error = Error;
 
+#[trusted]
     fn try_from(proto_msg: RawMsgUpgradeClient) -> Result<Self, Self::Error> {
         let raw_client_state = proto_msg
             .client_state

@@ -1,5 +1,6 @@
 use std::convert::{TryFrom, TryInto};
 use std::time::Duration;
+use prusti_contracts::*;
 
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenInit as RawMsgConnectionOpenInit;
 use tendermint_proto::Protobuf;
@@ -55,6 +56,7 @@ impl Protobuf<RawMsgConnectionOpenInit> for MsgConnectionOpenInit {}
 impl TryFrom<RawMsgConnectionOpenInit> for MsgConnectionOpenInit {
     type Error = Error;
 
+#[trusted]
     fn try_from(msg: RawMsgConnectionOpenInit) -> Result<Self, Self::Error> {
         Ok(Self {
             client_id: msg.client_id.parse().map_err(Error::invalid_identifier)?,

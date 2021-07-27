@@ -1,5 +1,6 @@
 use std::convert::TryFrom;
 
+use prusti_contracts::*;
 use tendermint_proto::Protobuf;
 
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenConfirm as RawMsgConnectionOpenConfirm;
@@ -52,6 +53,7 @@ impl Protobuf<RawMsgConnectionOpenConfirm> for MsgConnectionOpenConfirm {}
 impl TryFrom<RawMsgConnectionOpenConfirm> for MsgConnectionOpenConfirm {
     type Error = Error;
 
+#[trusted]
     fn try_from(msg: RawMsgConnectionOpenConfirm) -> Result<Self, Self::Error> {
         let proof_height = msg
             .proof_height

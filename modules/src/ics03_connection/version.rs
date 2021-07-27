@@ -1,5 +1,6 @@
 use std::convert::TryFrom;
 
+use prusti_contracts::*;
 use serde::{Deserialize, Serialize};
 use tendermint_proto::Protobuf;
 
@@ -18,6 +19,7 @@ pub struct Version {
 
 impl Version {
     /// Checks whether or not the given feature is supported in this versin
+#[trusted]
     pub fn is_supported_feature(&self, feature: String) -> bool {
         self.features.contains(&feature)
     }

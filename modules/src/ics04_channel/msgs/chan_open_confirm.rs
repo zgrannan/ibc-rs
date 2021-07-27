@@ -1,5 +1,6 @@
 use crate::ics04_channel::error::Error;
 use crate::ics24_host::identifier::{ChannelId, PortId};
+use prusti_contracts::*;
 use crate::proofs::Proofs;
 use crate::signer::Signer;
 use crate::tx_msg::Msg;
@@ -65,6 +66,7 @@ impl Protobuf<RawMsgChannelOpenConfirm> for MsgChannelOpenConfirm {}
 impl TryFrom<RawMsgChannelOpenConfirm> for MsgChannelOpenConfirm {
     type Error = Error;
 
+#[trusted]
     fn try_from(raw_msg: RawMsgChannelOpenConfirm) -> Result<Self, Self::Error> {
         let proofs = Proofs::new(
             raw_msg.proof_ack.into(),

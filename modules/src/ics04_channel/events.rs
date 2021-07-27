@@ -161,6 +161,7 @@ pub struct Attributes {
     pub counterparty_channel_id: Option<ChannelId>,
 }
 
+#[trusted]
 fn extract_attributes(object: &RawObject, namespace: &str) -> Result<Attributes, Error> {
     Ok(Attributes {
         height: object.height,

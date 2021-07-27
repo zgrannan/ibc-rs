@@ -1,5 +1,6 @@
 use crate::ics04_channel::channel::{validate_version, ChannelEnd};
 use crate::ics04_channel::error::Error as ChannelError;
+use prusti_contracts::*;
 use crate::ics24_host::error::ValidationError;
 use crate::ics24_host::identifier::{ChannelId, PortId};
 use crate::proofs::Proofs;
@@ -88,6 +89,7 @@ impl Protobuf<RawMsgChannelOpenTry> for MsgChannelOpenTry {}
 impl TryFrom<RawMsgChannelOpenTry> for MsgChannelOpenTry {
     type Error = ChannelError;
 
+#[trusted]
     fn try_from(raw_msg: RawMsgChannelOpenTry) -> Result<Self, Self::Error> {
         let proofs = Proofs::new(
             raw_msg.proof_init.into(),
@@ -127,6 +129,7 @@ impl TryFrom<RawMsgChannelOpenTry> for MsgChannelOpenTry {
 }
 
 impl From<MsgChannelOpenTry> for RawMsgChannelOpenTry {
+#[trusted]
     fn from(domain_msg: MsgChannelOpenTry) -> Self {
         RawMsgChannelOpenTry {
             port_id: domain_msg.port_id.to_string(),

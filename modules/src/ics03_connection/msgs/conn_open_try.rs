@@ -4,6 +4,7 @@ use std::{
     time::Duration,
 };
 
+use prusti_contracts::*;
 use tendermint_proto::Protobuf;
 
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenTry as RawMsgConnectionOpenTry;
@@ -95,6 +96,7 @@ impl Protobuf<RawMsgConnectionOpenTry> for MsgConnectionOpenTry {}
 impl TryFrom<RawMsgConnectionOpenTry> for MsgConnectionOpenTry {
     type Error = Error;
 
+#[trusted]
     fn try_from(msg: RawMsgConnectionOpenTry) -> Result<Self, Self::Error> {
         let previous_connection_id = Some(msg.previous_connection_id)
             .filter(|x| !x.is_empty())
@@ -157,6 +159,7 @@ impl TryFrom<RawMsgConnectionOpenTry> for MsgConnectionOpenTry {
 }
 
 impl From<MsgConnectionOpenTry> for RawMsgConnectionOpenTry {
+#[trusted]
     fn from(ics_msg: MsgConnectionOpenTry) -> Self {
         RawMsgConnectionOpenTry {
             client_id: ics_msg.client_id.as_str().to_string(),

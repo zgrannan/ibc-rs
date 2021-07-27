@@ -1,5 +1,6 @@
 use crate::ics23_commitment::error::Error;
 use ibc_proto::ibc::core::commitment::v1::MerkleProof as RawMerkleProof;
+use prusti_contracts::*;
 use serde::{Deserialize, Serialize};
 use std::{convert::TryFrom, fmt};
 use subtle_encoding::{Encoding, Hex};
@@ -25,6 +26,7 @@ impl CommitmentRoot {
         }
     }
 
+#[trusted]
     pub fn as_bytes(&self) -> &[u8] {
         &self.bytes
     }
@@ -106,6 +108,7 @@ impl CommitmentPrefix {
         }
     }
 
+#[trusted]
     pub fn is_empty(&self) -> bool {
         self.bytes.len() == 0
     }

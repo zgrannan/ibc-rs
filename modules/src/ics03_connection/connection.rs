@@ -1,5 +1,6 @@
 use std::convert::{TryFrom, TryInto};
 use std::str::FromStr;
+use prusti_contracts::*;
 use std::time::Duration;
 use std::u64;
 
@@ -46,6 +47,7 @@ impl Protobuf<RawIdentifiedConnection> for IdentifiedConnectionEnd {}
 impl TryFrom<RawIdentifiedConnection> for IdentifiedConnectionEnd {
     type Error = Error;
 
+#[trusted]
     fn try_from(value: RawIdentifiedConnection) -> Result<Self, Self::Error> {
         let raw_connection_end = RawConnectionEnd {
             client_id: value.client_id.to_string(),
@@ -105,6 +107,7 @@ impl Protobuf<RawConnectionEnd> for ConnectionEnd {}
 
 impl TryFrom<RawConnectionEnd> for ConnectionEnd {
     type Error = Error;
+#[trusted]
     fn try_from(value: RawConnectionEnd) -> Result<Self, Self::Error> {
         let state = value.state.try_into()?;
         if state == State::Uninitialized {
@@ -242,6 +245,7 @@ pub struct Counterparty {
 }
 
 impl Default for Counterparty {
+#[trusted]
     fn default() -> Self {
         Counterparty {
             client_id: Default::default(),
@@ -256,6 +260,7 @@ impl Default for Counterparty {
 impl TryFrom<RawCounterparty> for Counterparty {
     type Error = Error;
 
+#[trusted]
     fn try_from(value: RawCounterparty) -> Result<Self, Self::Error> {
         let connection_id = Some(value.connection_id)
             .filter(|x| !x.is_empty())
@@ -275,6 +280,7 @@ impl TryFrom<RawCounterparty> for Counterparty {
 }
 
 impl From<Counterparty> for RawCounterparty {
+#[trusted]
     fn from(value: Counterparty) -> Self {
         RawCounterparty {
             client_id: value.client_id.as_str().to_string(),

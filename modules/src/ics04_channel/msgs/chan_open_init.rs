@@ -1,5 +1,6 @@
 use crate::ics04_channel::channel::ChannelEnd;
 use crate::ics04_channel::error::Error;
+use prusti_contracts::*;
 use crate::ics24_host::identifier::PortId;
 use crate::signer::Signer;
 use crate::tx_msg::Msg;
@@ -59,6 +60,7 @@ impl Protobuf<RawMsgChannelOpenInit> for MsgChannelOpenInit {}
 impl TryFrom<RawMsgChannelOpenInit> for MsgChannelOpenInit {
     type Error = Error;
 
+#[trusted]
     fn try_from(raw_msg: RawMsgChannelOpenInit) -> Result<Self, Self::Error> {
         Ok(MsgChannelOpenInit {
             port_id: raw_msg.port_id.parse().map_err(Error::identifier)?,

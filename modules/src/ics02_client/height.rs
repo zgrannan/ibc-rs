@@ -1,5 +1,6 @@
 use std::cmp::Ordering;
 use std::convert::TryFrom;
+use prusti_contracts::*;
 use std::num::ParseIntError;
 use std::str::FromStr;
 
@@ -132,6 +133,7 @@ impl std::fmt::Debug for Height {
 
 /// Custom debug output to omit the packet data
 impl std::fmt::Display for Height {
+#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "{}-{}", self.revision_number, self.revision_height)
     }
@@ -152,6 +154,7 @@ define_error! {
 impl TryFrom<&str> for Height {
     type Error = HeightError;
 
+#[trusted]
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         let split: Vec<&str> = value.split('-').collect();
         Ok(Height {

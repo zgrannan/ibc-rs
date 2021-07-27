@@ -242,6 +242,7 @@ impl From<Attributes> for UpdateClient {
 impl TryFrom<RawObject> for UpdateClient {
     type Error = Error;
 
+#[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
         let header_str: Option<String> = obj
             .events

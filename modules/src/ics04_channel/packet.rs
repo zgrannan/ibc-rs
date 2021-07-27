@@ -66,6 +66,7 @@ impl Default for Sequence {
 impl FromStr for Sequence {
     type Err = Error;
 
+#[trusted]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(Self::from(s.parse::<u64>().map_err(|e| {
             Error::invalid_string_as_sequence(s.to_string(), e)
@@ -173,6 +174,7 @@ impl Default for Packet {
 impl TryFrom<RawPacket> for Packet {
     type Error = Error;
 
+#[trusted]
     fn try_from(raw_pkt: RawPacket) -> Result<Self, Self::Error> {
         if Sequence::from(raw_pkt.sequence).is_zero() {
             return Err(Error::zero_packet_sequence());

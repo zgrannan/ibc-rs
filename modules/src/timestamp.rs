@@ -1,5 +1,6 @@
 use std::convert::TryInto;
 use std::fmt::Display;
+use prusti_contracts::*;
 use std::num::{ParseIntError, TryFromIntError};
 use std::ops::{Add, Sub};
 use std::str::FromStr;
@@ -122,6 +123,7 @@ impl Timestamp {
 }
 
 impl Display for Timestamp {
+#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -157,6 +159,7 @@ impl Add<Duration> for Timestamp {
 impl Sub<Duration> for Timestamp {
     type Output = Result<Timestamp, TimestampOverflowError>;
 
+#[trusted]
     fn sub(self, duration: Duration) -> Result<Timestamp, TimestampOverflowError> {
         match self.as_datetime() {
             Some(datetime) => {

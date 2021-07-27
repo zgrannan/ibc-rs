@@ -1,5 +1,6 @@
 use std::convert::{TryFrom, TryInto};
 use std::fmt;
+use prusti_contracts::*;
 use std::str::FromStr;
 
 use serde::{Deserialize, Serialize};
@@ -37,6 +38,7 @@ impl Protobuf<RawIdentifiedChannel> for IdentifiedChannelEnd {}
 impl TryFrom<RawIdentifiedChannel> for IdentifiedChannelEnd {
     type Error = Error;
 
+#[trusted]
     fn try_from(value: RawIdentifiedChannel) -> Result<Self, Self::Error> {
         let raw_channel_end = RawChannel {
             state: value.state,
@@ -55,6 +57,7 @@ impl TryFrom<RawIdentifiedChannel> for IdentifiedChannelEnd {
 }
 
 impl From<IdentifiedChannelEnd> for RawIdentifiedChannel {
+#[trusted]
     fn from(value: IdentifiedChannelEnd) -> Self {
         RawIdentifiedChannel {
             state: value.channel_end.state as i32,
@@ -99,6 +102,7 @@ impl Protobuf<RawChannel> for ChannelEnd {}
 impl TryFrom<RawChannel> for ChannelEnd {
     type Error = Error;
 
+#[trusted]
     fn try_from(value: RawChannel) -> Result<Self, Self::Error> {
         let chan_state: State = State::from_i32(value.state)?;
 
@@ -135,6 +139,7 @@ impl TryFrom<RawChannel> for ChannelEnd {
 }
 
 impl From<ChannelEnd> for RawChannel {
+#[trusted]
     fn from(value: ChannelEnd) -> Self {
         RawChannel {
             state: value.state as i32,
@@ -198,6 +203,7 @@ impl ChannelEnd {
         &self.remote
     }
 
+#[trusted]
     pub fn connection_hops(&self) -> &Vec<ConnectionId> {
         &self.connection_hops
     }
@@ -230,6 +236,7 @@ impl ChannelEnd {
     }
 
     #[allow(clippy::ptr_arg)]
+#[trusted]
     pub fn connection_hops_matches(&self, other: &Vec<ConnectionId>) -> bool {
         self.connection_hops.eq(other)
     }
@@ -274,6 +281,7 @@ impl Counterparty {
         self.channel_id.as_ref()
     }
 
+#[trusted]
     pub fn validate_basic(&self) -> Result<(), Error> {
         Ok(())
     }
@@ -284,6 +292,7 @@ impl Protobuf<RawCounterparty> for Counterparty {}
 impl TryFrom<RawCounterparty> for Counterparty {
     type Error = Error;
 
+#[trusted]
     fn try_from(value: RawCounterparty) -> Result<Self, Self::Error> {
         let channel_id = Some(value.channel_id)
             .filter(|x| !x.is_empty())

@@ -1,5 +1,6 @@
 use crate::events::IbcEvent;
 use crate::handler::{HandlerOutput, HandlerResult};
+use prusti_contracts::*;
 use crate::ics02_client::height::Height;
 use crate::ics03_connection::connection::State as ConnectionState;
 use crate::ics04_channel::channel::State;
@@ -19,6 +20,7 @@ pub struct AckPacketResult {
     pub seq_number: Option<Sequence>,
 }
 
+#[trusted]
 pub fn process(
     ctx: &dyn ChannelReader,
     msg: MsgAcknowledgement,
