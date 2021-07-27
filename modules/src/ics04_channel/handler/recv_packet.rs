@@ -24,121 +24,121 @@ pub struct RecvPacketResult {
 
 #[trusted]
 pub fn process(ctx: &dyn ChannelReader, msg: MsgRecvPacket) -> HandlerResult<PacketResult, Error> {
-    let mut output = HandlerOutput::builder();
-
-    let packet = &msg.packet;
-
-    let dest_channel_end = ctx
-        .channel_end(&(
-            packet.destination_port.clone(),
-            packet.destination_channel.clone(),
-        ))
-        .ok_or_else(|| {
-            Error::channel_not_found(
-                packet.destination_port.clone(),
-                packet.destination_channel.clone(),
-            )
-        })?;
-
-    if !dest_channel_end.state_matches(&State::Open) {
-        return Err(Error::invalid_channel_state(
-            packet.source_channel.clone(),
-            dest_channel_end.state,
-        ));
-    }
-
-    let _channel_cap = ctx.authenticated_capability(&packet.destination_port)?;
-
-    let counterparty = Counterparty::new(
-        packet.source_port.clone(),
-        Some(packet.source_channel.clone()),
-    );
-
-    if !dest_channel_end.counterparty_matches(&counterparty) {
-        return Err(Error::invalid_packet_counterparty(
-            packet.source_port.clone(),
-            packet.source_channel.clone(),
-        ));
-    }
-
-    let connection_end = ctx
-        .connection_end(&dest_channel_end.connection_hops()[0])
-        .ok_or_else(|| Error::missing_connection(dest_channel_end.connection_hops()[0].clone()))?;
-
-    if !connection_end.state_matches(&ConnectionState::Open) {
-        return Err(Error::connection_not_open(
-            dest_channel_end.connection_hops()[0].clone(),
-        ));
-    }
-
-    let client_id = connection_end.client_id().clone();
-
-    // Check if packet height is newer than the height of the local host chain
-    let latest_height = ctx.host_height();
-    if (!packet.timeout_height.is_zero()) && (packet.timeout_height <= latest_height) {
-        return Err(Error::low_packet_height(
-            latest_height,
-            packet.timeout_height,
-        ));
-    }
-
-    // Check if packet timestamp is newer than the local host chain timestamp
-    let latest_timestamp = ctx.host_timestamp();
-    if let Expiry::Expired = latest_timestamp.check_expiry(&packet.timeout_timestamp) {
-        return Err(Error::low_packet_timestamp());
-    }
-
-    verify_packet_recv_proofs(ctx, packet, client_id, &msg.proofs)?;
-
-    let result = if dest_channel_end.order_matches(&Order::Ordered) {
-        let next_seq_recv = ctx
-            .get_next_sequence_recv(&(packet.source_port.clone(), packet.source_channel.clone()))
-            .ok_or_else(Error::missing_next_recv_seq)?;
-
-        if packet.sequence != next_seq_recv {
-            return Err(Error::invalid_packet_sequence(
-                packet.sequence,
-                next_seq_recv,
-            ));
-        }
-
-        PacketResult::Recv(RecvPacketResult {
-            port_id: packet.source_port.clone(),
-            channel_id: packet.source_channel.clone(),
-            seq: packet.sequence,
-            seq_number: next_seq_recv.increment(),
-            receipt: None,
-        })
-    } else {
-        let packet_rec = ctx.get_packet_receipt(&(
-            packet.source_port.clone(),
-            packet.source_channel.clone(),
-            packet.sequence,
-        ));
-
-        match packet_rec {
-            Some(_receipt) => return Err(Error::packet_already_received(packet.sequence)),
-            None => {
-                // store a receipt that does not contain any data
-                PacketResult::Recv(RecvPacketResult {
-                    port_id: packet.source_port.clone(),
-                    channel_id: packet.source_channel.clone(),
-                    seq: packet.sequence,
-                    seq_number: 1.into(),
-                    receipt: Some(Receipt::Ok),
-                })
-            }
-        }
-    };
-
-    output.log("success: packet receive");
-
-    output.emit(IbcEvent::ReceivePacket(ReceivePacket {
-        height: Height::zero(),
-        packet: msg.packet,
-    }));
-
-    Ok(output.with_result(result))
+panic!("No") // panic!("No") //     let mut output = HandlerOutput::builder();
+// // 
+// //     let packet = &msg.packet;
+// // 
+// //     let dest_channel_end = ctx
+// //         .channel_end(&(
+// //             packet.destination_port.clone(),
+// //             packet.destination_channel.clone(),
+// //         ))
+// //         .ok_or_else(|| {
+// //             Error::channel_not_found(
+// //                 packet.destination_port.clone(),
+// //                 packet.destination_channel.clone(),
+// //             )
+// //         })?;
+// // 
+// //     if !dest_channel_end.state_matches(&State::Open) {
+// //         return Err(Error::invalid_channel_state(
+// //             packet.source_channel.clone(),
+// //             dest_channel_end.state,
+// //         ));
+// //     }
+// // 
+// //     let _channel_cap = ctx.authenticated_capability(&packet.destination_port)?;
+// // 
+// //     let counterparty = Counterparty::new(
+// //         packet.source_port.clone(),
+// //         Some(packet.source_channel.clone()),
+// //     );
+// // 
+// //     if !dest_channel_end.counterparty_matches(&counterparty) {
+// //         return Err(Error::invalid_packet_counterparty(
+// //             packet.source_port.clone(),
+// //             packet.source_channel.clone(),
+// //         ));
+// //     }
+// // 
+// //     let connection_end = ctx
+// //         .connection_end(&dest_channel_end.connection_hops()[0])
+// //         .ok_or_else(|| Error::missing_connection(dest_channel_end.connection_hops()[0].clone()))?;
+// // 
+// //     if !connection_end.state_matches(&ConnectionState::Open) {
+// //         return Err(Error::connection_not_open(
+// //             dest_channel_end.connection_hops()[0].clone(),
+// //         ));
+// //     }
+// // 
+// //     let client_id = connection_end.client_id().clone();
+// // 
+// //     // Check if packet height is newer than the height of the local host chain
+// //     let latest_height = ctx.host_height();
+// //     if (!packet.timeout_height.is_zero()) && (packet.timeout_height <= latest_height) {
+// //         return Err(Error::low_packet_height(
+// //             latest_height,
+// //             packet.timeout_height,
+// //         ));
+// //     }
+// // 
+// //     // Check if packet timestamp is newer than the local host chain timestamp
+// //     let latest_timestamp = ctx.host_timestamp();
+// //     if let Expiry::Expired = latest_timestamp.check_expiry(&packet.timeout_timestamp) {
+// //         return Err(Error::low_packet_timestamp());
+// //     }
+// // 
+// //     verify_packet_recv_proofs(ctx, packet, client_id, &msg.proofs)?;
+// // 
+// //     let result = if dest_channel_end.order_matches(&Order::Ordered) {
+// //         let next_seq_recv = ctx
+// //             .get_next_sequence_recv(&(packet.source_port.clone(), packet.source_channel.clone()))
+// //             .ok_or_else(Error::missing_next_recv_seq)?;
+// // 
+// //         if packet.sequence != next_seq_recv {
+// //             return Err(Error::invalid_packet_sequence(
+// //                 packet.sequence,
+// //                 next_seq_recv,
+// //             ));
+// //         }
+// // 
+// //         PacketResult::Recv(RecvPacketResult {
+// //             port_id: packet.source_port.clone(),
+// //             channel_id: packet.source_channel.clone(),
+// //             seq: packet.sequence,
+// //             seq_number: next_seq_recv.increment(),
+// //             receipt: None,
+// //         })
+// //     } else {
+// //         let packet_rec = ctx.get_packet_receipt(&(
+// //             packet.source_port.clone(),
+// //             packet.source_channel.clone(),
+// //             packet.sequence,
+// //         ));
+// // 
+// //         match packet_rec {
+// //             Some(_receipt) => return Err(Error::packet_already_received(packet.sequence)),
+// //             None => {
+// //                 // store a receipt that does not contain any data
+// //                 PacketResult::Recv(RecvPacketResult {
+// //                     port_id: packet.source_port.clone(),
+// //                     channel_id: packet.source_channel.clone(),
+// //                     seq: packet.sequence,
+// //                     seq_number: 1.into(),
+// //                     receipt: Some(Receipt::Ok),
+// //                 })
+// //             }
+// //         }
+// //     };
+// // 
+// //     output.log("success: packet receive");
+// // 
+// //     output.emit(IbcEvent::ReceivePacket(ReceivePacket {
+// //         height: Height::zero(),
+// //         packet: msg.packet,
+// //     }));
+// // 
+// //     Ok(output.with_result(result))
 }
 
 #[cfg(test)]

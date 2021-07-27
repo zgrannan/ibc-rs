@@ -130,30 +130,30 @@ impl TryFrom<RawMsgConnectionOpenAck> for MsgConnectionOpenAck {
 impl From<MsgConnectionOpenAck> for RawMsgConnectionOpenAck {
 #[trusted]
     fn from(ics_msg: MsgConnectionOpenAck) -> Self {
-        RawMsgConnectionOpenAck {
-            connection_id: ics_msg.connection_id.as_str().to_string(),
-            counterparty_connection_id: ics_msg.counterparty_connection_id.as_str().to_string(),
-            client_state: ics_msg
-                .client_state
-                .map_or_else(|| None, |v| Some(v.into())),
-            proof_height: Some(ics_msg.proofs.height().into()),
-            proof_try: ics_msg.proofs.object_proof().clone().into(),
-            proof_client: ics_msg
-                .proofs
-                .client_proof()
-                .clone()
-                .map_or_else(Vec::new, |v| v.into()),
-            proof_consensus: ics_msg
-                .proofs
-                .consensus_proof()
-                .map_or_else(Vec::new, |v| v.proof().clone().into()),
-            consensus_height: ics_msg
-                .proofs
-                .consensus_proof()
-                .map_or_else(|| None, |h| Some(h.height().into())),
-            version: Some(ics_msg.version.into()),
-            signer: ics_msg.signer.to_string(),
-        }
+panic!("No") //         RawMsgConnectionOpenAck {
+//             connection_id: ics_msg.connection_id.as_str().to_string(),
+//             counterparty_connection_id: ics_msg.counterparty_connection_id.as_str().to_string(),
+//             client_state: ics_msg
+//                 .client_state
+//                 .map_or_else(|| None, |v| Some(v.into())),
+//             proof_height: Some(ics_msg.proofs.height().into()),
+//             proof_try: ics_msg.proofs.object_proof().clone().into(),
+//             proof_client: ics_msg
+//                 .proofs
+//                 .client_proof()
+//                 .clone()
+//                 .map_or_else(Vec::new, |v| v.into()),
+//             proof_consensus: ics_msg
+//                 .proofs
+//                 .consensus_proof()
+//                 .map_or_else(Vec::new, |v| v.proof().clone().into()),
+//             consensus_height: ics_msg
+//                 .proofs
+//                 .consensus_proof()
+//                 .map_or_else(|| None, |h| Some(h.height().into())),
+//             version: Some(ics_msg.version.into()),
+//             signer: ics_msg.signer.to_string(),
+//         }
     }
 }
 

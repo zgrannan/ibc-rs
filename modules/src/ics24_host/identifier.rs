@@ -204,7 +204,7 @@ impl FromStr for ClientId {
 
 #[trusted]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        validate_client_identifier(s).map(|_| Self(s.to_string()))
+panic!("No") //         validate_client_identifier(s).map(|_| Self(s.to_string()))
     }
 }
 
@@ -281,7 +281,7 @@ impl FromStr for ConnectionId {
     type Err = ValidationError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        validate_connection_identifier(s).map(|_| Self(s.to_string()))
+panic!("No") //         validate_connection_identifier(s).map(|_| Self(s.to_string()))
     }
 }
 
@@ -336,7 +336,7 @@ impl FromStr for PortId {
     type Err = ValidationError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        validate_port_identifier(s).map(|_| Self(s.to_string()))
+panic!("No") //         validate_port_identifier(s).map(|_| Self(s.to_string()))
     }
 }
 
@@ -376,10 +376,11 @@ impl ChannelId {
     /// Get this identifier as a borrowed `&str`
 #[trusted]
     pub fn as_str(&self) -> &str {
-        &self.0
+panic!("No") //         &self.0
     }
 
     /// Get this identifier as a borrowed byte slice
+    #[trusted]
     pub fn as_bytes(&self) -> &[u8] {
         self.0.as_bytes()
     }
@@ -397,19 +398,20 @@ impl FromStr for ChannelId {
     type Err = ValidationError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        validate_channel_identifier(s).map(|_| Self(s.to_string()))
+panic!("No") //         validate_channel_identifier(s).map(|_| Self(s.to_string()))
     }
 }
 
 impl Default for ChannelId {
 #[trusted]
     fn default() -> Self {
-        Self::new(0)
+panic!("No") //         Self::new(0)
     }
 }
 
 /// Equality check against string literal (satisfies &ChannelId == &str).
 impl PartialEq<str> for ChannelId {
+    #[trusted]
     fn eq(&self, other: &str) -> bool {
         self.as_str().eq(other)
     }

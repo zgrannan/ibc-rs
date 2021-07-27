@@ -17,36 +17,36 @@ pub fn build_client_update_datagram<Ctx>(
 where
     Ctx: Ics18Context,
 {
-    // Check if client for ibc0 on ibc1 has been updated to latest height:
-    // - query client state on destination chain
-    let dest_client_state = dest
-        .query_client_full_state(client_id)
-        .ok_or_else(|| Error::client_state_not_found(client_id.clone()))?;
-
-    let dest_client_latest_height = dest_client_state.latest_height();
-
-    if src_header.height() == dest_client_latest_height {
-        return Err(Error::client_already_up_to_date(
-            client_id.clone(),
-            src_header.height(),
-            dest_client_latest_height,
-        ));
-    };
-
-    if dest_client_latest_height > src_header.height() {
-        return Err(Error::client_at_higher_height(
-            client_id.clone(),
-            src_header.height(),
-            dest_client_latest_height,
-        ));
-    };
-
-    // Client on destination chain can be updated.
-    Ok(ClientMsg::UpdateClient(MsgUpdateAnyClient {
-        client_id: client_id.clone(),
-        header: src_header,
-        signer: dest.signer(),
-    }))
+panic!("No") //     // Check if client for ibc0 on ibc1 has been updated to latest height:
+//     // - query client state on destination chain
+//     let dest_client_state = dest
+//         .query_client_full_state(client_id)
+//         .ok_or_else(|| Error::client_state_not_found(client_id.clone()))?;
+// 
+//     let dest_client_latest_height = dest_client_state.latest_height();
+// 
+//     if src_header.height() == dest_client_latest_height {
+//         return Err(Error::client_already_up_to_date(
+//             client_id.clone(),
+//             src_header.height(),
+//             dest_client_latest_height,
+//         ));
+//     };
+// 
+//     if dest_client_latest_height > src_header.height() {
+//         return Err(Error::client_at_higher_height(
+//             client_id.clone(),
+//             src_header.height(),
+//             dest_client_latest_height,
+//         ));
+//     };
+// 
+//     // Client on destination chain can be updated.
+//     Ok(ClientMsg::UpdateClient(MsgUpdateAnyClient {
+//         client_id: client_id.clone(),
+//         header: src_header,
+//         signer: dest.signer(),
+//     }))
 }
 
 #[cfg(test)]

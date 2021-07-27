@@ -91,57 +91,57 @@ impl TryFrom<RawMsgChannelOpenTry> for MsgChannelOpenTry {
 
 #[trusted]
     fn try_from(raw_msg: RawMsgChannelOpenTry) -> Result<Self, Self::Error> {
-        let proofs = Proofs::new(
-            raw_msg.proof_init.into(),
-            None,
-            None,
-            None,
-            raw_msg
-                .proof_height
-                .ok_or_else(ChannelError::missing_height)?
-                .into(),
-        )
-        .map_err(ChannelError::invalid_proof)?;
-
-        let previous_channel_id = Some(raw_msg.previous_channel_id)
-            .filter(|x| !x.is_empty())
-            .map(|v| FromStr::from_str(v.as_str()))
-            .transpose()
-            .map_err(ChannelError::identifier)?;
-
-        let msg = MsgChannelOpenTry {
-            port_id: raw_msg.port_id.parse().map_err(ChannelError::identifier)?,
-            previous_channel_id,
-            channel: raw_msg
-                .channel
-                .ok_or_else(ChannelError::missing_channel)?
-                .try_into()?,
-            counterparty_version: validate_version(raw_msg.counterparty_version)?,
-            proofs,
-            signer: raw_msg.signer.into(),
-        };
-
-        msg.validate_basic()
-            .map_err(ChannelError::invalid_counterparty_channel_id)?;
-
-        Ok(msg)
+panic!("No") //         let proofs = Proofs::new(
+//             raw_msg.proof_init.into(),
+//             None,
+//             None,
+//             None,
+//             raw_msg
+//                 .proof_height
+//                 .ok_or_else(ChannelError::missing_height)?
+//                 .into(),
+//         )
+//         .map_err(ChannelError::invalid_proof)?;
+// 
+//         let previous_channel_id = Some(raw_msg.previous_channel_id)
+//             .filter(|x| !x.is_empty())
+//             .map(|v| FromStr::from_str(v.as_str()))
+//             .transpose()
+//             .map_err(ChannelError::identifier)?;
+// 
+//         let msg = MsgChannelOpenTry {
+//             port_id: raw_msg.port_id.parse().map_err(ChannelError::identifier)?,
+//             previous_channel_id,
+//             channel: raw_msg
+//                 .channel
+//                 .ok_or_else(ChannelError::missing_channel)?
+//                 .try_into()?,
+//             counterparty_version: validate_version(raw_msg.counterparty_version)?,
+//             proofs,
+//             signer: raw_msg.signer.into(),
+//         };
+// 
+//         msg.validate_basic()
+//             .map_err(ChannelError::invalid_counterparty_channel_id)?;
+// 
+//         Ok(msg)
     }
 }
 
 impl From<MsgChannelOpenTry> for RawMsgChannelOpenTry {
 #[trusted]
     fn from(domain_msg: MsgChannelOpenTry) -> Self {
-        RawMsgChannelOpenTry {
-            port_id: domain_msg.port_id.to_string(),
-            previous_channel_id: domain_msg
-                .previous_channel_id
-                .map_or_else(|| "".to_string(), |v| v.as_str().to_string()),
-            channel: Some(domain_msg.channel.into()),
-            counterparty_version: domain_msg.counterparty_version,
-            proof_init: domain_msg.proofs.object_proof().clone().into(),
-            proof_height: Some(domain_msg.proofs.height().into()),
-            signer: domain_msg.signer.to_string(),
-        }
+panic!("No") //         RawMsgChannelOpenTry {
+//             port_id: domain_msg.port_id.to_string(),
+//             previous_channel_id: domain_msg
+//                 .previous_channel_id
+//                 .map_or_else(|| "".to_string(), |v| v.as_str().to_string()),
+//             channel: Some(domain_msg.channel.into()),
+//             counterparty_version: domain_msg.counterparty_version,
+//             proof_init: domain_msg.proofs.object_proof().clone().into(),
+//             proof_height: Some(domain_msg.proofs.height().into()),
+//             signer: domain_msg.signer.to_string(),
+//         }
     }
 }
 

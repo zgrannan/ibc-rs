@@ -201,15 +201,15 @@ impl TryFrom<IdentifiedClientState> for IdentifiedAnyClientState {
 
 #[trusted]
     fn try_from(raw: IdentifiedClientState) -> Result<Self, Self::Error> {
-        Ok(IdentifiedAnyClientState {
-            client_id: raw.client_id.parse().map_err(|e: ValidationError| {
-                Error::invalid_raw_client_id(raw.client_id.clone(), e)
-            })?,
-            client_state: raw
-                .client_state
-                .ok_or_else(Error::missing_raw_client_state)?
-                .try_into()?,
-        })
+panic!("No") //         Ok(IdentifiedAnyClientState {
+//             client_id: raw.client_id.parse().map_err(|e: ValidationError| {
+//                 Error::invalid_raw_client_id(raw.client_id.clone(), e)
+//             })?,
+//             client_state: raw
+//                 .client_state
+//                 .ok_or_else(Error::missing_raw_client_state)?
+//                 .try_into()?,
+//         })
     }
 }
 

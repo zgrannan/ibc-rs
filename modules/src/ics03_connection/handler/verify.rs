@@ -65,42 +65,42 @@ pub fn verify_connection_proof(
     proof_height: Height,
     proof: &CommitmentProofBytes,
 ) -> Result<(), Error> {
-    // Fetch the client state (IBC client on the local/host chain).
-    let client_state = ctx
-        .client_state(connection_end.client_id())
-        .ok_or_else(|| Error::missing_client(connection_end.client_id().clone()))?;
-
-    // The client must not be frozen.
-    if client_state.is_frozen() {
-        return Err(Error::frozen_client(connection_end.client_id().clone()));
-    }
-
-    // The client must have the consensus state for the height where this proof was created.
-    if ctx
-        .client_consensus_state(connection_end.client_id(), proof_height)
-        .is_none()
-    {
-        return Err(Error::missing_client_consensus_state(
-            proof_height,
-            connection_end.client_id().clone(),
-        ));
-    }
-
-    let client_def = AnyClient::from_client_type(client_state.client_type());
-
-    // Verify the proof for the connection state against the expected connection end.
-    // A counterparty connection id of None causes `unwrap()` below and indicates an internal
-    // error as this is the connection id on the counterparty chain that must always be present.
-    client_def
-        .verify_connection_state(
-            &client_state,
-            proof_height,
-            connection_end.counterparty().prefix(),
-            proof,
-            connection_end.counterparty().connection_id(),
-            expected_conn,
-        )
-        .map_err(Error::verify_connection_state)
+panic!("No") //     // Fetch the client state (IBC client on the local/host chain).
+//     let client_state = ctx
+//         .client_state(connection_end.client_id())
+//         .ok_or_else(|| Error::missing_client(connection_end.client_id().clone()))?;
+// 
+//     // The client must not be frozen.
+//     if client_state.is_frozen() {
+//         return Err(Error::frozen_client(connection_end.client_id().clone()));
+//     }
+// 
+//     // The client must have the consensus state for the height where this proof was created.
+//     if ctx
+//         .client_consensus_state(connection_end.client_id(), proof_height)
+//         .is_none()
+//     {
+//         return Err(Error::missing_client_consensus_state(
+//             proof_height,
+//             connection_end.client_id().clone(),
+//         ));
+//     }
+// 
+//     let client_def = AnyClient::from_client_type(client_state.client_type());
+// 
+//     // Verify the proof for the connection state against the expected connection end.
+//     // A counterparty connection id of None causes `unwrap()` below and indicates an internal
+//     // error as this is the connection id on the counterparty chain that must always be present.
+//     client_def
+//         .verify_connection_state(
+//             &client_state,
+//             proof_height,
+//             connection_end.counterparty().prefix(),
+//             proof,
+//             connection_end.counterparty().connection_id(),
+//             expected_conn,
+//         )
+//         .map_err(Error::verify_connection_state)
 }
 
 /// Verifies the client `proof` from a connection handshake message, typically from a
@@ -118,36 +118,36 @@ pub fn verify_client_proof(
     proof_height: Height,
     proof: &CommitmentProofBytes,
 ) -> Result<(), Error> {
-    // Fetch the local client state (IBC client running on the host chain).
-    let client_state = ctx
-        .client_state(connection_end.client_id())
-        .ok_or_else(|| Error::missing_client(connection_end.client_id().clone()))?;
-
-    if client_state.is_frozen() {
-        return Err(Error::frozen_client(connection_end.client_id().clone()));
-    }
-
-    let consensus_state = ctx
-        .client_consensus_state(connection_end.client_id(), proof_height)
-        .ok_or_else(|| {
-            Error::missing_client_consensus_state(proof_height, connection_end.client_id().clone())
-        })?;
-
-    let client_def = AnyClient::from_client_type(client_state.client_type());
-
-    client_def
-        .verify_client_full_state(
-            &client_state,
-            proof_height,
-            consensus_state.root(),
-            connection_end.counterparty().prefix(),
-            connection_end.counterparty().client_id(),
-            proof,
-            &expected_client_state,
-        )
-        .map_err(|e| {
-            Error::client_state_verification_failure(connection_end.client_id().clone(), e)
-        })
+panic!("No") // panic!("No") // panic!("No") //     // Fetch the local client state (IBC client running on the host chain).
+// // //     let client_state = ctx
+// // //         .client_state(connection_end.client_id())
+// // //         .ok_or_else(|| Error::missing_client(connection_end.client_id().clone()))?;
+// // // 
+// // //     if client_state.is_frozen() {
+// // //         return Err(Error::frozen_client(connection_end.client_id().clone()));
+// // //     }
+// // // 
+// // //     let consensus_state = ctx
+// // //         .client_consensus_state(connection_end.client_id(), proof_height)
+// // //         .ok_or_else(|| {
+// // //             Error::missing_client_consensus_state(proof_height, connection_end.client_id().clone())
+// // //         })?;
+// // // 
+// // //     let client_def = AnyClient::from_client_type(client_state.client_type());
+// // // 
+// // //     client_def
+// // //         .verify_client_full_state(
+// // //             &client_state,
+// // //             proof_height,
+// // //             consensus_state.root(),
+// // //             connection_end.counterparty().prefix(),
+// // //             connection_end.counterparty().client_id(),
+// // //             proof,
+// // //             &expected_client_state,
+// // //         )
+// // //         .map_err(|e| {
+// // //             Error::client_state_verification_failure(connection_end.client_id().clone(), e)
+// // //         })
 }
 
 #[trusted]
@@ -157,33 +157,33 @@ pub fn verify_consensus_proof(
     proof_height: Height,
     proof: &ConsensusProof,
 ) -> Result<(), Error> {
-    // Fetch the client state (IBC client on the local chain).
-    let client_state = ctx
-        .client_state(connection_end.client_id())
-        .ok_or_else(|| Error::missing_client(connection_end.client_id().clone()))?;
-
-    if client_state.is_frozen() {
-        return Err(Error::frozen_client(connection_end.client_id().clone()));
-    }
-
-    // Fetch the expected consensus state from the historical (local) header data.
-    let expected_consensus = ctx
-        .host_consensus_state(proof.height())
-        .ok_or_else(|| Error::missing_local_consensus_state(proof.height()))?;
-
-    let client = AnyClient::from_client_type(client_state.client_type());
-
-    client
-        .verify_client_consensus_state(
-            &client_state,
-            proof_height,
-            connection_end.counterparty().prefix(),
-            proof.proof(),
-            connection_end.counterparty().client_id(),
-            proof.height(),
-            &expected_consensus,
-        )
-        .map_err(|e| Error::consensus_state_verification_failure(proof.height(), e))
+panic!("No") // panic!("No") // panic!("No") //     // Fetch the client state (IBC client on the local chain).
+// // //     let client_state = ctx
+// // //         .client_state(connection_end.client_id())
+// // //         .ok_or_else(|| Error::missing_client(connection_end.client_id().clone()))?;
+// // // 
+// // //     if client_state.is_frozen() {
+// // //         return Err(Error::frozen_client(connection_end.client_id().clone()));
+// // //     }
+// // // 
+// // //     // Fetch the expected consensus state from the historical (local) header data.
+// // //     let expected_consensus = ctx
+// // //         .host_consensus_state(proof.height())
+// // //         .ok_or_else(|| Error::missing_local_consensus_state(proof.height()))?;
+// // // 
+// // //     let client = AnyClient::from_client_type(client_state.client_type());
+// // // 
+// // //     client
+// // //         .verify_client_consensus_state(
+// // //             &client_state,
+// // //             proof_height,
+// // //             connection_end.counterparty().prefix(),
+// // //             proof.proof(),
+// // //             connection_end.counterparty().client_id(),
+// // //             proof.height(),
+// // //             &expected_consensus,
+// // //         )
+// // //         .map_err(|e| Error::consensus_state_verification_failure(proof.height(), e))
 }
 
 /// Checks that `claimed_height` is within normal bounds, i.e., fresh enough so that the chain has

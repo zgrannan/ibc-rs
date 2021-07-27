@@ -135,7 +135,7 @@ impl std::fmt::Debug for Height {
 impl std::fmt::Display for Height {
 #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        write!(f, "{}-{}", self.revision_number, self.revision_height)
+panic!("No") //         write!(f, "{}-{}", self.revision_number, self.revision_height)
     }
 }
 
@@ -156,15 +156,15 @@ impl TryFrom<&str> for Height {
 
 #[trusted]
     fn try_from(value: &str) -> Result<Self, Self::Error> {
-        let split: Vec<&str> = value.split('-').collect();
-        Ok(Height {
-            revision_number: split[0]
-                .parse::<u64>()
-                .map_err(|e| HeightError::height_conversion(value.to_owned(), e))?,
-            revision_height: split[1]
-                .parse::<u64>()
-                .map_err(|e| HeightError::height_conversion(value.to_owned(), e))?,
-        })
+panic!("No") // panic!("No") //         let split: Vec<&str> = value.split('-').collect();
+// //         Ok(Height {
+// //             revision_number: split[0]
+// //                 .parse::<u64>()
+// //                 .map_err(|e| HeightError::height_conversion(value.to_owned(), e))?,
+// //             revision_height: split[1]
+// //                 .parse::<u64>()
+// //                 .map_err(|e| HeightError::height_conversion(value.to_owned(), e))?,
+// //         })
     }
 }
 

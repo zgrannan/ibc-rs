@@ -24,102 +24,102 @@ pub struct SendPacketResult {
 
 #[trusted]
 pub fn send_packet(ctx: &dyn ChannelReader, packet: Packet) -> HandlerResult<PacketResult, Error> {
-    let mut output = HandlerOutput::builder();
-
-    let source_channel_end = ctx
-        .channel_end(&(packet.source_port.clone(), packet.source_channel.clone()))
-        .ok_or_else(|| {
-            Error::channel_not_found(packet.source_port.clone(), packet.source_channel.clone())
-        })?;
-
-    if source_channel_end.state_matches(&State::Closed) {
-        return Err(Error::channel_closed(packet.source_channel));
-    }
-
-    let _channel_cap = ctx.authenticated_capability(&packet.source_port)?;
-
-    let counterparty = Counterparty::new(
-        packet.destination_port.clone(),
-        Some(packet.destination_channel.clone()),
-    );
-
-    if !source_channel_end.counterparty_matches(&counterparty) {
-        return Err(Error::invalid_packet_counterparty(
-            packet.destination_port.clone(),
-            packet.destination_channel,
-        ));
-    }
-
-    let connection_end = ctx
-        .connection_end(&source_channel_end.connection_hops()[0])
-        .ok_or_else(|| {
-            Error::missing_connection(source_channel_end.connection_hops()[0].clone())
-        })?;
-
-    let client_id = connection_end.client_id().clone();
-
-    let client_state = ctx
-        .client_state(&client_id)
-        .ok_or_else(|| Error::missing_client_state(client_id.clone()))?;
-
-    // prevent accidental sends with clients that cannot be updated
-    if client_state.is_frozen() {
-        return Err(Error::frozen_client(connection_end.client_id().clone()));
-    }
-
-    // check if packet height is newer than the height of the latest client state on the receiving chain
-    let latest_height = client_state.latest_height();
-    let packet_height = packet.timeout_height;
-
-    if !packet.timeout_height.is_zero() && packet_height <= latest_height {
-        return Err(Error::low_packet_height(
-            latest_height,
-            packet.timeout_height,
-        ));
-    }
-
-    //check if packet timestamp is newer than the timestamp of the latest consensus state of the receiving chain
-    let consensus_state = ctx
-        .client_consensus_state(&client_id, latest_height)
-        .ok_or_else(|| Error::missing_client_consensus_state(client_id.clone(), latest_height))?;
-
-    let latest_timestamp = consensus_state.timestamp();
-
-    let packet_timestamp = packet.timeout_timestamp;
-    if let Expiry::Expired = latest_timestamp.check_expiry(&packet_timestamp) {
-        return Err(Error::low_packet_timestamp());
-    }
-
-    // check sequence number
-    let next_seq_send = ctx
-        .get_next_sequence_send(&(packet.source_port.clone(), packet.source_channel.clone()))
-        .ok_or_else(Error::missing_next_ack_seq)?;
-
-    if packet.sequence != next_seq_send {
-        return Err(Error::invalid_packet_sequence(
-            packet.sequence,
-            next_seq_send,
-        ));
-    }
-
-    output.log("success: packet send ");
-
-    let result = PacketResult::Send(SendPacketResult {
-        port_id: packet.source_port.clone(),
-        channel_id: packet.source_channel.clone(),
-        seq: packet.sequence,
-        seq_number: next_seq_send.increment(),
-        data: packet.clone().data,
-        timeout_height: packet.timeout_height,
-        timeout_timestamp: packet.timeout_timestamp,
-    });
-
-    output.emit(IbcEvent::SendPacket(SendPacket {
-        height: packet_height,
-        packet,
-    }));
-
-    Ok(output.with_result(result))
+panic!("No") // panic!("No") // panic!("No") // panic!("No") //     let mut output = HandlerOutput::builder();
+// // // // 
+// // // //     let source_channel_end = ctx
+// // // //         .channel_end(&(packet.source_port.clone(), packet.source_channel.clone()))
+// // // //         .ok_or_else(|| {
+// // // //             Error::channel_not_found(packet.source_port.clone(), packet.source_channel.clone())
+// // // //         })?;
+// // // // 
+// // // //     if source_channel_end.state_matches(&State::Closed) {
+// // // //         return Err(Error::channel_closed(packet.source_channel));
+// // // //     }
+// // // // 
+// // // //     let _channel_cap = ctx.authenticated_capability(&packet.source_port)?;
+// // // // 
+// // // //     let counterparty = Counterparty::new(
+// // // //         packet.destination_port.clone(),
+// // // //         Some(packet.destination_channel.clone()),
+// // // //     );
+// // // // 
+// // // //     if !source_channel_end.counterparty_matches(&counterparty) {
+// // // //         return Err(Error::invalid_packet_counterparty(
+// // // //             packet.destination_port.clone(),
+// // // //             packet.destination_channel,
+// // // //         ));
+// // // //     }
+// // // // 
+// // // //     let connection_end = ctx
+// // // //         .connection_end(&source_channel_end.connection_hops()[0])
+// // // //         .ok_or_else(|| {
+// // // //             Error::missing_connection(source_channel_end.connection_hops()[0].clone())
+// // // //         })?;
+// // // // 
+// // // //     let client_id = connection_end.client_id().clone();
+// // // // 
+// // // //     let client_state = ctx
+// // // //         .client_state(&client_id)
+// // // //         .ok_or_else(|| Error::missing_client_state(client_id.clone()))?;
+// // // // 
+// // // //     // prevent accidental sends with clients that cannot be updated
+// // // //     if client_state.is_frozen() {
+// // // //         return Err(Error::frozen_client(connection_end.client_id().clone()));
+// // // //     }
+// // // // 
+// // // //     // check if packet height is newer than the height of the latest client state on the receiving chain
+// // // //     let latest_height = client_state.latest_height();
+// // // //     let packet_height = packet.timeout_height;
+// // // // 
+// // // //     if !packet.timeout_height.is_zero() && packet_height <= latest_height {
+// // // //         return Err(Error::low_packet_height(
+// // // //             latest_height,
+// // // //             packet.timeout_height,
+// // // //         ));
+// // // //     }
+// // // // 
+// // // //     //check if packet timestamp is newer than the timestamp of the latest consensus state of the receiving chain
+// // // //     let consensus_state = ctx
+// // // //         .client_consensus_state(&client_id, latest_height)
+// // // //         .ok_or_else(|| Error::missing_client_consensus_state(client_id.clone(), latest_height))?;
+// // // // 
+// // // //     let latest_timestamp = consensus_state.timestamp();
+// // // // 
+// // // //     let packet_timestamp = packet.timeout_timestamp;
+// // // //     if let Expiry::Expired = latest_timestamp.check_expiry(&packet_timestamp) {
+// // // //         return Err(Error::low_packet_timestamp());
+// // // //     }
+// // // // 
+// // // //     // check sequence number
+// // // //     let next_seq_send = ctx
+// // // //         .get_next_sequence_send(&(packet.source_port.clone(), packet.source_channel.clone()))
+// // // //         .ok_or_else(Error::missing_next_ack_seq)?;
+// // // // 
+// // // //     if packet.sequence != next_seq_send {
+// // // //         return Err(Error::invalid_packet_sequence(
+// // // //             packet.sequence,
+// // // //             next_seq_send,
+// // // //         ));
+// // // //     }
+// // // // 
+// // // //     output.log("success: packet send ");
+// // // // 
+// // // //     let result = PacketResult::Send(SendPacketResult {
+// // // //         port_id: packet.source_port.clone(),
+// // // //         channel_id: packet.source_channel.clone(),
+// // // //         seq: packet.sequence,
+// // // //         seq_number: next_seq_send.increment(),
+// // // //         data: packet.clone().data,
+// // // //         timeout_height: packet.timeout_height,
+// // // //         timeout_timestamp: packet.timeout_timestamp,
+// // // //     });
+// // // // 
+// // // //     output.emit(IbcEvent::SendPacket(SendPacket {
+// // // //         height: packet_height,
+// // // //         packet,
+// // // //     }));
+// // // // 
+// // // //     Ok(output.with_result(result))
 }
 
 #[cfg(test)]

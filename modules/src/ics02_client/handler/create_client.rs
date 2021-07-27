@@ -29,33 +29,33 @@ pub fn process(
     ctx: &dyn ClientReader,
     msg: MsgCreateAnyClient,
 ) -> HandlerResult<ClientResult, Error> {
-    let mut output = HandlerOutput::builder();
-
-    // Construct this client's identifier
-    let id_counter = ctx.client_counter();
-    let client_id = ClientId::new(msg.client_state().client_type(), id_counter).map_err(|e| {
-        Error::client_identifier_constructor(msg.client_state().client_type(), id_counter, e)
-    })?;
-
-    output.log(format!(
-        "success: generated new client identifier: {}",
-        client_id
-    ));
-
-    let result = ClientResult::Create(Result {
-        client_id: client_id.clone(),
-        client_type: msg.client_state().client_type(),
-        client_state: msg.client_state(),
-        consensus_state: msg.consensus_state(),
-    });
-
-    let event_attributes = Attributes {
-        client_id,
-        ..Default::default()
-    };
-    output.emit(IbcEvent::CreateClient(event_attributes.into()));
-
-    Ok(output.with_result(result))
+panic!("No") //     let mut output = HandlerOutput::builder();
+// 
+//     // Construct this client's identifier
+//     let id_counter = ctx.client_counter();
+//     let client_id = ClientId::new(msg.client_state().client_type(), id_counter).map_err(|e| {
+//         Error::client_identifier_constructor(msg.client_state().client_type(), id_counter, e)
+//     })?;
+// 
+//     output.log(format!(
+//         "success: generated new client identifier: {}",
+//         client_id
+//     ));
+// 
+//     let result = ClientResult::Create(Result {
+//         client_id: client_id.clone(),
+//         client_type: msg.client_state().client_type(),
+//         client_state: msg.client_state(),
+//         consensus_state: msg.consensus_state(),
+//     });
+// 
+//     let event_attributes = Attributes {
+//         client_id,
+//         ..Default::default()
+//     };
+//     output.emit(IbcEvent::CreateClient(event_attributes.into()));
+// 
+//     Ok(output.with_result(result))
 }
 
 #[cfg(test)]

@@ -244,29 +244,29 @@ impl TryFrom<RawObject> for UpdateClient {
 
 #[trusted]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
-        let header_str: Option<String> = obj
-            .events
-            .get("update_client.header")
-            .and_then(|tags| tags[obj.idx].parse().ok());
-
-        let header: Option<AnyHeader> = match header_str {
-            Some(str) => {
-                let header_bytes = hex::decode(str).map_err(Error::subtle_encoding)?;
-
-                let decoded = prost_types::Any::decode(header_bytes.as_ref())
-                    .map_err(Error::decode)?
-                    .try_into()
-                    .map_err(Error::client)?;
-
-                Some(decoded)
-            }
-            None => None,
-        };
-
-        Ok(UpdateClient {
-            common: extract_attributes(&obj, "update_client")?,
-            header,
-        })
+panic!("No") //         let header_str: Option<String> = obj
+//             .events
+//             .get("update_client.header")
+//             .and_then(|tags| tags[obj.idx].parse().ok());
+// 
+//         let header: Option<AnyHeader> = match header_str {
+//             Some(str) => {
+//                 let header_bytes = hex::decode(str).map_err(Error::subtle_encoding)?;
+// 
+//                 let decoded = prost_types::Any::decode(header_bytes.as_ref())
+//                     .map_err(Error::decode)?
+//                     .try_into()
+//                     .map_err(Error::client)?;
+// 
+//                 Some(decoded)
+//             }
+//             None => None,
+//         };
+// 
+//         Ok(UpdateClient {
+//             common: extract_attributes(&obj, "update_client")?,
+//             header,
+//         })
     }
 }
 

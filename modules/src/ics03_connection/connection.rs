@@ -264,35 +264,35 @@ impl TryFrom<RawCounterparty> for Counterparty {
 
 #[trusted]
     fn try_from(value: RawCounterparty) -> Result<Self, Self::Error> {
-        let connection_id = Some(value.connection_id)
-            .filter(|x| !x.is_empty())
-            .map(|v| FromStr::from_str(v.as_str()))
-            .transpose()
-            .map_err(Error::invalid_identifier)?;
-        Ok(Counterparty::new(
-            value.client_id.parse().map_err(Error::invalid_identifier)?,
-            connection_id,
-            value
-                .prefix
-                .ok_or_else(Error::missing_counterparty)?
-                .key_prefix
-                .into(),
-        ))
+panic!("No") //         let connection_id = Some(value.connection_id)
+//             .filter(|x| !x.is_empty())
+//             .map(|v| FromStr::from_str(v.as_str()))
+//             .transpose()
+//             .map_err(Error::invalid_identifier)?;
+//         Ok(Counterparty::new(
+//             value.client_id.parse().map_err(Error::invalid_identifier)?,
+//             connection_id,
+//             value
+//                 .prefix
+//                 .ok_or_else(Error::missing_counterparty)?
+//                 .key_prefix
+//                 .into(),
+//         ))
     }
 }
 
 impl From<Counterparty> for RawCounterparty {
 #[trusted]
     fn from(value: Counterparty) -> Self {
-        RawCounterparty {
-            client_id: value.client_id.as_str().to_string(),
-            connection_id: value
-                .connection_id
-                .map_or_else(|| "".to_string(), |v| v.as_str().to_string()),
-            prefix: Some(ibc_proto::ibc::core::commitment::v1::MerklePrefix {
-                key_prefix: value.prefix.into_vec(),
-            }),
-        }
+panic!("No") //         RawCounterparty {
+//             client_id: value.client_id.as_str().to_string(),
+//             connection_id: value
+//                 .connection_id
+//                 .map_or_else(|| "".to_string(), |v| v.as_str().to_string()),
+//             prefix: Some(ibc_proto::ibc::core::commitment::v1::MerklePrefix {
+//                 key_prefix: value.prefix.into_vec(),
+//             }),
+//         }
     }
 }
 

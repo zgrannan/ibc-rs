@@ -70,29 +70,29 @@ pub struct Attributes {
 
 #[trusted]
 fn extract_attributes(object: &RawObject, namespace: &str) -> Result<Attributes, Error> {
-    Ok(Attributes {
-        height: object.height,
-
-        connection_id: maybe_extract_attribute(&object, &format!("{}.connection_id", namespace))
-            .and_then(|val| val.parse().ok()),
-
-        client_id: extract_attribute(&object, &format!("{}.client_id", namespace))?
-            .parse()
-            .map_err(Error::parse)?,
-
-        counterparty_connection_id: maybe_extract_attribute(
-            &object,
-            &format!("{}.counterparty_connection_id", namespace),
-        )
-        .and_then(|val| val.parse().ok()),
-
-        counterparty_client_id: extract_attribute(
-            &object,
-            &format!("{}.counterparty_client_id", namespace),
-        )?
-        .parse()
-        .map_err(Error::parse)?,
-    })
+panic!("No") // panic!("No") //     Ok(Attributes {
+// //         height: object.height,
+// // 
+// //         connection_id: maybe_extract_attribute(&object, &format!("{}.connection_id", namespace))
+// //             .and_then(|val| val.parse().ok()),
+// // 
+// //         client_id: extract_attribute(&object, &format!("{}.client_id", namespace))?
+// //             .parse()
+// //             .map_err(Error::parse)?,
+// // 
+// //         counterparty_connection_id: maybe_extract_attribute(
+// //             &object,
+// //             &format!("{}.counterparty_connection_id", namespace),
+// //         )
+// //         .and_then(|val| val.parse().ok()),
+// // 
+// //         counterparty_client_id: extract_attribute(
+// //             &object,
+// //             &format!("{}.counterparty_client_id", namespace),
+// //         )?
+// //         .parse()
+// //         .map_err(Error::parse)?,
+// //     })
 }
 
 impl Default for Attributes {

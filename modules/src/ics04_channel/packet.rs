@@ -68,9 +68,9 @@ impl FromStr for Sequence {
 
 #[trusted]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Self::from(s.parse::<u64>().map_err(|e| {
-            Error::invalid_string_as_sequence(s.to_string(), e)
-        })?))
+panic!("No") //         Ok(Self::from(s.parse::<u64>().map_err(|e| {
+//             Error::invalid_string_as_sequence(s.to_string(), e)
+//         })?))
     }
 }
 

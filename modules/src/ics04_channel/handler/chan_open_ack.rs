@@ -16,94 +16,94 @@ pub(crate) fn process(
     ctx: &dyn ChannelReader,
     msg: MsgChannelOpenAck,
 ) -> HandlerResult<ChannelResult, Error> {
-    let mut output = HandlerOutput::builder();
-
-    // Unwrap the old channel end and validate it against the message.
-    let mut channel_end = ctx
-        .channel_end(&(msg.port_id().clone(), msg.channel_id().clone()))
-        .ok_or_else(|| Error::channel_not_found(msg.port_id.clone(), msg.channel_id().clone()))?;
-
-    // Validate that the channel end is in a state where it can be ack.
-    if !channel_end.state_matches(&State::Init) && !channel_end.state_matches(&State::TryOpen) {
-        return Err(Error::invalid_channel_state(
-            msg.channel_id().clone(),
-            channel_end.state,
-        ));
-    }
-
-    // Channel capabilities
-    let channel_cap = ctx.authenticated_capability(&msg.port_id().clone())?;
-
-    // An OPEN IBC connection running on the local (host) chain should exist.
-
-    if channel_end.connection_hops().len() != 1 {
-        return Err(Error::invalid_connection_hops_length(
-            1,
-            channel_end.connection_hops().len(),
-        ));
-    }
-
-    let conn = ctx
-        .connection_end(&channel_end.connection_hops()[0])
-        .ok_or_else(|| Error::missing_connection(channel_end.connection_hops()[0].clone()))?;
-
-    if !conn.state_matches(&ConnectionState::Open) {
-        return Err(Error::connection_not_open(
-            channel_end.connection_hops()[0].clone(),
-        ));
-    }
-
-    // Proof verification in two steps:
-    // 1. Setup: build the Channel as we expect to find it on the other party.
-
-    let expected_counterparty =
-        Counterparty::new(msg.port_id().clone(), Some(msg.channel_id().clone()));
-
-    let counterparty = conn.counterparty();
-    let ccid = counterparty.connection_id().ok_or_else(|| {
-        Error::undefined_connection_counterparty(channel_end.connection_hops()[0].clone())
-    })?;
-
-    let expected_connection_hops = vec![ccid.clone()];
-
-    let expected_channel_end = ChannelEnd::new(
-        State::TryOpen,
-        *channel_end.ordering(),
-        expected_counterparty,
-        expected_connection_hops,
-        msg.counterparty_version().clone(),
-    );
-    //2. Verify proofs
-    verify_channel_proofs(
-        ctx,
-        &channel_end,
-        &conn,
-        &expected_channel_end,
-        msg.proofs(),
-    )?;
-
-    output.log("success: channel open ack ");
-
-    // Transition the channel end to the new state & pick a version.
-    channel_end.set_state(State::Open);
-    channel_end.set_version(msg.counterparty_version().clone());
-    channel_end.set_counterparty_channel_id(msg.counterparty_channel_id.clone());
-
-    let result = ChannelResult {
-        port_id: msg.port_id().clone(),
-        channel_id: msg.channel_id().clone(),
-        channel_id_state: ChannelIdState::Reused,
-        channel_cap,
-        channel_end,
-    };
-
-    let event_attributes = Attributes {
-        channel_id: Some(msg.channel_id().clone()),
-        ..Default::default()
-    };
-    output.emit(IbcEvent::OpenAckChannel(event_attributes.into()));
-
-    Ok(output.with_result(result))
+panic!("No") // panic!("No") // panic!("No") //     let mut output = HandlerOutput::builder();
+// // // 
+// // //     // Unwrap the old channel end and validate it against the message.
+// // //     let mut channel_end = ctx
+// // //         .channel_end(&(msg.port_id().clone(), msg.channel_id().clone()))
+// // //         .ok_or_else(|| Error::channel_not_found(msg.port_id.clone(), msg.channel_id().clone()))?;
+// // // 
+// // //     // Validate that the channel end is in a state where it can be ack.
+// // //     if !channel_end.state_matches(&State::Init) && !channel_end.state_matches(&State::TryOpen) {
+// // //         return Err(Error::invalid_channel_state(
+// // //             msg.channel_id().clone(),
+// // //             channel_end.state,
+// // //         ));
+// // //     }
+// // // 
+// // //     // Channel capabilities
+// // //     let channel_cap = ctx.authenticated_capability(&msg.port_id().clone())?;
+// // // 
+// // //     // An OPEN IBC connection running on the local (host) chain should exist.
+// // // 
+// // //     if channel_end.connection_hops().len() != 1 {
+// // //         return Err(Error::invalid_connection_hops_length(
+// // //             1,
+// // //             channel_end.connection_hops().len(),
+// // //         ));
+// // //     }
+// // // 
+// // //     let conn = ctx
+// // //         .connection_end(&channel_end.connection_hops()[0])
+// // //         .ok_or_else(|| Error::missing_connection(channel_end.connection_hops()[0].clone()))?;
+// // // 
+// // //     if !conn.state_matches(&ConnectionState::Open) {
+// // //         return Err(Error::connection_not_open(
+// // //             channel_end.connection_hops()[0].clone(),
+// // //         ));
+// // //     }
+// // // 
+// // //     // Proof verification in two steps:
+// // //     // 1. Setup: build the Channel as we expect to find it on the other party.
+// // // 
+// // //     let expected_counterparty =
+// // //         Counterparty::new(msg.port_id().clone(), Some(msg.channel_id().clone()));
+// // // 
+// // //     let counterparty = conn.counterparty();
+// // //     let ccid = counterparty.connection_id().ok_or_else(|| {
+// // //         Error::undefined_connection_counterparty(channel_end.connection_hops()[0].clone())
+// // //     })?;
+// // // 
+// // //     let expected_connection_hops = vec![ccid.clone()];
+// // // 
+// // //     let expected_channel_end = ChannelEnd::new(
+// // //         State::TryOpen,
+// // //         *channel_end.ordering(),
+// // //         expected_counterparty,
+// // //         expected_connection_hops,
+// // //         msg.counterparty_version().clone(),
+// // //     );
+// // //     //2. Verify proofs
+// // //     verify_channel_proofs(
+// // //         ctx,
+// // //         &channel_end,
+// // //         &conn,
+// // //         &expected_channel_end,
+// // //         msg.proofs(),
+// // //     )?;
+// // // 
+// // //     output.log("success: channel open ack ");
+// // // 
+// // //     // Transition the channel end to the new state & pick a version.
+// // //     channel_end.set_state(State::Open);
+// // //     channel_end.set_version(msg.counterparty_version().clone());
+// // //     channel_end.set_counterparty_channel_id(msg.counterparty_channel_id.clone());
+// // // 
+// // //     let result = ChannelResult {
+// // //         port_id: msg.port_id().clone(),
+// // //         channel_id: msg.channel_id().clone(),
+// // //         channel_id_state: ChannelIdState::Reused,
+// // //         channel_cap,
+// // //         channel_end,
+// // //     };
+// // // 
+// // //     let event_attributes = Attributes {
+// // //         channel_id: Some(msg.channel_id().clone()),
+// // //         ..Default::default()
+// // //     };
+// // //     output.emit(IbcEvent::OpenAckChannel(event_attributes.into()));
+// // // 
+// // //     Ok(output.with_result(result))
 }
 
 #[cfg(test)]

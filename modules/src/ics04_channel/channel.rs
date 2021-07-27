@@ -59,20 +59,20 @@ impl TryFrom<RawIdentifiedChannel> for IdentifiedChannelEnd {
 impl From<IdentifiedChannelEnd> for RawIdentifiedChannel {
 #[trusted]
     fn from(value: IdentifiedChannelEnd) -> Self {
-        RawIdentifiedChannel {
-            state: value.channel_end.state as i32,
-            ordering: value.channel_end.ordering as i32,
-            counterparty: Some(value.channel_end.counterparty().clone().into()),
-            connection_hops: value
-                .channel_end
-                .connection_hops
-                .iter()
-                .map(|v| v.as_str().to_string())
-                .collect(),
-            version: value.channel_end.version,
-            port_id: value.port_id.to_string(),
-            channel_id: value.channel_id.to_string(),
-        }
+panic!("No") //         RawIdentifiedChannel {
+//             state: value.channel_end.state as i32,
+//             ordering: value.channel_end.ordering as i32,
+//             counterparty: Some(value.channel_end.counterparty().clone().into()),
+//             connection_hops: value
+//                 .channel_end
+//                 .connection_hops
+//                 .iter()
+//                 .map(|v| v.as_str().to_string())
+//                 .collect(),
+//             version: value.channel_end.version,
+//             port_id: value.port_id.to_string(),
+//             channel_id: value.channel_id.to_string(),
+//         }
     }
 }
 
@@ -104,54 +104,54 @@ impl TryFrom<RawChannel> for ChannelEnd {
 
 #[trusted]
     fn try_from(value: RawChannel) -> Result<Self, Self::Error> {
-        let chan_state: State = State::from_i32(value.state)?;
-
-        if chan_state == State::Uninitialized {
-            return Ok(ChannelEnd::default());
-        }
-
-        let chan_ordering = Order::from_i32(value.ordering)?;
-
-        // Assemble the 'remote' attribute of the Channel, which represents the Counterparty.
-        let remote = value
-            .counterparty
-            .ok_or_else(Error::missing_counterparty)?
-            .try_into()?;
-
-        // Parse each item in connection_hops into a ConnectionId.
-        let connection_hops = value
-            .connection_hops
-            .into_iter()
-            .map(|conn_id| ConnectionId::from_str(conn_id.as_str()))
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(Error::identifier)?;
-
-        let version = validate_version(value.version)?;
-
-        Ok(ChannelEnd::new(
-            chan_state,
-            chan_ordering,
-            remote,
-            connection_hops,
-            version,
-        ))
+panic!("No") //         let chan_state: State = State::from_i32(value.state)?;
+// 
+//         if chan_state == State::Uninitialized {
+//             return Ok(ChannelEnd::default());
+//         }
+// 
+//         let chan_ordering = Order::from_i32(value.ordering)?;
+// 
+//         // Assemble the 'remote' attribute of the Channel, which represents the Counterparty.
+//         let remote = value
+//             .counterparty
+//             .ok_or_else(Error::missing_counterparty)?
+//             .try_into()?;
+// 
+//         // Parse each item in connection_hops into a ConnectionId.
+//         let connection_hops = value
+//             .connection_hops
+//             .into_iter()
+//             .map(|conn_id| ConnectionId::from_str(conn_id.as_str()))
+//             .collect::<Result<Vec<_>, _>>()
+//             .map_err(Error::identifier)?;
+// 
+//         let version = validate_version(value.version)?;
+// 
+//         Ok(ChannelEnd::new(
+//             chan_state,
+//             chan_ordering,
+//             remote,
+//             connection_hops,
+//             version,
+//         ))
     }
 }
 
 impl From<ChannelEnd> for RawChannel {
 #[trusted]
     fn from(value: ChannelEnd) -> Self {
-        RawChannel {
-            state: value.state as i32,
-            ordering: value.ordering as i32,
-            counterparty: Some(value.counterparty().clone().into()),
-            connection_hops: value
-                .connection_hops
-                .iter()
-                .map(|v| v.as_str().to_string())
-                .collect(),
-            version: value.version,
-        }
+panic!("No") //         RawChannel {
+//             state: value.state as i32,
+//             ordering: value.ordering as i32,
+//             counterparty: Some(value.counterparty().clone().into()),
+//             connection_hops: value
+//                 .connection_hops
+//                 .iter()
+//                 .map(|v| v.as_str().to_string())
+//                 .collect(),
+//             version: value.version,
+//         }
     }
 }
 
@@ -296,27 +296,27 @@ impl TryFrom<RawCounterparty> for Counterparty {
 
 #[trusted]
     fn try_from(value: RawCounterparty) -> Result<Self, Self::Error> {
-        let channel_id = Some(value.channel_id)
-            .filter(|x| !x.is_empty())
-            .map(|v| FromStr::from_str(v.as_str()))
-            .transpose()
-            .map_err(Error::identifier)?;
-        Ok(Counterparty::new(
-            value.port_id.parse().map_err(Error::identifier)?,
-            channel_id,
-        ))
+panic!("No") //         let channel_id = Some(value.channel_id)
+//             .filter(|x| !x.is_empty())
+//             .map(|v| FromStr::from_str(v.as_str()))
+//             .transpose()
+//             .map_err(Error::identifier)?;
+//         Ok(Counterparty::new(
+//             value.port_id.parse().map_err(Error::identifier)?,
+//             channel_id,
+//         ))
     }
 }
 
 impl From<Counterparty> for RawCounterparty {
 #[trusted]
     fn from(value: Counterparty) -> Self {
-        RawCounterparty {
-            port_id: value.port_id.as_str().to_string(),
-            channel_id: value
-                .channel_id
-                .map_or_else(|| "".to_string(), |v| v.as_str().to_string()),
-        }
+panic!("No") //         RawCounterparty {
+//             port_id: value.port_id.as_str().to_string(),
+//             channel_id: value
+//                 .channel_id
+//                 .map_or_else(|| "".to_string(), |v| v.as_str().to_string()),
+//         }
     }
 }
 
