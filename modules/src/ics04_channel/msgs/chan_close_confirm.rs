@@ -89,6 +89,7 @@ impl TryFrom<RawMsgChannelCloseConfirm> for MsgChannelCloseConfirm {
 }
 
 impl From<MsgChannelCloseConfirm> for RawMsgChannelCloseConfirm {
+#[trusted]
     fn from(domain_msg: MsgChannelCloseConfirm) -> Self {
         RawMsgChannelCloseConfirm {
             port_id: domain_msg.port_id.to_string(),

@@ -90,6 +90,7 @@ impl TryFrom<RawMsgChannelOpenConfirm> for MsgChannelOpenConfirm {
 }
 
 impl From<MsgChannelOpenConfirm> for RawMsgChannelOpenConfirm {
+#[trusted]
     fn from(domain_msg: MsgChannelOpenConfirm) -> Self {
         RawMsgChannelOpenConfirm {
             port_id: domain_msg.port_id.to_string(),

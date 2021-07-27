@@ -121,6 +121,7 @@ impl From<ChainId> for tendermint::chain::Id {
 }
 
 impl From<tendermint::chain::Id> for ChainId {
+#[trusted]
     fn from(id: tendermint::chain::Id) -> Self {
         ChainId::from_str(id.as_str()).unwrap()
     }
@@ -136,6 +137,7 @@ impl Default for ChainId {
 impl TryFrom<String> for ChainId {
     type Error = ValidationError;
 
+    #[trusted]
     fn try_from(value: String) -> Result<Self, Self::Error> {
         Self::from_str(value.as_str())
     }
@@ -164,6 +166,7 @@ impl ClientId {
     }
 
     /// Get this identifier as a borrowed `&str`
+    #[trusted]
     pub fn as_str(&self) -> &str {
         &self.0
     }
@@ -182,6 +185,7 @@ impl ClientId {
     }
 
     /// Get this identifier as a borrowed byte slice
+    #[trusted]
     pub fn as_bytes(&self) -> &[u8] {
         self.0.as_bytes()
     }
@@ -198,6 +202,7 @@ impl std::fmt::Display for ClientId {
 impl FromStr for ClientId {
     type Err = ValidationError;
 
+#[trusted]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         validate_client_identifier(s).map(|_| Self(s.to_string()))
     }
@@ -219,6 +224,7 @@ impl Default for ClientId {
 /// client_id.map(|id| {assert_eq!(&id, "clientidtwo")});
 /// ```
 impl PartialEq<str> for ClientId {
+    #[trusted]
     fn eq(&self, other: &str) -> bool {
         self.as_str().eq(other)
     }
@@ -251,6 +257,7 @@ impl ConnectionId {
     }
 
     /// Get this identifier as a borrowed `&str`
+    #[trusted]
     pub fn as_str(&self) -> &str {
         &self.0
     }
@@ -264,6 +271,7 @@ impl ConnectionId {
 
 /// This implementation provides a `to_string` method.
 impl std::fmt::Display for ConnectionId {
+#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "{}", self.0)
     }
@@ -304,6 +312,7 @@ pub struct PortId(String);
 
 impl PortId {
     /// Get this identifier as a borrowed `&str`
+    #[trusted]
     pub fn as_str(&self) -> &str {
         &self.0
     }
@@ -317,6 +326,7 @@ impl PortId {
 
 /// This implementation provides a `to_string` method.
 impl std::fmt::Display for PortId {
+#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "{}", self.0)
     }
@@ -358,6 +368,7 @@ impl ChannelId {
         Self::from_str(id.as_str()).unwrap()
     }
 
+#[trusted]
     pub fn prefix() -> &'static str {
         "channel"
     }
@@ -391,6 +402,7 @@ impl FromStr for ChannelId {
 }
 
 impl Default for ChannelId {
+#[trusted]
     fn default() -> Self {
         Self::new(0)
     }

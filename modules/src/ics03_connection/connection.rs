@@ -65,6 +65,7 @@ impl TryFrom<RawIdentifiedConnection> for IdentifiedConnectionEnd {
 }
 
 impl From<IdentifiedConnectionEnd> for RawIdentifiedConnection {
+#[trusted]
     fn from(value: IdentifiedConnectionEnd) -> Self {
         RawIdentifiedConnection {
             id: value.connection_id.to_string(),
@@ -135,6 +136,7 @@ impl TryFrom<RawConnectionEnd> for ConnectionEnd {
 }
 
 impl From<ConnectionEnd> for RawConnectionEnd {
+    #[trusted]
     fn from(value: ConnectionEnd) -> Self {
         RawConnectionEnd {
             client_id: value.client_id.to_string(),

@@ -72,6 +72,7 @@ impl TryFrom<RawMsgConnectionOpenInit> for MsgConnectionOpenInit {
 }
 
 impl From<MsgConnectionOpenInit> for RawMsgConnectionOpenInit {
+#[trusted]
     fn from(ics_msg: MsgConnectionOpenInit) -> Self {
         RawMsgConnectionOpenInit {
             client_id: ics_msg.client_id.as_str().to_string(),

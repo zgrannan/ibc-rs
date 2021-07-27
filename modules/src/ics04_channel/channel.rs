@@ -208,6 +208,7 @@ impl ChannelEnd {
         &self.connection_hops
     }
 
+#[trusted]
     pub fn version(&self) -> String {
         self.version.parse().unwrap()
     }
@@ -241,6 +242,7 @@ impl ChannelEnd {
         self.connection_hops.eq(other)
     }
 
+    #[trusted]
     pub fn counterparty_matches(&self, other: &Counterparty) -> bool {
         self.counterparty().eq(other)
     }
@@ -307,6 +309,7 @@ impl TryFrom<RawCounterparty> for Counterparty {
 }
 
 impl From<Counterparty> for RawCounterparty {
+#[trusted]
     fn from(value: Counterparty) -> Self {
         RawCounterparty {
             port_id: value.port_id.as_str().to_string(),

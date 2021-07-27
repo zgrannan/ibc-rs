@@ -113,6 +113,7 @@ impl TryFrom<RawMsgChannelOpenAck> for MsgChannelOpenAck {
 }
 
 impl From<MsgChannelOpenAck> for RawMsgChannelOpenAck {
+#[trusted]
     fn from(domain_msg: MsgChannelOpenAck) -> Self {
         RawMsgChannelOpenAck {
             port_id: domain_msg.port_id.to_string(),

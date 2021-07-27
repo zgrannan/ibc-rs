@@ -324,18 +324,20 @@ pub fn extract_events<S: ::std::hash::BuildHasher>(
 
 #[trusted]
 pub fn extract_attribute(object: &RawObject, key: &str) -> Result<String, Error> {
-    let value = object
-        .events
-        .get(key)
-        .ok_or_else(|| Error::missing_key(key.to_string()))?[object.idx]
-        .clone();
+    todo!()
+    // let value = object
+    //     .events
+    //     .get(key)
+    //     .ok_or_else(|| Error::missing_key(key.to_string()))?[object.idx]
+    //     .clone();
 
-    Ok(value)
+    // Ok(value)
 }
 
 #[trusted]
 pub fn maybe_extract_attribute(object: &RawObject, key: &str) -> Option<String> {
-    object.events.get(key).map(|tags| tags[object.idx].clone())
+   todo!()
+   //  object.events.get(key).map(|tags| tags[object.idx].clone())
 }
 
 #[macro_export]

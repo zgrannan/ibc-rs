@@ -113,6 +113,7 @@ impl CommitmentPrefix {
         self.bytes.len() == 0
     }
 
+#[trusted]
     pub fn as_bytes(&self) -> &[u8] {
         &self.bytes
     }

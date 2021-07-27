@@ -73,6 +73,7 @@ impl TryFrom<RawMsgConnectionOpenConfirm> for MsgConnectionOpenConfirm {
 }
 
 impl From<MsgConnectionOpenConfirm> for RawMsgConnectionOpenConfirm {
+#[trusted]
     fn from(ics_msg: MsgConnectionOpenConfirm) -> Self {
         RawMsgConnectionOpenConfirm {
             connection_id: ics_msg.connection_id.as_str().to_string(),
