@@ -1,6 +1,5 @@
 use crate::events::IbcEvent;
 use crate::handler::{HandlerOutput, HandlerResult};
-use prusti_contracts::*;
 use crate::ics02_client::height::Height;
 use crate::ics03_connection::connection::State as ConnectionState;
 use crate::ics04_channel::channel::State;
@@ -9,10 +8,10 @@ use crate::ics04_channel::events::AcknowledgePacket;
 use crate::ics04_channel::handler::verify::verify_packet_acknowledgement_proofs;
 use crate::ics04_channel::msgs::acknowledgement::MsgAcknowledgement;
 use crate::ics04_channel::packet::{PacketResult, Sequence};
-use crate::ics04_channel::{context::ChannelReader, error::Error, error::Kind};
+use crate::ics04_channel::{context::ChannelReader, error::Error};
 use crate::ics24_host::identifier::{ChannelId, PortId};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct AckPacketResult {
     pub port_id: PortId,
     pub channel_id: ChannelId,
@@ -20,112 +19,114 @@ pub struct AckPacketResult {
     pub seq_number: Option<Sequence>,
 }
 
-#[trusted]
 pub fn process(
     ctx: &dyn ChannelReader,
     msg: MsgAcknowledgement,
 ) -> HandlerResult<PacketResult, Error> {
-unreachable!() //     let mut output = HandlerOutput::builder();
-// 
-//     let packet = &msg.packet;
-// 
-//     let source_channel_end = ctx
-//         .channel_end(&(packet.source_port.clone(), packet.source_channel.clone()))
-//         .ok_or_else(|| {
-//             Kind::ChannelNotFound(packet.source_port.clone(), packet.source_channel.clone())
-//                 .context(packet.source_channel.to_string())
-//         })?;
-// 
-//     if !source_channel_end.state_matches(&State::Open) {
-//         return Err(Kind::ChannelClosed(packet.source_channel.clone()).into());
-//     }
-// 
-//     let _channel_cap = ctx.authenticated_capability(&packet.source_port)?;
-// 
-//     let counterparty = Counterparty::new(
-//         packet.destination_port.clone(),
-//         Some(packet.destination_channel.clone()),
-//     );
-// 
-//     if !source_channel_end.counterparty_matches(&counterparty) {
-//         return Err(Kind::InvalidPacketCounterparty(
-//             packet.destination_port.clone(),
-//             packet.destination_channel.clone(),
-//         )
-//         .into());
-//     }
-// 
-//     let connection_end = ctx
-//         .connection_end(&source_channel_end.connection_hops()[0])
-//         .ok_or_else(|| Kind::MissingConnection(source_channel_end.connection_hops()[0].clone()))?;
-// 
-//     if !connection_end.state_matches(&ConnectionState::Open) {
-//         return Err(
-//             Kind::ConnectionNotOpen(source_channel_end.connection_hops()[0].clone()).into(),
-//         );
-//     }
-// 
-//     let client_id = connection_end.client_id().clone();
-// 
-//     // Verify packet commitment
-//     let packet_commitment = ctx
-//         .get_packet_commitment(&(
-//             packet.source_port.clone(),
-//             packet.source_channel.clone(),
-//             packet.sequence,
-//         ))
-//         .ok_or(Kind::PacketCommitmentNotFound(packet.sequence))?;
-// 
-//     let input = format!(
-//         "{:?},{:?},{:?}",
-//         packet.timeout_timestamp, packet.timeout_height, packet.data,
-//     );
-// 
-//     if packet_commitment != ctx.hash(input) {
-//         return Err(Kind::IncorrectPacketCommitment(packet.sequence).into());
-//     }
-// 
-//     // Verify the acknowledgement proof
-//     verify_packet_acknowledgement_proofs(
-//         ctx,
-//         packet,
-//         msg.acknowledgement().clone(),
-//         client_id,
-//         msg.proofs(),
-//     )?;
-// 
-//     let result = if source_channel_end.order_matches(&Order::Ordered) {
-//         let next_seq_ack = ctx
-//             .get_next_sequence_ack(&(packet.source_port.clone(), packet.source_channel.clone()))
-//             .ok_or(Kind::MissingNextAckSeq)?;
-// 
-//         if packet.sequence != next_seq_ack {
-//             return Err(Kind::InvalidPacketSequence(packet.sequence, next_seq_ack).into());
-//         }
-// 
-//         PacketResult::Ack(AckPacketResult {
-//             port_id: packet.source_port.clone(),
-//             channel_id: packet.source_channel.clone(),
-//             seq: packet.sequence,
-//             seq_number: Some(next_seq_ack.increment()),
-//         })
-//     } else {
-//         PacketResult::Ack(AckPacketResult {
-//             port_id: packet.source_port.clone(),
-//             channel_id: packet.source_channel.clone(),
-//             seq: packet.sequence,
-//             seq_number: None,
-//         })
-//     };
-// 
-//     output.log("success: packet ack");
-// 
-//     output.emit(IbcEvent::AcknowledgePacket(AcknowledgePacket {
-//         height: Height::zero(),
-//         packet: packet.clone(),
-//     }));
-// 
-//     Ok(output.with_result(result))
+    let mut output = HandlerOutput::builder();
+
+    let packet = &msg.packet;
+
+    let source_channel_end = ctx
+        .channel_end(&(packet.source_port.clone(), packet.source_channel.clone()))
+        .ok_or_else(|| {
+            Error::channel_not_found(packet.source_port.clone(), packet.source_channel.clone())
+        })?;
+
+    if !source_channel_end.state_matches(&State::Open) {
+        return Err(Error::channel_closed(packet.source_channel.clone()));
+    }
+
+    let _channel_cap = ctx.authenticated_capability(&packet.source_port)?;
+
+    let counterparty = Counterparty::new(
+        packet.destination_port.clone(),
+        Some(packet.destination_channel.clone()),
+    );
+
+    if !source_channel_end.counterparty_matches(&counterparty) {
+        return Err(Error::invalid_packet_counterparty(
+            packet.destination_port.clone(),
+            packet.destination_channel.clone(),
+        ));
+    }
+
+    let connection_end = ctx
+        .connection_end(&source_channel_end.connection_hops()[0])
+        .ok_or_else(|| {
+            Error::missing_connection(source_channel_end.connection_hops()[0].clone())
+        })?;
+
+    if !connection_end.state_matches(&ConnectionState::Open) {
+        return Err(Error::connection_not_open(
+            source_channel_end.connection_hops()[0].clone(),
+        ));
+    }
+
+    let client_id = connection_end.client_id().clone();
+
+    // Verify packet commitment
+    let packet_commitment = ctx
+        .get_packet_commitment(&(
+            packet.source_port.clone(),
+            packet.source_channel.clone(),
+            packet.sequence,
+        ))
+        .ok_or_else(|| Error::packet_commitment_not_found(packet.sequence))?;
+
+    let input = format!(
+        "{:?},{:?},{:?}",
+        packet.timeout_timestamp, packet.timeout_height, packet.data,
+    );
+
+    if packet_commitment != ctx.hash(input) {
+        return Err(Error::incorrect_packet_commitment(packet.sequence));
+    }
+
+    // Verify the acknowledgement proof
+    verify_packet_acknowledgement_proofs(
+        ctx,
+        packet,
+        msg.acknowledgement().clone(),
+        client_id,
+        msg.proofs(),
+    )?;
+
+    let result = if source_channel_end.order_matches(&Order::Ordered) {
+        let next_seq_ack = ctx
+            .get_next_sequence_ack(&(packet.source_port.clone(), packet.source_channel.clone()))
+            .ok_or_else(Error::missing_next_ack_seq)?;
+
+        if packet.sequence != next_seq_ack {
+            return Err(Error::invalid_packet_sequence(
+                packet.sequence,
+                next_seq_ack,
+            ));
+        }
+
+        PacketResult::Ack(AckPacketResult {
+            port_id: packet.source_port.clone(),
+            channel_id: packet.source_channel.clone(),
+            seq: packet.sequence,
+            seq_number: Some(next_seq_ack.increment()),
+        })
+    } else {
+        PacketResult::Ack(AckPacketResult {
+            port_id: packet.source_port.clone(),
+            channel_id: packet.source_channel.clone(),
+            seq: packet.sequence,
+            seq_number: None,
+        })
+    };
+
+    output.log("success: packet ack");
+
+    output.emit(IbcEvent::AcknowledgePacket(AcknowledgePacket {
+        height: Height::zero(),
+        packet: packet.clone(),
+    }));
+
+    Ok(output.with_result(result))
 }
 
 #[cfg(test)]

@@ -1,12 +1,11 @@
-use std::convert::{TryFrom, TryInto};
+use std::convert::TryFrom;
 use std::str::FromStr;
-use prusti_contracts::*;
 
 use serde_derive::{Deserialize, Serialize};
 
 use ibc_proto::ibc::core::channel::v1::Packet as RawPacket;
 
-use crate::ics04_channel::error::Kind;
+use crate::ics04_channel::error::Error;
 use crate::ics24_host::identifier::{ChannelId, PortId};
 use crate::timestamp::{Expiry::Expired, Timestamp};
 use crate::Height;
@@ -17,7 +16,7 @@ use super::handler::{
 };
 
 /// Enumeration of proof carrying ICS4 message, helper for relayer.
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum PacketMsgType {
     Recv,
     Ack,
@@ -26,7 +25,7 @@ pub enum PacketMsgType {
     TimeoutOnClose,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum PacketResult {
     Send(SendPacketResult),
     Recv(RecvPacketResult),
@@ -35,34 +34,25 @@ pub enum PacketResult {
     Timeout(TimeoutPacketResult),
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Receipt {
     Ok,
 }
 
 impl std::fmt::Display for PacketMsgType {
-#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-unreachable!() //         match self {
-//             PacketMsgType::Recv => write!(f, "(PacketMsgType::Recv)"),
-//             PacketMsgType::Ack => write!(f, "(PacketMsgType::Ack)"),
-//             PacketMsgType::TimeoutUnordered => write!(f, "(PacketMsgType::TimeoutUnordered)"),
-//             PacketMsgType::TimeoutOrdered => write!(f, "(PacketMsgType::TimeoutOrdered)"),
-//             PacketMsgType::TimeoutOnClose => write!(f, "(PacketMsgType::TimeoutOnClose)"),
-//         }
+        match self {
+            PacketMsgType::Recv => write!(f, "(PacketMsgType::Recv)"),
+            PacketMsgType::Ack => write!(f, "(PacketMsgType::Ack)"),
+            PacketMsgType::TimeoutUnordered => write!(f, "(PacketMsgType::TimeoutUnordered)"),
+            PacketMsgType::TimeoutOrdered => write!(f, "(PacketMsgType::TimeoutOrdered)"),
+            PacketMsgType::TimeoutOnClose => write!(f, "(PacketMsgType::TimeoutOnClose)"),
+        }
     }
 }
-
-impl std::fmt::Debug for Sequence {
-    #[trusted]
-    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        unreachable!()
-    }
-}
-
 
 /// The sequence number of a packet enforces ordering among packets from the same source.
-#[derive(Copy, Clone, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Deserialize, Serialize, PartialOrd, Ord)]
 pub struct Sequence(u64);
 
 impl Default for Sequence {
@@ -72,13 +62,12 @@ impl Default for Sequence {
 }
 
 impl FromStr for Sequence {
-    type Err = anomaly::Error<Kind>;
+    type Err = Error;
 
-#[trusted]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-unreachable!() //         Ok(Self::from(s.parse::<u64>().map_err(|_e| {
-//             Kind::InvalidStringAsSequence(s.to_string())
-//         })?))
+        Ok(Self::from(s.parse::<u64>().map_err(|e| {
+            Error::invalid_string_as_sequence(s.to_string(), e)
+        })?))
     }
 }
 
@@ -87,7 +76,6 @@ impl Sequence {
         self.0 == 0
     }
 
-    #[requires(self.0 < u64::MAX)]
     pub fn increment(&self) -> Sequence {
         Sequence(self.0 + 1)
     }
@@ -106,65 +94,60 @@ impl From<Sequence> for u64 {
 }
 
 impl std::fmt::Display for Sequence {
-#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-unreachable!() //         write!(f, "{}", self.0)
+        write!(f, "{}", self.0)
     }
 }
 
-#[derive(Hash, Clone)]
+#[derive(PartialEq, Deserialize, Serialize, Hash, Clone)]
 pub struct Packet {
     pub sequence: Sequence,
     pub source_port: PortId,
     pub source_channel: ChannelId,
     pub destination_port: PortId,
     pub destination_channel: ChannelId,
-//     #[serde(serialize_with = "crate::serializers::ser_hex_upper")]
+    #[serde(serialize_with = "crate::serializers::ser_hex_upper")]
     pub data: Vec<u8>,
     pub timeout_height: Height,
     pub timeout_timestamp: Timestamp,
 }
 
 impl Packet {
-#[trusted]
     pub fn timed_out(&self, dst_chain_height: Height) -> bool {
-unreachable!() //         (self.timeout_height != Height::zero() && self.timeout_height < dst_chain_height)
-//             || (self.timeout_timestamp != Timestamp::none()
-//                 && Timestamp::now().check_expiry(&self.timeout_timestamp) == Expired)
+        (self.timeout_height != Height::zero() && self.timeout_height < dst_chain_height)
+            || (self.timeout_timestamp != Timestamp::none()
+                && Timestamp::now().check_expiry(&self.timeout_timestamp) == Expired)
     }
 }
 
 impl std::fmt::Debug for Packet {
-#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-unreachable!() //         write!(
-//             f,
-//             "{:?} {:?} {:?}",
-//             self.source_port, self.source_channel, self.sequence
-//         )
+        write!(
+            f,
+            "{:?} {:?} {:?}",
+            self.source_port, self.source_channel, self.sequence
+        )
     }
 }
 
 /// Custom debug output to omit the packet data
 impl std::fmt::Display for Packet {
-#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-unreachable!() //         write!(
-//             f,
-//             "seq:{}, path:{}/{}->{}/{}, toh:{}, tos:{})",
-//             self.sequence,
-//             self.source_channel,
-//             self.source_port,
-//             self.destination_channel,
-//             self.destination_port,
-//             self.timeout_height,
-//             self.timeout_timestamp
-//         )
+        write!(
+            f,
+            "seq:{}, path:{}/{}->{}/{}, toh:{}, tos:{})",
+            self.sequence,
+            self.source_channel,
+            self.source_port,
+            self.destination_channel,
+            self.destination_port,
+            self.timeout_height,
+            self.timeout_timestamp
+        )
     }
 }
 
 impl Default for Packet {
-#[trusted]
     fn default() -> Self {
         Packet {
             sequence: Sequence(0),
@@ -180,56 +163,47 @@ impl Default for Packet {
 }
 
 impl TryFrom<RawPacket> for Packet {
-    type Error = anomaly::Error<Kind>;
+    type Error = Error;
 
-#[trusted]
     fn try_from(raw_pkt: RawPacket) -> Result<Self, Self::Error> {
-unreachable!() //         if Sequence::from(raw_pkt.sequence).is_zero() {
-//             return Err(Kind::ZeroPacketSequence.into());
-//         }
-//         let packet_timeout_height: Height = raw_pkt
-//             .timeout_height
-//             .ok_or(Kind::MissingHeight)?
-//             .try_into()
-//             .map_err(|e| Kind::InvalidTimeoutHeight.context(e))?;
-// 
-//         if packet_timeout_height.is_zero() && raw_pkt.timeout_timestamp == 0 {
-//             return Err(Kind::ZeroPacketTimeout.into());
-//         }
-//         if raw_pkt.data.is_empty() {
-//             return Err(Kind::ZeroPacketData.into());
-//         }
-// 
-//         let timeout_timestamp = Timestamp::from_nanoseconds(raw_pkt.timeout_timestamp)
-//             .map_err(|_| Kind::InvalidPacketTimestamp)?;
-// 
-//         Ok(Packet {
-//             sequence: Sequence::from(raw_pkt.sequence),
-//             source_port: raw_pkt
-//                 .source_port
-//                 .parse()
-//                 .map_err(|e| Kind::IdentifierError.context(e))?,
-//             source_channel: raw_pkt
-//                 .source_channel
-//                 .parse()
-//                 .map_err(|e| Kind::IdentifierError.context(e))?,
-//             destination_port: raw_pkt
-//                 .destination_port
-//                 .parse()
-//                 .map_err(|e| Kind::IdentifierError.context(e))?,
-//             destination_channel: raw_pkt
-//                 .destination_channel
-//                 .parse()
-//                 .map_err(|e| Kind::IdentifierError.context(e))?,
-//             data: raw_pkt.data,
-//             timeout_height: packet_timeout_height,
-//             timeout_timestamp,
-//         })
+        if Sequence::from(raw_pkt.sequence).is_zero() {
+            return Err(Error::zero_packet_sequence());
+        }
+        let packet_timeout_height: Height = raw_pkt
+            .timeout_height
+            .ok_or_else(Error::missing_height)?
+            .into();
+
+        if packet_timeout_height.is_zero() && raw_pkt.timeout_timestamp == 0 {
+            return Err(Error::zero_packet_timeout());
+        }
+        if raw_pkt.data.is_empty() {
+            return Err(Error::zero_packet_data());
+        }
+
+        let timeout_timestamp = Timestamp::from_nanoseconds(raw_pkt.timeout_timestamp)
+            .map_err(Error::invalid_packet_timestamp)?;
+
+        Ok(Packet {
+            sequence: Sequence::from(raw_pkt.sequence),
+            source_port: raw_pkt.source_port.parse().map_err(Error::identifier)?,
+            source_channel: raw_pkt.source_channel.parse().map_err(Error::identifier)?,
+            destination_port: raw_pkt
+                .destination_port
+                .parse()
+                .map_err(Error::identifier)?,
+            destination_channel: raw_pkt
+                .destination_channel
+                .parse()
+                .map_err(Error::identifier)?,
+            data: raw_pkt.data,
+            timeout_height: packet_timeout_height,
+            timeout_timestamp,
+        })
     }
 }
 
 impl From<Packet> for RawPacket {
-    #[trusted]
     fn from(packet: Packet) -> Self {
         RawPacket {
             sequence: packet.sequence.0,

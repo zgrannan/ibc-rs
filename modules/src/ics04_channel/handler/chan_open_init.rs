@@ -1,88 +1,87 @@
 //! Protocol logic specific to ICS4 messages of type `MsgChannelOpenInit`.
 
-use prusti_contracts::*;
 use crate::events::IbcEvent;
 use crate::handler::{HandlerOutput, HandlerResult};
 use crate::ics04_channel::channel::{ChannelEnd, State};
 use crate::ics04_channel::context::ChannelReader;
-use crate::ics04_channel::error::{Error, Kind};
+use crate::ics04_channel::error::Error;
 use crate::ics04_channel::events::Attributes;
 use crate::ics04_channel::handler::{ChannelIdState, ChannelResult};
 use crate::ics04_channel::msgs::chan_open_init::MsgChannelOpenInit;
 use crate::ics24_host::identifier::ChannelId;
 
-#[trusted]
 pub(crate) fn process(
     ctx: &dyn ChannelReader,
     msg: MsgChannelOpenInit,
 ) -> HandlerResult<ChannelResult, Error> {
-unreachable!() //     let mut output = HandlerOutput::builder();
-// 
-//     // Channel capabilities
-//     let channel_cap = ctx.authenticated_capability(&msg.port_id().clone())?;
-// 
-//     if msg.channel().connection_hops().len() != 1 {
-//         return Err(
-//             Kind::InvalidConnectionHopsLength(1, msg.channel().connection_hops().len()).into(),
-//         );
-//     }
-// 
-//     // An IBC connection running on the local (host) chain should exist.
-//     let connection_end = ctx.connection_end(&msg.channel().connection_hops()[0]);
-// 
-//     let conn = connection_end
-//         .ok_or_else(|| Kind::MissingConnection(msg.channel().connection_hops()[0].clone()))?;
-// 
-//     let get_versions = conn.versions();
-//     let version = match get_versions.as_slice() {
-//         [version] => version,
-//         _ => return Err(Kind::InvalidVersionLengthConnection.into()),
-//     };
-// 
-//     let channel_feature = msg.channel().ordering().to_string();
-//     if !version.is_supported_feature(channel_feature) {
-//         return Err(Kind::ChannelFeatureNotSuportedByConnection.into());
-//     }
-// 
-//     // TODO: Check that `version` is non empty but not necessary coherent
-//     if msg.channel().version().is_empty() {
-//         return Err(Kind::InvalidVersion.into());
-//     }
-// 
-//     // Channel identifier construction.
-//     let id_counter = ctx.channel_counter();
-//     let chan_id = ChannelId::new(id_counter);
-// 
-//     output.log(format!(
-//         "success: generated new channel identifier: {}",
-//         chan_id
-//     ));
-// 
-//     let new_channel_end = ChannelEnd::new(
-//         State::Init,
-//         *msg.channel().ordering(),
-//         msg.channel().counterparty().clone(),
-//         msg.channel().connection_hops().clone(),
-//         msg.channel().version(),
-//     );
-// 
-//     output.log("success: no channel found");
-// 
-//     let result = ChannelResult {
-//         port_id: msg.port_id().clone(),
-//         channel_id: chan_id.clone(),
-//         channel_end: new_channel_end,
-//         channel_id_state: ChannelIdState::Generated,
-//         channel_cap,
-//     };
-// 
-//     let event_attributes = Attributes {
-//         channel_id: Some(chan_id),
-//         ..Default::default()
-//     };
-//     output.emit(IbcEvent::OpenInitChannel(event_attributes.into()));
-// 
-//     Ok(output.with_result(result))
+    let mut output = HandlerOutput::builder();
+
+    // Channel capabilities
+    let channel_cap = ctx.authenticated_capability(&msg.port_id().clone())?;
+
+    if msg.channel().connection_hops().len() != 1 {
+        return Err(Error::invalid_connection_hops_length(
+            1,
+            msg.channel().connection_hops().len(),
+        ));
+    }
+
+    // An IBC connection running on the local (host) chain should exist.
+    let connection_end = ctx.connection_end(&msg.channel().connection_hops()[0]);
+
+    let conn = connection_end
+        .ok_or_else(|| Error::missing_connection(msg.channel().connection_hops()[0].clone()))?;
+
+    let get_versions = conn.versions();
+    let version = match get_versions.as_slice() {
+        [version] => version,
+        _ => return Err(Error::invalid_version_length_connection()),
+    };
+
+    let channel_feature = msg.channel().ordering().to_string();
+    if !version.is_supported_feature(channel_feature) {
+        return Err(Error::channel_feature_not_suported_by_connection());
+    }
+
+    // TODO: Check that `version` is non empty but not necessary coherent
+    if msg.channel().version().is_empty() {
+        return Err(Error::empty_version());
+    }
+
+    // Channel identifier construction.
+    let id_counter = ctx.channel_counter();
+    let chan_id = ChannelId::new(id_counter);
+
+    output.log(format!(
+        "success: generated new channel identifier: {}",
+        chan_id
+    ));
+
+    let new_channel_end = ChannelEnd::new(
+        State::Init,
+        *msg.channel().ordering(),
+        msg.channel().counterparty().clone(),
+        msg.channel().connection_hops().clone(),
+        msg.channel().version(),
+    );
+
+    output.log("success: no channel found");
+
+    let result = ChannelResult {
+        port_id: msg.port_id().clone(),
+        channel_id: chan_id.clone(),
+        channel_end: new_channel_end,
+        channel_id_state: ChannelIdState::Generated,
+        channel_cap,
+    };
+
+    let event_attributes = Attributes {
+        channel_id: Some(chan_id),
+        ..Default::default()
+    };
+    output.emit(IbcEvent::OpenInitChannel(event_attributes.into()));
+
+    Ok(output.with_result(result))
 }
 
 #[cfg(test)]

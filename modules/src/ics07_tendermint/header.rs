@@ -1,6 +1,7 @@
 use std::convert::{TryFrom, TryInto};
 
-use prusti_contracts::*;
+use bytes::Buf;
+use prost::Message;
 use serde_derive::{Deserialize, Serialize};
 use tendermint::block::signed_header::SignedHeader;
 use tendermint::validator::Set as ValidatorSet;
@@ -11,13 +12,13 @@ use ibc_proto::ibc::lightclients::tendermint::v1::Header as RawHeader;
 
 use crate::ics02_client::client_type::ClientType;
 use crate::ics02_client::header::AnyHeader;
-use crate::ics07_tendermint::error::{Error, Kind};
+use crate::ics07_tendermint::error::Error;
 use crate::ics24_host::identifier::ChainId;
 use crate::Height;
 use std::cmp::Ordering;
 
 /// Tendermint consensus header
-#[derive(Clone)] // TODO: Add Eq bound once present in tendermint-rs
+#[derive(Clone, PartialEq, Deserialize, Serialize)] // TODO: Add Eq bound once present in tendermint-rs
 pub struct Header {
     pub signed_header: SignedHeader, // contains the commitment root
     pub validator_set: ValidatorSet, // the validator set that signed Header
@@ -26,19 +27,17 @@ pub struct Header {
 }
 
 impl std::fmt::Debug for Header {
-#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-unreachable!() //         write!(f, " Header {{...}}")
+        write!(f, " Header {{...}}")
     }
 }
 
 impl Header {
-#[trusted]
     pub fn height(&self) -> Height {
-unreachable!() //         Height::new(
-//             ChainId::chain_version(self.signed_header.header.chain_id.as_str()),
-//             u64::from(self.signed_header.header.height),
-//         )
+        Height::new(
+            ChainId::chain_version(self.signed_header.header.chain_id.as_str()),
+            u64::from(self.signed_header.header.height),
+        )
     }
 
     pub fn time(&self) -> Time {
@@ -89,31 +88,33 @@ impl Protobuf<RawHeader> for Header {}
 impl TryFrom<RawHeader> for Header {
     type Error = Error;
 
-#[trusted]
     fn try_from(raw: RawHeader) -> Result<Self, Self::Error> {
-unreachable!() // panic!("No") // panic!("No") // panic!("No") // panic!("No") //         Ok(Self {
-// // // // //             signed_header: raw
-// // // // //                 .signed_header
-// // // // //                 .ok_or_else(|| Kind::InvalidRawHeader.context("missing signed header"))?
-// // // // //                 .try_into()
-// // // // //                 .map_err(|_| Kind::InvalidHeader.context("signed header conversion"))?,
-// // // // //             validator_set: raw
-// // // // //                 .validator_set
-// // // // //                 .ok_or_else(|| Kind::InvalidRawHeader.context("missing validator set"))?
-// // // // //                 .try_into()
-// // // // //                 .map_err(|e| Kind::InvalidRawHeader.context(e))?,
-// // // // //             trusted_height: raw
-// // // // //                 .trusted_height
-// // // // //                 .ok_or_else(|| Kind::InvalidRawHeader.context("missing height"))?
-// // // // //                 .try_into()
-// // // // //                 .map_err(|e| Kind::InvalidRawHeight.context(e))?,
-// // // // //             trusted_validator_set: raw
-// // // // //                 .trusted_validators
-// // // // //                 .ok_or_else(|| Kind::InvalidRawHeader.context("missing trusted validator set"))?
-// // // // //                 .try_into()
-// // // // //                 .map_err(|e| Kind::InvalidRawHeader.context(e))?,
-// // // // //         })
+        Ok(Self {
+            signed_header: raw
+                .signed_header
+                .ok_or_else(Error::missing_signed_header)?
+                .try_into()
+                .map_err(|e| Error::invalid_header("signed header conversion".to_string(), e))?,
+            validator_set: raw
+                .validator_set
+                .ok_or_else(Error::missing_validator_set)?
+                .try_into()
+                .map_err(Error::invalid_raw_header)?,
+            trusted_height: raw
+                .trusted_height
+                .ok_or_else(Error::missing_trusted_height)?
+                .into(),
+            trusted_validator_set: raw
+                .trusted_validators
+                .ok_or_else(Error::missing_trusted_validator_set)?
+                .try_into()
+                .map_err(Error::invalid_raw_header)?,
+        })
     }
+}
+
+pub fn decode_header<B: Buf>(buf: B) -> Result<Header, Error> {
+    RawHeader::decode(buf).map_err(Error::decode)?.try_into()
 }
 
 impl From<Header> for RawHeader {

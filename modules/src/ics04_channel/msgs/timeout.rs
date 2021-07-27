@@ -5,7 +5,7 @@ use tendermint_proto::Protobuf;
 
 use ibc_proto::ibc::core::channel::v1::MsgTimeout as RawMsgTimeout;
 
-use crate::ics04_channel::error::{Error, Kind};
+use crate::ics04_channel::error::Error;
 use crate::ics04_channel::packet::{Packet, Sequence};
 use crate::proofs::Proofs;
 use crate::signer::Signer;
@@ -58,7 +58,7 @@ unreachable!() //         TYPE_URL.to_string()
 impl Protobuf<RawMsgTimeout> for MsgTimeout {}
 
 impl TryFrom<RawMsgTimeout> for MsgTimeout {
-    type Error = anomaly::Error<Kind>;
+    type Error = Error;
 
 #[trusted]
     fn try_from(raw_msg: RawMsgTimeout) -> Result<Self, Self::Error> {
@@ -69,20 +69,18 @@ impl TryFrom<RawMsgTimeout> for MsgTimeout {
             None,
             raw_msg
                 .proof_height
-                .ok_or(Kind::MissingHeight)?
-                .try_into()
-                .map_err(|e| Kind::InvalidProof.context(e))?,
+                .ok_or_else(Error::missing_height)?
+                .into(),
         )
-        .map_err(|e| Kind::InvalidProof.context(e))?;
+        .map_err(Error::invalid_proof)?;
 
         // TODO: Domain type verification for the next sequence: this should probably be > 0.
 
         Ok(MsgTimeout {
             packet: raw_msg
                 .packet
-                .ok_or(Kind::MissingPacket)?
-                .try_into()
-                .map_err(|e| Kind::InvalidPacket.context(e))?,
+                .ok_or_else(Error::missing_packet)?
+                .try_into()?,
             next_sequence_recv: Sequence::from(raw_msg.next_sequence_recv),
             signer: raw_msg.signer.into(),
             proofs,

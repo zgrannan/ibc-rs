@@ -1,13 +1,23 @@
-// use serde::Serialize;
+use serde::Serialize;
 
-use prusti_contracts::*;
 use crate::ics23_commitment::commitment::CommitmentProofBytes;
 use crate::Height;
+use flex_error::define_error;
+
+define_error! {
+    #[derive(Debug, PartialEq, Eq)]
+    ProofError {
+        ZeroHeight
+            | _ | { format_args!("proof height cannot be zero") },
+        EmptyProof
+            | _ | { format_args!("proof cannot be empty") },
+    }
+}
 
 /// Structure comprising proofs in a message. Proofs are typically present in messages for
 /// handshake protocols, e.g., ICS3 connection (open) handshake or ICS4 channel (open and close)
 /// handshake, as well as for ICS4 packets, timeouts, and acknowledgements.
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub struct Proofs {
     object_proof: CommitmentProofBytes,
     client_proof: Option<CommitmentProofBytes>,
@@ -20,29 +30,28 @@ pub struct Proofs {
 }
 
 impl Proofs {
-#[trusted]
     pub fn new(
         object_proof: CommitmentProofBytes,
         client_proof: Option<CommitmentProofBytes>,
         consensus_proof: Option<ConsensusProof>,
         other_proof: Option<CommitmentProofBytes>,
         height: Height,
-    ) -> Result<Self, String> {
-unreachable!() //         if height.is_zero() {
-//             return Err("Proofs height cannot be zero".to_string());
-//         }
-// 
-//         if object_proof.is_empty() {
-//             return Err("Object proof cannot be empty".to_string());
-//         }
-// 
-//         Ok(Self {
-//             object_proof,
-//             client_proof,
-//             consensus_proof,
-//             other_proof,
-//             height,
-//         })
+    ) -> Result<Self, ProofError> {
+        if height.is_zero() {
+            return Err(ProofError::zero_height());
+        }
+
+        if object_proof.is_empty() {
+            return Err(ProofError::empty_proof());
+        }
+
+        Ok(Self {
+            object_proof,
+            client_proof,
+            consensus_proof,
+            other_proof,
+            height,
+        })
     }
 
     /// Getter for the consensus_proof field of this proof. Intuitively, this is a proof that a
@@ -63,35 +72,33 @@ unreachable!() //         if height.is_zero() {
     }
 
     /// Getter for the client_proof.
-#[trusted]
     pub fn client_proof(&self) -> &Option<CommitmentProofBytes> {
         &self.client_proof
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub struct ConsensusProof {
     proof: CommitmentProofBytes,
     height: Height,
 }
 
 impl ConsensusProof {
-#[trusted]
     pub fn new(
         consensus_proof: CommitmentProofBytes,
         consensus_height: Height,
-    ) -> Result<Self, String> {
-unreachable!() //         if consensus_height.is_zero() {
-//             return Err("Consensus height cannot be zero".to_string());
-//         }
-//         if consensus_proof.is_empty() {
-//             return Err("Proof cannot be empty".to_string());
-//         }
-// 
-//         Ok(Self {
-//             proof: consensus_proof,
-//             height: consensus_height,
-//         })
+    ) -> Result<Self, ProofError> {
+        if consensus_height.is_zero() {
+            return Err(ProofError::zero_height());
+        }
+        if consensus_proof.is_empty() {
+            return Err(ProofError::empty_proof());
+        }
+
+        Ok(Self {
+            proof: consensus_proof,
+            height: consensus_height,
+        })
     }
 
     /// Getter for the height field of this consensus proof.

@@ -1,11 +1,9 @@
 use std::convert::{TryFrom, TryInto};
 use std::str::FromStr;
-use prusti_contracts::*;
 use std::time::Duration;
 use std::u64;
 
-use anomaly::fail;
-// use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use tendermint_proto::Protobuf;
 
 use ibc_proto::ibc::core::connection::v1::{
@@ -13,14 +11,14 @@ use ibc_proto::ibc::core::connection::v1::{
     IdentifiedConnection as RawIdentifiedConnection,
 };
 
-use crate::ics03_connection::error::{self, Error, Kind};
+use crate::ics03_connection::error::Error;
 use crate::ics03_connection::version::Version;
 use crate::ics23_commitment::commitment::CommitmentPrefix;
 use crate::ics24_host::error::ValidationError;
 use crate::ics24_host::identifier::{ClientId, ConnectionId};
 use crate::timestamp::ZERO_DURATION;
 
-#[derive(Clone, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct IdentifiedConnectionEnd {
     pub connection_id: ConnectionId,
     pub connection_end: ConnectionEnd,
@@ -46,45 +44,43 @@ impl IdentifiedConnectionEnd {
 impl Protobuf<RawIdentifiedConnection> for IdentifiedConnectionEnd {}
 
 impl TryFrom<RawIdentifiedConnection> for IdentifiedConnectionEnd {
-    type Error = anomaly::Error<Kind>;
+    type Error = Error;
 
-#[trusted]
     fn try_from(value: RawIdentifiedConnection) -> Result<Self, Self::Error> {
-unreachable!() //         let raw_connection_end = RawConnectionEnd {
-//             client_id: value.client_id.to_string(),
-//             versions: value.versions,
-//             state: value.state,
-//             counterparty: value.counterparty,
-//             delay_period: value.delay_period,
-//         };
-// 
-//         Ok(IdentifiedConnectionEnd {
-//             connection_id: value.id.parse().map_err(|_| Kind::IdentifierError)?,
-//             connection_end: raw_connection_end.try_into()?,
-//         })
+        let raw_connection_end = RawConnectionEnd {
+            client_id: value.client_id.to_string(),
+            versions: value.versions,
+            state: value.state,
+            counterparty: value.counterparty,
+            delay_period: value.delay_period,
+        };
+
+        Ok(IdentifiedConnectionEnd {
+            connection_id: value.id.parse().map_err(Error::invalid_identifier)?,
+            connection_end: raw_connection_end.try_into()?,
+        })
     }
 }
 
 impl From<IdentifiedConnectionEnd> for RawIdentifiedConnection {
-#[trusted]
     fn from(value: IdentifiedConnectionEnd) -> Self {
-unreachable!() //         RawIdentifiedConnection {
-//             id: value.connection_id.to_string(),
-//             client_id: value.connection_end.client_id.to_string(),
-//             versions: value
-//                 .connection_end
-//                 .versions
-//                 .iter()
-//                 .map(|v| From::from(v.clone()))
-//                 .collect(),
-//             state: value.connection_end.state as i32,
-//             delay_period: value.connection_end.delay_period.as_nanos() as u64,
-//             counterparty: Some(value.connection_end.counterparty().clone().into()),
-//         }
+        RawIdentifiedConnection {
+            id: value.connection_id.to_string(),
+            client_id: value.connection_end.client_id.to_string(),
+            versions: value
+                .connection_end
+                .versions
+                .iter()
+                .map(|v| From::from(v.clone()))
+                .collect(),
+            state: value.connection_end.state as i32,
+            delay_period: value.connection_end.delay_period.as_nanos() as u64,
+            counterparty: Some(value.connection_end.counterparty().clone().into()),
+        }
     }
 }
 
-#[derive(Clone, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ConnectionEnd {
     pub state: State,
     client_id: ClientId,
@@ -94,67 +90,60 @@ pub struct ConnectionEnd {
 }
 
 impl Default for ConnectionEnd {
-#[trusted]
     fn default() -> Self {
-unreachable!() //         Self {
-//             state: State::Uninitialized,
-//             client_id: Default::default(),
-//             counterparty: Default::default(),
-//             versions: vec![],
-//             delay_period: ZERO_DURATION,
-//         }
+        Self {
+            state: State::Uninitialized,
+            client_id: Default::default(),
+            counterparty: Default::default(),
+            versions: vec![],
+            delay_period: ZERO_DURATION,
+        }
     }
 }
 
 impl Protobuf<RawConnectionEnd> for ConnectionEnd {}
 
 impl TryFrom<RawConnectionEnd> for ConnectionEnd {
-    type Error = anomaly::Error<Kind>;
-#[trusted]
+    type Error = Error;
     fn try_from(value: RawConnectionEnd) -> Result<Self, Self::Error> {
-unreachable!() //         let state = value.state.try_into()?;
-//         if state == State::Uninitialized {
-//             return Ok(ConnectionEnd::default());
-//         }
-//         if value.client_id.is_empty() {
-//             return Err(Kind::EmptyProtoConnectionEnd.into());
-//         }
-// 
-//         Ok(Self::new(
-//             state,
-//             value
-//                 .client_id
-//                 .parse()
-//                 .map_err(|e| Kind::IdentifierError.context(e))?,
-//             value
-//                 .counterparty
-//                 .ok_or(Kind::MissingCounterparty)?
-//                 .try_into()?,
-//             value
-//                 .versions
-//                 .into_iter()
-//                 .map(Version::try_from)
-//                 .collect::<Result<Vec<_>, _>>()
-//                 .map_err(|e| Kind::InvalidVersion.context(e))?,
-//             Duration::from_nanos(value.delay_period),
-//         ))
+        let state = value.state.try_into()?;
+        if state == State::Uninitialized {
+            return Ok(ConnectionEnd::default());
+        }
+        if value.client_id.is_empty() {
+            return Err(Error::empty_proto_connection_end());
+        }
+
+        Ok(Self::new(
+            state,
+            value.client_id.parse().map_err(Error::invalid_identifier)?,
+            value
+                .counterparty
+                .ok_or_else(Error::missing_counterparty)?
+                .try_into()?,
+            value
+                .versions
+                .into_iter()
+                .map(Version::try_from)
+                .collect::<Result<Vec<_>, _>>()?,
+            Duration::from_nanos(value.delay_period),
+        ))
     }
 }
 
 impl From<ConnectionEnd> for RawConnectionEnd {
-#[trusted]
     fn from(value: ConnectionEnd) -> Self {
-unreachable!() //         RawConnectionEnd {
-//             client_id: value.client_id.to_string(),
-//             versions: value
-//                 .versions
-//                 .iter()
-//                 .map(|v| From::from(v.clone()))
-//                 .collect(),
-//             state: value.state as i32,
-//             counterparty: Some(value.counterparty.into()),
-//             delay_period: value.delay_period.as_nanos() as u64,
-//         }
+        RawConnectionEnd {
+            client_id: value.client_id.to_string(),
+            versions: value
+                .versions
+                .iter()
+                .map(|v| From::from(v.clone()))
+                .collect(),
+            state: value.state as i32,
+            counterparty: Some(value.counterparty.into()),
+            delay_period: value.delay_period.as_nanos() as u64,
+        }
     }
 }
 
@@ -186,15 +175,13 @@ impl ConnectionEnd {
     }
 
     /// Setter for the `counterparty` field.
-#[trusted]
     pub fn set_counterparty(&mut self, new_cparty: Counterparty) {
         self.counterparty = new_cparty;
     }
 
     /// Setter for the `version` field.
-#[trusted]
     pub fn set_version(&mut self, new_version: Version) {
-unreachable!() //         self.versions = vec![new_version];
+        self.versions = vec![new_version];
     }
 
     /// Helper function to compare the counterparty of this end with another counterparty.
@@ -203,19 +190,16 @@ unreachable!() //         self.versions = vec![new_version];
     }
 
     /// Helper function to compare the client id of this end with another client identifier.
-#[trusted]
     pub fn client_id_matches(&self, other: &ClientId) -> bool {
         self.client_id.eq(other)
     }
 
-#[trusted]
     pub fn is_open(&self) -> bool {
-unreachable!() //         self.state_matches(&State::Open)
+        self.state_matches(&State::Open)
     }
 
-#[trusted]
     pub fn is_uninitialized(&self) -> bool {
-unreachable!() //         self.state_matches(&State::Uninitialized)
+        self.state_matches(&State::Uninitialized)
     }
 
     /// Helper function to compare the state of this end with another state.
@@ -250,22 +234,14 @@ unreachable!() //         self.state_matches(&State::Uninitialized)
     }
 }
 
-#[derive(Clone, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Counterparty {
     client_id: ClientId,
     pub connection_id: Option<ConnectionId>,
     prefix: CommitmentPrefix,
 }
 
-impl PartialEq for Counterparty {
-    #[trusted]
-    fn eq(&self, other: &Self) -> bool {
-       unreachable!()
-    }
-}
-
 impl Default for Counterparty {
-#[trusted]
     fn default() -> Self {
         Counterparty {
             client_id: Default::default(),
@@ -278,47 +254,41 @@ impl Default for Counterparty {
 // Converts from the wire format RawCounterparty. Typically used from the relayer side
 // during queries for response validation and to extract the Counterparty structure.
 impl TryFrom<RawCounterparty> for Counterparty {
-    type Error = anomaly::Error<Kind>;
+    type Error = Error;
 
-#[trusted]
     fn try_from(value: RawCounterparty) -> Result<Self, Self::Error> {
-unreachable!() // panic!("No") // panic!("No") //         let connection_id = Some(value.connection_id)
-// // //             .filter(|x| !x.is_empty())
-// // //             .map(|v| FromStr::from_str(v.as_str()))
-// // //             .transpose()
-// // //             .map_err(|e| Kind::IdentifierError.context(e))?;
-// // //         Ok(Counterparty::new(
-// // //             value
-// // //                 .client_id
-// // //                 .parse()
-// // //                 .map_err(|e| Kind::IdentifierError.context(e))?,
-// // //             connection_id,
-// // //             value
-// // //                 .prefix
-// // //                 .ok_or(Kind::MissingCounterparty)?
-// // //                 .key_prefix
-// // //                 .into(),
-// // //         ))
+        let connection_id = Some(value.connection_id)
+            .filter(|x| !x.is_empty())
+            .map(|v| FromStr::from_str(v.as_str()))
+            .transpose()
+            .map_err(Error::invalid_identifier)?;
+        Ok(Counterparty::new(
+            value.client_id.parse().map_err(Error::invalid_identifier)?,
+            connection_id,
+            value
+                .prefix
+                .ok_or_else(Error::missing_counterparty)?
+                .key_prefix
+                .into(),
+        ))
     }
 }
 
 impl From<Counterparty> for RawCounterparty {
-#[trusted]
     fn from(value: Counterparty) -> Self {
-unreachable!() // panic!("No") // panic!("No") //         RawCounterparty {
-// // //             client_id: value.client_id.as_str().to_string(),
-// // //             connection_id: value
-// // //                 .connection_id
-// // //                 .map_or_else(|| "".to_string(), |v| v.as_str().to_string()),
-// // //             prefix: Some(ibc_proto::ibc::core::commitment::v1::MerklePrefix {
-// // //                 key_prefix: value.prefix.into_vec(),
-// // //             }),
-// // //         }
+        RawCounterparty {
+            client_id: value.client_id.as_str().to_string(),
+            connection_id: value
+                .connection_id
+                .map_or_else(|| "".to_string(), |v| v.as_str().to_string()),
+            prefix: Some(ibc_proto::ibc::core::commitment::v1::MerklePrefix {
+                key_prefix: value.prefix.into_vec(),
+            }),
+        }
     }
 }
 
 impl Counterparty {
-#[trusted]
     pub fn new(
         client_id: ClientId,
         connection_id: Option<ConnectionId>,
@@ -332,28 +302,25 @@ impl Counterparty {
     }
 
     /// Getter for the client id.
-    #[trusted]
     pub fn client_id(&self) -> &ClientId {
         &self.client_id
     }
 
     /// Getter for connection id.
-    #[trusted]
     pub fn connection_id(&self) -> Option<&ConnectionId> {
-unreachable!() //         self.connection_id.as_ref()
+        self.connection_id.as_ref()
     }
 
     pub fn prefix(&self) -> &CommitmentPrefix {
         &self.prefix
     }
 
-    #[trusted]
     pub fn validate_basic(&self) -> Result<(), ValidationError> {
         Ok(())
     }
 }
 
-#[derive(Copy, Clone, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum State {
     Uninitialized = 0,
     Init = 1,
@@ -361,41 +328,30 @@ pub enum State {
     Open = 3,
 }
 
-impl PartialEq for State {
-    #[trusted]
-    fn eq(&self, other: &Self) -> bool {
-       unreachable!()
-    }
-}
-
 impl State {
     /// Yields the State as a string.
-#[trusted]
     pub fn as_string(&self) -> &'static str {
-unreachable!() //         match self {
-//             Self::Uninitialized => "UNINITIALIZED",
-//             Self::Init => "INIT",
-//             Self::TryOpen => "TRYOPEN",
-//             Self::Open => "OPEN",
-//         }
+        match self {
+            Self::Uninitialized => "UNINITIALIZED",
+            Self::Init => "INIT",
+            Self::TryOpen => "TRYOPEN",
+            Self::Open => "OPEN",
+        }
     }
-
-    /// Parses the State out from a i32.
-#[trusted]
+    // Parses the State out from a i32.
     pub fn from_i32(s: i32) -> Result<Self, Error> {
         match s {
             0 => Ok(Self::Uninitialized),
             1 => Ok(Self::Init),
             2 => Ok(Self::TryOpen),
             3 => Ok(Self::Open),
-            _ => fail!(error::Kind::InvalidState(s), s),
+            _ => Err(Error::invalid_state(s)),
         }
     }
 
     /// Returns whether or not this connection state is `Open`.
-#[trusted]
     pub fn is_open(self) -> bool {
-unreachable!() //         self == State::Open
+        self == State::Open
     }
 
     /// Returns whether or not this connection with this state
@@ -407,21 +363,20 @@ unreachable!() //         self == State::Open
     /// assert!(State::TryOpen.less_or_equal_progress(State::TryOpen));
     /// assert!(!State::Open.less_or_equal_progress(State::Uninitialized));
     /// ```
-#[trusted]
     pub fn less_or_equal_progress(self, other: Self) -> bool {
-unreachable!() //         self as u32 <= other as u32
+        self as u32 <= other as u32
     }
 }
 
 impl TryFrom<i32> for State {
-    type Error = anomaly::Error<Kind>;
+    type Error = Error;
     fn try_from(value: i32) -> Result<Self, Self::Error> {
         match value {
             0 => Ok(Self::Uninitialized),
             1 => Ok(Self::Init),
             2 => Ok(Self::TryOpen),
             3 => Ok(Self::Open),
-            _ => Err(Kind::InvalidState(value).into()),
+            _ => Err(Error::invalid_state(value)),
         }
     }
 }

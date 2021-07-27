@@ -5,10 +5,9 @@ use crate::events::IbcEvent;
 use crate::handler::{HandlerOutput, HandlerResult};
 use crate::ics02_client::client_consensus::AnyConsensusState;
 use crate::ics02_client::client_def::{AnyClient, ClientDef};
-use crate::ics02_client::client_state::AnyClientState;
-use crate::ics02_client::client_state::ClientState;
+use crate::ics02_client::client_state::{AnyClientState, ClientState};
 use crate::ics02_client::context::ClientReader;
-use crate::ics02_client::error::{Error, Kind};
+use crate::ics02_client::error::Error;
 use crate::ics02_client::events::Attributes;
 use crate::ics02_client::handler::ClientResult;
 use crate::ics02_client::msgs::upgrade_client::MsgUpgradeAnyClient;
@@ -28,58 +27,55 @@ pub fn process(
     ctx: &dyn ClientReader,
     msg: MsgUpgradeAnyClient,
 ) -> HandlerResult<ClientResult, Error> {
-unreachable!() // panic!("No") //     let mut output = HandlerOutput::builder();
-// //     let MsgUpgradeAnyClient { client_id, .. } = msg;
-// // 
-// //     // Read client state from the host chain store.
-// //     let client_state = ctx
-// //         .client_state(&client_id)
-// //         .ok_or_else(|| Kind::ClientNotFound(client_id.clone()))?;
-// // 
-// //     if client_state.is_frozen() {
-// //         return Err(Kind::ClientFrozen(client_id).into());
-// //     }
-// // 
-// //     let upgrade_client_state = msg.client_state.clone();
-// // 
-// //     if client_state.latest_height() >= upgrade_client_state.latest_height() {
-// //         return Err(Kind::LowUpgradeHeight(
-// //             client_state.latest_height(),
-// //             upgrade_client_state.latest_height(),
-// //         )
-// //         .into());
-// //     }
-// // 
-// //     let client_type = ctx
-// //         .client_type(&client_id)
-// //         .ok_or_else(|| Kind::ClientNotFound(client_id.clone()))?;
-// // 
-// //     let client_def = AnyClient::from_client_type(client_type);
-// // 
-// //     let (new_client_state, new_consensus_state) = client_def
-// //         .verify_upgrade_and_update_state(
-// //             &upgrade_client_state,
-// //             &msg.consensus_state,
-// //             msg.proof_upgrade_client.clone(),
-// //             msg.proof_upgrade_consensus_state,
-// //         )
-// //         .map_err(|e| Kind::UpgradeVerificationFailure.context(e.to_string()))?;
-// // 
-// //     // Not implemented yet: https://github.com/informalsystems/ibc-rs/issues/722
-// //     // todo!()
-// // 
-// //     let result = ClientResult::Upgrade(Result {
-// //         client_id: client_id.clone(),
-// //         client_state: new_client_state,
-// //         consensus_state: new_consensus_state,
-// //     });
-// //     let event_attributes = Attributes {
-// //         client_id,
-// //         ..Default::default()
-// //     };
-// // 
-// //     output.emit(IbcEvent::UpgradeClient(event_attributes.into()));
-// //     Ok(output.with_result(result))
+    let mut output = HandlerOutput::builder();
+    let MsgUpgradeAnyClient { client_id, .. } = msg;
+
+    // Read client state from the host chain store.
+    let client_state = ctx
+        .client_state(&client_id)
+        .ok_or_else(|| Error::client_not_found(client_id.clone()))?;
+
+    if client_state.is_frozen() {
+        return Err(Error::client_frozen(client_id));
+    }
+
+    let upgrade_client_state = msg.client_state.clone();
+
+    if client_state.latest_height() >= upgrade_client_state.latest_height() {
+        return Err(Error::low_upgrade_height(
+            client_state.latest_height(),
+            upgrade_client_state.latest_height(),
+        ));
+    }
+
+    let client_type = ctx
+        .client_type(&client_id)
+        .ok_or_else(|| Error::client_not_found(client_id.clone()))?;
+
+    let client_def = AnyClient::from_client_type(client_type);
+
+    let (new_client_state, new_consensus_state) = client_def.verify_upgrade_and_update_state(
+        &upgrade_client_state,
+        &msg.consensus_state,
+        msg.proof_upgrade_client.clone(),
+        msg.proof_upgrade_consensus_state,
+    )?;
+
+    // Not implemented yet: https://github.com/informalsystems/ibc-rs/issues/722
+    // todo!()
+
+    let result = ClientResult::Upgrade(Result {
+        client_id: client_id.clone(),
+        client_state: new_client_state,
+        consensus_state: new_consensus_state,
+    });
+    let event_attributes = Attributes {
+        client_id,
+        ..Default::default()
+    };
+
+    output.emit(IbcEvent::UpgradeClient(event_attributes.into()));
+    Ok(output.with_result(result))
 }
 
 #[cfg(test)]
@@ -88,7 +84,7 @@ mod tests {
 
     use crate::events::IbcEvent;
     use crate::handler::HandlerOutput;
-    use crate::ics02_client::error::Kind;
+    use crate::ics02_client::error::{Error, ErrorDetail};
     use crate::ics02_client::handler::dispatch;
     use crate::ics02_client::handler::ClientResult::Upgrade;
     use crate::ics02_client::msgs::upgrade_client::MsgUpgradeAnyClient;
@@ -178,11 +174,11 @@ mod tests {
         let output = dispatch(&ctx, ClientMsg::UpgradeClient(msg.clone()));
 
         match output {
-            Ok(_) => {
-                panic!("unexpected success (expected error)");
+            Err(Error(ErrorDetail::ClientNotFound(e), _)) => {
+                assert_eq!(e.client_id, msg.client_id);
             }
-            Err(err) => {
-                assert_eq!(err.kind(), &Kind::ClientNotFound(msg.client_id));
+            _ => {
+                panic!("expected ClientNotFound error, instead got {:?}", output);
             }
         }
     }
@@ -212,14 +208,12 @@ mod tests {
         let output = dispatch(&ctx, ClientMsg::UpgradeClient(msg.clone()));
 
         match output {
-            Ok(_) => {
-                panic!("unexpected success (expected error)");
+            Err(Error(ErrorDetail::LowUpgradeHeight(e), _)) => {
+                assert_eq!(e.upgraded_height, Height::new(0, 42));
+                assert_eq!(e.client_height, msg.client_state.latest_height());
             }
-            Err(err) => {
-                assert_eq!(
-                    err.kind(),
-                    &Kind::LowUpgradeHeight(Height::new(0, 42), msg.client_state.latest_height())
-                );
+            _ => {
+                panic!("expected LowUpgradeHeight error, instead got {:?}", output);
             }
         }
     }

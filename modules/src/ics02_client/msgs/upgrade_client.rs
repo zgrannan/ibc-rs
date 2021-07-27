@@ -1,6 +1,5 @@
 //! Definition of domain type msg `MsgUpgradeAnyClient`.
 
-use prusti_contracts::*;
 use std::convert::TryFrom;
 use std::str::FromStr;
 
@@ -11,7 +10,7 @@ use ibc_proto::ibc::core::commitment::v1::MerkleProof as RawMerkleProof;
 
 use crate::ics02_client::client_consensus::AnyConsensusState;
 use crate::ics02_client::client_state::AnyClientState;
-use crate::ics02_client::error::Kind;
+use crate::ics02_client::error::Error;
 use crate::ics23_commitment::commitment::CommitmentProofBytes;
 use crate::ics24_host::identifier::ClientId;
 use crate::signer::Signer;
@@ -20,7 +19,7 @@ use crate::tx_msg::Msg;
 pub(crate) const TYPE_URL: &str = "/ibc.core.client.v1.MsgUpgradeClient";
 
 /// A type of message that triggers the upgrade of an on-chain (IBC) client.
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct MsgUpgradeAnyClient {
     pub client_id: ClientId,
     pub client_state: AnyClientState,
@@ -53,14 +52,12 @@ impl Msg for MsgUpgradeAnyClient {
     type ValidationError = crate::ics24_host::error::ValidationError;
     type Raw = RawMsgUpgradeClient;
 
-#[trusted]
     fn route(&self) -> String {
-unreachable!() //         crate::keys::ROUTER_KEY.to_string()
+        crate::keys::ROUTER_KEY.to_string()
     }
 
-#[trusted]
     fn type_url(&self) -> String {
-unreachable!() //         TYPE_URL.to_string()
+        TYPE_URL.to_string()
     }
 }
 
@@ -83,31 +80,31 @@ impl From<MsgUpgradeAnyClient> for RawMsgUpgradeClient {
 }
 
 impl TryFrom<RawMsgUpgradeClient> for MsgUpgradeAnyClient {
-    type Error = Kind;
+    type Error = Error;
 
-#[trusted]
     fn try_from(proto_msg: RawMsgUpgradeClient) -> Result<Self, Self::Error> {
-unreachable!() // panic!("No") //         let raw_client_state = proto_msg.client_state.ok_or(Kind::InvalidRawClientState)?;
-// //         let raw_consensus_state = proto_msg
-// //             .consensus_state
-// //             .ok_or(Kind::InvalidRawConsensusState)?;
-// // 
-// //         let c_bytes = CommitmentProofBytes::from(proto_msg.proof_upgrade_client);
-// //         let cs_bytes = CommitmentProofBytes::from(proto_msg.proof_upgrade_consensus_state);
-// // 
-// //         Ok(MsgUpgradeAnyClient {
-// //             client_id: ClientId::from_str(&proto_msg.client_id)
-// //                 .map_err(|e| Kind::InvalidClientIdentifier(e.kind().clone()))?,
-// //             client_state: AnyClientState::try_from(raw_client_state)
-// //                 .map_err(|_| Kind::InvalidRawClientState)?,
-// //             consensus_state: AnyConsensusState::try_from(raw_consensus_state)
-// //                 .map_err(|_| Kind::InvalidRawConsensusState)?,
-// //             proof_upgrade_client: RawMerkleProof::try_from(c_bytes)
-// //                 .map_err(|e| Kind::InvalidUpgradeClientProof(e))?,
-// //             proof_upgrade_consensus_state: RawMerkleProof::try_from(cs_bytes)
-// //                 .map_err(|e| Kind::InvalidUpgradeConsensusStateProof(e))?,
-// //             signer: proto_msg.signer.into(),
-// //         })
+        let raw_client_state = proto_msg
+            .client_state
+            .ok_or_else(Error::missing_raw_client_state)?;
+
+        let raw_consensus_state = proto_msg
+            .consensus_state
+            .ok_or_else(Error::missing_raw_client_state)?;
+
+        let c_bytes = CommitmentProofBytes::from(proto_msg.proof_upgrade_client);
+        let cs_bytes = CommitmentProofBytes::from(proto_msg.proof_upgrade_consensus_state);
+
+        Ok(MsgUpgradeAnyClient {
+            client_id: ClientId::from_str(&proto_msg.client_id)
+                .map_err(Error::invalid_client_identifier)?,
+            client_state: AnyClientState::try_from(raw_client_state)?,
+            consensus_state: AnyConsensusState::try_from(raw_consensus_state)?,
+            proof_upgrade_client: RawMerkleProof::try_from(c_bytes)
+                .map_err(Error::invalid_upgrade_client_proof)?,
+            proof_upgrade_consensus_state: RawMerkleProof::try_from(cs_bytes)
+                .map_err(Error::invalid_upgrade_consensus_state_proof)?,
+            signer: proto_msg.signer.into(),
+        })
     }
 }
 

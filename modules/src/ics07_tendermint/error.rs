@@ -1,67 +1,102 @@
-use anomaly::{BoxError, Context};
-use thiserror::Error;
-use prusti_contracts::*;
+use crate::ics24_host::error::ValidationError;
+use flex_error::{define_error, DisplayOnly, TraceError};
 
-use crate::ics24_host::error::ValidationKind;
+define_error! {
+    Error {
+        InvalidTrustingPeriod
+            { reason: String }
+            | _ | { "invalid trusting period" },
 
-pub type Error = anomaly::Error<Kind>;
+        InvalidUnboundingPeriod
+            { reason: String }
+            | _ | { "invalid unbonding period" },
 
-impl std::fmt::Display for Kind {
-#[trusted]
-    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        unreachable!()
-    }
-}
-impl std::fmt::Debug for Kind {
-#[trusted]
-    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        unreachable!()
-    }
-}
+        InvalidAddress
+            | _ | { "invalid address" },
 
+        InvalidHeader
+            { reason: String }
+            [ DisplayOnly<Box<dyn std::error::Error + Send + Sync>> ]
+            | _ | { "invalid header, failed basic validation" },
 
-#[derive(Clone, Error)]
-pub enum Kind {
-//     #[error("invalid trusting period")]
-    InvalidTrustingPeriod,
+        InvalidTrustThreshold
+            { reason: String }
+            | e | {
+                format_args!("invalid client state trust threshold: {}",
+                    e.reason)
+            },
 
-//    #[error("invalid client state trust threshold")]
-    InvalidTrustThreshold,
+        MissingSignedHeader
+            | _ | { "missing signed header" },
 
-//    #[error("invalid unbonding period")]
-    InvalidUnboundingPeriod,
+        Validation
+            { reason: String }
+            | _ | { "invalid header, failed basic validation" },
 
-//     #[error("invalid address")]
-    InvalidAddress,
+        InvalidRawClientState
+            { reason: String }
+            | _ | { "invalid raw client state" },
 
-//     #[error("invalid header, failed basic validation")]
-    InvalidHeader,
+        MissingValidatorSet
+            | _ | { "missing validator set" },
 
-//     #[error("validation error")]
-    ValidationError,
+        MissingTrustedValidatorSet
+            | _ | { "missing trusted validator set" },
 
-//     #[error("invalid raw client state")]
-    InvalidRawClientState,
+        MissingTrustedHeight
+            | _ | { "missing trusted height" },
 
-//     #[error("invalid chain identifier: raw value {0} with underlying validation error: {1}")]
-    InvalidChainId(String, ValidationKind),
+        MissingTrustingPeriod
+            | _ | { "missing trusting period" },
 
-//     #[error("invalid raw height")]
-    InvalidRawHeight,
+        MissingUnbondingPeriod
+            | _ | { "missing unbonding period" },
 
-//     #[error("invalid raw client consensus state")]
-    InvalidRawConsensusState,
+        InvalidChainIdentifier
+            [ ValidationError ]
+            | _ | { "Invalid chain identifier" },
 
-//     #[error("invalid raw header")]
-    InvalidRawHeader,
+        NegativeTrustingPeriod
+            | _ | { "negative trusting period" },
 
-//     #[error("invalid raw misbehaviour")]
-    InvalidRawMisbehaviour,
-}
+        NegativeUnbondingPeriod
+            | _ | { "negative unbonding period" },
 
-impl Kind {
-#[trusted]
-    pub fn context(self, source: impl Into<BoxError>) -> Context<Self> {
-unreachable!() //         Context::new(self, Some(source.into()))
+        MissingMaxClockDrift
+            | _ | { "missing max clock drift" },
+
+        NegativeMaxClockDrift
+            | _ | {  "negative max clock drift" },
+
+        MissingLatestHeight
+            | _ | { "missing latest height" },
+
+        MissingFrozenHeight
+            | _ | { "missing frozen height" },
+
+        InvalidChainId
+            { raw_value: String }
+            [ ValidationError ]
+            | e | { format_args!("invalid chain identifier: raw value {0}", e.raw_value) },
+
+        InvalidRawHeight
+            | _ | { "invalid raw height" },
+
+        InvalidRawConsensusState
+            { reason: String }
+            | _ | { "invalid raw client consensus state" },
+
+        InvalidRawHeader
+            [ DisplayOnly<Box<dyn std::error::Error + Send + Sync>> ]
+            | _ | { "invalid raw header" },
+
+        InvalidRawMisbehaviour
+            { reason: String }
+            | _ | { "invalid raw misbehaviour" },
+
+        Decode
+            [ TraceError<prost::DecodeError> ]
+            | _ | { "decode error" },
+
     }
 }

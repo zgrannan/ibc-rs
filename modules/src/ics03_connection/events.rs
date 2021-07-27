@@ -1,10 +1,7 @@
 //! Types for the IBC events emitted from Tendermint Websocket by the connection module.
-use crate::events::{IbcEvent, RawObject};
+use crate::events::{extract_attribute, maybe_extract_attribute, Error, IbcEvent, RawObject};
 use crate::ics02_client::height::Height;
 use crate::ics24_host::identifier::{ClientId, ConnectionId};
-use crate::{attribute, some_attribute};
-use anomaly::BoxError;
-use prusti_contracts::trusted;
 use serde_derive::{Deserialize, Serialize};
 use std::convert::TryFrom;
 
@@ -20,23 +17,22 @@ const CLIENT_ID_ATTRIBUTE_KEY: &str = "client_id";
 const COUNTERPARTY_CONN_ID_ATTRIBUTE_KEY: &str = "counterparty_connection_id";
 const COUNTERPARTY_CLIENT_ID_ATTRIBUTE_KEY: &str = "counterparty_client_id";
 
-#[trusted]
 pub fn try_from_tx(event: &tendermint::abci::Event) -> Option<IbcEvent> {
-unreachable!() //     match event.type_str.as_ref() {
-//         INIT_EVENT_TYPE => Some(IbcEvent::OpenInitConnection(OpenInit::from(
-//             extract_attributes_from_tx(event),
-//         ))),
-//         TRY_EVENT_TYPE => Some(IbcEvent::OpenTryConnection(OpenTry::from(
-//             extract_attributes_from_tx(event),
-//         ))),
-//         ACK_EVENT_TYPE => Some(IbcEvent::OpenAckConnection(OpenAck::from(
-//             extract_attributes_from_tx(event),
-//         ))),
-//         CONFIRM_EVENT_TYPE => Some(IbcEvent::OpenConfirmConnection(OpenConfirm::from(
-//             extract_attributes_from_tx(event),
-//         ))),
-//         _ => None,
-//     }
+    match event.type_str.as_ref() {
+        INIT_EVENT_TYPE => Some(IbcEvent::OpenInitConnection(OpenInit::from(
+            extract_attributes_from_tx(event),
+        ))),
+        TRY_EVENT_TYPE => Some(IbcEvent::OpenTryConnection(OpenTry::from(
+            extract_attributes_from_tx(event),
+        ))),
+        ACK_EVENT_TYPE => Some(IbcEvent::OpenAckConnection(OpenAck::from(
+            extract_attributes_from_tx(event),
+        ))),
+        CONFIRM_EVENT_TYPE => Some(IbcEvent::OpenConfirmConnection(OpenConfirm::from(
+            extract_attributes_from_tx(event),
+        ))),
+        _ => None,
+    }
 }
 
 fn extract_attributes_from_tx(event: &tendermint::abci::Event) -> Attributes {
@@ -62,13 +58,39 @@ fn extract_attributes_from_tx(event: &tendermint::abci::Event) -> Attributes {
     attr
 }
 
-#[derive(Clone, Hash)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Attributes {
     pub height: Height,
     pub connection_id: Option<ConnectionId>,
     pub client_id: ClientId,
     pub counterparty_connection_id: Option<ConnectionId>,
     pub counterparty_client_id: ClientId,
+}
+
+fn extract_attributes(object: &RawObject, namespace: &str) -> Result<Attributes, Error> {
+    Ok(Attributes {
+        height: object.height,
+
+        connection_id: maybe_extract_attribute(&object, &format!("{}.connection_id", namespace))
+            .and_then(|val| val.parse().ok()),
+
+        client_id: extract_attribute(&object, &format!("{}.client_id", namespace))?
+            .parse()
+            .map_err(Error::parse)?,
+
+        counterparty_connection_id: maybe_extract_attribute(
+            &object,
+            &format!("{}.counterparty_connection_id", namespace),
+        )
+        .and_then(|val| val.parse().ok()),
+
+        counterparty_client_id: extract_attribute(
+            &object,
+            &format!("{}.counterparty_client_id", namespace),
+        )?
+        .parse()
+        .map_err(Error::parse)?,
+    })
 }
 
 impl Default for Attributes {
@@ -83,7 +105,7 @@ impl Default for Attributes {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct OpenInit(Attributes);
 
 impl OpenInit {
@@ -108,19 +130,9 @@ impl From<Attributes> for OpenInit {
 }
 
 impl TryFrom<RawObject> for OpenInit {
-    type Error = BoxError;
-#[trusted]
+    type Error = Error;
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
-unreachable!() //         Ok(OpenInit(Attributes {
-//             height: obj.height,
-//             connection_id: some_attribute!(obj, "connection_open_init.connection_id"),
-//             client_id: attribute!(obj, "connection_open_init.client_id"),
-//             counterparty_connection_id: some_attribute!(
-//                 obj,
-//                 "connection_open_init.counterparty_connection_id"
-//             ),
-//             counterparty_client_id: attribute!(obj, "connection_open_init.counterparty_client_id"),
-//         }))
+        Ok(OpenInit(extract_attributes(&obj, "connection_open_init")?))
     }
 }
 
@@ -130,7 +142,7 @@ impl From<OpenInit> for IbcEvent {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct OpenTry(Attributes);
 
 impl OpenTry {
@@ -155,19 +167,9 @@ impl From<Attributes> for OpenTry {
 }
 
 impl TryFrom<RawObject> for OpenTry {
-    type Error = BoxError;
-#[trusted]
+    type Error = Error;
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
-unreachable!() //         Ok(OpenTry(Attributes {
-//             height: obj.height,
-//             connection_id: some_attribute!(obj, "connection_open_try.connection_id"),
-//             client_id: attribute!(obj, "connection_open_try.client_id"),
-//             counterparty_connection_id: some_attribute!(
-//                 obj,
-//                 "connection_open_try.counterparty_connection_id"
-//             ),
-//             counterparty_client_id: attribute!(obj, "connection_open_try.counterparty_client_id"),
-//         }))
+        Ok(OpenTry(extract_attributes(&obj, "connection_open_try")?))
     }
 }
 
@@ -177,7 +179,7 @@ impl From<OpenTry> for IbcEvent {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct OpenAck(Attributes);
 
 impl OpenAck {
@@ -202,19 +204,9 @@ impl From<Attributes> for OpenAck {
 }
 
 impl TryFrom<RawObject> for OpenAck {
-    type Error = BoxError;
-#[trusted]
+    type Error = Error;
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
-unreachable!() //         Ok(OpenAck(Attributes {
-//             height: obj.height,
-//             connection_id: some_attribute!(obj, "connection_open_ack.connection_id"),
-//             client_id: attribute!(obj, "connection_open_ack.client_id"),
-//             counterparty_connection_id: some_attribute!(
-//                 obj,
-//                 "connection_open_ack.counterparty_connection_id"
-//             ),
-//             counterparty_client_id: attribute!(obj, "connection_open_ack.counterparty_client_id"),
-//         }))
+        Ok(OpenAck(extract_attributes(&obj, "connection_open_ack")?))
     }
 }
 
@@ -224,7 +216,7 @@ impl From<OpenAck> for IbcEvent {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct OpenConfirm(Attributes);
 
 impl OpenConfirm {
@@ -249,22 +241,12 @@ impl From<Attributes> for OpenConfirm {
 }
 
 impl TryFrom<RawObject> for OpenConfirm {
-    type Error = BoxError;
-#[trusted]
+    type Error = Error;
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
-unreachable!() //         Ok(OpenConfirm(Attributes {
-//             height: obj.height,
-//             connection_id: some_attribute!(obj, "connection_open_confirm.connection_id"),
-//             client_id: attribute!(obj, "connection_open_confirm.client_id"),
-//             counterparty_connection_id: some_attribute!(
-//                 obj,
-//                 "connection_open_confirm.counterparty_connection_id"
-//             ),
-//             counterparty_client_id: attribute!(
-//                 obj,
-//                 "connection_open_confirm.counterparty_client_id"
-//             ),
-//         }))
+        Ok(OpenConfirm(extract_attributes(
+            &obj,
+            "connection_open_confirm",
+        )?))
     }
 }
 

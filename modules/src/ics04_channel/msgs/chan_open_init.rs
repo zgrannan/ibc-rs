@@ -1,6 +1,5 @@
 use crate::ics04_channel::channel::ChannelEnd;
-use crate::ics04_channel::error::{Error, Kind};
-use prusti_contracts::*;
+use crate::ics04_channel::error::Error;
 use crate::ics24_host::identifier::PortId;
 use crate::signer::Signer;
 use crate::tx_msg::Msg;
@@ -15,7 +14,7 @@ pub const TYPE_URL: &str = "/ibc.core.channel.v1.MsgChannelOpenInit";
 ///
 /// Message definition for the first step in the channel open handshake (`ChanOpenInit` datagram).
 ///
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct MsgChannelOpenInit {
     pub port_id: PortId,
     pub channel: ChannelEnd,
@@ -46,32 +45,29 @@ impl Msg for MsgChannelOpenInit {
     type ValidationError = Error;
     type Raw = RawMsgChannelOpenInit;
 
-#[trusted]
     fn route(&self) -> String {
-unreachable!() //         crate::keys::ROUTER_KEY.to_string()
+        crate::keys::ROUTER_KEY.to_string()
     }
 
-#[trusted]
     fn type_url(&self) -> String {
-unreachable!() //         TYPE_URL.to_string()
+        TYPE_URL.to_string()
     }
 }
 
 impl Protobuf<RawMsgChannelOpenInit> for MsgChannelOpenInit {}
 
 impl TryFrom<RawMsgChannelOpenInit> for MsgChannelOpenInit {
-    type Error = anomaly::Error<Kind>;
+    type Error = Error;
 
-#[trusted]
     fn try_from(raw_msg: RawMsgChannelOpenInit) -> Result<Self, Self::Error> {
-unreachable!() //         Ok(MsgChannelOpenInit {
-//             port_id: raw_msg
-//                 .port_id
-//                 .parse()
-//                 .map_err(|e| Kind::IdentifierError.context(e))?,
-//             channel: raw_msg.channel.ok_or(Kind::MissingChannel)?.try_into()?,
-//             signer: raw_msg.signer.into(),
-//         })
+        Ok(MsgChannelOpenInit {
+            port_id: raw_msg.port_id.parse().map_err(Error::identifier)?,
+            channel: raw_msg
+                .channel
+                .ok_or_else(Error::missing_channel)?
+                .try_into()?,
+            signer: raw_msg.signer.into(),
+        })
     }
 }
 

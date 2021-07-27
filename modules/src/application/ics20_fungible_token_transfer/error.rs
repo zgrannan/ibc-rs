@@ -1,60 +1,46 @@
-use anomaly::{BoxError, Context};
-use thiserror::Error;
-use prusti_contracts::*;
-
+use crate::ics04_channel::error as channel_error;
+use crate::ics24_host::error::ValidationError;
 use crate::ics24_host::identifier::{ChannelId, PortId};
+use flex_error::define_error;
 
-pub type Error = anomaly::Error<Kind>;
+define_error! {
+    Error {
+        UnknowMessageTypeUrl
+            { url: String }
+            | e | { format_args!("unrecognized ICS-20 transfer message type URL {0}", e.url) },
 
-impl std::fmt::Display for Kind {
-    #[trusted]
-    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        unreachable!()
-    }
-}
-impl std::fmt::Debug for Kind {
-    #[trusted]
-    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        unreachable!()
-    }
-}
+        Ics04Channel
+            [ channel_error::Error ]
+            |_ | { "Ics04 channel error" },
 
+        SequenceSendNotFound
+            { port_id: PortId, channel_id: ChannelId }
+            | e | { format_args!("sending sequence number not found for port {0} and channel {1}", e.port_id, e.channel_id) },
 
-#[derive(Clone, Error)]
-pub enum Kind {
-//     #[error("unrecognized ICS-20 transfer message type URL {0}")]
-    UnknownMessageTypeUrl(String),
+        ChannelNotFound
+            { port_id: PortId, channel_id: ChannelId }
+            | e | { format_args!("sending sequence number not found for port {0} and channel {1}", e.port_id, e.channel_id) },
 
-//     #[error("error raised by message handler")]
-    HandlerRaisedError,
+        DestinationChannelNotFound
+            { port_id: PortId, channel_id: ChannelId }
+            | e | { format_args!("destination channel not found in the counterparty of port_id {0} and channel_id {1} ", e.port_id, e.channel_id) },
 
-//     #[error("sending sequence number not found for port {0} and channel {1}")]
-    SequenceSendNotFound(PortId, ChannelId),
+        InvalidPortId
+            { context: String }
+            [ ValidationError ]
+            | _ | { "invalid port identifier" },
 
-//     #[error("missing channel for port_id {0} and channel_id {1} ")]
-    ChannelNotFound(PortId, ChannelId),
+        InvalidChannelId
+            { context: String }
+            [ ValidationError ]
+            | _ | { "invalid channel identifier" },
 
-//     #[error(
-        // "destination channel not found in the counterparty of port_id {0} and channel_id {1} "
-    // )]
-    DestinationChannelNotFound(PortId, ChannelId),
+        InvalidPacketTimeoutHeight
+            { context: String }
+            | _ | { "invalid packet timeout height value" },
 
-//     #[error("invalid port identifier")]
-    InvalidPortId(String),
-
-//     #[error("invalid channel identifier")]
-    InvalidChannelId(String),
-
-//     #[error("invalid packet timeout height value")]
-    InvalidPacketTimeoutHeight(String),
-
-//     #[error("invalid packet timeout timestamp value")]
-    InvalidPacketTimeoutTimestamp(u64),
-}
-
-impl Kind {
-#[trusted]
-    pub fn context(self, source: impl Into<BoxError>) -> Context<Self> {
-unreachable!() //         Context::new(self, Some(source.into()))
+        InvalidPacketTimeoutTimestamp
+            { timestamp: u64 }
+            | _ | { "invalid packet timeout timestamp value" },
     }
 }

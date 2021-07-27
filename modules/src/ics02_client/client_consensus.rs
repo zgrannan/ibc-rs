@@ -1,17 +1,18 @@
 use core::marker::{Send, Sync};
-use std::convert::{TryFrom, TryInto};
 use prusti_contracts::*;
+use std::convert::TryFrom;
 
 use chrono::{DateTime, Utc};
 use prost_types::Any;
-// use serde::Serialize;
+use serde::Serialize;
+use std::convert::Infallible;
 use tendermint_proto::Protobuf;
 
 use ibc_proto::ibc::core::client::v1::ConsensusStateWithHeight;
 
 use crate::events::IbcEventType;
 use crate::ics02_client::client_type::ClientType;
-use crate::ics02_client::error::{Error, Kind};
+use crate::ics02_client::error::Error;
 use crate::ics02_client::height::Height;
 use crate::ics07_tendermint::consensus_state;
 use crate::ics23_commitment::commitment::CommitmentRoot;
@@ -26,8 +27,9 @@ pub const TENDERMINT_CONSENSUS_STATE_TYPE_URL: &str =
 
 pub const MOCK_CONSENSUS_STATE_TYPE_URL: &str = "/ibc.mock.ConsensusState";
 
-// #[dyn_clonable::clonable]
 pub trait ConsensusState: Clone + std::fmt::Debug + Send + Sync {
+    type Error;
+
     /// Type of client associated with this consensus state (eg. Tendermint)
     fn client_type(&self) -> ClientType;
 
@@ -35,7 +37,7 @@ pub trait ConsensusState: Clone + std::fmt::Debug + Send + Sync {
     // fn root(&self) -> &CommitmentRoot;
 
     /// Performs basic validation of the consensus state
-    fn validate_basic(&self) -> Result<(), Box<dyn std::error::Error>>;
+    fn validate_basic(&self) -> Result<(), Self::Error>;
 
     /// Wrap into an `AnyConsensusState`
 #[trusted]
@@ -88,22 +90,22 @@ impl TryFrom<Any> for AnyConsensusState {
 
 #[trusted]
     fn try_from(value: Any) -> Result<Self, Self::Error> {
-unreachable!() //         match value.type_url.as_str() {
-//             "" => Err(Kind::EmptyConsensusStateResponse.into()),
-// 
-//             TENDERMINT_CONSENSUS_STATE_TYPE_URL => Ok(AnyConsensusState::Tendermint(
-//                 consensus_state::ConsensusState::decode_vec(&value.value)
-//                     .map_err(|e| Kind::InvalidRawConsensusState.context(e))?,
-//             )),
-// 
-//             #[cfg(any(test, feature = "mocks"))]
-//             MOCK_CONSENSUS_STATE_TYPE_URL => Ok(AnyConsensusState::Mock(
-//                 MockConsensusState::decode_vec(&value.value)
-//                     .map_err(|e| Kind::InvalidRawConsensusState.context(e))?,
-//             )),
-// 
-//             _ => Err(Kind::UnknownConsensusStateType(value.type_url).into()),
-//         }
+        match value.type_url.as_str() {
+            "" => Err(Error::empty_consensus_state_response()),
+
+            TENDERMINT_CONSENSUS_STATE_TYPE_URL => Ok(AnyConsensusState::Tendermint(
+                consensus_state::ConsensusState::decode_vec(&value.value)
+                    .map_err(Error::decode_raw_client_state)?,
+            )),
+
+            #[cfg(any(test, feature = "mocks"))]
+            MOCK_CONSENSUS_STATE_TYPE_URL => Ok(AnyConsensusState::Mock(
+                MockConsensusState::decode_vec(&value.value)
+                    .map_err(Error::decode_raw_client_state)?,
+            )),
+
+            _ => Err(Error::unknown_consensus_state_type(value.type_url)),
+        }
     }
 }
 
@@ -137,22 +139,17 @@ pub struct AnyConsensusStateWithHeight {
 impl Protobuf<ConsensusStateWithHeight> for AnyConsensusStateWithHeight {}
 
 impl TryFrom<ConsensusStateWithHeight> for AnyConsensusStateWithHeight {
-    type Error = Kind;
+    type Error = Error;
 
     fn try_from(value: ConsensusStateWithHeight) -> Result<Self, Self::Error> {
         let state = value
             .consensus_state
-            .map(|cs| AnyConsensusState::try_from(cs))
-            .transpose()
-            .map_err(|_| Kind::InvalidRawConsensusState)?
-            .ok_or(Kind::EmptyConsensusStateResponse)?;
-
-        let height = value
-                .height
-                .ok_or(Kind::MissingHeight)?;
+            .map(AnyConsensusState::try_from)
+            .transpose()?
+            .ok_or_else(Error::empty_consensus_state_response)?;
 
         Ok(AnyConsensusStateWithHeight {
-            height: height.into(),
+            height: value.height.ok_or_else(Error::missing_height)?.into(),
             consensus_state: state,
         })
     }
@@ -168,6 +165,8 @@ impl From<AnyConsensusStateWithHeight> for ConsensusStateWithHeight {
 }
 
 impl ConsensusState for AnyConsensusState {
+    type Error = Infallible;
+
     fn client_type(&self) -> ClientType {
         self.client_type()
     }
@@ -176,8 +175,7 @@ impl ConsensusState for AnyConsensusState {
     //     todo!()
     // }
 
-    #[trusted]
-    fn validate_basic(&self) -> Result<(), Box<dyn std::error::Error>> {
+    fn validate_basic(&self) -> Result<(), Infallible> {
         todo!()
     }
 

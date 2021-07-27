@@ -1,78 +1,33 @@
-use anomaly::{BoxError, Context};
-use thiserror::Error;
-use prusti_contracts::*;
+use flex_error::define_error;
 
-pub type ValidationError = anomaly::Error<ValidationKind>;
+define_error! {
+    #[derive(Debug, PartialEq, Eq)]
+    ValidationError {
+        ContainSeparator
+            { id : String }
+            | e | { format_args!("identifier {0} cannot contain separator '/'", e.id) },
 
-impl std::fmt::Debug for ValidationKind {
-#[trusted]
-    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        unreachable!()
-    }
-}
+        InvalidLength
+            {
+                id: String,
+                length: usize,
+                min: usize,
+                max: usize,
+            }
+            | e | { format_args!("identifier {0} has invalid length {1} must be between {2}-{3} characters", e.id, e.length, e.min, e.max) },
 
-impl std::fmt::Display for ValidationKind {
-#[trusted]
-    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        unreachable!()
-    }
-}
+        InvalidCharacter
+            { id: String }
+            | e | { format_args!("identifier {0} must only contain alphanumeric characters or `.`, `_`, `+`, `-`, `#`, - `[`, `]`, `<`, `>`", e.id) },
 
+        Empty
+            | _ | { "identifier cannot be empty" },
 
-#[derive(Clone, Error)]
-pub enum ValidationKind {
-//     #[error("identifier {id} cannot contain separator '/'")]
-    ContainsSeparator { id: String },
+        ChainIdInvalidFormat
+            { id: String }
+            | e | { format_args!("chain identifiers are expected to be in epoch format {0}", e.id) },
 
-//     #[error("identifier {id} has invalid length {length} must be between {min}-{max} characters")]
-    InvalidLength {
-        id: String,
-        length: usize,
-        min: usize,
-        max: usize,
-    },
-
-//     #[error("identifier {id} must only contain alphanumeric characters or `.`, `_`, `+`, `-`, `#`, - `[`, `]`, `<`, `>`")]
-    InvalidCharacter { id: String },
-
-//     #[error("identifier cannot be empty")]
-    Empty,
-
-//     #[error("chain identifiers are expected to be in epoch format {id}")]
-    ChainIdInvalidFormat { id: String },
-
-//     #[error("Invalid channel id in counterparty")]
-    InvalidCounterpartyChannelId,
-}
-
-impl ValidationKind {
-    pub fn contains_separator(id: String) -> Self {
-        Self::ContainsSeparator { id }
-    }
-
-    pub fn invalid_length(id: String, length: usize, min: usize, max: usize) -> Self {
-        Self::InvalidLength {
-            id,
-            length,
-            min,
-            max,
-        }
-    }
-
-    pub fn invalid_character(id: String) -> Self {
-        Self::InvalidCharacter { id }
-    }
-
-    pub fn empty() -> Self {
-        Self::Empty
-    }
-
-    pub fn chain_id_invalid_format(id: String) -> Self {
-        Self::ChainIdInvalidFormat { id }
-    }
-
-#[trusted]
-    pub fn context(self, source: impl Into<BoxError>) -> Context<Self> {
-unreachable!() //         Context::new(self, Some(source.into()))
+        InvalidCounterpartyChannelId
+            |_| { "Invalid channel id in counterparty" }
     }
 }

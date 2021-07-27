@@ -1,10 +1,10 @@
+use std::convert::Infallible;
 use std::convert::TryFrom;
 use std::time::SystemTime;
-use prusti_contracts::*;
 
 use chrono::{TimeZone, Utc};
 use prost_types::Timestamp;
-// use serde::Serialize;
+use serde::Serialize;
 use tendermint::{hash::Algorithm, time::Time, Hash};
 use tendermint_proto::Protobuf;
 
@@ -12,19 +12,11 @@ use ibc_proto::ibc::lightclients::tendermint::v1::ConsensusState as RawConsensus
 
 use crate::ics02_client::client_consensus::AnyConsensusState;
 use crate::ics02_client::client_type::ClientType;
-use crate::ics07_tendermint::error::{Error, Kind};
+use crate::ics07_tendermint::error::Error;
 use crate::ics07_tendermint::header::Header;
 use crate::ics23_commitment::commitment::CommitmentRoot;
 
-impl std::fmt::Debug for ConsensusState {
-    #[trusted]
-    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        unreachable!()
-    }
-}
-
-
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub struct ConsensusState {
     pub timestamp: Time,
     pub root: CommitmentRoot,
@@ -42,16 +34,17 @@ impl ConsensusState {
 }
 
 impl crate::ics02_client::client_consensus::ConsensusState for ConsensusState {
+    type Error = Infallible;
+
     fn client_type(&self) -> ClientType {
         ClientType::Tendermint
     }
 
-    // fn root(&self) -> &CommitmentRoot {
-    //     &self.root
-    // }
+    fn root(&self) -> &CommitmentRoot {
+        &self.root
+    }
 
-    #[trusted]
-    fn validate_basic(&self) -> Result<(), Box<dyn std::error::Error>> {
+    fn validate_basic(&self) -> Result<(), Infallible> {
         unimplemented!()
     }
 
@@ -65,48 +58,47 @@ impl Protobuf<RawConsensusState> for ConsensusState {}
 impl TryFrom<RawConsensusState> for ConsensusState {
     type Error = Error;
 
-#[trusted]
     fn try_from(raw: RawConsensusState) -> Result<Self, Self::Error> {
-unreachable!() // panic!("No") // panic!("No") //         let proto_timestamp = raw
-// // //             .timestamp
-// // //             .ok_or_else(|| Kind::InvalidRawConsensusState.context("missing timestamp"))?;
-// // // 
-// // //         Ok(Self {
-// // //             root: raw
-// // //                 .root
-// // //                 .ok_or_else(|| Kind::InvalidRawConsensusState.context("missing commitment root"))?
-// // //                 .hash
-// // //                 .into(),
-// // //             timestamp: Utc
-// // //                 .timestamp(proto_timestamp.seconds, proto_timestamp.nanos as u32)
-// // //                 .into(),
-// // //             next_validators_hash: Hash::from_bytes(Algorithm::Sha256, &raw.next_validators_hash)
-// // //                 .map_err(|e| Kind::InvalidRawConsensusState.context(e.to_string()))?,
-// // //         })
+        let proto_timestamp = raw
+            .timestamp
+            .ok_or_else(|| Error::invalid_raw_consensus_state("missing timestamp".into()))?;
+
+        Ok(Self {
+            root: raw
+                .root
+                .ok_or_else(|| {
+                    Error::invalid_raw_consensus_state("missing commitment root".into())
+                })?
+                .hash
+                .into(),
+            timestamp: Utc
+                .timestamp(proto_timestamp.seconds, proto_timestamp.nanos as u32)
+                .into(),
+            next_validators_hash: Hash::from_bytes(Algorithm::Sha256, &raw.next_validators_hash)
+                .map_err(|e| Error::invalid_raw_consensus_state(e.to_string()))?,
+        })
     }
 }
 
 impl From<ConsensusState> for RawConsensusState {
-#[trusted]
     fn from(value: ConsensusState) -> Self {
-unreachable!() //         RawConsensusState {
-//             timestamp: Some(Timestamp::from(SystemTime::from(value.timestamp))),
-//             root: Some(ibc_proto::ibc::core::commitment::v1::MerkleRoot {
-//                 hash: value.root.into_vec(),
-//             }),
-//             next_validators_hash: value.next_validators_hash.as_bytes().to_vec(),
-//         }
+        RawConsensusState {
+            timestamp: Some(Timestamp::from(SystemTime::from(value.timestamp))),
+            root: Some(ibc_proto::ibc::core::commitment::v1::MerkleRoot {
+                hash: value.root.into_vec(),
+            }),
+            next_validators_hash: value.next_validators_hash.as_bytes().to_vec(),
+        }
     }
 }
 
 impl From<tendermint::block::Header> for ConsensusState {
-#[trusted]
     fn from(header: tendermint::block::Header) -> Self {
-unreachable!() //         Self {
-//             root: CommitmentRoot::from_bytes(header.app_hash.as_ref()),
-//             timestamp: header.time,
-//             next_validators_hash: header.next_validators_hash,
-//         }
+        Self {
+            root: CommitmentRoot::from_bytes(header.app_hash.as_ref()),
+            timestamp: header.time,
+            next_validators_hash: header.next_validators_hash,
+        }
     }
 }
 

@@ -1,15 +1,14 @@
 use std::convert::TryFrom;
 
-use prusti_contracts::*;
-// use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use tendermint_proto::Protobuf;
 
 use ibc_proto::ibc::core::connection::v1::Version as RawVersion;
 
-use crate::ics03_connection::error::Kind;
+use crate::ics03_connection::error::Error;
 
 /// Stores the identifier and the features supported by a version
-#[derive(Clone, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Version {
     /// unique version identifier
     identifier: String,
@@ -19,34 +18,28 @@ pub struct Version {
 
 impl Version {
     /// Checks whether or not the given feature is supported in this versin
-#[trusted]
     pub fn is_supported_feature(&self, feature: String) -> bool {
-unreachable!() //         self.features.contains(&feature)
+        self.features.contains(&feature)
     }
 }
 
 impl Protobuf<RawVersion> for Version {}
 
 impl TryFrom<RawVersion> for Version {
-    type Error = anomaly::Error<Kind>;
-#[trusted]
+    type Error = Error;
     fn try_from(value: RawVersion) -> Result<Self, Self::Error> {
-unreachable!() //         if value.identifier.trim().is_empty() {
-//             return Err(Kind::InvalidVersion
-//                 .context("empty version string".to_string())
-//                 .into());
-//         }
-//         for feature in value.features.iter() {
-//             if feature.trim().is_empty() {
-//                 return Err(Kind::InvalidVersion
-//                     .context("empty feature string".to_string())
-//                     .into());
-//             }
-//         }
-//         Ok(Version {
-//             identifier: value.identifier,
-//             features: value.features,
-//         })
+        if value.identifier.trim().is_empty() {
+            return Err(Error::empty_versions());
+        }
+        for feature in value.features.iter() {
+            if feature.trim().is_empty() {
+                return Err(Error::empty_features());
+            }
+        }
+        Ok(Version {
+            identifier: value.identifier,
+            features: value.features,
+        })
     }
 }
 
@@ -60,42 +53,39 @@ impl From<Version> for RawVersion {
 }
 
 impl Default for Version {
-#[trusted]
     fn default() -> Self {
-unreachable!() //         Version {
-//             identifier: "1".to_string(),
-//             features: vec!["ORDER_ORDERED".to_string(), "ORDER_UNORDERED".to_string()],
-//         }
+        Version {
+            identifier: "1".to_string(),
+            features: vec!["ORDER_ORDERED".to_string(), "ORDER_UNORDERED".to_string()],
+        }
     }
 }
 
 /// Returns the lists of supported versions
-#[trusted]
 pub fn get_compatible_versions() -> Vec<Version> {
-unreachable!() //     vec![Version::default()]
+    vec![Version::default()]
 }
 
 /// Selects a version from the intersection of locally supported and counterparty versions.
-#[trusted]
 pub fn pick_version(
     supported_versions: Vec<Version>,
     counterparty_versions: Vec<Version>,
 ) -> Option<Version> {
-unreachable!() //     let mut intersection: Vec<Version> = vec![];
-//     for s in supported_versions.iter() {
-//         for c in counterparty_versions.iter() {
-//             if c.identifier != s.identifier {
-//                 continue;
-//             }
-//             // TODO - perform feature intersection and error if empty
-//             intersection.append(&mut vec![s.clone()]);
-//         }
-//     }
-//     intersection.sort_by(|a, b| a.identifier.cmp(&b.identifier));
-//     if intersection.is_empty() {
-//         return None;
-//     }
-//     Some(intersection[0].clone())
+    let mut intersection: Vec<Version> = vec![];
+    for s in supported_versions.iter() {
+        for c in counterparty_versions.iter() {
+            if c.identifier != s.identifier {
+                continue;
+            }
+            // TODO - perform feature intersection and error if empty
+            intersection.append(&mut vec![s.clone()]);
+        }
+    }
+    intersection.sort_by(|a, b| a.identifier.cmp(&b.identifier));
+    if intersection.is_empty() {
+        return None;
+    }
+    Some(intersection[0].clone())
 }
 
 #[cfg(test)]

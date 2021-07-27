@@ -1,12 +1,11 @@
 use std::convert::{TryFrom, TryInto};
 use std::time::Duration;
-use prusti_contracts::*;
 
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenInit as RawMsgConnectionOpenInit;
 use tendermint_proto::Protobuf;
 
 use crate::ics03_connection::connection::Counterparty;
-use crate::ics03_connection::error::{Error, Kind};
+use crate::ics03_connection::error::Error;
 use crate::ics03_connection::version::Version;
 use crate::ics24_host::identifier::ClientId;
 use crate::signer::Signer;
@@ -17,7 +16,7 @@ pub const TYPE_URL: &str = "/ibc.core.connection.v1.MsgConnectionOpenInit";
 ///
 /// Message definition `MsgConnectionOpenInit`  (i.e., the `ConnOpenInit` datagram).
 ///
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MsgConnectionOpenInit {
     pub client_id: ClientId,
     pub counterparty: Counterparty,
@@ -42,54 +41,43 @@ impl Msg for MsgConnectionOpenInit {
     type ValidationError = Error;
     type Raw = RawMsgConnectionOpenInit;
 
-#[trusted]
     fn route(&self) -> String {
-unreachable!() //         crate::keys::ROUTER_KEY.to_string()
+        crate::keys::ROUTER_KEY.to_string()
     }
 
-#[trusted]
     fn type_url(&self) -> String {
-unreachable!() //         TYPE_URL.to_string()
+        TYPE_URL.to_string()
     }
 }
 
 impl Protobuf<RawMsgConnectionOpenInit> for MsgConnectionOpenInit {}
 
 impl TryFrom<RawMsgConnectionOpenInit> for MsgConnectionOpenInit {
-    type Error = anomaly::Error<Kind>;
+    type Error = Error;
 
-#[trusted]
     fn try_from(msg: RawMsgConnectionOpenInit) -> Result<Self, Self::Error> {
-unreachable!() //         Ok(Self {
-//             client_id: msg
-//                 .client_id
-//                 .parse()
-//                 .map_err(|e| Kind::IdentifierError.context(e))?,
-//             counterparty: msg
-//                 .counterparty
-//                 .ok_or(Kind::MissingCounterparty)?
-//                 .try_into()?,
-//             version: msg
-//                 .version
-//                 .ok_or(Kind::InvalidVersion)?
-//                 .try_into()
-//                 .map_err(|e| Kind::InvalidVersion.context(e))?,
-//             delay_period: Duration::from_nanos(msg.delay_period),
-//             signer: msg.signer.into(),
-//         })
+        Ok(Self {
+            client_id: msg.client_id.parse().map_err(Error::invalid_identifier)?,
+            counterparty: msg
+                .counterparty
+                .ok_or_else(Error::missing_counterparty)?
+                .try_into()?,
+            version: msg.version.ok_or_else(Error::empty_versions)?.try_into()?,
+            delay_period: Duration::from_nanos(msg.delay_period),
+            signer: msg.signer.into(),
+        })
     }
 }
 
 impl From<MsgConnectionOpenInit> for RawMsgConnectionOpenInit {
-#[trusted]
     fn from(ics_msg: MsgConnectionOpenInit) -> Self {
-unreachable!() //         RawMsgConnectionOpenInit {
-//             client_id: ics_msg.client_id.as_str().to_string(),
-//             counterparty: Some(ics_msg.counterparty.into()),
-//             version: Some(ics_msg.version.into()),
-//             delay_period: ics_msg.delay_period.as_nanos() as u64,
-//             signer: ics_msg.signer.to_string(),
-//         }
+        RawMsgConnectionOpenInit {
+            client_id: ics_msg.client_id.as_str().to_string(),
+            counterparty: Some(ics_msg.counterparty.into()),
+            version: Some(ics_msg.version.into()),
+            delay_period: ics_msg.delay_period.as_nanos() as u64,
+            signer: ics_msg.signer.to_string(),
+        }
     }
 }
 
@@ -138,7 +126,7 @@ mod tests {
 
     #[test]
     fn parse_connection_open_init_msg() {
-        #[derive(Clone)]
+        #[derive(Clone, Debug, PartialEq)]
         struct Test {
             name: String,
             raw: RawMsgConnectionOpenInit,

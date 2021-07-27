@@ -1,6 +1,5 @@
-use crate::ics04_channel::error::{Error, Kind};
+use crate::ics04_channel::error::Error;
 use crate::ics24_host::identifier::{ChannelId, PortId};
-use prusti_contracts::*;
 use crate::proofs::Proofs;
 use crate::signer::Signer;
 use crate::tx_msg::Msg;
@@ -8,7 +7,7 @@ use crate::tx_msg::Msg;
 use ibc_proto::ibc::core::channel::v1::MsgChannelOpenConfirm as RawMsgChannelOpenConfirm;
 use tendermint_proto::Protobuf;
 
-use std::convert::{TryFrom, TryInto};
+use std::convert::TryFrom;
 
 pub const TYPE_URL: &str = "/ibc.core.channel.v1.MsgChannelOpenConfirm";
 
@@ -16,7 +15,7 @@ pub const TYPE_URL: &str = "/ibc.core.channel.v1.MsgChannelOpenConfirm";
 /// Message definition for the fourth step in the channel open handshake (`ChanOpenConfirm`
 /// datagram).
 ///
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct MsgChannelOpenConfirm {
     pub port_id: PortId,
     pub channel_id: ChannelId,
@@ -52,62 +51,51 @@ impl Msg for MsgChannelOpenConfirm {
     type ValidationError = Error;
     type Raw = RawMsgChannelOpenConfirm;
 
-#[trusted]
     fn route(&self) -> String {
-unreachable!() //         crate::keys::ROUTER_KEY.to_string()
+        crate::keys::ROUTER_KEY.to_string()
     }
 
-#[trusted]
     fn type_url(&self) -> String {
-unreachable!() //         TYPE_URL.to_string()
+        TYPE_URL.to_string()
     }
 }
 
 impl Protobuf<RawMsgChannelOpenConfirm> for MsgChannelOpenConfirm {}
 
 impl TryFrom<RawMsgChannelOpenConfirm> for MsgChannelOpenConfirm {
-    type Error = anomaly::Error<Kind>;
+    type Error = Error;
 
-#[trusted]
     fn try_from(raw_msg: RawMsgChannelOpenConfirm) -> Result<Self, Self::Error> {
-unreachable!() //         let proofs = Proofs::new(
-//             raw_msg.proof_ack.into(),
-//             None,
-//             None,
-//             None,
-//             raw_msg
-//                 .proof_height
-//                 .ok_or(Kind::MissingHeight)?
-//                 .try_into()
-//                 .map_err(|e| Kind::InvalidProof.context(e))?,
-//         )
-//         .map_err(|e| Kind::InvalidProof.context(e))?;
-// 
-//         Ok(MsgChannelOpenConfirm {
-//             port_id: raw_msg
-//                 .port_id
-//                 .parse()
-//                 .map_err(|e| Kind::IdentifierError.context(e))?,
-//             channel_id: raw_msg
-//                 .channel_id
-//                 .parse()
-//                 .map_err(|e| Kind::IdentifierError.context(e))?,
-//             proofs,
-//             signer: raw_msg.signer.into(),
-//         })
+        let proofs = Proofs::new(
+            raw_msg.proof_ack.into(),
+            None,
+            None,
+            None,
+            raw_msg
+                .proof_height
+                .ok_or_else(Error::missing_height)?
+                .into(),
+        )
+        .map_err(Error::invalid_proof)?;
+
+        Ok(MsgChannelOpenConfirm {
+            port_id: raw_msg.port_id.parse().map_err(Error::identifier)?,
+            channel_id: raw_msg.channel_id.parse().map_err(Error::identifier)?,
+            proofs,
+            signer: raw_msg.signer.into(),
+        })
     }
 }
 
 impl From<MsgChannelOpenConfirm> for RawMsgChannelOpenConfirm {
-#[trusted]
     fn from(domain_msg: MsgChannelOpenConfirm) -> Self {
-unreachable!() //         RawMsgChannelOpenConfirm {
-//             port_id: domain_msg.port_id.to_string(),
-//             channel_id: domain_msg.channel_id.to_string(),
-//             proof_ack: domain_msg.proofs.object_proof().clone().into(),
-//             proof_height: Some(domain_msg.proofs.height().into()),
-//             signer: domain_msg.signer.to_string(),
-//         }
+        RawMsgChannelOpenConfirm {
+            port_id: domain_msg.port_id.to_string(),
+            channel_id: domain_msg.channel_id.to_string(),
+            proof_ack: domain_msg.proofs.object_proof().clone().into(),
+            proof_height: Some(domain_msg.proofs.height().into()),
+            signer: domain_msg.signer.to_string(),
+        }
     }
 }
 

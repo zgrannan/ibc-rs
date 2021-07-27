@@ -1,43 +1,33 @@
+use crate::application::ics20_fungible_token_transfer;
+use crate::ics02_client;
+use crate::ics03_connection;
+use crate::ics04_channel;
+use flex_error::{define_error, TraceError};
 
-use anomaly::{BoxError, Context};
-use thiserror::Error;
-use prusti_contracts::*;
+define_error! {
+    Error {
+        Ics02Client
+            [ ics02_client::error::Error ]
+            | _ | { "ICS02 client error" },
 
-pub type Error = anomaly::Error<Kind>;
+        Ics03Connection
+            [ ics03_connection::error::Error ]
+            | _ | { "ICS03 connection error" },
 
+        Ics04Channel
+            [ ics04_channel::error::Error ]
+            | _ | { "ICS04 channel error" },
 
-impl std::fmt::Debug for Kind {
-#[trusted]
-    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        unreachable!()
-    }
-}
+        Ics20FungibleTokenTransfer
+            [ ics20_fungible_token_transfer::error::Error ]
+            | _ | { "ICS20 fungible token transfer error" },
 
-impl std::fmt::Display for Kind {
-#[trusted]
-    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        unreachable!()
-    }
-}
+        UnknownMessageTypeUrl
+            { url: String }
+            | e | { format_args!("unknown type URL {0}", e.url) },
 
-#[derive(Clone, Error)]
-pub enum Kind {
-//     #[error("error raised by message handler")]
-    HandlerRaisedError,
-
-//     #[error("error raised by the keeper functionality in message handler")]
-    KeeperRaisedError,
-
-//     #[error("unknown type URL {0}")]
-    UnknownMessageTypeUrl(String),
-
-//     #[error("the message is malformed and cannot be decoded")]
-    MalformedMessageBytes,
-}
-
-impl Kind {
-#[trusted]
-    pub fn context(self, source: impl Into<BoxError>) -> Context<Self> {
-unreachable!() //         Context::new(self, Some(source.into()))
+        MalformedMessageBytes
+            [ TraceError<tendermint_proto::Error> ]
+            | _ | { "the message is malformed and cannot be decoded" },
     }
 }

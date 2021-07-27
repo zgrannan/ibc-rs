@@ -5,7 +5,7 @@ use crate::downcast;
 use crate::ics02_client::client_consensus::{AnyConsensusState, ConsensusState};
 use crate::ics02_client::client_state::{AnyClientState, ClientState};
 use crate::ics02_client::client_type::ClientType;
-use crate::ics02_client::error::Kind;
+use crate::ics02_client::error::Error;
 use crate::ics02_client::header::{AnyHeader, Header};
 use crate::ics03_connection::connection::ConnectionEnd;
 use crate::ics04_channel::channel::ChannelEnd;
@@ -28,7 +28,7 @@ pub trait ClientDef: Clone {
         &self,
         client_state: Self::ClientState,
         header: Self::Header,
-    ) -> Result<(Self::ClientState, Self::ConsensusState), Box<dyn std::error::Error>>;
+    ) -> Result<(Self::ClientState, Self::ConsensusState), Error>;
 
     fn verify_upgrade_and_update_state(
         &self,
@@ -36,7 +36,7 @@ pub trait ClientDef: Clone {
         consensus_state: &Self::ConsensusState,
         proof_upgrade_client: MerkleProof,
         proof_upgrade_consensus_state: MerkleProof,
-    ) -> Result<(Self::ClientState, Self::ConsensusState), Box<dyn std::error::Error>>;
+    ) -> Result<(Self::ClientState, Self::ConsensusState), Error>;
 
     /// Verification functions as specified in:
     /// <https://github.com/cosmos/ics/tree/master/spec/ics-002-client-semantics>
@@ -55,7 +55,7 @@ pub trait ClientDef: Clone {
         client_id: &ClientId,
         consensus_height: Height,
         expected_consensus_state: &AnyConsensusState,
-    ) -> Result<(), Box<dyn std::error::Error>>;
+    ) -> Result<(), Error>;
 
     /// Verify a `proof` that a connection state matches that of the input `connection_end`.
     fn verify_connection_state(
@@ -66,7 +66,7 @@ pub trait ClientDef: Clone {
         proof: &CommitmentProofBytes,
         connection_id: Option<&ConnectionId>,
         expected_connection_end: &ConnectionEnd,
-    ) -> Result<(), Box<dyn std::error::Error>>;
+    ) -> Result<(), Error>;
 
     /// Verify a `proof` that a channel state matches that of the input `channel_end`.
     #[allow(clippy::too_many_arguments)]
@@ -79,7 +79,7 @@ pub trait ClientDef: Clone {
         port_id: &PortId,
         channel_id: &ChannelId,
         expected_channel_end: &ChannelEnd,
-    ) -> Result<(), Box<dyn std::error::Error>>;
+    ) -> Result<(), Error>;
 
     /// Verify the client state for this chain that it is stored on the counterparty chain.
     #[allow(clippy::too_many_arguments)]
@@ -92,7 +92,7 @@ pub trait ClientDef: Clone {
         client_id: &ClientId,
         proof: &CommitmentProofBytes,
         client_state: &AnyClientState,
-    ) -> Result<(), Box<dyn std::error::Error>>;
+    ) -> Result<(), Error>;
 
     /// Verify a `proof` that a packet has been commited.
     #[allow(clippy::too_many_arguments)]
@@ -105,7 +105,7 @@ pub trait ClientDef: Clone {
         channel_id: &ChannelId,
         seq: &Sequence,
         commitment: String,
-    ) -> Result<(), Box<dyn std::error::Error>>;
+    ) -> Result<(), Error>;
 
     /// Verify a `proof` that a packet has been commited.
     #[allow(clippy::too_many_arguments)]
@@ -118,7 +118,7 @@ pub trait ClientDef: Clone {
         channel_id: &ChannelId,
         seq: &Sequence,
         ack: Vec<u8>,
-    ) -> Result<(), Box<dyn std::error::Error>>;
+    ) -> Result<(), Error>;
 
     /// Verify a `proof` that of the next_seq_received.
     #[allow(clippy::too_many_arguments)]
@@ -130,7 +130,7 @@ pub trait ClientDef: Clone {
         port_id: &PortId,
         channel_id: &ChannelId,
         seq: &Sequence,
-    ) -> Result<(), Box<dyn std::error::Error>>;
+    ) -> Result<(), Error>;
 
     /// Verify a `proof` that a packet has not been received.
     #[allow(clippy::too_many_arguments)]
@@ -143,7 +143,7 @@ pub trait ClientDef: Clone {
         port_id: &PortId,
         channel_id: &ChannelId,
         seq: &Sequence,
-    ) -> Result<(), Box<dyn std::error::Error>>;
+    ) -> Result<(), Error>;
 }
 
 #[derive(Clone)]
@@ -176,14 +176,14 @@ impl ClientDef for AnyClient {
         &self,
         client_state: AnyClientState,
         header: AnyHeader,
-    ) -> Result<(AnyClientState, AnyConsensusState), Box<dyn std::error::Error>> {
+    ) -> Result<(AnyClientState, AnyConsensusState), Error> {
         match self {
             Self::Tendermint(client) => {
                 let (client_state, header) = downcast!(
                     client_state => AnyClientState::Tendermint,
                     header => AnyHeader::Tendermint,
                 )
-                .ok_or_else(|| Kind::ClientArgsTypeMismatch(ClientType::Tendermint))?;
+                .ok_or_else(|| Error::client_args_type_mismatch(ClientType::Tendermint))?;
 
                 let (new_state, new_consensus) =
                     client.check_header_and_update_state(client_state, header)?;
@@ -200,7 +200,7 @@ impl ClientDef for AnyClient {
                     client_state => AnyClientState::Mock,
                     header => AnyHeader::Mock,
                 )
-                .ok_or_else(|| Kind::ClientArgsTypeMismatch(ClientType::Mock))?;
+                .ok_or_else(|| Error::client_args_type_mismatch(ClientType::Mock))?;
 
                 let (new_state, new_consensus) =
                     client.check_header_and_update_state(client_state, header)?;
@@ -223,43 +223,43 @@ impl ClientDef for AnyClient {
         client_id: &ClientId,
         consensus_height: Height,
         expected_consensus_state: &AnyConsensusState,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-unreachable!() //         match self {
-//             Self::Tendermint(client) => {
-//                 let client_state = downcast!(
-//                     client_state => AnyClientState::Tendermint
-//                 )
-//                 .ok_or_else(|| Kind::ClientArgsTypeMismatch(ClientType::Tendermint))?;
-// 
-//                 client.verify_client_consensus_state(
-//                     client_state,
-//                     height,
-//                     prefix,
-//                     proof,
-//                     client_id,
-//                     consensus_height,
-//                     expected_consensus_state,
-//                 )
-//             }
-// 
-//             #[cfg(any(test, feature = "mocks"))]
-//             Self::Mock(client) => {
-//                 let client_state = downcast!(
-//                     client_state => AnyClientState::Mock
-//                 )
-//                 .ok_or_else(|| Kind::ClientArgsTypeMismatch(ClientType::Mock))?;
-// 
-//                 client.verify_client_consensus_state(
-//                     client_state,
-//                     height,
-//                     prefix,
-//                     proof,
-//                     client_id,
-//                     consensus_height,
-//                     expected_consensus_state,
-//                 )
-//             }
-//         }
+    ) -> Result<(), Error> {
+        match self {
+            Self::Tendermint(client) => {
+                let client_state = downcast!(
+                    client_state => AnyClientState::Tendermint
+                )
+                .ok_or_else(|| Error::client_args_type_mismatch(ClientType::Tendermint))?;
+
+                client.verify_client_consensus_state(
+                    client_state,
+                    height,
+                    prefix,
+                    proof,
+                    client_id,
+                    consensus_height,
+                    expected_consensus_state,
+                )
+            }
+
+            #[cfg(any(test, feature = "mocks"))]
+            Self::Mock(client) => {
+                let client_state = downcast!(
+                    client_state => AnyClientState::Mock
+                )
+                .ok_or_else(|| Error::client_args_type_mismatch(ClientType::Mock))?;
+
+                client.verify_client_consensus_state(
+                    client_state,
+                    height,
+                    prefix,
+                    proof,
+                    client_id,
+                    consensus_height,
+                    expected_consensus_state,
+                )
+            }
+        }
     }
 
 #[trusted]
@@ -271,37 +271,37 @@ unreachable!() //         match self {
         proof: &CommitmentProofBytes,
         connection_id: Option<&ConnectionId>,
         expected_connection_end: &ConnectionEnd,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-unreachable!() //         match self {
-//             Self::Tendermint(client) => {
-//                 let client_state = downcast!(client_state => AnyClientState::Tendermint)
-//                     .ok_or_else(|| Kind::ClientArgsTypeMismatch(ClientType::Tendermint))?;
-// 
-//                 client.verify_connection_state(
-//                     client_state,
-//                     height,
-//                     prefix,
-//                     proof,
-//                     connection_id,
-//                     expected_connection_end,
-//                 )
-//             }
-// 
-//             #[cfg(any(test, feature = "mocks"))]
-//             Self::Mock(client) => {
-//                 let client_state = downcast!(client_state => AnyClientState::Mock)
-//                     .ok_or_else(|| Kind::ClientArgsTypeMismatch(ClientType::Mock))?;
-// 
-//                 client.verify_connection_state(
-//                     client_state,
-//                     height,
-//                     prefix,
-//                     proof,
-//                     connection_id,
-//                     expected_connection_end,
-//                 )
-//             }
-//         }
+    ) -> Result<(), Error> {
+        match self {
+            Self::Tendermint(client) => {
+                let client_state = downcast!(client_state => AnyClientState::Tendermint)
+                    .ok_or_else(|| Error::client_args_type_mismatch(ClientType::Tendermint))?;
+
+                client.verify_connection_state(
+                    client_state,
+                    height,
+                    prefix,
+                    proof,
+                    connection_id,
+                    expected_connection_end,
+                )
+            }
+
+            #[cfg(any(test, feature = "mocks"))]
+            Self::Mock(client) => {
+                let client_state = downcast!(client_state => AnyClientState::Mock)
+                    .ok_or_else(|| Error::client_args_type_mismatch(ClientType::Mock))?;
+
+                client.verify_connection_state(
+                    client_state,
+                    height,
+                    prefix,
+                    proof,
+                    connection_id,
+                    expected_connection_end,
+                )
+            }
+        }
     }
 
 #[trusted]
@@ -314,39 +314,39 @@ unreachable!() //         match self {
         port_id: &PortId,
         channel_id: &ChannelId,
         expected_channel_end: &ChannelEnd,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-unreachable!() //         match self {
-//             Self::Tendermint(client) => {
-//                 let client_state = downcast!(client_state => AnyClientState::Tendermint)
-//                     .ok_or_else(|| Kind::ClientArgsTypeMismatch(ClientType::Tendermint))?;
-// 
-//                 client.verify_channel_state(
-//                     client_state,
-//                     height,
-//                     prefix,
-//                     proof,
-//                     port_id,
-//                     channel_id,
-//                     expected_channel_end,
-//                 )
-//             }
-// 
-//             #[cfg(any(test, feature = "mocks"))]
-//             Self::Mock(client) => {
-//                 let client_state = downcast!(client_state => AnyClientState::Mock)
-//                     .ok_or_else(|| Kind::ClientArgsTypeMismatch(ClientType::Mock))?;
-// 
-//                 client.verify_channel_state(
-//                     client_state,
-//                     height,
-//                     prefix,
-//                     proof,
-//                     port_id,
-//                     channel_id,
-//                     expected_channel_end,
-//                 )
-//             }
-//         }
+    ) -> Result<(), Error> {
+        match self {
+            Self::Tendermint(client) => {
+                let client_state = downcast!(client_state => AnyClientState::Tendermint)
+                    .ok_or_else(|| Error::client_args_type_mismatch(ClientType::Tendermint))?;
+
+                client.verify_channel_state(
+                    client_state,
+                    height,
+                    prefix,
+                    proof,
+                    port_id,
+                    channel_id,
+                    expected_channel_end,
+                )
+            }
+
+            #[cfg(any(test, feature = "mocks"))]
+            Self::Mock(client) => {
+                let client_state = downcast!(client_state => AnyClientState::Mock)
+                    .ok_or_else(|| Error::client_args_type_mismatch(ClientType::Mock))?;
+
+                client.verify_channel_state(
+                    client_state,
+                    height,
+                    prefix,
+                    proof,
+                    port_id,
+                    channel_id,
+                    expected_channel_end,
+                )
+            }
+        }
     }
 
 #[trusted]
@@ -359,43 +359,43 @@ unreachable!() //         match self {
         client_id: &ClientId,
         proof: &CommitmentProofBytes,
         client_state_on_counterparty: &AnyClientState,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-unreachable!() //         match self {
-//             Self::Tendermint(client) => {
-//                 let client_state = downcast!(
-//                     client_state => AnyClientState::Tendermint
-//                 )
-//                 .ok_or_else(|| Kind::ClientArgsTypeMismatch(ClientType::Tendermint))?;
-// 
-//                 client.verify_client_full_state(
-//                     client_state,
-//                     height,
-//                     root,
-//                     prefix,
-//                     client_id,
-//                     proof,
-//                     client_state_on_counterparty,
-//                 )
-//             }
-// 
-//             #[cfg(any(test, feature = "mocks"))]
-//             Self::Mock(client) => {
-//                 let client_state = downcast!(
-//                     client_state => AnyClientState::Mock
-//                 )
-//                 .ok_or_else(|| Kind::ClientArgsTypeMismatch(ClientType::Mock))?;
-// 
-//                 client.verify_client_full_state(
-//                     client_state,
-//                     height,
-//                     root,
-//                     prefix,
-//                     client_id,
-//                     proof,
-//                     client_state_on_counterparty,
-//                 )
-//             }
-//         }
+    ) -> Result<(), Error> {
+        match self {
+            Self::Tendermint(client) => {
+                let client_state = downcast!(
+                    client_state => AnyClientState::Tendermint
+                )
+                .ok_or_else(|| Error::client_args_type_mismatch(ClientType::Tendermint))?;
+
+                client.verify_client_full_state(
+                    client_state,
+                    height,
+                    root,
+                    prefix,
+                    client_id,
+                    proof,
+                    client_state_on_counterparty,
+                )
+            }
+
+            #[cfg(any(test, feature = "mocks"))]
+            Self::Mock(client) => {
+                let client_state = downcast!(
+                    client_state => AnyClientState::Mock
+                )
+                .ok_or_else(|| Error::client_args_type_mismatch(ClientType::Mock))?;
+
+                client.verify_client_full_state(
+                    client_state,
+                    height,
+                    root,
+                    prefix,
+                    client_id,
+                    proof,
+                    client_state_on_counterparty,
+                )
+            }
+        }
     }
 #[trusted]
     fn verify_packet_data(
@@ -407,43 +407,43 @@ unreachable!() //         match self {
         channel_id: &ChannelId,
         seq: &Sequence,
         commitment: String,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-unreachable!() //         match self {
-//             Self::Tendermint(client) => {
-//                 let client_state = downcast!(
-//                     client_state => AnyClientState::Tendermint
-//                 )
-//                 .ok_or_else(|| Kind::ClientArgsTypeMismatch(ClientType::Tendermint))?;
-// 
-//                 client.verify_packet_data(
-//                     client_state,
-//                     height,
-//                     proof,
-//                     port_id,
-//                     channel_id,
-//                     seq,
-//                     commitment,
-//                 )
-//             }
-// 
-//             #[cfg(any(test, feature = "mocks"))]
-//             Self::Mock(client) => {
-//                 let client_state = downcast!(
-//                     client_state => AnyClientState::Mock
-//                 )
-//                 .ok_or_else(|| Kind::ClientArgsTypeMismatch(ClientType::Mock))?;
-// 
-//                 client.verify_packet_data(
-//                     client_state,
-//                     height,
-//                     proof,
-//                     port_id,
-//                     channel_id,
-//                     seq,
-//                     commitment,
-//                 )
-//             }
-//         }
+    ) -> Result<(), Error> {
+        match self {
+            Self::Tendermint(client) => {
+                let client_state = downcast!(
+                    client_state => AnyClientState::Tendermint
+                )
+                .ok_or_else(|| Error::client_args_type_mismatch(ClientType::Tendermint))?;
+
+                client.verify_packet_data(
+                    client_state,
+                    height,
+                    proof,
+                    port_id,
+                    channel_id,
+                    seq,
+                    commitment,
+                )
+            }
+
+            #[cfg(any(test, feature = "mocks"))]
+            Self::Mock(client) => {
+                let client_state = downcast!(
+                    client_state => AnyClientState::Mock
+                )
+                .ok_or_else(|| Error::client_args_type_mismatch(ClientType::Mock))?;
+
+                client.verify_packet_data(
+                    client_state,
+                    height,
+                    proof,
+                    port_id,
+                    channel_id,
+                    seq,
+                    commitment,
+                )
+            }
+        }
     }
 
 #[trusted]
@@ -456,43 +456,43 @@ unreachable!() //         match self {
         channel_id: &ChannelId,
         seq: &Sequence,
         ack: Vec<u8>,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-unreachable!() //         match self {
-//             Self::Tendermint(client) => {
-//                 let client_state = downcast!(
-//                     client_state => AnyClientState::Tendermint
-//                 )
-//                 .ok_or_else(|| Kind::ClientArgsTypeMismatch(ClientType::Tendermint))?;
-// 
-//                 client.verify_packet_acknowledgement(
-//                     client_state,
-//                     height,
-//                     proof,
-//                     port_id,
-//                     channel_id,
-//                     seq,
-//                     ack,
-//                 )
-//             }
-// 
-//             #[cfg(any(test, feature = "mocks"))]
-//             Self::Mock(client) => {
-//                 let client_state = downcast!(
-//                     client_state => AnyClientState::Mock
-//                 )
-//                 .ok_or_else(|| Kind::ClientArgsTypeMismatch(ClientType::Mock))?;
-// 
-//                 client.verify_packet_acknowledgement(
-//                     client_state,
-//                     height,
-//                     proof,
-//                     port_id,
-//                     channel_id,
-//                     seq,
-//                     ack,
-//                 )
-//             }
-//         }
+    ) -> Result<(), Error> {
+        match self {
+            Self::Tendermint(client) => {
+                let client_state = downcast!(
+                    client_state => AnyClientState::Tendermint
+                )
+                .ok_or_else(|| Error::client_args_type_mismatch(ClientType::Tendermint))?;
+
+                client.verify_packet_acknowledgement(
+                    client_state,
+                    height,
+                    proof,
+                    port_id,
+                    channel_id,
+                    seq,
+                    ack,
+                )
+            }
+
+            #[cfg(any(test, feature = "mocks"))]
+            Self::Mock(client) => {
+                let client_state = downcast!(
+                    client_state => AnyClientState::Mock
+                )
+                .ok_or_else(|| Error::client_args_type_mismatch(ClientType::Mock))?;
+
+                client.verify_packet_acknowledgement(
+                    client_state,
+                    height,
+                    proof,
+                    port_id,
+                    channel_id,
+                    seq,
+                    ack,
+                )
+            }
+        }
     }
 
 #[trusted]
@@ -504,41 +504,41 @@ unreachable!() //         match self {
         port_id: &PortId,
         channel_id: &ChannelId,
         seq: &Sequence,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-unreachable!() //         match self {
-//             Self::Tendermint(client) => {
-//                 let client_state = downcast!(
-//                     client_state => AnyClientState::Tendermint
-//                 )
-//                 .ok_or_else(|| Kind::ClientArgsTypeMismatch(ClientType::Tendermint))?;
-// 
-//                 client.verify_next_sequence_recv(
-//                     client_state,
-//                     height,
-//                     proof,
-//                     port_id,
-//                     channel_id,
-//                     seq,
-//                 )
-//             }
-// 
-//             #[cfg(any(test, feature = "mocks"))]
-//             Self::Mock(client) => {
-//                 let client_state = downcast!(
-//                     client_state => AnyClientState::Mock
-//                 )
-//                 .ok_or_else(|| Kind::ClientArgsTypeMismatch(ClientType::Mock))?;
-// 
-//                 client.verify_next_sequence_recv(
-//                     client_state,
-//                     height,
-//                     proof,
-//                     port_id,
-//                     channel_id,
-//                     seq,
-//                 )
-//             }
-//         }
+    ) -> Result<(), Error> {
+        match self {
+            Self::Tendermint(client) => {
+                let client_state = downcast!(
+                    client_state => AnyClientState::Tendermint
+                )
+                .ok_or_else(|| Error::client_args_type_mismatch(ClientType::Tendermint))?;
+
+                client.verify_next_sequence_recv(
+                    client_state,
+                    height,
+                    proof,
+                    port_id,
+                    channel_id,
+                    seq,
+                )
+            }
+
+            #[cfg(any(test, feature = "mocks"))]
+            Self::Mock(client) => {
+                let client_state = downcast!(
+                    client_state => AnyClientState::Mock
+                )
+                .ok_or_else(|| Error::client_args_type_mismatch(ClientType::Mock))?;
+
+                client.verify_next_sequence_recv(
+                    client_state,
+                    height,
+                    proof,
+                    port_id,
+                    channel_id,
+                    seq,
+                )
+            }
+        }
     }
 #[trusted]
     fn verify_packet_receipt_absence(
@@ -549,41 +549,41 @@ unreachable!() //         match self {
         port_id: &PortId,
         channel_id: &ChannelId,
         seq: &Sequence,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-unreachable!() //         match self {
-//             Self::Tendermint(client) => {
-//                 let client_state = downcast!(
-//                     client_state => AnyClientState::Tendermint
-//                 )
-//                 .ok_or_else(|| Kind::ClientArgsTypeMismatch(ClientType::Tendermint))?;
-// 
-//                 client.verify_packet_receipt_absence(
-//                     client_state,
-//                     height,
-//                     proof,
-//                     port_id,
-//                     channel_id,
-//                     seq,
-//                 )
-//             }
-// 
-//             #[cfg(any(test, feature = "mocks"))]
-//             Self::Mock(client) => {
-//                 let client_state = downcast!(
-//                     client_state => AnyClientState::Mock
-//                 )
-//                 .ok_or_else(|| Kind::ClientArgsTypeMismatch(ClientType::Mock))?;
-// 
-//                 client.verify_packet_receipt_absence(
-//                     client_state,
-//                     height,
-//                     proof,
-//                     port_id,
-//                     channel_id,
-//                     seq,
-//                 )
-//             }
-//         }
+    ) -> Result<(), Error> {
+        match self {
+            Self::Tendermint(client) => {
+                let client_state = downcast!(
+                    client_state => AnyClientState::Tendermint
+                )
+                .ok_or_else(|| Error::client_args_type_mismatch(ClientType::Tendermint))?;
+
+                client.verify_packet_receipt_absence(
+                    client_state,
+                    height,
+                    proof,
+                    port_id,
+                    channel_id,
+                    seq,
+                )
+            }
+
+            #[cfg(any(test, feature = "mocks"))]
+            Self::Mock(client) => {
+                let client_state = downcast!(
+                    client_state => AnyClientState::Mock
+                )
+                .ok_or_else(|| Error::client_args_type_mismatch(ClientType::Mock))?;
+
+                client.verify_packet_receipt_absence(
+                    client_state,
+                    height,
+                    proof,
+                    port_id,
+                    channel_id,
+                    seq,
+                )
+            }
+        }
     }
 
 #[trusted]
@@ -593,48 +593,48 @@ unreachable!() //         match self {
         consensus_state: &Self::ConsensusState,
         proof_upgrade_client: MerkleProof,
         proof_upgrade_consensus_state: MerkleProof,
-    ) -> Result<(Self::ClientState, Self::ConsensusState), Box<dyn std::error::Error>> {
-unreachable!() //         match self {
-//             Self::Tendermint(client) => {
-//                 let (client_state, consensus_state) = downcast!(
-//                     client_state => AnyClientState::Tendermint,
-//                     consensus_state => AnyConsensusState::Tendermint,
-//                 )
-//                 .ok_or_else(|| Kind::ClientArgsTypeMismatch(ClientType::Tendermint))?;
-// 
-//                 let (new_state, new_consensus) = client.verify_upgrade_and_update_state(
-//                     client_state,
-//                     consensus_state,
-//                     proof_upgrade_client,
-//                     proof_upgrade_consensus_state,
-//                 )?;
-// 
-//                 Ok((
-//                     AnyClientState::Tendermint(new_state),
-//                     AnyConsensusState::Tendermint(new_consensus),
-//                 ))
-//             }
-// 
-//             #[cfg(any(test, feature = "mocks"))]
-//             Self::Mock(client) => {
-//                 let (client_state, consensus_state) = downcast!(
-//                     client_state => AnyClientState::Mock,
-//                     consensus_state => AnyConsensusState::Mock,
-//                 )
-//                 .ok_or_else(|| Kind::ClientArgsTypeMismatch(ClientType::Mock))?;
-// 
-//                 let (new_state, new_consensus) = client.verify_upgrade_and_update_state(
-//                     client_state,
-//                     consensus_state,
-//                     proof_upgrade_client,
-//                     proof_upgrade_consensus_state,
-//                 )?;
-// 
-//                 Ok((
-//                     AnyClientState::Mock(new_state),
-//                     AnyConsensusState::Mock(new_consensus),
-//                 ))
-//             }
-//         }
+    ) -> Result<(Self::ClientState, Self::ConsensusState), Error> {
+        match self {
+            Self::Tendermint(client) => {
+                let (client_state, consensus_state) = downcast!(
+                    client_state => AnyClientState::Tendermint,
+                    consensus_state => AnyConsensusState::Tendermint,
+                )
+                .ok_or_else(|| Error::client_args_type_mismatch(ClientType::Tendermint))?;
+
+                let (new_state, new_consensus) = client.verify_upgrade_and_update_state(
+                    client_state,
+                    consensus_state,
+                    proof_upgrade_client,
+                    proof_upgrade_consensus_state,
+                )?;
+
+                Ok((
+                    AnyClientState::Tendermint(new_state),
+                    AnyConsensusState::Tendermint(new_consensus),
+                ))
+            }
+
+            #[cfg(any(test, feature = "mocks"))]
+            Self::Mock(client) => {
+                let (client_state, consensus_state) = downcast!(
+                    client_state => AnyClientState::Mock,
+                    consensus_state => AnyConsensusState::Mock,
+                )
+                .ok_or_else(|| Error::client_args_type_mismatch(ClientType::Mock))?;
+
+                let (new_state, new_consensus) = client.verify_upgrade_and_update_state(
+                    client_state,
+                    consensus_state,
+                    proof_upgrade_client,
+                    proof_upgrade_consensus_state,
+                )?;
+
+                Ok((
+                    AnyClientState::Mock(new_state),
+                    AnyConsensusState::Mock(new_consensus),
+                ))
+            }
+        }
     }
 }

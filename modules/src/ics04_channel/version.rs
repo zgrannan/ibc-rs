@@ -1,13 +1,12 @@
 use std::convert::TryFrom;
 
 use ibc_proto::ibc::core::connection::v1::Version as RawVersion;
-use prusti_contracts::trusted;
 use tendermint_proto::Protobuf;
 
-use crate::ics04_channel::error::{Error, Kind};
+use crate::ics04_channel::error::Error;
 use std::str::FromStr;
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Version {
     /// unique version identifier
     identifier: String,
@@ -18,7 +17,7 @@ pub struct Version {
 impl Protobuf<RawVersion> for Version {}
 
 impl TryFrom<RawVersion> for Version {
-    type Error = anomaly::Error<Kind>;
+    type Error = Error;
     fn try_from(value: RawVersion) -> Result<Self, Self::Error> {
         Ok(Version {
             identifier: value.identifier,
@@ -37,12 +36,11 @@ impl From<Version> for RawVersion {
 }
 
 impl Default for Version {
-#[trusted]
     fn default() -> Self {
-unreachable!() //         Version {
-//             identifier: "1".to_string(),
-//             features: vec!["TOKEN_TRANSFER".to_string()],
-//         }
+        Version {
+            identifier: "1".to_string(),
+            features: vec!["TOKEN_TRANSFER".to_string()],
+        }
     }
 }
 
@@ -50,18 +48,17 @@ impl FromStr for Version {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Version::decode(s.as_bytes()).map_err(|e| Kind::InvalidVersion.context(e))?)
+        Version::decode(s.as_bytes()).map_err(Error::invalid_version)
     }
 }
 
 impl std::fmt::Display for Version {
-#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-unreachable!() //         write!(
-//             f,
-//             "{}",
-//             String::from_utf8(Version::encode_vec(self).unwrap()).unwrap()
-//         )
+        write!(
+            f,
+            "{}",
+            String::from_utf8(Version::encode_vec(self).unwrap()).unwrap()
+        )
     }
 }
 
@@ -69,65 +66,53 @@ pub fn default_version_string() -> String {
     Version::default().to_string()
 }
 
-#[trusted]
 pub fn get_compatible_versions() -> Vec<String> {
-unreachable!() //     vec![default_version_string()]
+    vec![default_version_string()]
 }
 
-#[trusted]
 pub fn pick_version(
     supported_versions: Vec<String>,
     counterparty_versions: Vec<String>,
 ) -> Result<String, Error> {
-unreachable!() //     let mut intersection: Vec<Version> = vec![];
-//     for s in supported_versions.iter() {
-//         let supported_version =
-//             Version::decode(s.as_bytes()).map_err(|e| Kind::InvalidVersion.context(e))?;
-//         for c in counterparty_versions.iter() {
-//             let counterparty_version = Version::from_str(c.as_str())?;
-//             if supported_version.identifier != counterparty_version.identifier {
-//                 continue;
-//             }
-//             // TODO - perform feature intersection and error if empty
-//             intersection.append(&mut vec![supported_version.clone()]);
-//         }
-//     }
-//     intersection.sort_by(|a, b| a.identifier.cmp(&b.identifier));
-//     if intersection.is_empty() {
-//         return Err(Kind::NoCommonVersion.into());
-//     }
-//     Ok(intersection[0].to_string())
+    let mut intersection: Vec<Version> = vec![];
+    for s in supported_versions.iter() {
+        let supported_version = Version::decode(s.as_bytes()).map_err(Error::invalid_version)?;
+        for c in counterparty_versions.iter() {
+            let counterparty_version = Version::from_str(c.as_str())?;
+            if supported_version.identifier != counterparty_version.identifier {
+                continue;
+            }
+            // TODO - perform feature intersection and error if empty
+            intersection.append(&mut vec![supported_version.clone()]);
+        }
+    }
+    intersection.sort_by(|a, b| a.identifier.cmp(&b.identifier));
+    if intersection.is_empty() {
+        return Err(Error::no_common_version());
+    }
+    Ok(intersection[0].to_string())
 }
 
-#[trusted]
 pub fn validate_versions(versions: Vec<String>) -> Result<Vec<String>, Error> {
-unreachable!() //     if versions.is_empty() {
-//         return Err(Kind::InvalidVersion
-//             .context("no versions".to_string())
-//             .into());
-//     }
-//     for version_str in versions.iter() {
-//         validate_version(version_str.clone())?;
-//     }
-//     Ok(versions)
+    if versions.is_empty() {
+        return Err(Error::empty_version());
+    }
+    for version_str in versions.iter() {
+        validate_version(version_str.clone())?;
+    }
+    Ok(versions)
 }
 
-#[trusted]
 pub fn validate_version(raw_version: String) -> Result<String, Error> {
-unreachable!() //     let version =
-//         Version::from_str(raw_version.as_ref()).map_err(|e| Kind::InvalidVersion.context(e))?;
-// 
-//     if version.identifier.trim().is_empty() {
-//         return Err(Kind::InvalidVersion
-//             .context("empty version string".to_string())
-//             .into());
-//     }
-//     for feature in version.features {
-//         if feature.trim().is_empty() {
-//             return Err(Kind::InvalidVersion
-//                 .context("empty feature string".to_string())
-//                 .into());
-//         }
-//     }
-//     Ok(raw_version)
+    let version = Version::from_str(raw_version.as_ref())?;
+
+    if version.identifier.trim().is_empty() {
+        return Err(Error::empty_version());
+    }
+    for feature in version.features {
+        if feature.trim().is_empty() {
+            return Err(Error::empty_version());
+        }
+    }
+    Ok(raw_version)
 }

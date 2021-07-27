@@ -1,11 +1,10 @@
-use std::convert::{TryFrom, TryInto};
+use std::convert::TryFrom;
 
-use prusti_contracts::*;
 use tendermint_proto::Protobuf;
 
 use ibc_proto::ibc::core::connection::v1::MsgConnectionOpenConfirm as RawMsgConnectionOpenConfirm;
 
-use crate::ics03_connection::error::{Error, Kind};
+use crate::ics03_connection::error::Error;
 use crate::ics24_host::identifier::ConnectionId;
 use crate::proofs::Proofs;
 use crate::signer::Signer;
@@ -16,7 +15,7 @@ pub const TYPE_URL: &str = "/ibc.core.connection.v1.MsgConnectionOpenConfirm";
 ///
 /// Message definition for `MsgConnectionOpenConfirm` (i.e., `ConnOpenConfirm` datagram).
 ///
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MsgConnectionOpenConfirm {
     pub connection_id: ConnectionId,
     pub proofs: Proofs,
@@ -39,50 +38,46 @@ impl Msg for MsgConnectionOpenConfirm {
     type ValidationError = Error;
     type Raw = RawMsgConnectionOpenConfirm;
 
-#[trusted]
     fn route(&self) -> String {
-unreachable!() //         crate::keys::ROUTER_KEY.to_string()
+        crate::keys::ROUTER_KEY.to_string()
     }
 
-#[trusted]
     fn type_url(&self) -> String {
-unreachable!() //         TYPE_URL.to_string()
+        TYPE_URL.to_string()
     }
 }
 
 impl Protobuf<RawMsgConnectionOpenConfirm> for MsgConnectionOpenConfirm {}
 
 impl TryFrom<RawMsgConnectionOpenConfirm> for MsgConnectionOpenConfirm {
-    type Error = anomaly::Error<Kind>;
+    type Error = Error;
 
-#[trusted]
     fn try_from(msg: RawMsgConnectionOpenConfirm) -> Result<Self, Self::Error> {
-unreachable!() //         let proof_height = msg
-//             .proof_height
-//             .ok_or(Kind::MissingProofHeight)?
-//             .try_into() // Cast from the raw height type into the domain type.
-//             .map_err(|e| Kind::InvalidProof.context(e))?;
-//         Ok(Self {
-//             connection_id: msg
-//                 .connection_id
-//                 .parse()
-//                 .map_err(|e| Kind::IdentifierError.context(e))?,
-//             proofs: Proofs::new(msg.proof_ack.into(), None, None, None, proof_height)
-//                 .map_err(|e| Kind::InvalidProof.context(e))?,
-//             signer: msg.signer.into(),
-//         })
+        let proof_height = msg
+            .proof_height
+            .ok_or_else(Error::missing_proof_height)?
+            .into();
+
+        Ok(Self {
+            connection_id: msg
+                .connection_id
+                .parse()
+                .map_err(Error::invalid_identifier)?,
+            proofs: Proofs::new(msg.proof_ack.into(), None, None, None, proof_height)
+                .map_err(Error::invalid_proof)?,
+            signer: msg.signer.into(),
+        })
     }
 }
 
 impl From<MsgConnectionOpenConfirm> for RawMsgConnectionOpenConfirm {
-#[trusted]
     fn from(ics_msg: MsgConnectionOpenConfirm) -> Self {
-unreachable!() //         RawMsgConnectionOpenConfirm {
-//             connection_id: ics_msg.connection_id.as_str().to_string(),
-//             proof_ack: ics_msg.proofs.object_proof().clone().into(),
-//             proof_height: Some(ics_msg.proofs.height().into()),
-//             signer: ics_msg.signer.to_string(),
-//         }
+        RawMsgConnectionOpenConfirm {
+            connection_id: ics_msg.connection_id.as_str().to_string(),
+            proof_ack: ics_msg.proofs.object_proof().clone().into(),
+            proof_height: Some(ics_msg.proofs.height().into()),
+            signer: ics_msg.signer.to_string(),
+        }
     }
 }
 
@@ -119,7 +114,7 @@ mod tests {
 
     #[test]
     fn parse_connection_open_confirm_msg() {
-        #[derive(Clone)]
+        #[derive(Clone, Debug, PartialEq)]
         struct Test {
             name: String,
             raw: RawMsgConnectionOpenConfirm,

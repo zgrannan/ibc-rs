@@ -3,7 +3,7 @@ use std::fmt;
 use prusti_contracts::*;
 use serde_derive::{Deserialize, Serialize};
 
-use super::error;
+use super::error::Error;
 
 /// Type of the client, depending on the specific consensus algorithm.
 #[derive(Copy, Clone, Hash)]
@@ -55,18 +55,18 @@ unreachable!() //         write!(f, "ClientType({})", self.as_str())
 }
 
 impl std::str::FromStr for ClientType {
-    type Err = error::Error;
+    type Err = Error;
 
 #[trusted]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-unreachable!() //         match s {
-//             Self::TENDERMINT_STR => Ok(Self::Tendermint),
-// 
-//             #[cfg(any(test, feature = "mocks"))]
-//             Self::MOCK_STR => Ok(Self::Mock),
-// 
-//             _ => Err(error::Kind::UnknownClientType(s.to_string()).into()),
-//         }
+        match s {
+            Self::TENDERMINT_STR => Ok(Self::Tendermint),
+
+            #[cfg(any(test, feature = "mocks"))]
+            Self::MOCK_STR => Ok(Self::Mock),
+
+            _ => Err(Error::unknown_client_type(s.to_string())),
+        }
     }
 }
 

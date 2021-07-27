@@ -1,106 +1,99 @@
 //! Protocol logic specific to processing ICS3 messages of type `MsgConnectionOpenAck`.
 
-use prusti_contracts::trusted;
-
 use crate::events::IbcEvent;
 use crate::handler::{HandlerOutput, HandlerResult};
 use crate::ics03_connection::connection::{ConnectionEnd, Counterparty, State};
 use crate::ics03_connection::context::ConnectionReader;
-use crate::ics03_connection::error::{Error, Kind};
+use crate::ics03_connection::error::Error;
 use crate::ics03_connection::events::Attributes;
 use crate::ics03_connection::handler::verify::{check_client_consensus_height, verify_proofs};
 use crate::ics03_connection::handler::{ConnectionIdState, ConnectionResult};
 use crate::ics03_connection::msgs::conn_open_ack::MsgConnectionOpenAck;
 
-#[trusted]
 pub(crate) fn process(
     ctx: &dyn ConnectionReader,
     msg: MsgConnectionOpenAck,
 ) -> HandlerResult<ConnectionResult, Error> {
-unreachable!() //     let mut output = HandlerOutput::builder();
-// 
-//     // Check the client's (consensus state) proof height.
-//     check_client_consensus_height(ctx, msg.consensus_height())?;
-// 
-//     // Unwrap the old connection end & validate it.
-//     let mut new_conn_end = match ctx.connection_end(msg.connection_id()) {
-//         // A connection end must exist and must be Init or TryOpen; otherwise we return an error.
-//         Some(old_conn_end) => {
-//             // Check if the connection state is either Init or TryOpen and message version
-//             // is compatible.
-//             let state_is_consistent = old_conn_end.state_matches(&State::Init)
-//                 && old_conn_end.versions().contains(msg.version())
-//                 || old_conn_end.state_matches(&State::TryOpen)
-//                     && old_conn_end.versions().get(0).eq(&Some(msg.version()));
-// 
-//             // Check that, if we have a counterparty connection id, then it
-//             // matches the one in the message.
-//             let counterparty_matches = if let Some(counterparty_connection_id) =
-//                 old_conn_end.counterparty().connection_id()
-//             {
-//                 &msg.counterparty_connection_id == counterparty_connection_id
-//             } else {
-//                 true
-//             };
-// 
-//             if state_is_consistent && counterparty_matches {
-//                 Ok(old_conn_end)
-//             } else {
-//                 // Old connection end is in incorrect state, propagate the error.
-//                 Err(Into::<Error>::into(Kind::ConnectionMismatch(
-//                     msg.connection_id().clone(),
-//                 )))
-//             }
-//         }
-//         None => {
-//             // No connection end exists for this conn. identifier. Impossible to continue handshake.
-//             Err(Into::<Error>::into(Kind::UninitializedConnection(
-//                 msg.connection_id().clone(),
-//             )))
-//         }
-//     }?;
-// 
-//     // Proof verification.
-//     let expected_conn = ConnectionEnd::new(
-//         State::TryOpen,
-//         new_conn_end.counterparty().client_id().clone(),
-//         Counterparty::new(
-//             // The counterparty is the local chain.
-//             new_conn_end.client_id().clone(), // The local client identifier.
-//             Some(msg.counterparty_connection_id().clone()), // This chain's connection id as known on counterparty.
-//             ctx.commitment_prefix(),                        // Local commitment prefix.
-//         ),
-//         vec![msg.version().clone()],
-//         new_conn_end.delay_period(),
-//     );
-// 
-//     // 2. Pass the details to the verification function.
-//     verify_proofs(
-//         ctx,
-//         msg.client_state(),
-//         &new_conn_end,
-//         &expected_conn,
-//         msg.proofs(),
-//     )?;
-// 
-//     output.log("success: connection verification passed");
-// 
-//     new_conn_end.set_state(State::Open);
-//     new_conn_end.set_version(msg.version().clone());
-// 
-//     let result = ConnectionResult {
-//         connection_id: msg.connection_id().clone(),
-//         connection_id_state: ConnectionIdState::Reused,
-//         connection_end: new_conn_end,
-//     };
-// 
-//     let event_attributes = Attributes {
-//         connection_id: Some(result.connection_id.clone()),
-//         ..Default::default()
-//     };
-//     output.emit(IbcEvent::OpenAckConnection(event_attributes.into()));
-// 
-//     Ok(output.with_result(result))
+    let mut output = HandlerOutput::builder();
+
+    // Check the client's (consensus state) proof height.
+    check_client_consensus_height(ctx, msg.consensus_height())?;
+
+    // Unwrap the old connection end & validate it.
+    let mut new_conn_end = match ctx.connection_end(msg.connection_id()) {
+        // A connection end must exist and must be Init or TryOpen; otherwise we return an error.
+        Some(old_conn_end) => {
+            // Check if the connection state is either Init or TryOpen and message version
+            // is compatible.
+            let state_is_consistent = old_conn_end.state_matches(&State::Init)
+                && old_conn_end.versions().contains(msg.version())
+                || old_conn_end.state_matches(&State::TryOpen)
+                    && old_conn_end.versions().get(0).eq(&Some(msg.version()));
+
+            // Check that, if we have a counterparty connection id, then it
+            // matches the one in the message.
+            let counterparty_matches = if let Some(counterparty_connection_id) =
+                old_conn_end.counterparty().connection_id()
+            {
+                &msg.counterparty_connection_id == counterparty_connection_id
+            } else {
+                true
+            };
+
+            if state_is_consistent && counterparty_matches {
+                Ok(old_conn_end)
+            } else {
+                // Old connection end is in incorrect state, propagate the error.
+                Err(Error::connection_mismatch(msg.connection_id().clone()))
+            }
+        }
+        None => {
+            // No connection end exists for this conn. identifier. Impossible to continue handshake.
+            Err(Error::uninitialized_connection(msg.connection_id().clone()))
+        }
+    }?;
+
+    // Proof verification.
+    let expected_conn = ConnectionEnd::new(
+        State::TryOpen,
+        new_conn_end.counterparty().client_id().clone(),
+        Counterparty::new(
+            // The counterparty is the local chain.
+            new_conn_end.client_id().clone(), // The local client identifier.
+            Some(msg.counterparty_connection_id().clone()), // This chain's connection id as known on counterparty.
+            ctx.commitment_prefix(),                        // Local commitment prefix.
+        ),
+        vec![msg.version().clone()],
+        new_conn_end.delay_period(),
+    );
+
+    // 2. Pass the details to the verification function.
+    verify_proofs(
+        ctx,
+        msg.client_state(),
+        &new_conn_end,
+        &expected_conn,
+        msg.proofs(),
+    )?;
+
+    output.log("success: connection verification passed");
+
+    new_conn_end.set_state(State::Open);
+    new_conn_end.set_version(msg.version().clone());
+
+    let result = ConnectionResult {
+        connection_id: msg.connection_id().clone(),
+        connection_id_state: ConnectionIdState::Reused,
+        connection_end: new_conn_end,
+    };
+
+    let event_attributes = Attributes {
+        connection_id: Some(result.connection_id.clone()),
+        ..Default::default()
+    };
+    output.emit(IbcEvent::OpenAckConnection(event_attributes.into()));
+
+    Ok(output.with_result(result))
 }
 
 #[cfg(test)]
@@ -111,7 +104,7 @@ mod tests {
 
     use crate::events::IbcEvent;
     use crate::ics03_connection::connection::{ConnectionEnd, Counterparty, State};
-    use crate::ics03_connection::error::Kind;
+    use crate::ics03_connection::error;
     use crate::ics03_connection::handler::{dispatch, ConnectionResult};
     use crate::ics03_connection::msgs::conn_open_ack::test_util::get_dummy_raw_msg_conn_open_ack;
     use crate::ics03_connection::msgs::conn_open_ack::MsgConnectionOpenAck;
@@ -129,7 +122,7 @@ mod tests {
             ctx: MockContext,
             msg: ConnectionMsg,
             want_pass: bool,
-            error_kind: Option<Kind>,
+            match_error: Box<dyn FnOnce(error::Error)>,
         }
 
         let msg_ack =
@@ -187,14 +180,28 @@ mod tests {
                     .with_connection(conn_id.clone(), default_conn_end),
                 msg: ConnectionMsg::ConnectionOpenAck(Box::new(msg_ack.clone())),
                 want_pass: true,
-                error_kind: None,
+                match_error: Box::new(|_| {
+                    panic!("should not have error")
+                }),
             },
             Test {
                 name: "Processing fails because the connection does not exist in the context".to_string(),
                 ctx: default_context.clone(),
                 msg: ConnectionMsg::ConnectionOpenAck(Box::new(msg_ack.clone())),
                 want_pass: false,
-                error_kind: Some(Kind::UninitializedConnection(conn_id.clone())),
+                match_error: {
+                    let connection_id = conn_id.clone();
+                    Box::new(move |e| {
+                        match e.detail() {
+                            error::ErrorDetail::UninitializedConnection(e) => {
+                                assert_eq!(e.connection_id, connection_id)
+                            }
+                            _ => {
+                                panic!("Expected UninitializedConnection error");
+                            }
+                        }
+                    })
+                },
             },
             Test {
                 name: "Processing fails due to connections mismatch (incorrect 'open' state)".to_string(),
@@ -204,7 +211,19 @@ mod tests {
                     .with_connection(conn_id.clone(), conn_end_open),
                 msg: ConnectionMsg::ConnectionOpenAck(Box::new(msg_ack.clone())),
                 want_pass: false,
-                error_kind: Some(Kind::ConnectionMismatch(conn_id.clone()))
+                match_error: {
+                    let connection_id = conn_id.clone();
+                    Box::new(move |e| {
+                        match e.detail() {
+                            error::ErrorDetail::ConnectionMismatch(e) => {
+                                assert_eq!(e.connection_id, connection_id);
+                            }
+                            _ => {
+                                panic!("Expected ConnectionMismatch error");
+                            }
+                        }
+                    })
+                },
             },
             Test {
                 name: "Processing fails: ConsensusStateVerificationFailure due to empty counterparty prefix".to_string(),
@@ -213,7 +232,17 @@ mod tests {
                     .with_connection(conn_id, conn_end_prefix),
                 msg: ConnectionMsg::ConnectionOpenAck(Box::new(msg_ack)),
                 want_pass: false,
-                error_kind: Some(Kind::ConsensusStateVerificationFailure(proof_height))
+                match_error:
+                    Box::new(move |e| {
+                        match e.detail() {
+                            error::ErrorDetail::ConsensusStateVerificationFailure(e) => {
+                                assert_eq!(e.height, proof_height)
+                            }
+                            _ => {
+                                panic!("Expected ConsensusStateVerificationFailure error");
+                            }
+                        }
+                    }),
             },
             /*
             Test {
@@ -262,16 +291,7 @@ mod tests {
                     );
 
                     // Verify that the error kind matches
-                    if let Some(expected_kind) = test.error_kind {
-                        assert_eq!(
-                            &expected_kind,
-                            e.kind(),
-                            "conn_open_ack: failed for test: {}\nexpected error kind: {:?}\nfound: {:?}",
-                            test.name,
-                            expected_kind,
-                            e.kind()
-                        )
-                    }
+                    (test.match_error)(e);
                 }
             }
         }

@@ -1,16 +1,14 @@
-use prusti_contracts::trusted;
-
 use crate::ics04_channel::channel::State;
 use crate::ics04_channel::events::WriteAcknowledgement;
 use crate::ics04_channel::packet::{Packet, PacketResult, Sequence};
-use crate::ics04_channel::{context::ChannelReader, error::Error, error::Kind};
+use crate::ics04_channel::{context::ChannelReader, error::Error};
 use crate::ics24_host::identifier::{ChannelId, PortId};
 use crate::{
     events::IbcEvent,
     handler::{HandlerOutput, HandlerResult},
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct WriteAckPacketResult {
     pub port_id: PortId,
     pub channel_id: ChannelId,
@@ -18,68 +16,68 @@ pub struct WriteAckPacketResult {
     pub ack: Vec<u8>,
 }
 
-#[trusted]
 pub fn process(
     ctx: &dyn ChannelReader,
     packet: Packet,
     ack: Vec<u8>,
 ) -> HandlerResult<PacketResult, Error> {
-unreachable!() //     let mut output = HandlerOutput::builder();
-// 
-//     let dest_channel_end = ctx
-//         .channel_end(&(
-//             packet.destination_port.clone(),
-//             packet.destination_channel.clone(),
-//         ))
-//         .ok_or_else(|| {
-//             Kind::ChannelNotFound(
-//                 packet.destination_port.clone(),
-//                 packet.destination_channel.clone(),
-//             )
-//         })?;
-// 
-//     if !dest_channel_end.state_matches(&State::Open) {
-//         return Err(
-//             Kind::InvalidChannelState(packet.source_channel, dest_channel_end.state).into(),
-//         );
-//     }
-// 
-//     let _channel_cap = ctx.authenticated_capability(&packet.destination_port)?;
-// 
-//     // NOTE: IBC app modules might have written the acknowledgement synchronously on
-//     // the OnRecvPacket callback so we need to check if the acknowledgement is already
-//     // set on the store and return an error if so.
-//     if ctx
-//         .get_packet_acknowledgement(&(
-//             packet.destination_port.clone(),
-//             packet.destination_channel.clone(),
-//             packet.sequence,
-//         ))
-//         .is_some()
-//     {
-//         return Err(Kind::AcknowledgementExists(packet.sequence).into());
-//     }
-// 
-//     if ack.is_empty() {
-//         return Err(Kind::InvalidAcknowledgement.into());
-//     }
-// 
-//     let result = PacketResult::WriteAck(WriteAckPacketResult {
-//         port_id: packet.source_port.clone(),
-//         channel_id: packet.source_channel.clone(),
-//         seq: packet.sequence,
-//         ack: ack.clone(),
-//     });
-// 
-//     output.log("success: packet write acknowledgement");
-// 
-//     output.emit(IbcEvent::WriteAcknowledgement(WriteAcknowledgement {
-//         height: Default::default(),
-//         packet,
-//         ack,
-//     }));
-// 
-//     Ok(output.with_result(result))
+    let mut output = HandlerOutput::builder();
+
+    let dest_channel_end = ctx
+        .channel_end(&(
+            packet.destination_port.clone(),
+            packet.destination_channel.clone(),
+        ))
+        .ok_or_else(|| {
+            Error::channel_not_found(
+                packet.destination_port.clone(),
+                packet.destination_channel.clone(),
+            )
+        })?;
+
+    if !dest_channel_end.state_matches(&State::Open) {
+        return Err(Error::invalid_channel_state(
+            packet.source_channel,
+            dest_channel_end.state,
+        ));
+    }
+
+    let _channel_cap = ctx.authenticated_capability(&packet.destination_port)?;
+
+    // NOTE: IBC app modules might have written the acknowledgement synchronously on
+    // the OnRecvPacket callback so we need to check if the acknowledgement is already
+    // set on the store and return an error if so.
+    if ctx
+        .get_packet_acknowledgement(&(
+            packet.destination_port.clone(),
+            packet.destination_channel.clone(),
+            packet.sequence,
+        ))
+        .is_some()
+    {
+        return Err(Error::acknowledgement_exists(packet.sequence));
+    }
+
+    if ack.is_empty() {
+        return Err(Error::invalid_acknowledgement());
+    }
+
+    let result = PacketResult::WriteAck(WriteAckPacketResult {
+        port_id: packet.source_port.clone(),
+        channel_id: packet.source_channel.clone(),
+        seq: packet.sequence,
+        ack: ack.clone(),
+    });
+
+    output.log("success: packet write acknowledgement");
+
+    output.emit(IbcEvent::WriteAcknowledgement(WriteAcknowledgement {
+        height: Default::default(),
+        packet,
+        ack,
+    }));
+
+    Ok(output.with_result(result))
 }
 
 #[cfg(test)]

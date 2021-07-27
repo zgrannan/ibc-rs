@@ -1,8 +1,6 @@
 use crate::ics04_channel::channel::{validate_version, ChannelEnd};
-use crate::ics04_channel::error::{Error, Kind};
-use prusti_contracts::*;
+use crate::ics04_channel::error::Error as ChannelError;
 use crate::ics24_host::error::ValidationError;
-use crate::ics24_host::error::ValidationKind;
 use crate::ics24_host::identifier::{ChannelId, PortId};
 use crate::proofs::Proofs;
 use crate::signer::Signer;
@@ -19,7 +17,7 @@ pub const TYPE_URL: &str = "/ibc.core.channel.v1.MsgChannelOpenTry";
 ///
 /// Message definition for the second step in the channel open handshake (`ChanOpenTry` datagram).
 ///
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct MsgChannelOpenTry {
     pub port_id: PortId,
     pub previous_channel_id: Option<ChannelId>,
@@ -66,87 +64,81 @@ impl MsgChannelOpenTry {
     }
 }
 impl Msg for MsgChannelOpenTry {
-    type ValidationError = Error;
+    type ValidationError = ChannelError;
     type Raw = RawMsgChannelOpenTry;
 
-#[trusted]
     fn route(&self) -> String {
-unreachable!() //         crate::keys::ROUTER_KEY.to_string()
+        crate::keys::ROUTER_KEY.to_string()
     }
 
-#[trusted]
     fn type_url(&self) -> String {
-unreachable!() //         TYPE_URL.to_string()
+        TYPE_URL.to_string()
     }
 
-#[trusted]
     fn validate_basic(&self) -> Result<(), ValidationError> {
-unreachable!() //         match self.channel().counterparty().channel_id() {
-//             None => Err(ValidationKind::InvalidCounterpartyChannelId.into()),
-//             Some(_c) => Ok(()),
-//         }
+        match self.channel().counterparty().channel_id() {
+            None => Err(ValidationError::invalid_counterparty_channel_id()),
+            Some(_c) => Ok(()),
+        }
     }
 }
 
 impl Protobuf<RawMsgChannelOpenTry> for MsgChannelOpenTry {}
 
 impl TryFrom<RawMsgChannelOpenTry> for MsgChannelOpenTry {
-    type Error = anomaly::Error<Kind>;
+    type Error = ChannelError;
 
-#[trusted]
     fn try_from(raw_msg: RawMsgChannelOpenTry) -> Result<Self, Self::Error> {
-unreachable!() // panic!("No") // panic!("No") //         let proofs = Proofs::new(
-// // //             raw_msg.proof_init.into(),
-// // //             None,
-// // //             None,
-// // //             None,
-// // //             raw_msg
-// // //                 .proof_height
-// // //                 .ok_or(Kind::MissingHeight)?
-// // //                 .try_into()
-// // //                 .map_err(|e| Kind::InvalidProof.context(e))?,
-// // //         )
-// // //         .map_err(|e| Kind::InvalidProof.context(e))?;
-// // // 
-// // //         let previous_channel_id = Some(raw_msg.previous_channel_id)
-// // //             .filter(|x| !x.is_empty())
-// // //             .map(|v| FromStr::from_str(v.as_str()))
-// // //             .transpose()
-// // //             .map_err(|e| Kind::IdentifierError.context(e))?;
-// // // 
-// // //         let msg = MsgChannelOpenTry {
-// // //             port_id: raw_msg
-// // //                 .port_id
-// // //                 .parse()
-// // //                 .map_err(|e| Kind::IdentifierError.context(e))?,
-// // //             previous_channel_id,
-// // //             channel: raw_msg.channel.ok_or(Kind::MissingChannel)?.try_into()?,
-// // //             counterparty_version: validate_version(raw_msg.counterparty_version)?,
-// // //             proofs,
-// // //             signer: raw_msg.signer.into(),
-// // //         };
-// // // 
-// // //         match msg.validate_basic() {
-// // //             Err(_e) => Err(Kind::InvalidCounterpartyChannelId.into()),
-// // //             Ok(()) => Ok(msg),
-// // //         }
+        let proofs = Proofs::new(
+            raw_msg.proof_init.into(),
+            None,
+            None,
+            None,
+            raw_msg
+                .proof_height
+                .ok_or_else(ChannelError::missing_height)?
+                .into(),
+        )
+        .map_err(ChannelError::invalid_proof)?;
+
+        let previous_channel_id = Some(raw_msg.previous_channel_id)
+            .filter(|x| !x.is_empty())
+            .map(|v| FromStr::from_str(v.as_str()))
+            .transpose()
+            .map_err(ChannelError::identifier)?;
+
+        let msg = MsgChannelOpenTry {
+            port_id: raw_msg.port_id.parse().map_err(ChannelError::identifier)?,
+            previous_channel_id,
+            channel: raw_msg
+                .channel
+                .ok_or_else(ChannelError::missing_channel)?
+                .try_into()?,
+            counterparty_version: validate_version(raw_msg.counterparty_version)?,
+            proofs,
+            signer: raw_msg.signer.into(),
+        };
+
+        msg.validate_basic()
+            .map_err(ChannelError::invalid_counterparty_channel_id)?;
+
+        Ok(msg)
     }
 }
 
 impl From<MsgChannelOpenTry> for RawMsgChannelOpenTry {
-#[trusted]
     fn from(domain_msg: MsgChannelOpenTry) -> Self {
-unreachable!() // panic!("No") // panic!("No") //         RawMsgChannelOpenTry {
-// // //             port_id: domain_msg.port_id.to_string(),
-// // //             previous_channel_id: domain_msg
-// // //                 .previous_channel_id
-// // //                 .map_or_else(|| "".to_string(), |v| v.as_str().to_string()),
-// // //             channel: Some(domain_msg.channel.into()),
-// // //             counterparty_version: domain_msg.counterparty_version,
-// // //             proof_init: domain_msg.proofs.object_proof().clone().into(),
-// // //             proof_height: Some(domain_msg.proofs.height().into()),
-// // //             signer: domain_msg.signer.to_string(),
-// // //         }
+        RawMsgChannelOpenTry {
+            port_id: domain_msg.port_id.to_string(),
+            previous_channel_id: domain_msg
+                .previous_channel_id
+                .map_or_else(|| "".to_string(), |v| v.as_str().to_string()),
+            channel: Some(domain_msg.channel.into()),
+            counterparty_version: domain_msg.counterparty_version,
+            proof_init: domain_msg.proofs.object_proof().clone().into(),
+            proof_height: Some(domain_msg.proofs.height().into()),
+            signer: domain_msg.signer.to_string(),
+        }
     }
 }
 

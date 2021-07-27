@@ -1,20 +1,13 @@
 use std::convert::TryInto;
 use std::fmt::Display;
-use prusti_contracts::*;
 use std::num::{ParseIntError, TryFromIntError};
 use std::ops::{Add, Sub};
 use std::str::FromStr;
 use std::time::Duration;
 
 use chrono::{offset::Utc, DateTime, TimeZone};
+use flex_error::{define_error, TraceError};
 use serde_derive::{Deserialize, Serialize};
-use thiserror::Error;
-
-// #[extern_spec]
-// impl<T, E: std::fmt::Debug> Result<T, E> {
-//     #[requires(self.is_ok())]
-//     pub fn unwrap(self) -> T;
-// }
 
 pub const ZERO_DURATION: Duration = Duration::from_secs(0);
 
@@ -25,7 +18,7 @@ pub const ZERO_DURATION: Duration = Duration::from_secs(0);
 /// a `u64` value and a raw timestamp. In protocol buffer, the timestamp is
 /// represented as a `u64` Unix timestamp in nanoseconds, with 0 representing the absence
 /// of timestamp.
-#[derive(Copy, Clone, Hash)]
+#[derive(PartialEq, Eq, Copy, Clone, Debug, Deserialize, Serialize, Hash)]
 pub struct Timestamp {
     time: Option<DateTime<Utc>>,
 }
@@ -37,30 +30,11 @@ pub struct Timestamp {
 ///
 /// User of this result may want to determine whether error should be raised,
 /// when either of the timestamp being compared is invalid.
-#[derive(Copy, Clone, Hash)]
+#[derive(PartialEq, Eq, Copy, Clone, Debug, Deserialize, Serialize, Hash)]
 pub enum Expiry {
     Expired,
     NotExpired,
     InvalidTimestamp,
-}
-
-#[extern_spec]
-impl <Tz: chrono::TimeZone> chrono::DateTime<Tz> {
-  #[pure]
-  pub fn timestamp_nanos(&self) -> i64;
-}
-
-
-#[extern_spec]
-impl std::option::Option<DateTime<Utc>> {
-    #[pure]
-    #[ensures(matches!(*self, Some(_)) == result)]
-    pub fn is_some(&self) -> bool;
-
-    #[pure]
-    #[requires(self.is_some())]
-    pub fn unwrap(self) -> DateTime<Utc>;
-
 }
 
 impl Timestamp {
@@ -73,16 +47,15 @@ impl Timestamp {
     /// from an `i64` value. In practice, `i64` still have sufficient precision for our purpose.
     /// However we have to handle the case of `u64` overflowing in `i64`, to prevent
     /// malicious packets from crashing the relayer.
-#[trusted]
     pub fn from_nanoseconds(nanoseconds: u64) -> Result<Timestamp, TryFromIntError> {
-unreachable!() //         if nanoseconds == 0 {
-//             Ok(Timestamp { time: None })
-//         } else {
-//             let nanoseconds = nanoseconds.try_into()?;
-//             Ok(Timestamp {
-//                 time: Some(Utc.timestamp_nanos(nanoseconds)),
-//             })
-//         }
+        if nanoseconds == 0 {
+            Ok(Timestamp { time: None })
+        } else {
+            let nanoseconds = nanoseconds.try_into()?;
+            Ok(Timestamp {
+                time: Some(Utc.timestamp_nanos(nanoseconds)),
+            })
+        }
     }
 
     /// Returns a `Timestamp` representation of the current time.
@@ -115,7 +88,6 @@ unreachable!() //         if nanoseconds == 0 {
 
     /// Convert a `Timestamp` to `u64` value in nanoseconds. If no timestamp
     /// is set, the result is 0.
-    #[requires(self.time.is_some() ==> self.time.unwrap().timestamp_nanos() >= 0)]
     pub fn as_nanoseconds(&self) -> u64 {
         self.time
             .map_or(0, |time| time.timestamp_nanos().try_into().unwrap())
@@ -143,31 +115,20 @@ unreachable!() //         if nanoseconds == 0 {
 }
 
 impl Display for Timestamp {
-#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-unreachable!() //         write!(
-//             f,
-//             "Timestamp({})",
-//             self.time
-//                 .map_or("NoTimestamp".to_string(), |time| time.to_rfc3339())
-//         )
+        write!(
+            f,
+            "Timestamp({})",
+            self.time
+                .map_or("NoTimestamp".to_string(), |time| time.to_rfc3339())
+        )
     }
 }
 
-#[derive(Clone, Error)]
-// #[error("Timestamp overflow when modifying with duration")]
-pub struct TimestampOverflowError;
-
-impl std::fmt::Display for TimestampOverflowError {
-    #[trusted]
-    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        unreachable!()
-    }
-}
-impl std::fmt::Debug for TimestampOverflowError {
-    #[trusted]
-    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        unreachable!()
+define_error! {
+    TimestampOverflowError {
+        TimestampOverflow
+            |_| { "Timestamp overflow when modifying with duration" }
     }
 }
 
@@ -177,8 +138,8 @@ impl Add<Duration> for Timestamp {
     fn add(self, duration: Duration) -> Result<Timestamp, TimestampOverflowError> {
         match self.as_datetime() {
             Some(datetime) => {
-                let duration2 =
-                    chrono::Duration::from_std(duration).map_err(|_| TimestampOverflowError)?;
+                let duration2 = chrono::Duration::from_std(duration)
+                    .map_err(|_| TimestampOverflowError::timestamp_overflow())?;
                 Ok(Self::from_datetime(datetime + duration2))
             }
             None => Ok(self),
@@ -189,64 +150,37 @@ impl Add<Duration> for Timestamp {
 impl Sub<Duration> for Timestamp {
     type Output = Result<Timestamp, TimestampOverflowError>;
 
-#[trusted]
     fn sub(self, duration: Duration) -> Result<Timestamp, TimestampOverflowError> {
-unreachable!() //         match self.as_datetime() {
-//             Some(datetime) => {
-//                 let duration2 =
-//                     chrono::Duration::from_std(duration).map_err(|_| TimestampOverflowError)?;
-//                 Ok(Self::from_datetime(datetime - duration2))
-//             }
-//             None => Ok(self),
-//         }
+        match self.as_datetime() {
+            Some(datetime) => {
+                let duration2 = chrono::Duration::from_std(duration)
+                    .map_err(|_| TimestampOverflowError::timestamp_overflow())?;
+                Ok(Self::from_datetime(datetime - duration2))
+            }
+            None => Ok(self),
+        }
     }
 }
 
-pub type ParseTimestampError = anomaly::Error<ParseTimestampErrorKind>;
+define_error! {
+    ParseTimestampError {
+        ParseInt
+            [ TraceError<ParseIntError> ]
+            | _ | { "error parsing integer from string"},
 
-#[derive(Clone)]
-pub enum ParseTimestampErrorKind {
-    ParseIntError,
-
-    TryFromIntError,
-}
-
-impl std::fmt::Debug for ParseTimestampErrorKind {
-    #[trusted]
-    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        unreachable!()
-    }
-}
-
-
-impl Display for ParseTimestampErrorKind {
-#[trusted]
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        todo!()
-    }
-}
-
-impl std::error::Error for ParseTimestampErrorKind {
-    #[trusted]
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-unreachable!() //         None
-    }
-
-    #[trusted]
-    fn cause(&self) -> Option<&dyn std::error::Error> {
-unreachable!() //         None
+        TryFromInt
+            [ TraceError<TryFromIntError> ]
+            | _ | { "error converting from u64 to i64" },
     }
 }
 
 impl FromStr for Timestamp {
     type Err = ParseTimestampError;
 
-#[trusted]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let seconds = u64::from_str(s).map_err(|_| ParseTimestampErrorKind::ParseIntError)?;
+        let seconds = u64::from_str(s).map_err(ParseTimestampError::parse_int)?;
 
-        Timestamp::from_nanoseconds(seconds)
-            .map_err(|err| ParseTimestampErrorKind::TryFromIntError.into())
+        Timestamp::from_nanoseconds(seconds).map_err(ParseTimestampError::try_from_int)
     }
 }
 

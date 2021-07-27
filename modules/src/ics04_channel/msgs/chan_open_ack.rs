@@ -1,6 +1,5 @@
 use crate::ics04_channel::channel::validate_version;
-use crate::ics04_channel::error::{Error, Kind};
-use prusti_contracts::*;
+use crate::ics04_channel::error::Error;
 use crate::ics24_host::identifier::{ChannelId, PortId};
 use crate::proofs::Proofs;
 use crate::signer::Signer;
@@ -9,14 +8,14 @@ use crate::tx_msg::Msg;
 use ibc_proto::ibc::core::channel::v1::MsgChannelOpenAck as RawMsgChannelOpenAck;
 use tendermint_proto::Protobuf;
 
-use std::convert::{TryFrom, TryInto};
+use std::convert::TryFrom;
 
 pub const TYPE_URL: &str = "/ibc.core.channel.v1.MsgChannelOpenAck";
 
 ///
 /// Message definition for the third step in the channel open handshake (`ChanOpenAck` datagram).
 ///
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct MsgChannelOpenAck {
     pub port_id: PortId,
     pub channel_id: ChannelId,
@@ -70,69 +69,58 @@ impl Msg for MsgChannelOpenAck {
     type ValidationError = Error;
     type Raw = RawMsgChannelOpenAck;
 
-#[trusted]
     fn route(&self) -> String {
-unreachable!() //         crate::keys::ROUTER_KEY.to_string()
+        crate::keys::ROUTER_KEY.to_string()
     }
 
-#[trusted]
     fn type_url(&self) -> String {
-unreachable!() //         TYPE_URL.to_string()
+        TYPE_URL.to_string()
     }
 }
 
 impl Protobuf<RawMsgChannelOpenAck> for MsgChannelOpenAck {}
 
 impl TryFrom<RawMsgChannelOpenAck> for MsgChannelOpenAck {
-    type Error = anomaly::Error<Kind>;
+    type Error = Error;
 
-#[trusted]
     fn try_from(raw_msg: RawMsgChannelOpenAck) -> Result<Self, Self::Error> {
-unreachable!() //         let proofs = Proofs::new(
-//             raw_msg.proof_try.into(),
-//             None,
-//             None,
-//             None,
-//             raw_msg
-//                 .proof_height
-//                 .ok_or(Kind::MissingHeight)?
-//                 .try_into()
-//                 .map_err(|e| Kind::InvalidProof.context(e))?,
-//         )
-//         .map_err(|e| Kind::InvalidProof.context(e))?;
-// 
-//         Ok(MsgChannelOpenAck {
-//             port_id: raw_msg
-//                 .port_id
-//                 .parse()
-//                 .map_err(|e| Kind::IdentifierError.context(e))?,
-//             channel_id: raw_msg
-//                 .channel_id
-//                 .parse()
-//                 .map_err(|e| Kind::IdentifierError.context(e))?,
-//             counterparty_channel_id: raw_msg
-//                 .counterparty_channel_id
-//                 .parse()
-//                 .map_err(|e| Kind::IdentifierError.context(e))?,
-//             counterparty_version: validate_version(raw_msg.counterparty_version)?,
-//             proofs,
-//             signer: raw_msg.signer.into(),
-//         })
+        let proofs = Proofs::new(
+            raw_msg.proof_try.into(),
+            None,
+            None,
+            None,
+            raw_msg
+                .proof_height
+                .ok_or_else(Error::missing_height)?
+                .into(),
+        )
+        .map_err(Error::invalid_proof)?;
+
+        Ok(MsgChannelOpenAck {
+            port_id: raw_msg.port_id.parse().map_err(Error::identifier)?,
+            channel_id: raw_msg.channel_id.parse().map_err(Error::identifier)?,
+            counterparty_channel_id: raw_msg
+                .counterparty_channel_id
+                .parse()
+                .map_err(Error::identifier)?,
+            counterparty_version: validate_version(raw_msg.counterparty_version)?,
+            proofs,
+            signer: raw_msg.signer.into(),
+        })
     }
 }
 
 impl From<MsgChannelOpenAck> for RawMsgChannelOpenAck {
-#[trusted]
     fn from(domain_msg: MsgChannelOpenAck) -> Self {
-unreachable!() //         RawMsgChannelOpenAck {
-//             port_id: domain_msg.port_id.to_string(),
-//             channel_id: domain_msg.channel_id.to_string(),
-//             counterparty_channel_id: domain_msg.counterparty_channel_id.to_string(),
-//             counterparty_version: domain_msg.counterparty_version.to_string(),
-//             proof_try: domain_msg.proofs.object_proof().clone().into(),
-//             proof_height: Some(domain_msg.proofs.height().into()),
-//             signer: domain_msg.signer.to_string(),
-//         }
+        RawMsgChannelOpenAck {
+            port_id: domain_msg.port_id.to_string(),
+            channel_id: domain_msg.channel_id.to_string(),
+            counterparty_channel_id: domain_msg.counterparty_channel_id.to_string(),
+            counterparty_version: domain_msg.counterparty_version.to_string(),
+            proof_try: domain_msg.proofs.object_proof().clone().into(),
+            proof_height: Some(domain_msg.proofs.height().into()),
+            signer: domain_msg.signer.to_string(),
+        }
     }
 }
 

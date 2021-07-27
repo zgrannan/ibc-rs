@@ -1,6 +1,5 @@
 //! Definition of domain type message `MsgCreateAnyClient`.
 
-use prusti_contracts::*;
 use std::convert::TryFrom;
 
 use tendermint_proto::Protobuf;
@@ -9,15 +8,14 @@ use ibc_proto::ibc::core::client::v1::MsgCreateClient as RawMsgCreateClient;
 
 use crate::ics02_client::client_consensus::AnyConsensusState;
 use crate::ics02_client::client_state::AnyClientState;
-use crate::ics02_client::error;
-use crate::ics02_client::error::{Error, Kind};
+use crate::ics02_client::error::Error;
 use crate::signer::Signer;
 use crate::tx_msg::Msg;
 
 pub(crate) const TYPE_URL: &str = "/ibc.core.client.v1.MsgCreateClient";
 
 /// A type of message that triggers the creation of a new on-chain (IBC) client.
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MsgCreateAnyClient {
     pub client_state: AnyClientState,
     pub consensus_state: AnyConsensusState,
@@ -31,11 +29,10 @@ impl MsgCreateAnyClient {
         signer: Signer,
     ) -> Result<Self, Error> {
         if client_state.client_type() != consensus_state.client_type() {
-            return Err(error::Kind::RawClientAndConsensusStateTypesMismatch {
-                state_type: client_state.client_type(),
-                consensus_type: consensus_state.client_type(),
-            }
-            .into());
+            return Err(Error::raw_client_and_consensus_state_types_mismatch(
+                client_state.client_type(),
+                consensus_state.client_type(),
+            ));
         }
         Ok(MsgCreateAnyClient {
             client_state,
@@ -57,14 +54,12 @@ impl Msg for MsgCreateAnyClient {
     type ValidationError = crate::ics24_host::error::ValidationError;
     type Raw = RawMsgCreateClient;
 
-#[trusted]
     fn route(&self) -> String {
-unreachable!() //         crate::keys::ROUTER_KEY.to_string()
+        crate::keys::ROUTER_KEY.to_string()
     }
 
-#[trusted]
     fn type_url(&self) -> String {
-unreachable!() //         TYPE_URL.to_string()
+        TYPE_URL.to_string()
     }
 }
 
@@ -73,23 +68,20 @@ impl Protobuf<RawMsgCreateClient> for MsgCreateAnyClient {}
 impl TryFrom<RawMsgCreateClient> for MsgCreateAnyClient {
     type Error = Error;
 
-#[trusted]
-    fn try_from(raw: RawMsgCreateClient) -> Result<Self, Self::Error> {
-unreachable!() // panic!("No") //         let raw_client_state = raw
-// //             .client_state
-// //             .ok_or_else(|| Kind::InvalidRawClientState.context("missing client state"))?;
-// // 
-// //         let raw_consensus_state = raw
-// //             .consensus_state
-// //             .ok_or_else(|| Kind::InvalidRawConsensusState.context("missing consensus state"))?;
-// // 
-// //         MsgCreateAnyClient::new(
-// //             AnyClientState::try_from(raw_client_state)
-// //                 .map_err(|e| Kind::InvalidRawClientState.context(e))?,
-// //             AnyConsensusState::try_from(raw_consensus_state)
-// //                 .map_err(|e| Kind::InvalidRawConsensusState.context(e))?,
-// //             raw.signer.into(),
-// //         )
+    fn try_from(raw: RawMsgCreateClient) -> Result<Self, Error> {
+        let raw_client_state = raw
+            .client_state
+            .ok_or_else(Error::missing_raw_client_state)?;
+
+        let raw_consensus_state = raw
+            .consensus_state
+            .ok_or_else(Error::missing_raw_client_state)?;
+
+        MsgCreateAnyClient::new(
+            AnyClientState::try_from(raw_client_state)?,
+            AnyConsensusState::try_from(raw_consensus_state)?,
+            raw.signer.into(),
+        )
     }
 }
 

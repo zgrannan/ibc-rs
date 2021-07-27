@@ -1,10 +1,8 @@
 use std::convert::{TryFrom, TryInto};
 use std::fmt;
-use prusti_contracts::*;
 use std::str::FromStr;
 
-use anomaly::fail;
-// use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use tendermint_proto::Protobuf;
 
 use ibc_proto::ibc::core::channel::v1::{
@@ -14,13 +12,10 @@ use ibc_proto::ibc::core::channel::v1::{
 
 use crate::events::IbcEventType;
 use crate::ics02_client::height::Height;
-use crate::ics04_channel::{
-    error::{self, Error, Kind},
-    packet::Sequence,
-};
+use crate::ics04_channel::{error::Error, packet::Sequence};
 use crate::ics24_host::identifier::{ChannelId, ConnectionId, PortId};
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct IdentifiedChannelEnd {
     pub port_id: PortId,
     pub channel_id: ChannelId,
@@ -28,7 +23,6 @@ pub struct IdentifiedChannelEnd {
 }
 
 impl IdentifiedChannelEnd {
-#[trusted]
     pub fn new(port_id: PortId, channel_id: ChannelId, channel_end: ChannelEnd) -> Self {
         IdentifiedChannelEnd {
             port_id,
@@ -41,50 +35,45 @@ impl IdentifiedChannelEnd {
 impl Protobuf<RawIdentifiedChannel> for IdentifiedChannelEnd {}
 
 impl TryFrom<RawIdentifiedChannel> for IdentifiedChannelEnd {
-    type Error = anomaly::Error<Kind>;
+    type Error = Error;
 
-#[trusted]
     fn try_from(value: RawIdentifiedChannel) -> Result<Self, Self::Error> {
-unreachable!() //         let raw_channel_end = RawChannel {
-//             state: value.state,
-//             ordering: value.ordering,
-//             counterparty: value.counterparty,
-//             connection_hops: value.connection_hops,
-//             version: value.version,
-//         };
-// 
-//         Ok(IdentifiedChannelEnd {
-//             port_id: value.port_id.parse().map_err(|_| Kind::IdentifierError)?,
-//             channel_id: value
-//                 .channel_id
-//                 .parse()
-//                 .map_err(|_| Kind::IdentifierError)?,
-//             channel_end: raw_channel_end.try_into()?,
-//         })
+        let raw_channel_end = RawChannel {
+            state: value.state,
+            ordering: value.ordering,
+            counterparty: value.counterparty,
+            connection_hops: value.connection_hops,
+            version: value.version,
+        };
+
+        Ok(IdentifiedChannelEnd {
+            port_id: value.port_id.parse().map_err(Error::identifier)?,
+            channel_id: value.channel_id.parse().map_err(Error::identifier)?,
+            channel_end: raw_channel_end.try_into()?,
+        })
     }
 }
 
 impl From<IdentifiedChannelEnd> for RawIdentifiedChannel {
-#[trusted]
     fn from(value: IdentifiedChannelEnd) -> Self {
-unreachable!() // panic!("No") //         RawIdentifiedChannel {
-// //             state: value.channel_end.state as i32,
-// //             ordering: value.channel_end.ordering as i32,
-// //             counterparty: Some(value.channel_end.counterparty().clone().into()),
-// //             connection_hops: value
-// //                 .channel_end
-// //                 .connection_hops
-// //                 .iter()
-// //                 .map(|v| v.as_str().to_string())
-// //                 .collect(),
-// //             version: value.channel_end.version,
-// //             port_id: value.port_id.to_string(),
-// //             channel_id: value.channel_id.to_string(),
-// //         }
+        RawIdentifiedChannel {
+            state: value.channel_end.state as i32,
+            ordering: value.channel_end.ordering as i32,
+            counterparty: Some(value.channel_end.counterparty().clone().into()),
+            connection_hops: value
+                .channel_end
+                .connection_hops
+                .iter()
+                .map(|v| v.as_str().to_string())
+                .collect(),
+            version: value.channel_end.version,
+            port_id: value.port_id.to_string(),
+            channel_id: value.channel_id.to_string(),
+        }
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ChannelEnd {
     pub state: State,
     pub ordering: Order,
@@ -94,73 +83,70 @@ pub struct ChannelEnd {
 }
 
 impl Default for ChannelEnd {
-#[trusted]
     fn default() -> Self {
-unreachable!() //         ChannelEnd {
-//             state: State::Uninitialized,
-//             ordering: Default::default(),
-//             remote: Counterparty::default(),
-//             connection_hops: vec![],
-//             version: "".to_string(),
-//         }
+        ChannelEnd {
+            state: State::Uninitialized,
+            ordering: Default::default(),
+            remote: Counterparty::default(),
+            connection_hops: vec![],
+            version: "".to_string(),
+        }
     }
 }
 
 impl Protobuf<RawChannel> for ChannelEnd {}
 
 impl TryFrom<RawChannel> for ChannelEnd {
-    type Error = anomaly::Error<Kind>;
+    type Error = Error;
 
-#[trusted]
     fn try_from(value: RawChannel) -> Result<Self, Self::Error> {
-unreachable!() // panic!("No") //         let chan_state: State = State::from_i32(value.state)?;
-// // 
-// //         if chan_state == State::Uninitialized {
-// //             return Ok(ChannelEnd::default());
-// //         }
-// // 
-// //         let chan_ordering = Order::from_i32(value.ordering)?;
-// // 
-// //         // Assemble the 'remote' attribute of the Channel, which represents the Counterparty.
-// //         let remote = value
-// //             .counterparty
-// //             .ok_or(Kind::MissingCounterparty)?
-// //             .try_into()?;
-// // 
-// //         // Parse each item in connection_hops into a ConnectionId.
-// //         let connection_hops = value
-// //             .connection_hops
-// //             .into_iter()
-// //             .map(|conn_id| ConnectionId::from_str(conn_id.as_str()))
-// //             .collect::<Result<Vec<_>, _>>()
-// //             .map_err(|e| Kind::IdentifierError.context(e))?;
-// // 
-// //         let version = validate_version(value.version)?;
-// // 
-// //         Ok(ChannelEnd::new(
-// //             chan_state,
-// //             chan_ordering,
-// //             remote,
-// //             connection_hops,
-// //             version,
-// //         ))
+        let chan_state: State = State::from_i32(value.state)?;
+
+        if chan_state == State::Uninitialized {
+            return Ok(ChannelEnd::default());
+        }
+
+        let chan_ordering = Order::from_i32(value.ordering)?;
+
+        // Assemble the 'remote' attribute of the Channel, which represents the Counterparty.
+        let remote = value
+            .counterparty
+            .ok_or_else(Error::missing_counterparty)?
+            .try_into()?;
+
+        // Parse each item in connection_hops into a ConnectionId.
+        let connection_hops = value
+            .connection_hops
+            .into_iter()
+            .map(|conn_id| ConnectionId::from_str(conn_id.as_str()))
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(Error::identifier)?;
+
+        let version = validate_version(value.version)?;
+
+        Ok(ChannelEnd::new(
+            chan_state,
+            chan_ordering,
+            remote,
+            connection_hops,
+            version,
+        ))
     }
 }
 
 impl From<ChannelEnd> for RawChannel {
-#[trusted]
     fn from(value: ChannelEnd) -> Self {
-unreachable!() // panic!("No") //         RawChannel {
-// //             state: value.state as i32,
-// //             ordering: value.ordering as i32,
-// //             counterparty: Some(value.counterparty().clone().into()),
-// //             connection_hops: value
-// //                 .connection_hops
-// //                 .iter()
-// //                 .map(|v| v.as_str().to_string())
-// //                 .collect(),
-// //             version: value.version,
-// //         }
+        RawChannel {
+            state: value.state as i32,
+            ordering: value.ordering as i32,
+            counterparty: Some(value.counterparty().clone().into()),
+            connection_hops: value
+                .connection_hops
+                .iter()
+                .map(|v| v.as_str().to_string())
+                .collect(),
+            version: value.version,
+        }
     }
 }
 
@@ -191,15 +177,13 @@ impl ChannelEnd {
         self.version = v;
     }
 
-#[trusted]
     pub fn set_counterparty_channel_id(&mut self, c: ChannelId) {
         self.remote.channel_id = Some(c);
     }
 
     /// Returns `true` if this `ChannelEnd` is in state [`State::Open`].
-#[trusted]
     pub fn is_open(&self) -> bool {
-unreachable!() //         self.state_matches(&State::Open)
+        self.state_matches(&State::Open)
     }
 
     pub fn state(&self) -> &State {
@@ -210,57 +194,48 @@ unreachable!() //         self.state_matches(&State::Open)
         &self.ordering
     }
 
-#[trusted]
     pub fn counterparty(&self) -> &Counterparty {
         &self.remote
     }
 
-#[trusted]
     pub fn connection_hops(&self) -> &Vec<ConnectionId> {
         &self.connection_hops
     }
 
-#[trusted]
     pub fn version(&self) -> String {
-unreachable!() //         self.version.parse().unwrap()
+        self.version.parse().unwrap()
     }
 
-#[trusted]
     pub fn validate_basic(&self) -> Result<(), Error> {
-unreachable!() //         if self.connection_hops.len() != 1 {
-//             return Err(
-//                 Kind::InvalidConnectionHopsLength(1, self.connection_hops.len())
-//                     .context("validate channel")
-//                     .into(),
-//             );
-//         }
-//         if self.version().trim() == "" {
-//             return Err(Kind::InvalidVersion.context("empty version string").into());
-//         }
-//         self.counterparty().validate_basic()
+        if self.connection_hops.len() != 1 {
+            return Err(Error::invalid_connection_hops_length(
+                1,
+                self.connection_hops.len(),
+            ));
+        }
+        if self.version().trim() == "" {
+            return Err(Error::empty_version());
+        }
+        self.counterparty().validate_basic()
     }
 
     /// Helper function to compare the state of this end with another state.
-#[trusted]
     pub fn state_matches(&self, other: &State) -> bool {
         self.state.eq(other)
     }
 
     /// Helper function to compare the order of this end with another order.
-#[trusted]
     pub fn order_matches(&self, other: &Order) -> bool {
         self.ordering.eq(other)
     }
 
     #[allow(clippy::ptr_arg)]
-#[trusted]
     pub fn connection_hops_matches(&self, other: &Vec<ConnectionId>) -> bool {
         self.connection_hops.eq(other)
     }
 
-#[trusted]
     pub fn counterparty_matches(&self, other: &Counterparty) -> bool {
-unreachable!() //         self.counterparty().eq(other)
+        self.counterparty().eq(other)
     }
 
     pub fn version_matches(&self, other: &str) -> bool {
@@ -268,14 +243,13 @@ unreachable!() //         self.counterparty().eq(other)
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Counterparty {
     pub port_id: PortId,
     pub channel_id: Option<ChannelId>,
 }
 
 impl Default for Counterparty {
-#[trusted]
     fn default() -> Self {
         Counterparty {
             port_id: Default::default(),
@@ -285,7 +259,6 @@ impl Default for Counterparty {
 }
 
 impl Counterparty {
-#[trusted]
     pub fn new(port_id: PortId, channel_id: Option<ChannelId>) -> Self {
         Self {
             port_id,
@@ -297,12 +270,10 @@ impl Counterparty {
         &self.port_id
     }
 
-#[trusted]
     pub fn channel_id(&self) -> Option<&ChannelId> {
-unreachable!() //         self.channel_id.as_ref()
+        self.channel_id.as_ref()
     }
 
-#[trusted]
     pub fn validate_basic(&self) -> Result<(), Error> {
         Ok(())
     }
@@ -311,85 +282,68 @@ unreachable!() //         self.channel_id.as_ref()
 impl Protobuf<RawCounterparty> for Counterparty {}
 
 impl TryFrom<RawCounterparty> for Counterparty {
-    type Error = anomaly::Error<Kind>;
+    type Error = Error;
 
-#[trusted]
     fn try_from(value: RawCounterparty) -> Result<Self, Self::Error> {
-unreachable!() // panic!("No") // panic!("No") //         let channel_id = Some(value.channel_id)
-// // //             .filter(|x| !x.is_empty())
-// // //             .map(|v| FromStr::from_str(v.as_str()))
-// // //             .transpose()
-// // //             .map_err(|e| Kind::IdentifierError.context(e))?;
-// // //         Ok(Counterparty::new(
-// // //             value
-// // //                 .port_id
-// // //                 .parse()
-// // //                 .map_err(|e| Kind::IdentifierError.context(e))?,
-// // //             channel_id,
-// // //         ))
+        let channel_id = Some(value.channel_id)
+            .filter(|x| !x.is_empty())
+            .map(|v| FromStr::from_str(v.as_str()))
+            .transpose()
+            .map_err(Error::identifier)?;
+        Ok(Counterparty::new(
+            value.port_id.parse().map_err(Error::identifier)?,
+            channel_id,
+        ))
     }
 }
 
 impl From<Counterparty> for RawCounterparty {
-#[trusted]
     fn from(value: Counterparty) -> Self {
-unreachable!() // panic!("No") // panic!("No") //         RawCounterparty {
-// // //             port_id: value.port_id.as_str().to_string(),
-// // //             channel_id: value
-// // //                 .channel_id
-// // //                 .map_or_else(|| "".to_string(), |v| v.as_str().to_string()),
-// // //         }
+        RawCounterparty {
+            port_id: value.port_id.as_str().to_string(),
+            channel_id: value
+                .channel_id
+                .map_or_else(|| "".to_string(), |v| v.as_str().to_string()),
+        }
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub enum Order {
     None = 0,
     Unordered,
     Ordered,
 }
 
-
-impl PartialEq for Order {
-    #[trusted]
-    fn eq(&self, other: &Self) -> bool {
-       unreachable!()
-    }
-}
-
 impl Default for Order {
-#[trusted]
     fn default() -> Self {
         Order::Unordered
     }
 }
 
 impl fmt::Display for Order {
-#[trusted]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-unreachable!() //         write!(f, "{}", self.as_str())
+        write!(f, "{}", self.as_str())
     }
 }
 
 impl Order {
     /// Yields the Order as a string
-#[trusted]
     pub fn as_str(&self) -> &'static str {
-unreachable!() //         match self {
-//             Self::None => "UNINITIALIZED",
-//             Self::Unordered => "ORDER_UNORDERED",
-//             Self::Ordered => "ORDER_ORDERED",
-//         }
+        match self {
+            Self::None => "UNINITIALIZED",
+            Self::Unordered => "ORDER_UNORDERED",
+            Self::Ordered => "ORDER_ORDERED",
+        }
     }
 
     // Parses the Order out from a i32.
-#[trusted]
     pub fn from_i32(nr: i32) -> Result<Self, Error> {
         match nr {
             0 => Ok(Self::None),
             1 => Ok(Self::Unordered),
             2 => Ok(Self::Ordered),
-            _ => fail!(error::Kind::UnknownOrderType, nr),
+            _ => Err(Error::unknown_order_type(nr.to_string())),
         }
     }
 }
@@ -397,25 +351,17 @@ unreachable!() //         match self {
 impl FromStr for Order {
     type Err = Error;
 
-#[trusted]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-unreachable!() //         match s.to_lowercase().as_str() {
-//             "uninitialized" => Ok(Self::None),
-//             "unordered" => Ok(Self::Unordered),
-//             "ordered" => Ok(Self::Ordered),
-//             _ => fail!(error::Kind::UnknownOrderType, s),
-//         }
+        match s.to_lowercase().as_str() {
+            "uninitialized" => Ok(Self::None),
+            "unordered" => Ok(Self::Unordered),
+            "ordered" => Ok(Self::Ordered),
+            _ => Err(Error::unknown_order_type(s.to_string())),
+        }
     }
 }
 
-impl PartialEq for State {
-    #[trusted]
-    fn eq(&self, other: &Self) -> bool {
-       unreachable!()
-    }
-}
-
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum State {
     Uninitialized = 0,
     Init = 1,
@@ -426,19 +372,17 @@ pub enum State {
 
 impl State {
     /// Yields the state as a string
-#[trusted]
     pub fn as_string(&self) -> &'static str {
-unreachable!() //         match self {
-//             Self::Uninitialized => "UNINITIALIZED",
-//             Self::Init => "INIT",
-//             Self::TryOpen => "TRYOPEN",
-//             Self::Open => "OPEN",
-//             Self::Closed => "CLOSED",
-//         }
+        match self {
+            Self::Uninitialized => "UNINITIALIZED",
+            Self::Init => "INIT",
+            Self::TryOpen => "TRYOPEN",
+            Self::Open => "OPEN",
+            Self::Closed => "CLOSED",
+        }
     }
 
-    /// Parses the State out from a i32.
-#[trusted]
+    // Parses the State out from a i32.
     pub fn from_i32(s: i32) -> Result<Self, Error> {
         match s {
             0 => Ok(Self::Uninitialized),
@@ -446,14 +390,13 @@ unreachable!() //         match self {
             2 => Ok(Self::TryOpen),
             3 => Ok(Self::Open),
             4 => Ok(Self::Closed),
-            _ => fail!(error::Kind::UnknownState, s),
+            _ => Err(Error::unknown_state(s)),
         }
     }
 
     /// Returns whether or not this channel state is `Open`.
-#[trusted]
     pub fn is_open(self) -> bool {
-unreachable!() //         self == State::Open
+        self == State::Open
     }
 
     /// Returns whether or not the channel with this state
@@ -465,23 +408,21 @@ unreachable!() //         self == State::Open
     /// assert!(State::TryOpen.less_or_equal_progress(State::TryOpen));
     /// assert!(!State::Closed.less_or_equal_progress(State::Open));
     /// ```
-#[trusted]
     pub fn less_or_equal_progress(self, other: Self) -> bool {
-unreachable!() //         self as u32 <= other as u32
+        self as u32 <= other as u32
     }
 }
 
 /// Provides a `to_string` method.
 impl std::fmt::Display for State {
-#[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-unreachable!() //         write!(f, "{}", self.as_string())
+        write!(f, "{}", self.as_string())
     }
 }
 
 /// Used to query a packet event, identified by `event_id`, for specific channel and sequences.
 /// The query is preformed for the chain context at `height`.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct QueryPacketEventDataRequest {
     pub event_id: IbcEventType,
     pub source_channel_id: ChannelId,

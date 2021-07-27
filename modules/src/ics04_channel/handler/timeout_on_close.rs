@@ -1,5 +1,3 @@
-use prusti_contracts::trusted;
-
 use crate::events::IbcEvent;
 use crate::handler::{HandlerOutput, HandlerResult};
 use crate::ics04_channel::channel::State;
@@ -12,131 +10,131 @@ use crate::ics04_channel::handler::verify::{
 use crate::ics04_channel::msgs::timeout_on_close::MsgTimeoutOnClose;
 use crate::ics04_channel::packet::PacketResult;
 use crate::ics04_channel::{
-    context::ChannelReader, error::Error, error::Kind, handler::timeout::TimeoutPacketResult,
+    context::ChannelReader, error::Error, handler::timeout::TimeoutPacketResult,
 };
 
-#[trusted]
 pub fn process(
     ctx: &dyn ChannelReader,
     msg: MsgTimeoutOnClose,
 ) -> HandlerResult<PacketResult, Error> {
-unreachable!() //     let mut output = HandlerOutput::builder();
-// 
-//     let packet = &msg.packet;
-// 
-//     let source_channel_end = ctx
-//         .channel_end(&(packet.source_port.clone(), packet.source_channel.clone()))
-//         .ok_or_else(|| {
-//             Kind::ChannelNotFound(packet.source_port.clone(), packet.source_channel.clone())
-//                 .context(packet.source_channel.to_string())
-//         })?;
-// 
-//     let _channel_cap = ctx.authenticated_capability(&packet.source_port)?;
-// 
-//     let counterparty = Counterparty::new(
-//         packet.destination_port.clone(),
-//         Some(packet.destination_channel.clone()),
-//     );
-// 
-//     if !source_channel_end.counterparty_matches(&counterparty) {
-//         return Err(Kind::InvalidPacketCounterparty(
-//             packet.destination_port.clone(),
-//             packet.destination_channel.clone(),
-//         )
-//         .into());
-//     }
-// 
-//     let connection_end = ctx
-//         .connection_end(&source_channel_end.connection_hops()[0])
-//         .ok_or_else(|| Kind::MissingConnection(source_channel_end.connection_hops()[0].clone()))?;
-// 
-//     let client_id = connection_end.client_id().clone();
-// 
-//     //verify the packet was sent, check the store
-//     let packet_commitment = ctx
-//         .get_packet_commitment(&(
-//             packet.source_port.clone(),
-//             packet.source_channel.clone(),
-//             packet.sequence,
-//         ))
-//         .ok_or(Kind::PacketCommitmentNotFound(packet.sequence))?;
-// 
-//     let input = format!(
-//         "{:?},{:?},{:?}",
-//         packet.timeout_timestamp, packet.timeout_height, packet.data,
-//     );
-// 
-//     if packet_commitment != ChannelReader::hash(ctx, input) {
-//         return Err(Kind::IncorrectPacketCommitment(packet.sequence).into());
-//     }
-// 
-//     let expected_counterparty = Counterparty::new(
-//         packet.source_port.clone(),
-//         Some(packet.source_channel.clone()),
-//     );
-// 
-//     let counterparty = connection_end.counterparty();
-//     let ccid = counterparty.connection_id().ok_or_else(|| {
-//         Kind::UndefinedConnectionCounterparty(source_channel_end.connection_hops()[0].clone())
-//     })?;
-// 
-//     let expected_connection_hops = vec![ccid.clone()];
-// 
-//     let expected_channel_end = ChannelEnd::new(
-//         State::Closed,
-//         *source_channel_end.ordering(),
-//         expected_counterparty,
-//         expected_connection_hops,
-//         source_channel_end.version(),
-//     );
-// 
-//     verify_channel_proofs(
-//         ctx,
-//         &source_channel_end,
-//         &connection_end,
-//         &expected_channel_end,
-//         &msg.proofs.clone(),
-//     )?;
-// 
-//     let result = if source_channel_end.order_matches(&Order::Ordered) {
-//         if packet.sequence < msg.next_sequence_recv {
-//             return Err(
-//                 Kind::InvalidPacketSequence(packet.sequence, msg.next_sequence_recv).into(),
-//             );
-//         }
-//         verify_next_sequence_recv(
-//             ctx,
-//             client_id,
-//             packet.clone(),
-//             msg.next_sequence_recv,
-//             &msg.proofs.clone(),
-//         )?;
-// 
-//         PacketResult::Timeout(TimeoutPacketResult {
-//             port_id: packet.source_port.clone(),
-//             channel_id: packet.source_channel.clone(),
-//             seq: packet.sequence,
-//             channel: Some(source_channel_end),
-//         })
-//     } else {
-//         verify_packet_receipt_absence(ctx, client_id, packet.clone(), &msg.proofs.clone())?;
-// 
-//         PacketResult::Timeout(TimeoutPacketResult {
-//             port_id: packet.source_port.clone(),
-//             channel_id: packet.source_channel.clone(),
-//             seq: packet.sequence,
-//             channel: None,
-//         })
-//     };
-// 
-//     output.log("success: packet timeout ");
-// 
-//     output.emit(IbcEvent::TimeoutOnClosePacket(TimeoutOnClosePacket {
-//         height: Default::default(),
-//         packet: packet.clone(),
-//     }));
-// 
-//     Ok(output.with_result(result))
+    let mut output = HandlerOutput::builder();
+
+    let packet = &msg.packet;
+
+    let source_channel_end = ctx
+        .channel_end(&(packet.source_port.clone(), packet.source_channel.clone()))
+        .ok_or_else(|| {
+            Error::channel_not_found(packet.source_port.clone(), packet.source_channel.clone())
+        })?;
+
+    let _channel_cap = ctx.authenticated_capability(&packet.source_port)?;
+
+    let counterparty = Counterparty::new(
+        packet.destination_port.clone(),
+        Some(packet.destination_channel.clone()),
+    );
+
+    if !source_channel_end.counterparty_matches(&counterparty) {
+        return Err(Error::invalid_packet_counterparty(
+            packet.destination_port.clone(),
+            packet.destination_channel.clone(),
+        ));
+    }
+
+    let connection_end = ctx
+        .connection_end(&source_channel_end.connection_hops()[0])
+        .ok_or_else(|| {
+            Error::missing_connection(source_channel_end.connection_hops()[0].clone())
+        })?;
+
+    let client_id = connection_end.client_id().clone();
+
+    //verify the packet was sent, check the store
+    let packet_commitment = ctx
+        .get_packet_commitment(&(
+            packet.source_port.clone(),
+            packet.source_channel.clone(),
+            packet.sequence,
+        ))
+        .ok_or_else(|| Error::packet_commitment_not_found(packet.sequence))?;
+
+    let input = format!(
+        "{:?},{:?},{:?}",
+        packet.timeout_timestamp, packet.timeout_height, packet.data,
+    );
+
+    if packet_commitment != ChannelReader::hash(ctx, input) {
+        return Err(Error::incorrect_packet_commitment(packet.sequence));
+    }
+
+    let expected_counterparty = Counterparty::new(
+        packet.source_port.clone(),
+        Some(packet.source_channel.clone()),
+    );
+
+    let counterparty = connection_end.counterparty();
+    let ccid = counterparty.connection_id().ok_or_else(|| {
+        Error::undefined_connection_counterparty(source_channel_end.connection_hops()[0].clone())
+    })?;
+
+    let expected_connection_hops = vec![ccid.clone()];
+
+    let expected_channel_end = ChannelEnd::new(
+        State::Closed,
+        *source_channel_end.ordering(),
+        expected_counterparty,
+        expected_connection_hops,
+        source_channel_end.version(),
+    );
+
+    verify_channel_proofs(
+        ctx,
+        &source_channel_end,
+        &connection_end,
+        &expected_channel_end,
+        &msg.proofs.clone(),
+    )?;
+
+    let result = if source_channel_end.order_matches(&Order::Ordered) {
+        if packet.sequence < msg.next_sequence_recv {
+            return Err(Error::invalid_packet_sequence(
+                packet.sequence,
+                msg.next_sequence_recv,
+            ));
+        }
+        verify_next_sequence_recv(
+            ctx,
+            client_id,
+            packet.clone(),
+            msg.next_sequence_recv,
+            &msg.proofs.clone(),
+        )?;
+
+        PacketResult::Timeout(TimeoutPacketResult {
+            port_id: packet.source_port.clone(),
+            channel_id: packet.source_channel.clone(),
+            seq: packet.sequence,
+            channel: Some(source_channel_end),
+        })
+    } else {
+        verify_packet_receipt_absence(ctx, client_id, packet.clone(), &msg.proofs.clone())?;
+
+        PacketResult::Timeout(TimeoutPacketResult {
+            port_id: packet.source_port.clone(),
+            channel_id: packet.source_channel.clone(),
+            seq: packet.sequence,
+            channel: None,
+        })
+    };
+
+    output.log("success: packet timeout ");
+
+    output.emit(IbcEvent::TimeoutOnClosePacket(TimeoutOnClosePacket {
+        height: Default::default(),
+        packet: packet.clone(),
+    }));
+
+    Ok(output.with_result(result))
 }
 
 #[cfg(test)]
