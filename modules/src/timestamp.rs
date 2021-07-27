@@ -10,6 +10,12 @@ use chrono::{offset::Utc, DateTime, TimeZone};
 use serde_derive::{Deserialize, Serialize};
 use thiserror::Error;
 
+// #[extern_spec]
+// impl<T, E: std::fmt::Debug> Result<T, E> {
+//     #[requires(self.is_ok())]
+//     pub fn unwrap(self) -> T;
+// }
+
 pub const ZERO_DURATION: Duration = Duration::from_secs(0);
 
 /// A newtype wrapper over `Option<DateTime<Utc>>` to keep track of
@@ -36,6 +42,25 @@ pub enum Expiry {
     Expired,
     NotExpired,
     InvalidTimestamp,
+}
+
+#[extern_spec]
+impl <Tz: chrono::TimeZone> chrono::DateTime<Tz> {
+  #[pure]
+  pub fn timestamp_nanos(&self) -> i64;
+}
+
+
+#[extern_spec]
+impl std::option::Option<DateTime<Utc>> {
+    #[pure]
+    #[ensures(matches!(*self, Some(_)) == result)]
+    pub fn is_some(&self) -> bool;
+
+    #[pure]
+    #[requires(self.is_some())]
+    pub fn unwrap(self) -> DateTime<Utc>;
+
 }
 
 impl Timestamp {
@@ -90,6 +115,7 @@ unreachable!() //         if nanoseconds == 0 {
 
     /// Convert a `Timestamp` to `u64` value in nanoseconds. If no timestamp
     /// is set, the result is 0.
+    #[requires(self.time.is_some() ==> self.time.unwrap().timestamp_nanos() >= 0)]
     pub fn as_nanoseconds(&self) -> u64 {
         self.time
             .map_or(0, |time| time.timestamp_nanos().try_into().unwrap())

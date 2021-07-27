@@ -52,6 +52,7 @@ impl Height {
         self.revision_height == 0
     }
 
+    #[requires(u64::MAX - self.revision_height >= delta)]
     pub fn add(&self, delta: u64) -> Height {
         Height {
             revision_number: self.revision_number,
@@ -59,6 +60,7 @@ impl Height {
         }
     }
 
+    #[requires(self.revision_height < u64::MAX)]
     pub fn increment(&self) -> Height {
         self.add(1)
     }

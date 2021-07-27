@@ -87,6 +87,7 @@ impl Sequence {
         self.0 == 0
     }
 
+    #[requires(self.0 < u64::MAX)]
     pub fn increment(&self) -> Sequence {
         Sequence(self.0 + 1)
     }
@@ -228,6 +229,7 @@ unreachable!() //         if Sequence::from(raw_pkt.sequence).is_zero() {
 }
 
 impl From<Packet> for RawPacket {
+    #[trusted]
     fn from(packet: Packet) -> Self {
         RawPacket {
             sequence: packet.sequence.0,

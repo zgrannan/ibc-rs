@@ -90,6 +90,7 @@ unreachable!() // panic!("No") // panic!("No") // panic!("No") // panic!("No") /
 }
 
 impl From<MsgTransfer> for RawMsgTransfer {
+    #[trusted]
     fn from(domain_msg: MsgTransfer) -> Self {
         RawMsgTransfer {
             source_port: domain_msg.source_port.to_string(),
