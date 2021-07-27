@@ -8,7 +8,7 @@ use crate::{
     handler::{HandlerOutput, HandlerResult},
 };
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct WriteAckPacketResult {
     pub port_id: PortId,
     pub channel_id: ChannelId,

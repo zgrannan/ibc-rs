@@ -12,7 +12,7 @@ use crate::ics04_channel::{context::ChannelReader, error::Error};
 use crate::ics24_host::identifier::{ChannelId, PortId};
 use crate::timestamp::Expiry;
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct TimeoutPacketResult {
     pub port_id: PortId,
     pub channel_id: ChannelId,

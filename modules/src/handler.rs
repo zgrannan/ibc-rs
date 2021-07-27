@@ -35,7 +35,6 @@ impl<T> HandlerOutputBuilder<T> {
     }
 
     // These seem to be upsetting Prusti
-    /*
     pub fn with_log(mut self, log: impl Into<Vec<String>>) -> Self {
         self.log.append(&mut log.into());
         self
@@ -44,7 +43,6 @@ impl<T> HandlerOutputBuilder<T> {
     pub fn log(&mut self, log: impl Into<String>) {
         self.log.push(log.into());
     }
-    */
 
     pub fn with_events(mut self, mut events: Vec<IbcEvent>) -> Self {
         self.events.append(&mut events);

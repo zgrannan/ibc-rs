@@ -10,7 +10,7 @@ use crate::ics24_host::identifier::{ChannelId, PortId};
 use crate::timestamp::{Expiry, Timestamp};
 use crate::Height;
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct SendPacketResult {
     pub port_id: PortId,
     pub channel_id: ChannelId,

@@ -15,8 +15,8 @@ pub const TENDERMINT_HEADER_TYPE_URL: &str = "/ibc.lightclients.tendermint.v1.He
 pub const MOCK_HEADER_TYPE_URL: &str = "/ibc.mock.Header";
 
 /// Abstract of consensus state update information
-#[dyn_clonable::clonable]
-pub trait Header: Clone + std::fmt::Debug + Send + Sync {
+// #[dyn_clonable::clonable]
+pub trait Header: Clone + Send + Sync {
     /// The type of client (eg. Tendermint)
     fn client_type(&self) -> ClientType;
 
@@ -27,7 +27,7 @@ pub trait Header: Clone + std::fmt::Debug + Send + Sync {
     fn wrap_any(self) -> AnyHeader;
 }
 
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)] // TODO: Add Eq bound once possible
+#[derive(Clone)] // TODO: Add Eq bound once possible
 #[allow(clippy::large_enum_variant)]
 pub enum AnyHeader {
     Tendermint(TendermintHeader),

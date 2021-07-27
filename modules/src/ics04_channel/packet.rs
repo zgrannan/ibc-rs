@@ -1,3 +1,4 @@
+use prusti_contracts::*;
 use std::convert::TryFrom;
 use std::str::FromStr;
 
@@ -16,7 +17,7 @@ use super::handler::{
 };
 
 /// Enumeration of proof carrying ICS4 message, helper for relayer.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone)]
 pub enum PacketMsgType {
     Recv,
     Ack,
@@ -25,7 +26,7 @@ pub enum PacketMsgType {
     TimeoutOnClose,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub enum PacketResult {
     Send(SendPacketResult),
     Recv(RecvPacketResult),
@@ -34,7 +35,7 @@ pub enum PacketResult {
     Timeout(TimeoutPacketResult),
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub enum Receipt {
     Ok,
 }
@@ -52,8 +53,9 @@ impl std::fmt::Display for PacketMsgType {
 }
 
 /// The sequence number of a packet enforces ordering among packets from the same source.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Deserialize, Serialize, PartialOrd, Ord)]
+#[derive(Eq, PartialEq, Ord, PartialOrd, Copy, Clone, Hash)]
 pub struct Sequence(u64);
+
 
 impl Default for Sequence {
     fn default() -> Self {
@@ -99,14 +101,14 @@ impl std::fmt::Display for Sequence {
     }
 }
 
-#[derive(PartialEq, Deserialize, Serialize, Hash, Clone)]
+#[derive(Hash, Clone)]
 pub struct Packet {
     pub sequence: Sequence,
     pub source_port: PortId,
     pub source_channel: ChannelId,
     pub destination_port: PortId,
     pub destination_channel: ChannelId,
-    #[serde(serialize_with = "crate::serializers::ser_hex_upper")]
+//     #[serde(serialize_with = "crate::serializers::ser_hex_upper")]
     pub data: Vec<u8>,
     pub timeout_height: Height,
     pub timeout_timestamp: Timestamp,
@@ -121,18 +123,23 @@ impl Packet {
 }
 
 impl std::fmt::Debug for Packet {
+    #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        write!(
-            f,
-            "{:?} {:?} {:?}",
-            self.source_port, self.source_channel, self.sequence
-        )
+        todo!()
+        // write!(
+        //     f,
+        //     "{:?} {:?} {:?}",
+        //     self.source_port, self.source_channel, self.sequence
+        // )
     }
 }
 
 /// Custom debug output to omit the packet data
 impl std::fmt::Display for Packet {
+    #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+        todo!()
+        /*
         write!(
             f,
             "seq:{}, path:{}/{}->{}/{}, toh:{}, tos:{})",
@@ -144,6 +151,7 @@ impl std::fmt::Display for Packet {
             self.timeout_height,
             self.timeout_timestamp
         )
+        */
     }
 }
 

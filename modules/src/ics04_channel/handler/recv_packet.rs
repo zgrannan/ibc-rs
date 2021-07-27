@@ -12,7 +12,7 @@ use crate::ics04_channel::packet::{PacketResult, Receipt, Sequence};
 use crate::ics24_host::identifier::{ChannelId, PortId};
 use crate::timestamp::Expiry;
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct RecvPacketResult {
     pub port_id: PortId,
     pub channel_id: ChannelId,

@@ -15,8 +15,8 @@ use super::validate::*;
 ///       See: <https://github.com/informalsystems/ibc-rs/pull/304#discussion_r503917283>.
 ///
 /// Also, contrast with tendermint-rs `ChainId` type.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
-#[serde(from = "tendermint::chain::Id", into = "tendermint::chain::Id")]
+#[derive(Clone, Hash)]
+// #[serde(from = "tendermint::chain::Id", into = "tendermint::chain::Id")]
 pub struct ChainId {
     id: String,
     version: u64,
@@ -136,7 +136,7 @@ impl TryFrom<String> for ChainId {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(Eq, PartialEq, Clone, Hash)]
 pub struct ClientId(String);
 
 impl ClientId {
@@ -215,7 +215,7 @@ impl PartialEq<str> for ClientId {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(Eq, PartialEq, Clone, Hash)]
 pub struct ConnectionId(String);
 
 impl ConnectionId {
@@ -285,7 +285,7 @@ impl PartialEq<str> for ConnectionId {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(Eq, PartialEq, Clone, Hash)]
 pub struct PortId(String);
 
 impl PortId {
@@ -321,7 +321,7 @@ impl Default for PortId {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(Eq, PartialEq, Clone, Hash)]
 pub struct ChannelId(String);
 
 impl ChannelId {
@@ -385,7 +385,7 @@ impl PartialEq<str> for ChannelId {
 }
 
 /// A pair of [`PortId`] and [`ChannelId`] are used together for sending IBC packets.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(Clone, Hash)]
 pub struct PortChannelId {
     pub channel_id: ChannelId,
     pub port_id: PortId,

@@ -18,10 +18,17 @@ pub const ZERO_DURATION: Duration = Duration::from_secs(0);
 /// a `u64` value and a raw timestamp. In protocol buffer, the timestamp is
 /// represented as a `u64` Unix timestamp in nanoseconds, with 0 representing the absence
 /// of timestamp.
-#[derive(PartialEq, Eq, Copy, Clone, Debug, Deserialize, Serialize, Hash)]
+#[derive(Eq, PartialEq, Copy, Clone, Hash)]
 pub struct Timestamp {
     time: Option<DateTime<Utc>>,
 }
+
+impl std::fmt::Debug for Timestamp {
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("No")
+    }
+}
+
 
 /// The expiry result when comparing two timestamps.
 /// - If either timestamp is invalid (0), the result is `InvalidTimestamp`.
@@ -30,7 +37,7 @@ pub struct Timestamp {
 ///
 /// User of this result may want to determine whether error should be raised,
 /// when either of the timestamp being compared is invalid.
-#[derive(PartialEq, Eq, Copy, Clone, Debug, Deserialize, Serialize, Hash)]
+#[derive(Eq, PartialEq, Ord, PartialOrd, Copy, Clone, Hash)]
 pub enum Expiry {
     Expired,
     NotExpired,

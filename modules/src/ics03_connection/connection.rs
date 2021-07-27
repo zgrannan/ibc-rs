@@ -18,7 +18,7 @@ use crate::ics24_host::error::ValidationError;
 use crate::ics24_host::identifier::{ClientId, ConnectionId};
 use crate::timestamp::ZERO_DURATION;
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Clone, Hash)]
 pub struct IdentifiedConnectionEnd {
     pub connection_id: ConnectionId,
     pub connection_end: ConnectionEnd,
@@ -80,7 +80,7 @@ impl From<IdentifiedConnectionEnd> for RawIdentifiedConnection {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Eq, PartialEq, Clone, Hash)]
 pub struct ConnectionEnd {
     pub state: State,
     client_id: ClientId,
@@ -234,7 +234,7 @@ impl ConnectionEnd {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Eq, PartialEq, Clone, Hash)]
 pub struct Counterparty {
     client_id: ClientId,
     pub connection_id: Option<ConnectionId>,
@@ -320,7 +320,7 @@ impl Counterparty {
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Eq, PartialEq, Copy, Clone, Hash)]
 pub enum State {
     Uninitialized = 0,
     Init = 1,

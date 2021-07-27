@@ -1,7 +1,7 @@
 use flex_error::define_error;
 
 define_error! {
-    #[derive(Debug, PartialEq, Eq)]
+    #[derive(Eq, PartialEq)]
     ValidationError {
         ContainSeparator
             { id : String }

@@ -1,5 +1,4 @@
 use core::marker::{Send, Sync};
-use prusti_contracts::*;
 use std::convert::TryFrom;
 
 use chrono::{DateTime, Utc};
@@ -27,28 +26,20 @@ pub const TENDERMINT_CONSENSUS_STATE_TYPE_URL: &str =
 
 pub const MOCK_CONSENSUS_STATE_TYPE_URL: &str = "/ibc.mock.ConsensusState";
 
-pub trait ConsensusState: Clone + std::fmt::Debug + Send + Sync {
+pub trait ConsensusState: Clone + Send + Sync {
     type Error;
 
     /// Type of client associated with this consensus state (eg. Tendermint)
     fn client_type(&self) -> ClientType;
 
     /// Commitment root of the consensus state, which is used for key-value pair verification.
-    // fn root(&self) -> &CommitmentRoot;
+    fn root(&self) -> &CommitmentRoot;
 
     /// Performs basic validation of the consensus state
     fn validate_basic(&self) -> Result<(), Self::Error>;
 
     /// Wrap into an `AnyConsensusState`
-#[trusted]
     fn wrap_any(self) -> AnyConsensusState;
-}
-
-impl std::fmt::Debug for AnyConsensusState {
-    #[trusted]
-    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        unreachable!()
-    }
 }
 
 #[derive(Clone)]
@@ -88,7 +79,6 @@ impl Protobuf<Any> for AnyConsensusState {}
 impl TryFrom<Any> for AnyConsensusState {
     type Error = Error;
 
-#[trusted]
     fn try_from(value: Any) -> Result<Self, Self::Error> {
         match value.type_url.as_str() {
             "" => Err(Error::empty_consensus_state_response()),
@@ -110,23 +100,22 @@ impl TryFrom<Any> for AnyConsensusState {
 }
 
 impl From<AnyConsensusState> for Any {
-#[trusted]
     fn from(value: AnyConsensusState) -> Self {
-unreachable!() //         match value {
-//             AnyConsensusState::Tendermint(value) => Any {
-//                 type_url: TENDERMINT_CONSENSUS_STATE_TYPE_URL.to_string(),
-//                 value: value
-//                     .encode_vec()
-//                     .expect("encoding to `Any` from `AnyConsensusState::Tendermint`"),
-//             },
-//             #[cfg(any(test, feature = "mocks"))]
-//             AnyConsensusState::Mock(value) => Any {
-//                 type_url: MOCK_CONSENSUS_STATE_TYPE_URL.to_string(),
-//                 value: value
-//                     .encode_vec()
-//                     .expect("encoding to `Any` from `AnyConsensusState::Mock`"),
-//             },
-//         }
+        match value {
+            AnyConsensusState::Tendermint(value) => Any {
+                type_url: TENDERMINT_CONSENSUS_STATE_TYPE_URL.to_string(),
+                value: value
+                    .encode_vec()
+                    .expect("encoding to `Any` from `AnyConsensusState::Tendermint`"),
+            },
+            #[cfg(any(test, feature = "mocks"))]
+            AnyConsensusState::Mock(value) => Any {
+                type_url: MOCK_CONSENSUS_STATE_TYPE_URL.to_string(),
+                value: value
+                    .encode_vec()
+                    .expect("encoding to `Any` from `AnyConsensusState::Mock`"),
+            },
+        }
     }
 }
 
@@ -171,15 +160,14 @@ impl ConsensusState for AnyConsensusState {
         self.client_type()
     }
 
-    // fn root(&self) -> &CommitmentRoot {
-    //     todo!()
-    // }
+    fn root(&self) -> &CommitmentRoot {
+        todo!()
+    }
 
     fn validate_basic(&self) -> Result<(), Infallible> {
         todo!()
     }
 
-#[trusted]
     fn wrap_any(self) -> AnyConsensusState {
         self
     }

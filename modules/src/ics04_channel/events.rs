@@ -1,4 +1,5 @@
 //! Types for the IBC events emitted from Tendermint Websocket by the channels module.
+use prusti_contracts::*;
 use crate::events::{extract_attribute, maybe_extract_attribute, Error, IbcEvent, RawObject};
 use crate::ics02_client::height::Height;
 use crate::ics04_channel::packet::Packet;
@@ -150,7 +151,7 @@ fn extract_packet_and_write_ack_from_tx(
     (packet, write_ack)
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Hash)]
 pub struct Attributes {
     pub height: Height,
     pub port_id: PortId,
@@ -207,7 +208,7 @@ impl Default for Attributes {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Clone)]
 pub struct OpenInit(Attributes);
 
 impl OpenInit {
@@ -247,7 +248,7 @@ impl From<OpenInit> for IbcEvent {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Clone)]
 pub struct OpenTry(Attributes);
 
 impl OpenTry {
@@ -287,7 +288,7 @@ impl From<OpenTry> for IbcEvent {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Clone)]
 pub struct OpenAck(Attributes);
 
 impl OpenAck {
@@ -331,7 +332,7 @@ impl From<OpenAck> for IbcEvent {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Clone)]
 pub struct OpenConfirm(Attributes);
 
 impl OpenConfirm {
@@ -374,7 +375,7 @@ impl From<OpenConfirm> for IbcEvent {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Clone)]
 pub struct CloseInit(Attributes);
 
 impl CloseInit {
@@ -427,18 +428,20 @@ impl From<CloseInit> for IbcEvent {
 }
 
 impl std::fmt::Display for CloseInit {
+    #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        write!(
-            f,
-            "{} {} {:?}",
-            self.height(),
-            CLOSE_INIT_EVENT_TYPE,
-            self.0
-        )
+        todo!()
+        // write!(
+        //     f,
+        //     "{} {} {:?}",
+        //     self.height(),
+        //     CLOSE_INIT_EVENT_TYPE,
+        //     self.0
+        // )
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Clone)]
 pub struct CloseConfirm(Attributes);
 
 impl CloseConfirm {
@@ -514,7 +517,7 @@ impl TryFrom<RawObject> for Packet {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Clone)]
 pub struct SendPacket {
     pub height: Height,
     pub packet: Packet,
@@ -566,7 +569,7 @@ impl std::fmt::Display for SendPacket {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Clone)]
 pub struct ReceivePacket {
     pub height: Height,
     pub packet: Packet,
@@ -618,11 +621,11 @@ impl std::fmt::Display for ReceivePacket {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Clone)]
 pub struct WriteAcknowledgement {
     pub height: Height,
     pub packet: Packet,
-    #[serde(serialize_with = "crate::serializers::ser_hex_upper")]
+//     #[serde(serialize_with = "crate::serializers::ser_hex_upper")]
     pub ack: Vec<u8>,
 }
 
@@ -683,7 +686,7 @@ impl std::fmt::Display for WriteAcknowledgement {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Clone)]
 pub struct AcknowledgePacket {
     pub height: Height,
     pub packet: Packet,
@@ -725,7 +728,7 @@ impl std::fmt::Display for AcknowledgePacket {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Clone)]
 pub struct TimeoutPacket {
     pub height: Height,
     pub packet: Packet,
@@ -774,7 +777,7 @@ impl std::fmt::Display for TimeoutPacket {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Clone)]
 pub struct TimeoutOnClosePacket {
     pub height: Height,
     pub packet: Packet,

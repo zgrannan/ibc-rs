@@ -6,7 +6,7 @@ use tendermint_proto::Protobuf;
 use crate::ics04_channel::error::Error;
 use std::str::FromStr;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone)]
 pub struct Version {
     /// unique version identifier
     identifier: String,

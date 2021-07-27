@@ -6,7 +6,7 @@ use ibc_proto::ibc::core::commitment::v1::MerkleProof as RawMerkleProof;
 use crate::ics23_commitment::commitment::{CommitmentPrefix, CommitmentProofBytes};
 use crate::ics23_commitment::error::Error;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone)]
 pub struct EmptyPrefixError;
 
 pub fn apply_prefix(
@@ -23,7 +23,7 @@ pub fn apply_prefix(
     Ok(MerklePath { key_path: result })
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone)]
 pub struct MerkleProof {
     pub proof: Vec<CommitmentProofBytes>,
 }
@@ -34,7 +34,7 @@ pub struct MerkleProof {
 // - RawProofOps: in tendermint-proto/tendermint.cyrpto.rs:ProofOps
 // - RawMerkleProof: in ibc-proto/ibc.core.commitment.v1.rs:MerkleProof
 //     - structure that includes a RawProofOps in its only `proof` field.
-//         #[derive(Clone, PartialEq, ::prost::Message)]
+//         #[derive(Clone)]
 //         pub struct MerkleProof {
 //             #[prost(message, optional, tag="1")]
 //             pub proof: ::std::option::Option<::tendermint_proto::crypto::ProofOps>,

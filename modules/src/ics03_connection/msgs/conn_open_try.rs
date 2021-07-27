@@ -24,7 +24,7 @@ pub const TYPE_URL: &str = "/ibc.core.connection.v1.MsgConnectionOpenTry";
 ///
 /// Message definition `MsgConnectionOpenTry`  (i.e., `ConnOpenTry` datagram).
 ///
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone)]
 pub struct MsgConnectionOpenTry {
     pub previous_connection_id: Option<ConnectionId>,
     pub client_id: ClientId,
@@ -272,7 +272,7 @@ mod tests {
 
     #[test]
     fn parse_connection_open_try_msg() {
-        #[derive(Clone, Debug, PartialEq)]
+        #[derive(Clone)]
         struct Test {
             name: String,
             raw: RawMsgConnectionOpenTry,

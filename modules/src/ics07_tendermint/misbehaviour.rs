@@ -1,6 +1,7 @@
 use std::convert::{TryFrom, TryInto};
 
 use tendermint_proto::Protobuf;
+use prusti_contracts::*;
 
 use ibc_proto::ibc::lightclients::tendermint::v1::Misbehaviour as RawMisbehaviour;
 
@@ -10,7 +11,7 @@ use crate::ics07_tendermint::header::Header;
 use crate::ics24_host::identifier::ClientId;
 use crate::Height;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone)]
 pub struct Misbehaviour {
     pub client_id: ClientId,
     pub header1: Header,
@@ -62,7 +63,10 @@ impl From<Misbehaviour> for RawMisbehaviour {
 }
 
 impl std::fmt::Display for Misbehaviour {
+    #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+        todo!()
+        /*
         write!(
             f,
             "{:?} h1: {:?}-{:?} h2: {:?}-{:?}",
@@ -72,5 +76,6 @@ impl std::fmt::Display for Misbehaviour {
             self.header2.height(),
             self.header2.trusted_height,
         )
+        */
     }
 }

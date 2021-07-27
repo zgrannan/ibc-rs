@@ -15,7 +15,7 @@ use crate::ics02_client::height::Height;
 use crate::ics04_channel::{error::Error, packet::Sequence};
 use crate::ics24_host::identifier::{ChannelId, ConnectionId, PortId};
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone)]
 pub struct IdentifiedChannelEnd {
     pub port_id: PortId,
     pub channel_id: ChannelId,
@@ -73,7 +73,7 @@ impl From<IdentifiedChannelEnd> for RawIdentifiedChannel {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone)]
 pub struct ChannelEnd {
     pub state: State,
     pub ordering: Order,
@@ -243,7 +243,7 @@ impl ChannelEnd {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Eq, PartialEq, Clone)]
 pub struct Counterparty {
     pub port_id: PortId,
     pub channel_id: Option<ChannelId>,
@@ -308,7 +308,7 @@ impl From<Counterparty> for RawCounterparty {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Eq, PartialEq, Clone, Copy)]
 pub enum Order {
     None = 0,
     Unordered,
@@ -361,7 +361,7 @@ impl FromStr for Order {
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Eq, PartialEq, Copy, Clone)]
 pub enum State {
     Uninitialized = 0,
     Init = 1,
@@ -422,7 +422,7 @@ impl std::fmt::Display for State {
 
 /// Used to query a packet event, identified by `event_id`, for specific channel and sequences.
 /// The query is preformed for the chain context at `height`.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct QueryPacketEventDataRequest {
     pub event_id: IbcEventType,
     pub source_channel_id: ChannelId,

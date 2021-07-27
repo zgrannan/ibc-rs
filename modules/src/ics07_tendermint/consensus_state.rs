@@ -1,3 +1,4 @@
+use prusti_contracts::*;
 use std::convert::Infallible;
 use std::convert::TryFrom;
 use std::time::SystemTime;
@@ -16,11 +17,18 @@ use crate::ics07_tendermint::error::Error;
 use crate::ics07_tendermint::header::Header;
 use crate::ics23_commitment::commitment::CommitmentRoot;
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+#[derive(Clone)] //
 pub struct ConsensusState {
     pub timestamp: Time,
     pub root: CommitmentRoot,
     pub next_validators_hash: Hash,
+}
+
+impl std::fmt::Debug for ConsensusState {
+    #[trusted]
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("No")
+    }
 }
 
 impl ConsensusState {

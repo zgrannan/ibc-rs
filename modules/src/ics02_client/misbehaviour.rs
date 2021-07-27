@@ -19,8 +19,8 @@ pub const TENDERMINT_MISBEHAVIOR_TYPE_URL: &str = "/ibc.lightclients.tendermint.
 #[cfg(any(test, feature = "mocks"))]
 pub const MOCK_MISBEHAVIOUR_TYPE_URL: &str = "/ibc.mock.Misbehavior";
 
-#[dyn_clonable::clonable]
-pub trait Misbehaviour: Clone + std::fmt::Debug + Send + Sync {
+// #[dyn_clonable::clonable]
+pub trait Misbehaviour: Clone + Send + Sync {
     /// The type of client (eg. Tendermint)
     fn client_id(&self) -> &ClientId;
 
@@ -30,7 +30,7 @@ pub trait Misbehaviour: Clone + std::fmt::Debug + Send + Sync {
     fn wrap_any(self) -> AnyMisbehaviour;
 }
 
-#[derive(Clone, Debug, PartialEq)] // TODO: Add Eq bound once possible
+#[derive(Clone)] // TODO: Add Eq bound once possible
 #[allow(clippy::large_enum_variant)]
 pub enum AnyMisbehaviour {
     Tendermint(TmMisbehaviour),
@@ -115,7 +115,7 @@ impl std::fmt::Display for AnyMisbehaviour {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone)]
 pub struct MisbehaviourEvidence {
     pub misbehaviour: AnyMisbehaviour,
     pub supporting_headers: Vec<AnyHeader>,
