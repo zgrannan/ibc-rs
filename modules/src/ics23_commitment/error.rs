@@ -1,8 +1,8 @@
 use flex_error::{define_error, TraceError};
 use prost::DecodeError;
+use prusti_contracts::*;
 
 define_error! {
-    #[derive(Clone)]
     Error {
         InvalidRawMerkleProof
             [ TraceError<DecodeError> ]

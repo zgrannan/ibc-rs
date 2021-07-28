@@ -1,5 +1,6 @@
 use ibc_proto::ibc::core::commitment::v1::MerkleProof;
 
+use prusti_contracts::*;
 use crate::ics02_client::client_consensus::AnyConsensusState;
 use crate::ics02_client::client_def::ClientDef;
 use crate::ics02_client::client_state::AnyClientState;
@@ -43,6 +44,7 @@ impl ClientDef for TendermintClient {
         ))
     }
 
+    #[trusted]
     fn verify_client_consensus_state(
         &self,
         _client_state: &Self::ClientState,
@@ -56,6 +58,7 @@ impl ClientDef for TendermintClient {
         todo!()
     }
 
+    #[trusted]
     fn verify_connection_state(
         &self,
         _client_state: &Self::ClientState,
@@ -68,6 +71,7 @@ impl ClientDef for TendermintClient {
         todo!()
     }
 
+    #[trusted]
     fn verify_channel_state(
         &self,
         _client_state: &Self::ClientState,
@@ -81,6 +85,7 @@ impl ClientDef for TendermintClient {
         todo!()
     }
 
+    #[trusted]
     fn verify_client_full_state(
         &self,
         _client_state: &Self::ClientState,
@@ -94,6 +99,7 @@ impl ClientDef for TendermintClient {
         unimplemented!()
     }
 
+    #[trusted]
     fn verify_packet_data(
         &self,
         _client_state: &Self::ClientState,
@@ -107,6 +113,7 @@ impl ClientDef for TendermintClient {
         todo!()
     }
 
+    #[trusted]
     fn verify_packet_acknowledgement(
         &self,
         _client_state: &Self::ClientState,
@@ -120,6 +127,7 @@ impl ClientDef for TendermintClient {
         todo!()
     }
 
+    #[trusted]
     fn verify_next_sequence_recv(
         &self,
         _client_state: &Self::ClientState,
@@ -132,6 +140,7 @@ impl ClientDef for TendermintClient {
         todo!()
     }
 
+    #[trusted]
     fn verify_packet_receipt_absence(
         &self,
         _client_state: &Self::ClientState,
@@ -144,6 +153,7 @@ impl ClientDef for TendermintClient {
         todo!()
     }
 
+    #[trusted]
     fn verify_upgrade_and_update_state(
         &self,
         _client_state: &Self::ClientState,

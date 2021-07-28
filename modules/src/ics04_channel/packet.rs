@@ -79,6 +79,7 @@ impl Sequence {
         self.0 == 0
     }
 
+    #[requires(self.0 < u64::MAX)]
     pub fn increment(&self) -> Sequence {
         Sequence(self.0 + 1)
     }

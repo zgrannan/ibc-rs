@@ -48,10 +48,11 @@ impl crate::ics02_client::client_consensus::ConsensusState for ConsensusState {
         ClientType::Tendermint
     }
 
-    fn root(&self) -> &CommitmentRoot {
-        &self.root
-    }
+    // fn root(&self) -> &CommitmentRoot {
+    //     &self.root
+    // }
 
+    #[trusted]
     fn validate_basic(&self) -> Result<(), Infallible> {
         unimplemented!()
     }

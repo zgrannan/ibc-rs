@@ -1,3 +1,4 @@
+use prusti_contracts::*;
 use core::marker::{Send, Sync};
 use std::convert::TryFrom;
 
@@ -33,7 +34,7 @@ pub trait ConsensusState: Clone + Send + Sync {
     fn client_type(&self) -> ClientType;
 
     /// Commitment root of the consensus state, which is used for key-value pair verification.
-    fn root(&self) -> &CommitmentRoot;
+    // fn root(&self) -> &CommitmentRoot;
 
     /// Performs basic validation of the consensus state
     fn validate_basic(&self) -> Result<(), Self::Error>;
@@ -160,10 +161,11 @@ impl ConsensusState for AnyConsensusState {
         self.client_type()
     }
 
-    fn root(&self) -> &CommitmentRoot {
-        todo!()
-    }
+    // fn root(&self) -> &CommitmentRoot {
+    //     todo!()
+    // }
 
+    #[trusted]
     fn validate_basic(&self) -> Result<(), Infallible> {
         todo!()
     }

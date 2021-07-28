@@ -1,7 +1,7 @@
 use flex_error::define_error;
+use prusti_contracts::*;
 
 define_error! {
-    #[derive(Eq, PartialEq)]
     ValidationError {
         ContainSeparator
             { id : String }

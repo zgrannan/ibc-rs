@@ -280,6 +280,7 @@ impl std::fmt::Display for ConnectionId {
 impl FromStr for ConnectionId {
     type Err = ValidationError;
 
+    #[trusted]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
 panic!("No") //         validate_connection_identifier(s).map(|_| Self(s.to_string()))
     }
@@ -335,6 +336,7 @@ impl std::fmt::Display for PortId {
 impl FromStr for PortId {
     type Err = ValidationError;
 
+    #[trusted]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
 panic!("No") //         validate_port_identifier(s).map(|_| Self(s.to_string()))
     }
@@ -397,6 +399,7 @@ impl std::fmt::Display for ChannelId {
 impl FromStr for ChannelId {
     type Err = ValidationError;
 
+    #[trusted]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
 panic!("No") //         validate_channel_identifier(s).map(|_| Self(s.to_string()))
     }

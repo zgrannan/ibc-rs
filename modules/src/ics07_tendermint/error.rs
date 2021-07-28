@@ -1,5 +1,6 @@
 use crate::ics24_host::error::ValidationError;
 use flex_error::{define_error, DisplayOnly, TraceError};
+use prusti_contracts::*;
 
 define_error! {
     Error {

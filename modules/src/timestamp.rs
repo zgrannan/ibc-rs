@@ -25,6 +25,7 @@ pub struct Timestamp {
 }
 
 impl std::fmt::Debug for Timestamp {
+    #[trusted]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         panic!("No")
     }

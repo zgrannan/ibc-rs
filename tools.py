@@ -92,6 +92,7 @@ def fixup(arg: str, panic: bool):
 should_panic = len(argv) > 1 and argv[1] == "panic"
 chunks = stdin.read().split("\nerror:")
 for chunk in chunks[1:]:
+    print(f"Processing chunk {chunk}")
     chunk_lines = chunk.splitlines()
     if len(chunk_lines) < 2:
         continue # Last Chunk
