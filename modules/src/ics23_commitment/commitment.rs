@@ -78,6 +78,7 @@ impl From<CommitmentProofBytes> for Vec<u8> {
 // }
 
 impl From<RawMerkleProof> for CommitmentProofBytes {
+    #[trusted]
     fn from(proof: RawMerkleProof) -> Self {
         let mut buf = Vec::new();
         prost::Message::encode(&proof, &mut buf).unwrap();

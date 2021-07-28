@@ -215,6 +215,7 @@ impl TryFrom<RawPacket> for Packet {
 }
 
 impl From<Packet> for RawPacket {
+    #[trusted]
     fn from(packet: Packet) -> Self {
         RawPacket {
             sequence: packet.sequence.0,

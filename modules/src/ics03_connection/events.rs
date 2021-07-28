@@ -36,6 +36,24 @@ pub fn try_from_tx(event: &tendermint::abci::Event) -> Option<IbcEvent> {
     }
 }
 
+#[extern_spec]
+impl<T, E: std::fmt::Debug> Result<T, E> {
+    #[pure]
+    pub fn is_ok(&self) -> bool {
+        match self {
+            Ok(_) => true,
+            Err(_) => false
+        }
+    }
+    #[requires(self.is_ok())]
+    pub fn unwrap(self) -> T {
+        match self {
+            Ok(t) => t,
+            Err(e) => unreachable!()
+        }
+    }
+}
+
 fn extract_attributes_from_tx(event: &tendermint::abci::Event) -> Attributes {
     let mut attr = Attributes::default();
 

@@ -32,6 +32,25 @@ impl std::fmt::Debug for Timestamp {
 }
 
 
+#[extern_spec]
+impl <Tz: chrono::TimeZone> chrono::DateTime<Tz> {
+  #[pure]
+  pub fn timestamp_nanos(&self) -> i64;
+}
+
+
+#[extern_spec]
+impl <T> std::option::Option<T> {
+    #[pure]
+    #[ensures(matches!(*self, Some(_)) == result)]
+    pub fn is_some(&self) -> bool;
+
+    #[pure]
+    #[requires(self.is_some())]
+    pub fn unwrap(self) -> T;
+
+}
+
 /// The expiry result when comparing two timestamps.
 /// - If either timestamp is invalid (0), the result is `InvalidTimestamp`.
 /// - If the left timestamp is strictly after the right timestamp, the result is `Expired`.
@@ -97,9 +116,13 @@ impl Timestamp {
 
     /// Convert a `Timestamp` to `u64` value in nanoseconds. If no timestamp
     /// is set, the result is 0.
+    #[requires(self.time.is_some() ==> self.time.unwrap().timestamp_nanos() >= 0)]
+    #[trusted] // For some reason refactoring to `unwrap` causes a bug
     pub fn as_nanoseconds(&self) -> u64 {
-        self.time
-            .map_or(0, |time| time.timestamp_nanos().try_into().unwrap())
+      match self.time {
+        Some(time) => time.timestamp_nanos() as u64,
+        None => 0
+      }
     }
 
     /// Convert a `Timestamp` to an optional [`chrono::DateTime<Utc>`]
