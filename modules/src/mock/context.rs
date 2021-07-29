@@ -319,7 +319,10 @@ impl MockContext {
         Self { timestamp, ..self }
     }
 
+    #[requires(self.max_history_size > 0)]
     #[requires(target_height.revision_height <= u64::MAX)]
+    #[requires(target_height.revision_number == self.latest_height.revision_number)]
+    #[requires(target_height.revision_height >= self.latest_height.revision_height)]
     pub fn with_height(self, target_height: Height) -> Self {
         if target_height.revision_number > self.latest_height.revision_number {
             unimplemented!()
@@ -331,6 +334,7 @@ impl MockContext {
             // Repeatedly advance the host chain height till we hit the desired height
             let mut ctx = MockContext { ..self };
             while ctx.latest_height.revision_height < target_height.revision_height {
+                body_invariant!(ctx.max_history_size > 0);
                 body_invariant!(ctx.latest_height.revision_height < u64::MAX);
                 ctx.advance_host_chain_height()
             }
@@ -373,6 +377,7 @@ impl MockContext {
     /// Triggers the advancing of the host chain, by extending the history of blocks (or headers).
     #[requires(self.latest_height.revision_height < u64::MAX)]
     #[requires(self.max_history_size > 0)]
+    #[ensures(self.max_history_size == old(self.max_history_size))]
     pub fn advance_host_chain_height(&mut self) {
         let new_block = HostBlock::generate_block(
             self.host_chain_id.clone(),

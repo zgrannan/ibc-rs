@@ -79,7 +79,7 @@ impl Timestamp {
     /// from an `i64` value. In practice, `i64` still have sufficient precision for our purpose.
     /// However we have to handle the case of `u64` overflowing in `i64`, to prevent
     /// malicious packets from crashing the relayer.
-    #[ensures(nanoseconds <= 4294967295 ==> result.is_ok())] // u32::MAX
+    #[ensures(nanoseconds <= i64::MAX as u64 ==> result.is_ok())]
     pub fn from_nanoseconds(nanoseconds: u64) -> Result<Timestamp, TryFromIntError> {
         if nanoseconds == 0 {
             Ok(Timestamp { time: None })
