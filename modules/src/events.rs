@@ -67,6 +67,7 @@ define_error! {
 
 /// Events types
 #[derive(Clone)]
+#[cfg_attr(not(feature="prusti"), derive(Debug))]
 pub enum IbcEventType {
     CreateClient,
     UpdateClient,

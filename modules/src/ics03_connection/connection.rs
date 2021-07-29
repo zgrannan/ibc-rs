@@ -20,6 +20,7 @@ use crate::ics24_host::identifier::{ClientId, ConnectionId};
 use crate::timestamp::ZERO_DURATION;
 
 #[derive(Clone, Hash)]
+#[cfg_attr(not(feature="prusti"), derive(Debug), derive(Deserialize), derive(Serialize), derive(PartialEq), derive(Eq))]
 pub struct IdentifiedConnectionEnd {
     pub connection_id: ConnectionId,
     pub connection_end: ConnectionEnd,
@@ -84,6 +85,7 @@ impl From<IdentifiedConnectionEnd> for RawIdentifiedConnection {
 }
 
 #[derive(Eq, PartialEq, Clone, Hash)]
+#[cfg_attr(not(feature="prusti"), derive(Debug), derive(Deserialize), derive(Serialize))]
 pub struct ConnectionEnd {
     pub state: State,
     client_id: ClientId,
@@ -240,6 +242,7 @@ impl ConnectionEnd {
 }
 
 #[derive(Eq, PartialEq, Clone, Hash)]
+#[cfg_attr(not(feature="prusti"), derive(Debug), derive(Deserialize), derive(Serialize))]
 pub struct Counterparty {
     client_id: ClientId,
     pub connection_id: Option<ConnectionId>,
@@ -329,11 +332,20 @@ impl Counterparty {
 }
 
 #[derive(Eq, PartialEq, Copy, Clone, Hash)]
+#[cfg_attr(not(feature="prusti"), derive(Debug), derive(Deserialize), derive(Serialize))]
 pub enum State {
     Uninitialized = 0,
     Init = 1,
     TryOpen = 2,
     Open = 3,
+}
+
+#[cfg(feature="prusti")]
+impl std::fmt::Debug for State {
+    #[trusted]
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("No")
+    }
 }
 
 impl State {

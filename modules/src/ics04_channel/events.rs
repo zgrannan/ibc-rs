@@ -152,6 +152,7 @@ fn extract_packet_and_write_ack_from_tx(
 }
 
 #[derive(Clone, Hash)]
+#[cfg_attr(not(feature="prusti"), derive(Debug))]
 pub struct Attributes {
     pub height: Height,
     pub port_id: PortId,

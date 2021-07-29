@@ -12,6 +12,7 @@ use crate::ics24_host::identifier::ClientId;
 use crate::Height;
 
 #[derive(Clone)]
+#[cfg_attr(not(feature="prusti"), derive(Debug))]
 pub struct Misbehaviour {
     pub client_id: ClientId,
     pub header1: Header,

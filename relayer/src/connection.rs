@@ -1,3 +1,4 @@
+use prusti_contracts::*;
 use std::time::Duration;
 
 use crate::chain::counterparty::connection_state_on_destination;

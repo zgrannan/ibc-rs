@@ -16,11 +16,51 @@ use super::validate::*;
 ///       See: <https://github.com/informalsystems/ibc-rs/pull/304#discussion_r503917283>.
 ///
 /// Also, contrast with tendermint-rs `ChainId` type.
+#[cfg_attr(not(feature="prusti"), derive(Debug), derive(PartialEq), derive(Eq), derive(PartialOrd), derive(Ord), derive(Serialize), derive(Deserialize))]
 #[derive(Clone, Hash)]
 // #[serde(from = "tendermint::chain::Id", into = "tendermint::chain::Id")]
 pub struct ChainId {
     id: String,
     version: u64,
+}
+
+#[cfg(feature="prusti")]
+impl std::fmt::Debug for ChainId {
+    #[trusted]
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("No")
+    }
+}
+
+#[cfg(feature="prusti")]
+impl PartialEq for ChainId {
+    #[trusted]
+    fn eq(&self, other: &ChainId) -> bool {
+        panic!("No")
+    }
+}
+
+#[cfg(feature="prusti")]
+impl Eq for ChainId {
+    fn assert_receiver_is_total_eq(&self) {}
+}
+
+
+
+#[cfg(feature="prusti")]
+impl std::cmp::PartialOrd for ChainId {
+    #[trusted]
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        todo!()
+    }
+}
+
+#[cfg(feature="prusti")]
+impl std::cmp::Ord for ChainId {
+    #[trusted]
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        todo!()
+    }
 }
 
 impl ChainId {
@@ -143,8 +183,18 @@ impl TryFrom<String> for ChainId {
     }
 }
 
+#[cfg_attr(not(feature="prusti"), derive(Debug), derive(Deserialize), derive(Serialize), derive(PartialOrd), derive(Ord))]
 #[derive(Eq, PartialEq, Clone, Hash)]
 pub struct ClientId(String);
+
+#[cfg(feature="prusti")]
+impl std::fmt::Debug for ClientId {
+    #[trusted]
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("No")
+    }
+}
+
 
 impl ClientId {
     /// Builds a new client identifier. Client identifiers are deterministically formed from two
@@ -230,8 +280,17 @@ impl PartialEq<str> for ClientId {
     }
 }
 
+#[cfg_attr(not(feature="prusti"), derive(Debug), derive(Deserialize), derive(Serialize), derive(PartialOrd), derive(Ord))]
 #[derive(Eq, PartialEq, Clone, Hash)]
 pub struct ConnectionId(String);
+
+#[cfg(feature="prusti")]
+impl std::fmt::Debug for ConnectionId {
+    #[trusted]
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("No")
+    }
+}
 
 impl ConnectionId {
     /// Builds a new connection identifier. Connection identifiers are deterministically formed from
@@ -308,8 +367,17 @@ impl PartialEq<str> for ConnectionId {
     }
 }
 
+#[cfg_attr(not(feature="prusti"), derive(Debug), derive(Deserialize), derive(Serialize), derive(PartialOrd), derive(Ord))]
 #[derive(Eq, PartialEq, Clone, Hash)]
 pub struct PortId(String);
+
+#[cfg(feature="prusti")]
+impl std::fmt::Debug for PortId {
+    #[trusted]
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("No")
+    }
+}
 
 impl PortId {
     /// Get this identifier as a borrowed `&str`
@@ -350,7 +418,17 @@ impl Default for PortId {
 }
 
 #[derive(Eq, PartialEq, Clone, Hash)]
+#[cfg_attr(not(feature="prusti"), derive(PartialOrd), derive(Ord), derive(Deserialize), derive(Serialize), derive(Debug))]
 pub struct ChannelId(String);
+
+#[cfg(feature="prusti")]
+impl std::fmt::Debug for ChannelId {
+    #[trusted]
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("No")
+    }
+}
+
 
 impl ChannelId {
     /// Builds a new channel identifier. Like client and connection identifiers, channel ids are
@@ -422,6 +500,7 @@ impl PartialEq<str> for ChannelId {
 
 /// A pair of [`PortId`] and [`ChannelId`] are used together for sending IBC packets.
 #[derive(Clone, Hash)]
+#[cfg_attr(not(feature="prusti"), derive(PartialEq), derive(Eq), derive(Debug))]
 pub struct PortChannelId {
     pub channel_id: ChannelId,
     pub port_id: PortId,

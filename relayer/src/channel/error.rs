@@ -1,3 +1,4 @@
+use prusti_contracts::*;
 use flex_error::define_error;
 use ibc::events::IbcEvent;
 use ibc::ics02_client::error::Error as ClientError;

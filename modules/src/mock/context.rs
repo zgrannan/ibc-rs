@@ -1,5 +1,6 @@
 //! Implementation of a global context mock. Used in testing handlers of all IBC modules.
 
+use prusti_contracts::*;
 use std::cmp::min;
 use std::collections::HashMap;
 
@@ -127,6 +128,16 @@ impl MockContext {
     /// the chain maintain in its history, which also determines the pruning window. Parameter
     /// `latest_height` determines the current height of the chain. This context
     /// has support to emulate two type of underlying chains: Mock or SyntheticTendermint.
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn new(
+        host_id: ChainId,
+        host_type: HostType,
+        max_history_size: usize,
+        latest_height: Height,
+    ) -> Self { unimplemented!() }
+
+    #[cfg(not(feature="prusti"))]
     pub fn new(
         host_id: ChainId,
         host_type: HostType,
@@ -308,6 +319,7 @@ impl MockContext {
         Self { timestamp, ..self }
     }
 
+    #[requires(target_height.revision_height <= u64::MAX)]
     pub fn with_height(self, target_height: Height) -> Self {
         if target_height.revision_number > self.latest_height.revision_number {
             unimplemented!()
@@ -319,6 +331,7 @@ impl MockContext {
             // Repeatedly advance the host chain height till we hit the desired height
             let mut ctx = MockContext { ..self };
             while ctx.latest_height.revision_height < target_height.revision_height {
+                body_invariant!(ctx.latest_height.revision_height < u64::MAX);
                 ctx.advance_host_chain_height()
             }
             ctx
@@ -358,6 +371,8 @@ impl MockContext {
     }
 
     /// Triggers the advancing of the host chain, by extending the history of blocks (or headers).
+    #[requires(self.latest_height.revision_height < u64::MAX)]
+    #[requires(self.max_history_size > 0)]
     pub fn advance_host_chain_height(&mut self) {
         let new_block = HostBlock::generate_block(
             self.host_chain_id.clone(),
@@ -380,8 +395,10 @@ impl MockContext {
     /// A datagram passes from the relayer to the IBC module (on host chain).
     /// Alternative method to `Ics18Context::send` that does not exercise any serialization.
     /// Used in testing the Ics18 algorithms, hence this may return a Ics18Error.
+    #[requires(self.latest_height.revision_height < u64::MAX)]
+    #[trusted]
     pub fn deliver(&mut self, msg: Ics26Envelope) -> Result<(), Ics18Error> {
-        dispatch(self, msg).map_err(Ics18Error::transaction_failed)?;
+        dispatch(self, msg).map_err(Ics18Error::transaction_failed)?; // How to verify this doesn't impact self.latest_height.revision_height?
         // Create a new block.
         self.advance_host_chain_height();
         Ok(())
@@ -419,6 +436,11 @@ impl MockContext {
         self.port_capabilities.insert(port_id, Capability::new());
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn consensus_states(&self, client_id: &ClientId) -> Vec<AnyConsensusStateWithHeight> { unimplemented!() }
+
+    #[cfg(not(feature="prusti"))]
     pub fn consensus_states(&self, client_id: &ClientId) -> Vec<AnyConsensusStateWithHeight> {
         self.clients[client_id]
             .consensus_states
@@ -607,6 +629,7 @@ impl ChannelKeeper for MockContext {
         Ok(())
     }
 
+    #[trusted]
     fn increase_channel_counter(&mut self) {
         self.channel_ids_counter += 1;
     }
@@ -639,10 +662,12 @@ impl ConnectionReader for MockContext {
         ClientReader::client_state(self, client_id)
     }
 
+    #[trusted]
     fn host_current_height(&self) -> Height {
         self.latest_height
     }
 
+    #[trusted]
     fn host_oldest_height(&self) -> Height {
         // history must be non-empty, so `self.history[0]` is valid
         self.history[0].height()
@@ -692,6 +717,7 @@ impl ConnectionKeeper for MockContext {
         Ok(())
     }
 
+    #[trusted]
     fn increase_connection_counter(&mut self) {
         self.connection_ids_counter += 1;
     }
@@ -776,6 +802,8 @@ impl ClientKeeper for MockContext {
         Ok(())
     }
 
+    // #[requires(self.client_ids_counter < u64::MAX)]
+    #[trusted]
     fn increase_client_counter(&mut self) {
         self.client_ids_counter += 1
     }
@@ -796,6 +824,7 @@ impl Ics18Context for MockContext {
         block_ref.cloned().map(Into::into)
     }
 
+    #[trusted]
     fn send(&mut self, msgs: Vec<Any>) -> Result<Vec<IbcEvent>, Ics18Error> {
         // Forward call to Ics26 delivery method.
         let events = deliver(self, msgs).map_err(Ics18Error::transaction_failed)?;

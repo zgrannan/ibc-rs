@@ -1,3 +1,4 @@
+use prusti_contracts::*;
 use flex_error::{define_error, DisplayOnly, TraceError};
 use std::io::Error as IoError;
 

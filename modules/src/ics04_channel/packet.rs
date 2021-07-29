@@ -18,6 +18,7 @@ use super::handler::{
 
 /// Enumeration of proof carrying ICS4 message, helper for relayer.
 #[derive(Clone)]
+#[cfg_attr(not(feature="prusti"), derive(Debug), derive(PartialEq), derive(Eq))]
 pub enum PacketMsgType {
     Recv,
     Ack,
@@ -55,6 +56,13 @@ impl std::fmt::Display for PacketMsgType {
 /// The sequence number of a packet enforces ordering among packets from the same source.
 #[derive(Eq, PartialEq, Ord, PartialOrd, Copy, Clone, Hash)]
 pub struct Sequence(u64);
+
+impl std::fmt::Debug for Sequence {
+    #[trusted]
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("No")
+    }
+}
 
 
 impl Default for Sequence {

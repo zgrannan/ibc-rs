@@ -17,6 +17,7 @@ use crate::ics04_channel::{error::Error, packet::Sequence};
 use crate::ics24_host::identifier::{ChannelId, ConnectionId, PortId};
 
 #[derive(Clone)]
+#[cfg_attr(not(feature="prusti"), derive(Debug), derive(Deserialize), derive(Serialize), derive(PartialEq), derive(Eq))]
 pub struct IdentifiedChannelEnd {
     pub port_id: PortId,
     pub channel_id: ChannelId,
@@ -77,6 +78,7 @@ panic!("No") //         RawIdentifiedChannel {
 }
 
 #[derive(Clone)]
+#[cfg_attr(not(feature="prusti"), derive(Debug), derive(Deserialize), derive(Serialize), derive(PartialEq), derive(Eq))]
 pub struct ChannelEnd {
     pub state: State,
     pub ordering: Order,
@@ -253,6 +255,7 @@ impl ChannelEnd {
 }
 
 #[derive(Eq, PartialEq, Clone)]
+#[cfg_attr(not(feature="prusti"), derive(Debug), derive(Deserialize), derive(Serialize))]
 pub struct Counterparty {
     pub port_id: PortId,
     pub channel_id: Option<ChannelId>,
@@ -321,6 +324,7 @@ panic!("No") //         RawCounterparty {
 }
 
 #[derive(Eq, PartialEq, Clone, Copy)]
+#[cfg_attr(not(feature="prusti"), derive(Debug), derive(Deserialize), derive(Serialize), derive(PartialOrd), derive(Ord))]
 pub enum Order {
     None = 0,
     Unordered,
@@ -373,6 +377,7 @@ impl FromStr for Order {
     }
 }
 
+#[cfg_attr(not(feature="prusti"), derive(Debug), derive(Deserialize), derive(Serialize))]
 #[derive(Eq, PartialEq, Copy, Clone)]
 pub enum State {
     Uninitialized = 0,
@@ -381,6 +386,15 @@ pub enum State {
     Open = 3,
     Closed = 4,
 }
+
+#[cfg(feature="prusti")]
+impl std::fmt::Debug for State {
+    #[trusted]
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("No")
+    }
+}
+
 
 impl State {
     /// Yields the state as a string
@@ -435,6 +449,7 @@ impl std::fmt::Display for State {
 /// Used to query a packet event, identified by `event_id`, for specific channel and sequences.
 /// The query is preformed for the chain context at `height`.
 #[derive(Clone)]
+#[cfg_attr(not(feature="prusti"), derive(Debug))]
 pub struct QueryPacketEventDataRequest {
     pub event_id: IbcEventType,
     pub source_channel_id: ChannelId,

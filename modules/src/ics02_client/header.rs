@@ -29,6 +29,7 @@ pub trait Header: Clone + Send + Sync {
 
 #[derive(Clone)] // TODO: Add Eq bound once possible
 #[allow(clippy::large_enum_variant)]
+#[cfg_attr(not(feature="prusti"), derive(Debug))]
 pub enum AnyHeader {
     Tendermint(TendermintHeader),
 

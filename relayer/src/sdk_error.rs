@@ -1,3 +1,4 @@
+use prusti_contracts::*;
 use flex_error::define_error;
 use tendermint::abci::Code;
 use tendermint_rpc::endpoint::broadcast::tx_commit::TxResult;

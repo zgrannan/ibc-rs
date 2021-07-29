@@ -87,8 +87,17 @@ unreachable!() //     for tag in &event.attributes {
 /// NewBlock event signals the committing & execution of a new block.
 // TODO - find a better place for NewBlock
 #[derive(Clone, Copy)]
+#[cfg_attr(not(feature="prusti"), derive(Debug))]
 pub struct NewBlock {
     pub height: Height,
+}
+
+#[cfg(feature="prusti")]
+impl std::fmt::Debug for NewBlock {
+    #[trusted]
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("No")
+    }
 }
 
 impl NewBlock {
@@ -111,6 +120,7 @@ impl From<NewBlock> for IbcEvent {
 }
 
 #[derive(Clone, Hash)]
+#[cfg_attr(not(feature="prusti"), derive(Debug))]
 pub struct Attributes {
     pub height: Height,
     pub client_id: ClientId,
@@ -203,6 +213,7 @@ unreachable!() //         write!(f, "{}", self.0)
 
 /// UpdateClient event signals a recent update of an on-chain client (IBC Client).
 #[derive(Clone)]
+#[cfg_attr(not(feature="prusti"), derive(Debug))]
 pub struct UpdateClient {
     pub common: Attributes,
     pub header: Option<AnyHeader>,

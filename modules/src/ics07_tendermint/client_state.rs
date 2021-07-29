@@ -20,6 +20,7 @@ use crate::ics24_host::identifier::ChainId;
 use crate::timestamp::ZERO_DURATION;
 use crate::Height;
 
+#[cfg_attr(not(feature="prusti"), derive(Debug), derive(Deserialize), derive(Serialize), derive(PartialEq), derive(Eq))]
 #[derive(Clone)]
 pub struct ClientState {
     pub chain_id: ChainId,
@@ -34,6 +35,7 @@ pub struct ClientState {
     pub allow_update: AllowUpdate,
 }
 
+#[cfg_attr(not(feature="prusti"), derive(Debug), derive(Deserialize), derive(Serialize), derive(PartialEq), derive(Eq))]
 #[derive(Copy, Clone)]
 pub struct AllowUpdate {
     pub after_expiry: bool,

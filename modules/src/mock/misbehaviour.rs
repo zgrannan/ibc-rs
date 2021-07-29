@@ -1,3 +1,4 @@
+use prusti_contracts::*;
 use std::convert::{TryFrom, TryInto};
 
 use tendermint_proto::Protobuf;
@@ -16,6 +17,14 @@ pub struct Misbehaviour {
     pub header1: MockHeader,
     pub header2: MockHeader,
 }
+
+impl std::fmt::Debug for Misbehaviour {
+    #[trusted]
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("No")
+    }
+}
+
 
 impl crate::ics02_client::misbehaviour::Misbehaviour for Misbehaviour {
     fn client_id(&self) -> &ClientId {

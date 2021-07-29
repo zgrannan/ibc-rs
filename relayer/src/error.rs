@@ -1,5 +1,6 @@
 //! This module defines the various errors that be raised in the relayer.
 
+use prusti_contracts::*;
 use crate::keyring::errors::Error as KeyringError;
 use crate::sdk_error::SdkError;
 use flex_error::{define_error, DisplayOnly, TraceClone, TraceError};

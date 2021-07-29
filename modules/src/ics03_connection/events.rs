@@ -36,6 +36,7 @@ pub fn try_from_tx(event: &tendermint::abci::Event) -> Option<IbcEvent> {
     }
 }
 
+#[cfg(feature="prusti")]
 #[extern_spec]
 impl<T, E: std::fmt::Debug> Result<T, E> {
     #[pure]
@@ -78,6 +79,7 @@ fn extract_attributes_from_tx(event: &tendermint::abci::Event) -> Attributes {
 }
 
 #[derive(Clone, Hash)]
+#[cfg_attr(not(feature="prusti"), derive(Debug))]
 pub struct Attributes {
     pub height: Height,
     pub connection_id: Option<ConnectionId>,

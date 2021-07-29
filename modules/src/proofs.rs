@@ -18,6 +18,7 @@ define_error! {
 /// handshake protocols, e.g., ICS3 connection (open) handshake or ICS4 channel (open and close)
 /// handshake, as well as for ICS4 packets, timeouts, and acknowledgements.
 #[derive(Clone)]
+#[cfg_attr(not(feature="prusti"), derive(Debug))]
 pub struct Proofs {
     object_proof: CommitmentProofBytes,
     client_proof: Option<CommitmentProofBytes>,
@@ -78,6 +79,7 @@ impl Proofs {
 }
 
 #[derive(Clone)]
+#[cfg_attr(not(feature="prusti"), derive(Debug))]
 pub struct ConsensusProof {
     proof: CommitmentProofBytes,
     height: Height,

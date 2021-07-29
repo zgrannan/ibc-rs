@@ -1,3 +1,4 @@
+use prusti_contracts::*;
 use std::time::Instant;
 use std::{fmt, thread, time::Duration};
 

@@ -43,6 +43,7 @@ pub trait ConsensusState: Clone + Send + Sync {
     fn wrap_any(self) -> AnyConsensusState;
 }
 
+#[cfg_attr(not(feature="prusti"), derive(Debug))]
 #[derive(Clone)]
 // #[serde(tag = "type")]
 pub enum AnyConsensusState {
@@ -121,6 +122,7 @@ impl From<AnyConsensusState> for Any {
 }
 
 #[derive(Clone)]
+#[cfg_attr(not(feature="prusti"), derive(Debug))]
 pub struct AnyConsensusStateWithHeight {
     pub height: Height,
     pub consensus_state: AnyConsensusState,
@@ -177,6 +179,7 @@ impl ConsensusState for AnyConsensusState {
 
 /// Query request for a single client event, identified by `event_id`, for `client_id`.
 #[derive(Clone)]
+#[cfg_attr(not(feature="prusti"), derive(Debug))]
 pub struct QueryClientEventRequest {
     pub height: crate::Height,
     pub event_id: IbcEventType,

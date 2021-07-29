@@ -1,3 +1,4 @@
+use prusti_contracts::*;
 use std::collections::HashMap;
 use std::convert::Infallible;
 use std::convert::{TryFrom, TryInto};
@@ -37,6 +38,7 @@ pub struct MockClientRecord {
 /// `ClientState` of ics07_tendermint/client_state.rs.
 // TODO: `MockClientState` should evolve, at the very least needs a `is_frozen` boolean field.
 #[derive(Copy, Clone)]
+#[cfg_attr(not(feature="prusti"), derive(Debug), derive(Deserialize), derive(Serialize), derive(PartialEq), derive(Eq))]
 pub struct MockClientState(pub MockHeader);
 
 impl Protobuf<RawMockClientState> for MockClientState {}
@@ -63,12 +65,14 @@ impl From<MockClientState> for AnyClientState {
 impl TryFrom<RawMockClientState> for MockClientState {
     type Error = Error;
 
+    #[trusted]
     fn try_from(raw: RawMockClientState) -> Result<Self, Self::Error> {
         Ok(MockClientState(raw.header.unwrap().try_into()?))
     }
 }
 
 impl From<MockClientState> for RawMockClientState {
+    #[trusted]
     fn from(value: MockClientState) -> Self {
         RawMockClientState {
             header: Some(ibc_proto::ibc::mock::Header {
@@ -80,6 +84,7 @@ impl From<MockClientState> for RawMockClientState {
 }
 
 impl ClientState for MockClientState {
+    #[trusted]
     fn chain_id(&self) -> ChainId {
         todo!()
     }
@@ -108,6 +113,7 @@ impl From<MockConsensusState> for MockClientState {
     }
 }
 
+#[cfg_attr(not(feature="prusti"), derive(Debug))]
 #[derive(Clone)]
 pub struct MockConsensusState {
     pub header: MockHeader,
@@ -143,6 +149,7 @@ impl TryFrom<RawMockConsensusState> for MockConsensusState {
 }
 
 impl From<MockConsensusState> for RawMockConsensusState {
+    #[trusted]
     fn from(value: MockConsensusState) -> Self {
         RawMockConsensusState {
             header: Some(ibc_proto::ibc::mock::Header {
@@ -166,9 +173,9 @@ impl ConsensusState for MockConsensusState {
         ClientType::Mock
     }
 
-    fn root(&self) -> &CommitmentRoot {
-        &self.root
-    }
+    // fn root(&self) -> &CommitmentRoot {
+    //     &self.root
+    // }
 
     fn validate_basic(&self) -> Result<(), Infallible> {
         Ok(())

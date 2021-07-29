@@ -4,6 +4,7 @@ use prusti_contracts::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Hash)]
+#[cfg_attr(not(feature="prusti"), derive(Debug))]
 pub struct Signer(String);
 
 impl Signer {

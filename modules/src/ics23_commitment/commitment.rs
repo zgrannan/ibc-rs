@@ -46,6 +46,7 @@ impl From<Vec<u8>> for CommitmentRoot {
 pub struct CommitmentPath;
 
 #[derive(Clone)]
+#[cfg_attr(not(feature="prusti"), derive(Debug))]
 // #[serde(transparent)]
 pub struct CommitmentProofBytes {
 //     #[serde(serialize_with = "crate::serializers::ser_hex_upper")]
@@ -98,6 +99,7 @@ impl TryFrom<CommitmentProofBytes> for RawMerkleProof {
 }
 
 #[derive(Eq, PartialEq, Clone, Hash, Default)]
+#[cfg_attr(not(feature="prusti"), derive(Deserialize))]
 pub struct CommitmentPrefix {
     bytes: Vec<u8>,
 }

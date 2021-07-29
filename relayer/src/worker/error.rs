@@ -1,3 +1,4 @@
+use prusti_contracts::*;
 use flex_error::define_error;
 
 use crate::channel::ChannelError;

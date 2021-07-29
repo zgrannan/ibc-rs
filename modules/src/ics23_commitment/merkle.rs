@@ -1,3 +1,4 @@
+use prusti_contracts::*;
 use tendermint::merkle::proof::Proof;
 
 use ibc_proto::ibc::core::commitment::v1::MerklePath;
@@ -6,8 +7,17 @@ use ibc_proto::ibc::core::commitment::v1::MerkleProof as RawMerkleProof;
 use crate::ics23_commitment::commitment::{CommitmentPrefix, CommitmentProofBytes};
 use crate::ics23_commitment::error::Error;
 
+#[cfg_attr(not(feature="prusti"), derive(Debug))]
 #[derive(Clone)]
 pub struct EmptyPrefixError;
+
+#[cfg(feature="prusti")]
+impl std::fmt::Debug for EmptyPrefixError {
+    #[trusted]
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("No")
+    }
+}
 
 pub fn apply_prefix(
     prefix: &CommitmentPrefix,

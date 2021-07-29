@@ -1,3 +1,4 @@
+use prusti_contracts::*;
 use std::time::Duration;
 
 use flex_error::{define_error, DetailOnly};

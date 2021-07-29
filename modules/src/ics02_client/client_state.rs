@@ -4,7 +4,7 @@ use prusti_contracts::*;
 use std::time::Duration;
 
 use prost_types::Any;
-// use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use tendermint::trust_threshold::TrustThresholdFraction;
 use tendermint_proto::Protobuf;
 
@@ -42,6 +42,7 @@ pub trait ClientState: Clone + Send + Sync {
     fn wrap_any(self) -> AnyClientState;
 }
 
+#[cfg_attr(not(feature="prusti"), derive(Debug), derive(Deserialize), derive(Serialize), derive(PartialEq), derive(Eq))]
 #[derive(Clone)]
 // #[serde(tag = "type")]
 pub enum AnyClientState {
@@ -178,6 +179,7 @@ impl ClientState for AnyClientState {
 }
 
 #[derive(Clone)]
+#[cfg_attr(not(feature="prusti"), derive(Debug), derive(Deserialize), derive(Serialize), derive(PartialEq), derive(Eq))]
 // #[serde(tag = "type")]
 pub struct IdentifiedAnyClientState {
     pub client_id: ClientId,

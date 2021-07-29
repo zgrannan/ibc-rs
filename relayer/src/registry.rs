@@ -1,5 +1,6 @@
 //! Registry for keeping track of [`ChainHandle`]s indexed by a `ChainId`.
 
+use prusti_contracts::*;
 use std::{collections::HashMap, sync::Arc};
 
 use flex_error::define_error;

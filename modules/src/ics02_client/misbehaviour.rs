@@ -33,6 +33,7 @@ pub trait Misbehaviour: Clone + Send + Sync {
 
 #[derive(Clone)] // TODO: Add Eq bound once possible
 #[allow(clippy::large_enum_variant)]
+#[cfg_attr(not(feature="prusti"), derive(Debug))]
 pub enum AnyMisbehaviour {
     Tendermint(TmMisbehaviour),
 
@@ -118,6 +119,7 @@ impl std::fmt::Display for AnyMisbehaviour {
 }
 
 #[derive(Clone)]
+#[cfg_attr(not(feature="prusti"), derive(Debug))]
 pub struct MisbehaviourEvidence {
     pub misbehaviour: AnyMisbehaviour,
     pub supporting_headers: Vec<AnyHeader>,

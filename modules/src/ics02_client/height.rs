@@ -13,6 +13,7 @@ use ibc_proto::ibc::core::client::v1::Height as RawHeight;
 use crate::ics02_client::error::Error;
 
 #[derive(Eq, PartialEq, Copy, Clone, Hash)]
+#[cfg_attr(not(feature="prusti"), derive(Deserialize), derive(Serialize))]
 pub struct Height {
     /// Previously known as "epoch"
     pub revision_number: u64,

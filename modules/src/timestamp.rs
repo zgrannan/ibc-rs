@@ -20,10 +20,12 @@ pub const ZERO_DURATION: Duration = Duration::from_secs(0);
 /// represented as a `u64` Unix timestamp in nanoseconds, with 0 representing the absence
 /// of timestamp.
 #[derive(Eq, PartialEq, Copy, Clone, Hash)]
+#[cfg_attr(not(feature="prusti"), derive(Debug), derive(Deserialize), derive(Serialize))]
 pub struct Timestamp {
     time: Option<DateTime<Utc>>,
 }
 
+#[cfg(feature = "prusti")]
 impl std::fmt::Debug for Timestamp {
     #[trusted]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -32,6 +34,7 @@ impl std::fmt::Debug for Timestamp {
 }
 
 
+#[cfg(feature = "prusti")]
 #[extern_spec]
 impl <Tz: chrono::TimeZone> chrono::DateTime<Tz> {
   #[pure]
@@ -39,6 +42,7 @@ impl <Tz: chrono::TimeZone> chrono::DateTime<Tz> {
 }
 
 
+#[cfg(feature = "prusti")]
 #[extern_spec]
 impl <T> std::option::Option<T> {
     #[pure]
@@ -75,6 +79,7 @@ impl Timestamp {
     /// from an `i64` value. In practice, `i64` still have sufficient precision for our purpose.
     /// However we have to handle the case of `u64` overflowing in `i64`, to prevent
     /// malicious packets from crashing the relayer.
+    #[ensures(nanoseconds <= 4294967295 ==> result.is_ok())] // u32::MAX
     pub fn from_nanoseconds(nanoseconds: u64) -> Result<Timestamp, TryFromIntError> {
         if nanoseconds == 0 {
             Ok(Timestamp { time: None })

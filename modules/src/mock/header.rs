@@ -2,6 +2,7 @@ use std::convert::TryFrom;
 
 use serde_derive::{Deserialize, Serialize};
 use tendermint_proto::Protobuf;
+use prusti_contracts::*;
 
 use ibc_proto::ibc::mock::Header as RawMockHeader;
 
@@ -15,6 +16,7 @@ use crate::timestamp::Timestamp;
 use crate::Height;
 
 #[derive(Copy, Clone, Default)]
+#[cfg_attr(not(feature="prusti"), derive(Debug), derive(Deserialize), derive(Serialize), derive(PartialEq), derive(Eq))]
 pub struct MockHeader {
     pub height: Height,
     pub timestamp: Timestamp,
@@ -36,6 +38,7 @@ impl TryFrom<RawMockHeader> for MockHeader {
 }
 
 impl From<MockHeader> for RawMockHeader {
+    #[trusted]
     fn from(value: MockHeader) -> Self {
         RawMockHeader {
             height: Some(value.height.into()),
