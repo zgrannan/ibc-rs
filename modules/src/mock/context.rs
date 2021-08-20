@@ -838,6 +838,7 @@ impl Ics18Context for MockContext {
         Ok(events)
     }
 
+    #[trusted]
     fn signer(&self) -> Signer {
         "0CDA3F47EF3C4906693B170EF650EB968C5F4B2C".parse().unwrap()
     }

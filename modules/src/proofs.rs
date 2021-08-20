@@ -19,6 +19,7 @@ define_error! {
 /// handshake, as well as for ICS4 packets, timeouts, and acknowledgements.
 #[derive(Clone)]
 #[cfg_attr(not(feature="prusti"), derive(Debug))]
+#[cfg_attr(feature="prusti", derive(PrustiDebug))]
 pub struct Proofs {
     object_proof: CommitmentProofBytes,
     client_proof: Option<CommitmentProofBytes>,

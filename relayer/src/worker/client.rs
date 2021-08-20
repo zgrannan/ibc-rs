@@ -71,6 +71,7 @@ impl ClientWorker {
                     };
                 }
                 Err(e) => {
+                    /* PRUSTITODO: Why does this cause an error?
                     if let ForeignClientErrorDetail::ExpiredOrFrozen(_) = e.detail() {
                         warn!("failed to refresh client '{}': {}", client, e);
 
@@ -78,6 +79,7 @@ impl ClientWorker {
                         // further, and can therefore exit without an error.
                         return Ok(());
                     }
+                    */
                 }
                 _ => (),
             };

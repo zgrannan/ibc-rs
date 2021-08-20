@@ -18,6 +18,7 @@ use crate::ics24_host::identifier::{ChannelId, ConnectionId, PortId};
 
 #[derive(Clone)]
 #[cfg_attr(not(feature="prusti"), derive(Debug), derive(Deserialize), derive(Serialize), derive(PartialEq), derive(Eq))]
+#[cfg_attr(feature="prusti", derive(PrustiDebug), derive(PrustiDeserialize), derive(PrustiSerialize), derive(PrustiPartialEq), derive(PrustiEq))]
 pub struct IdentifiedChannelEnd {
     pub port_id: PortId,
     pub channel_id: ChannelId,
@@ -79,6 +80,7 @@ panic!("No") //         RawIdentifiedChannel {
 
 #[derive(Clone)]
 #[cfg_attr(not(feature="prusti"), derive(Debug), derive(Deserialize), derive(Serialize), derive(PartialEq), derive(Eq))]
+#[cfg_attr(feature="prusti", derive(PrustiDebug))]
 pub struct ChannelEnd {
     pub state: State,
     pub ordering: Order,
@@ -325,6 +327,7 @@ panic!("No") //         RawCounterparty {
 
 #[derive(Eq, PartialEq, Clone, Copy)]
 #[cfg_attr(not(feature="prusti"), derive(Debug), derive(Deserialize), derive(Serialize), derive(PartialOrd), derive(Ord))]
+#[cfg_attr(feature="prusti", derive(PrustiSerialize), derive(PrustiDebug))]
 pub enum Order {
     None = 0,
     Unordered,

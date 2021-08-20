@@ -375,6 +375,7 @@ impl EventMonitor {
                 }),
                 Err(e) => {
                     match e.detail() {
+                        /* PRUSTITODO: Why does this cause a compiler error?
                         ErrorDetail::SubscriptionCancelled(reason) => {
                             error!(
                                 "[{}] subscription cancelled, reason: {}",
@@ -394,6 +395,7 @@ impl EventMonitor {
                             // thus potentially blow up the stack after many restarts.
                             return Next::Continue;
                         }
+                        */
                         _ => {
                             error!("[{}] failed to collect events: {}", self.chain_id, e);
 

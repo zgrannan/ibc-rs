@@ -19,6 +19,7 @@ use super::handler::{
 /// Enumeration of proof carrying ICS4 message, helper for relayer.
 #[derive(Clone)]
 #[cfg_attr(not(feature="prusti"), derive(Debug), derive(PartialEq), derive(Eq))]
+#[cfg_attr(feature="prusti", derive(PrustiPartialEq), derive(PrustiEq))]
 pub enum PacketMsgType {
     Recv,
     Ack,

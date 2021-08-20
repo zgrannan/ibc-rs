@@ -12,19 +12,12 @@ use crate::mock::header::MockHeader;
 use crate::Height;
 
 #[derive(Clone)]
+#[cfg_attr(feature="prusti", derive(PrustiDebug))]
 pub struct Misbehaviour {
     pub client_id: ClientId,
     pub header1: MockHeader,
     pub header2: MockHeader,
 }
-
-impl std::fmt::Debug for Misbehaviour {
-    #[trusted]
-    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        panic!("No")
-    }
-}
-
 
 impl crate::ics02_client::misbehaviour::Misbehaviour for Misbehaviour {
     fn client_id(&self) -> &ClientId {

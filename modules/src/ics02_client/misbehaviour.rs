@@ -120,6 +120,7 @@ impl std::fmt::Display for AnyMisbehaviour {
 
 #[derive(Clone)]
 #[cfg_attr(not(feature="prusti"), derive(Debug))]
+#[cfg_attr(feature="prusti", derive(PrustiDebug))]
 pub struct MisbehaviourEvidence {
     pub misbehaviour: AnyMisbehaviour,
     pub supporting_headers: Vec<AnyHeader>,

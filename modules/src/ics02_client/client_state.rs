@@ -52,6 +52,14 @@ pub enum AnyClientState {
     Mock(MockClientState),
 }
 
+#[cfg(feature="prusti")]
+impl std::fmt::Debug for AnyClientState {
+    #[trusted]
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("No")
+    }
+}
+
 impl AnyClientState {
     pub fn latest_height(&self) -> Height {
         match self {
@@ -180,6 +188,7 @@ impl ClientState for AnyClientState {
 
 #[derive(Clone)]
 #[cfg_attr(not(feature="prusti"), derive(Debug), derive(Deserialize), derive(Serialize), derive(PartialEq), derive(Eq))]
+#[cfg_attr(feature="prusti", derive(PrustiDebug), derive(PrustiDeserialize), derive(PrustiSerialize), derive(PrustiPartialEq), derive(PrustiEq))]
 // #[serde(tag = "type")]
 pub struct IdentifiedAnyClientState {
     pub client_id: ClientId,

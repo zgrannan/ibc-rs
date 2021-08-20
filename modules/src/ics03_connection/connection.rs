@@ -21,6 +21,7 @@ use crate::timestamp::ZERO_DURATION;
 
 #[derive(Clone, Hash)]
 #[cfg_attr(not(feature="prusti"), derive(Debug), derive(Deserialize), derive(Serialize), derive(PartialEq), derive(Eq))]
+#[cfg_attr(feature="prusti", derive(PrustiDebug), derive(PrustiDeserialize), derive(PrustiSerialize), derive(PrustiPartialEq), derive(PrustiEq))]
 pub struct IdentifiedConnectionEnd {
     pub connection_id: ConnectionId,
     pub connection_end: ConnectionEnd,
@@ -86,6 +87,7 @@ impl From<IdentifiedConnectionEnd> for RawIdentifiedConnection {
 
 #[derive(Eq, PartialEq, Clone, Hash)]
 #[cfg_attr(not(feature="prusti"), derive(Debug), derive(Deserialize), derive(Serialize))]
+#[cfg_attr(feature="prusti", derive(PrustiDebug), derive(PrustiDeserialize), derive(PrustiSerialize))]
 pub struct ConnectionEnd {
     pub state: State,
     client_id: ClientId,
@@ -243,6 +245,7 @@ impl ConnectionEnd {
 
 #[derive(Eq, PartialEq, Clone, Hash)]
 #[cfg_attr(not(feature="prusti"), derive(Debug), derive(Deserialize), derive(Serialize))]
+#[cfg_attr(feature="prusti", derive(PrustiDebug))]
 pub struct Counterparty {
     client_id: ClientId,
     pub connection_id: Option<ConnectionId>,

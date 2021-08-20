@@ -1073,6 +1073,7 @@ impl ForeignClient {
                 }
             }
             Err(e) => match e.detail() {
+                /* PRUSTITODO: Why does this cause a compiler error?
                 ForeignClientErrorDetail::MisbehaviourExit(s) => {
                     error!(
                         "[{}] misbehaviour checking is being disabled: {:?}",
@@ -1080,6 +1081,7 @@ impl ForeignClient {
                     );
                     MisbehaviourResults::CannotExecute
                 }
+                */
                 _ => {
                     if update_event.is_some() {
                         MisbehaviourResults::CannotExecute

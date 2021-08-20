@@ -28,6 +28,7 @@ pub struct Header {
 }
 
 impl std::fmt::Debug for Header {
+    #[trusted]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, " Header {{...}}")
     }
@@ -90,6 +91,7 @@ impl Protobuf<RawHeader> for Header {}
 impl TryFrom<RawHeader> for Header {
     type Error = Error;
 
+    #[trusted]
     fn try_from(raw: RawHeader) -> Result<Self, Self::Error> {
         Ok(Self {
             signed_header: raw
@@ -115,6 +117,7 @@ impl TryFrom<RawHeader> for Header {
     }
 }
 
+#[trusted]
 pub fn decode_header<B: Buf>(buf: B) -> Result<Header, Error> {
     RawHeader::decode(buf).map_err(Error::decode)?.try_into()
 }

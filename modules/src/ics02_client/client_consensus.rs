@@ -76,6 +76,15 @@ impl AnyConsensusState {
     }
 }
 
+#[cfg(feature="prusti")]
+impl std::fmt::Debug for AnyConsensusState {
+    #[trusted]
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        panic!("No")
+    }
+}
+
+
 impl Protobuf<Any> for AnyConsensusState {}
 
 impl TryFrom<Any> for AnyConsensusState {
@@ -123,6 +132,7 @@ impl From<AnyConsensusState> for Any {
 
 #[derive(Clone)]
 #[cfg_attr(not(feature="prusti"), derive(Debug))]
+#[cfg_attr(feature="prusti", derive(PrustiDebug))]
 pub struct AnyConsensusStateWithHeight {
     pub height: Height,
     pub consensus_state: AnyConsensusState,

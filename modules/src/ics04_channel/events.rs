@@ -153,6 +153,7 @@ fn extract_packet_and_write_ack_from_tx(
 
 #[derive(Clone, Hash)]
 #[cfg_attr(not(feature="prusti"), derive(Debug))]
+#[cfg_attr(feature="prusti", derive(PrustiDebug))]
 pub struct Attributes {
     pub height: Height,
     pub port_id: PortId,
@@ -162,7 +163,13 @@ pub struct Attributes {
     pub counterparty_channel_id: Option<ChannelId>,
 }
 
+#[cfg(feature="prusti")]
 #[trusted]
+fn extract_attributes(object: &RawObject, namespace: &str) -> Result<Attributes, Error> {
+    unimplemented!()
+}
+
+#[cfg(not(feature="prusti"))]
 fn extract_attributes(object: &RawObject, namespace: &str) -> Result<Attributes, Error> {
     Ok(Attributes {
         height: object.height,

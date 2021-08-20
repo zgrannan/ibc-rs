@@ -38,7 +38,7 @@ impl TryFrom<RawMockHeader> for MockHeader {
 }
 
 impl From<MockHeader> for RawMockHeader {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn from(value: MockHeader) -> Self {
         RawMockHeader {
             height: Some(value.height.into()),

@@ -10,6 +10,7 @@ use crate::Height;
 use prost_types::Any;
 use serde_derive::{Deserialize, Serialize};
 use tendermint_proto::Protobuf;
+use prusti_contracts::*;
 
 pub const TENDERMINT_HEADER_TYPE_URL: &str = "/ibc.lightclients.tendermint.v1.Header";
 pub const MOCK_HEADER_TYPE_URL: &str = "/ibc.mock.Header";
@@ -30,6 +31,7 @@ pub trait Header: Clone + Send + Sync {
 #[derive(Clone)] // TODO: Add Eq bound once possible
 #[allow(clippy::large_enum_variant)]
 #[cfg_attr(not(feature="prusti"), derive(Debug))]
+#[cfg_attr(feature="prusti", derive(PrustiDebug))]
 pub enum AnyHeader {
     Tendermint(TendermintHeader),
 

@@ -90,7 +90,7 @@ pub fn reply_channel<T>() -> (ReplyTo<T>, Reply<T>) {
 }
 
 /// Requests that a `ChainHandle` may send to a `ChainRuntime`.
-#[derive(Clone, Debug)]
+#[cfg_attr(not(feature="prusti"), derive(Clone, Debug))]
 #[allow(clippy::large_enum_variant)]
 pub enum ChainRequest {
     Shutdown {

@@ -80,6 +80,7 @@ fn extract_attributes_from_tx(event: &tendermint::abci::Event) -> Attributes {
 
 #[derive(Clone, Hash)]
 #[cfg_attr(not(feature="prusti"), derive(Debug))]
+#[cfg_attr(feature="prusti", derive(PrustiDebug))]
 pub struct Attributes {
     pub height: Height,
     pub connection_id: Option<ConnectionId>,
@@ -88,7 +89,13 @@ pub struct Attributes {
     pub counterparty_client_id: ClientId,
 }
 
+#[cfg(feature="prusti")]
 #[trusted]
+fn extract_attributes(object: &RawObject, namespace: &str) -> Result<Attributes, Error> {
+    unimplemented!()
+}
+
+#[cfg(not(feature="prusti"))]
 fn extract_attributes(object: &RawObject, namespace: &str) -> Result<Attributes, Error> {
     Ok(Attributes {
         height: object.height,

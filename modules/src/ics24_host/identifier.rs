@@ -25,6 +25,26 @@ pub struct ChainId {
 }
 
 #[cfg(feature="prusti")]
+impl Serialize for ChainId {
+    #[trusted]
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer {
+        todo!()
+    }
+}
+
+#[cfg(feature="prusti")]
+impl <'de> Deserialize<'de> for ChainId {
+    #[trusted]
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de> {
+        todo!()
+    }
+}
+
+#[cfg(feature="prusti")]
 impl std::fmt::Debug for ChainId {
     #[trusted]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -123,6 +143,7 @@ impl ChainId {
     /// assert_eq!(ChainId::is_epoch_format("chainA"), false);
     /// assert_eq!(ChainId::is_epoch_format("chainA-1"), true);
     /// ```
+    #[trusted]
     pub fn is_epoch_format(chain_id: &str) -> bool {
         let re = regex::Regex::new(r"^.+[^-]-{1}[1-9][0-9]*$").unwrap();
         re.is_match(chain_id)
@@ -184,8 +205,25 @@ impl TryFrom<String> for ChainId {
 }
 
 #[cfg_attr(not(feature="prusti"), derive(Debug), derive(Deserialize), derive(Serialize), derive(PartialOrd), derive(Ord))]
+#[cfg_attr(feature="prusti", derive(PrustiDeserialize), derive(PrustiSerialize))]
 #[derive(Eq, PartialEq, Clone, Hash)]
 pub struct ClientId(String);
+
+#[cfg(feature="prusti")]
+impl Ord for ClientId {
+    #[trusted]
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        todo!()
+    }
+}
+
+#[cfg(feature="prusti")]
+impl PartialOrd for ClientId {
+    #[trusted]
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        todo!()
+    }
+}
 
 #[cfg(feature="prusti")]
 impl std::fmt::Debug for ClientId {
@@ -280,7 +318,9 @@ impl PartialEq<str> for ClientId {
     }
 }
 
+
 #[cfg_attr(not(feature="prusti"), derive(Debug), derive(Deserialize), derive(Serialize), derive(PartialOrd), derive(Ord))]
+#[cfg_attr(feature="prusti", derive(PrustiDeserialize), derive(PrustiSerialize))]
 #[derive(Eq, PartialEq, Clone, Hash)]
 pub struct ConnectionId(String);
 
@@ -289,6 +329,14 @@ impl std::fmt::Debug for ConnectionId {
     #[trusted]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         panic!("No")
+    }
+}
+
+#[cfg(feature="prusti")]
+impl PartialOrd for ConnectionId {
+    #[trusted]
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        todo!()
     }
 }
 
@@ -367,9 +415,58 @@ impl PartialEq<str> for ConnectionId {
     }
 }
 
+
+
+
+#[cfg(feature="prusti")]
+impl Ord for ConnectionId {
+    #[trusted]
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        todo!()
+    }
+}
+
 #[cfg_attr(not(feature="prusti"), derive(Debug), derive(Deserialize), derive(Serialize), derive(PartialOrd), derive(Ord))]
 #[derive(Eq, PartialEq, Clone, Hash)]
 pub struct PortId(String);
+
+#[cfg(feature="prusti")]
+impl Ord for PortId {
+    #[trusted]
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        todo!()
+    }
+}
+
+#[cfg(feature="prusti")]
+impl Serialize for PortId {
+    #[trusted]
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer {
+        todo!()
+    }
+}
+
+#[cfg(feature="prusti")]
+impl PartialOrd for PortId {
+    #[trusted]
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        todo!()
+    }
+}
+
+
+
+#[cfg(feature="prusti")]
+impl <'de> Deserialize<'de> for PortId {
+    #[trusted]
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de> {
+        todo!()
+    }
+}
 
 #[cfg(feature="prusti")]
 impl std::fmt::Debug for PortId {
@@ -422,10 +519,47 @@ impl Default for PortId {
 pub struct ChannelId(String);
 
 #[cfg(feature="prusti")]
+impl Serialize for ChannelId {
+    #[trusted]
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer {
+        todo!()
+    }
+}
+
+
+#[cfg(feature="prusti")]
+impl <'de> Deserialize<'de> for ChannelId {
+    #[trusted]
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de> {
+        todo!()
+    }
+}
+
+#[cfg(feature="prusti")]
 impl std::fmt::Debug for ChannelId {
     #[trusted]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         panic!("No")
+    }
+}
+
+#[cfg(feature="prusti")]
+impl Ord for ChannelId {
+    #[trusted]
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        todo!()
+    }
+}
+
+#[cfg(feature="prusti")]
+impl PartialOrd for ChannelId {
+    #[trusted]
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        todo!()
     }
 }
 
@@ -501,6 +635,7 @@ impl PartialEq<str> for ChannelId {
 /// A pair of [`PortId`] and [`ChannelId`] are used together for sending IBC packets.
 #[derive(Clone, Hash)]
 #[cfg_attr(not(feature="prusti"), derive(PartialEq), derive(Eq), derive(Debug))]
+#[cfg_attr(feature="prusti", derive(PrustiDebug), derive(PrustiPartialEq))]
 pub struct PortChannelId {
     pub channel_id: ChannelId,
     pub port_id: PortId,

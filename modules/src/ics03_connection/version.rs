@@ -11,6 +11,7 @@ use crate::ics03_connection::error::Error;
 /// Stores the identifier and the features supported by a version
 #[derive(Eq, PartialEq, Clone, Hash)]
 #[cfg_attr(not(feature="prusti"), derive(Debug), derive(Deserialize), derive(Serialize))]
+#[cfg_attr(feature="prusti", derive(PrustiDebug))]
 pub struct Version {
     /// unique version identifier
     identifier: String,
