@@ -2,6 +2,7 @@ use tendermint::abci::transaction::Hash;
 
 use crate::ics02_client::client_consensus::QueryClientEventRequest;
 use crate::ics04_channel::channel::QueryPacketEventDataRequest;
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 
 /// Used for queries and not yet standardized in channel's query.proto

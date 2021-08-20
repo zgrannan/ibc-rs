@@ -1,5 +1,6 @@
 //! This is the definition of a transfer messages that an application submits to a chain.
 
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use std::convert::{TryFrom, TryInto};
 
@@ -43,12 +44,12 @@ impl Msg for MsgTransfer {
     type ValidationError = Error;
     type Raw = RawMsgTransfer;
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn route(&self) -> String {
 unreachable!() // panic!("No") //         crate::keys::ROUTER_KEY.to_string()
     }
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn type_url(&self) -> String {
 unreachable!() //         TYPE_URL.to_string()
     }
@@ -59,7 +60,7 @@ impl Protobuf<RawMsgTransfer> for MsgTransfer {}
 impl TryFrom<RawMsgTransfer> for MsgTransfer {
     type Error = Error;
 
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn try_from(raw_msg: RawMsgTransfer) -> Result<Self, Self::Error> {
 panic!("No") // panic!("No") // panic!("No") //         let timeout_timestamp = Timestamp::from_nanoseconds(raw_msg.timeout_timestamp)
 // // //             .map_err(|_| Error::invalid_packet_timeout_timestamp(raw_msg.timeout_timestamp))?;
@@ -90,7 +91,7 @@ panic!("No") // panic!("No") // panic!("No") //         let timeout_timestamp = 
 }
 
 impl From<MsgTransfer> for RawMsgTransfer {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn from(domain_msg: MsgTransfer) -> Self {
         RawMsgTransfer {
             source_port: domain_msg.source_port.to_string(),

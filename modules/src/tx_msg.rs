@@ -1,3 +1,4 @@
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use prost_types::Any;
 
@@ -21,7 +22,7 @@ pub trait Msg: Clone {
         }
     }
 
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn get_sign_bytes(self) -> Vec<u8> {
         panic!("no")
         // let mut buf = Vec::new();

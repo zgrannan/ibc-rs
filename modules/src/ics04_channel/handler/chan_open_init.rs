@@ -1,5 +1,6 @@
 //! Protocol logic specific to ICS4 messages of type `MsgChannelOpenInit`.
 
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use crate::events::IbcEvent;
 use crate::handler::{HandlerOutput, HandlerResult};
@@ -11,7 +12,7 @@ use crate::ics04_channel::handler::{ChannelIdState, ChannelResult};
 use crate::ics04_channel::msgs::chan_open_init::MsgChannelOpenInit;
 use crate::ics24_host::identifier::ChannelId;
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
 pub(crate) fn process(
     ctx: &dyn ChannelReader,
     msg: MsgChannelOpenInit,

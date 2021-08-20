@@ -1,5 +1,6 @@
 use std::fmt;
 
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use serde_derive::{Deserialize, Serialize};
 
@@ -15,14 +16,14 @@ pub enum ClientType {
 }
 
 impl PartialEq for ClientType {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn eq(&self, other: &Self) -> bool {
        unreachable!()
     }
 }
 
 impl std::fmt::Debug for ClientType {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         unreachable!()
     }
@@ -36,7 +37,7 @@ impl ClientType {
     const MOCK_STR: &'static str = "9999-mock";
 
     /// Yields the identifier of this client type as a string
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     pub fn as_str(&self) -> &'static str {
 unreachable!() //         match self {
 //             Self::Tendermint => Self::TENDERMINT_STR,
@@ -48,7 +49,7 @@ unreachable!() //         match self {
 }
 
 impl fmt::Display for ClientType {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 unreachable!() //         write!(f, "ClientType({})", self.as_str())
     }
@@ -57,7 +58,7 @@ unreachable!() //         write!(f, "ClientType({})", self.as_str())
 impl std::str::FromStr for ClientType {
     type Err = Error;
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             Self::TENDERMINT_STR => Ok(Self::Tendermint),

@@ -1,5 +1,6 @@
 use std::convert::TryFrom;
 
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use tendermint_proto::Protobuf;
 
@@ -42,7 +43,7 @@ impl Protobuf<RawMsgSubmitMisbehaviour> for MsgSubmitAnyMisbehaviour {}
 impl TryFrom<RawMsgSubmitMisbehaviour> for MsgSubmitAnyMisbehaviour {
     type Error = Error;
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn try_from(raw: RawMsgSubmitMisbehaviour) -> Result<Self, Self::Error> {
         let raw_misbehaviour = raw
             .misbehaviour

@@ -1,3 +1,4 @@
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use std::convert::Infallible;
 use std::convert::TryFrom;
@@ -25,7 +26,7 @@ pub struct ConsensusState {
 }
 
 impl std::fmt::Debug for ConsensusState {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         panic!("No")
     }
@@ -52,7 +53,7 @@ impl crate::ics02_client::client_consensus::ConsensusState for ConsensusState {
     //     &self.root
     // }
 
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn validate_basic(&self) -> Result<(), Infallible> {
         unimplemented!()
     }
@@ -90,7 +91,7 @@ impl TryFrom<RawConsensusState> for ConsensusState {
 }
 
 impl From<ConsensusState> for RawConsensusState {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn from(value: ConsensusState) -> Self {
         RawConsensusState {
             timestamp: Some(Timestamp::from(SystemTime::from(value.timestamp))),
@@ -103,7 +104,7 @@ impl From<ConsensusState> for RawConsensusState {
 }
 
 impl From<tendermint::block::Header> for ConsensusState {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn from(header: tendermint::block::Header) -> Self {
         Self {
             root: CommitmentRoot::from_bytes(header.app_hash.as_ref()),

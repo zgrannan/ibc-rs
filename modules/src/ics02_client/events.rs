@@ -1,7 +1,8 @@
 //! Types for the IBC events emitted from Tendermint Websocket by the client module.
 use std::convert::{TryFrom, TryInto};
 
-use prusti_contracts::trusted;
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
 use prost::Message;
 use serde_derive::{Deserialize, Serialize};
 use subtle_encoding::hex;
@@ -31,7 +32,7 @@ const CONSENSUS_HEIGHT_ATTRIBUTE_KEY: &str = "consensus_height";
 /// The content of the `key` field for the header in update client event.
 const HEADER: &str = "header";
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
 pub fn try_from_tx(event: &tendermint::abci::Event) -> Option<IbcEvent> {
 unreachable!() //     match event.type_str.as_ref() {
 //         CREATE_EVENT_TYPE => Some(IbcEvent::CreateClient(CreateClient(
@@ -51,7 +52,7 @@ unreachable!() //     match event.type_str.as_ref() {
 //     }
 }
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
 fn extract_attributes_from_tx(event: &tendermint::abci::Event) -> Attributes {
 unreachable!() //     let mut attr = Attributes::default();
 // 
@@ -70,7 +71,7 @@ unreachable!() //     let mut attr = Attributes::default();
 //     attr
 }
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
 pub fn extract_header_from_tx(event: &tendermint::abci::Event) -> Option<AnyHeader> {
 unreachable!() //     for tag in &event.attributes {
 //         let key = tag.key.as_ref();
@@ -94,7 +95,7 @@ pub struct NewBlock {
 
 #[cfg(feature="prusti")]
 impl std::fmt::Debug for NewBlock {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         panic!("No")
     }
@@ -113,7 +114,7 @@ impl NewBlock {
 }
 
 impl From<NewBlock> for IbcEvent {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn from(v: NewBlock) -> Self {
         IbcEvent::NewBlock(v)
     }
@@ -140,7 +141,7 @@ impl Default for Attributes {
 }
 
 impl std::fmt::Display for Attributes {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
 unreachable!() //         write!(
 //             f,
@@ -205,7 +206,7 @@ impl From<CreateClient> for IbcEvent {
 }
 
 impl std::fmt::Display for CreateClient {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
 unreachable!() //         write!(f, "{}", self.0)
     }
@@ -241,7 +242,7 @@ impl UpdateClient {
 }
 
 impl From<Attributes> for UpdateClient {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn from(attrs: Attributes) -> Self {
         UpdateClient {
             common: attrs,
@@ -253,7 +254,7 @@ impl From<Attributes> for UpdateClient {
 impl TryFrom<RawObject> for UpdateClient {
     type Error = Error;
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
 panic!("No") //         let header_str: Option<String> = obj
 //             .events
@@ -282,14 +283,14 @@ panic!("No") //         let header_str: Option<String> = obj
 }
 
 impl From<UpdateClient> for IbcEvent {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn from(v: UpdateClient) -> Self {
         IbcEvent::UpdateClient(v)
     }
 }
 
 impl std::fmt::Display for UpdateClient {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
 unreachable!() //         write!(f, "{}", self.common)
     }
@@ -307,7 +308,7 @@ impl ClientMisbehaviour {
     pub fn height(&self) -> Height {
         self.0.height
     }
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     pub fn set_height(&mut self, height: Height) {
         self.0.height = height;
     }
@@ -324,7 +325,7 @@ impl TryFrom<RawObject> for ClientMisbehaviour {
 }
 
 impl From<ClientMisbehaviour> for IbcEvent {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn from(v: ClientMisbehaviour) -> Self {
         IbcEvent::ClientMisbehaviour(v)
     }

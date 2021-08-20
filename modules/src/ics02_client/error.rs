@@ -1,3 +1,4 @@
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use crate::ics02_client::client_type::ClientType;
 use crate::ics07_tendermint::error::Error as Ics07Error;

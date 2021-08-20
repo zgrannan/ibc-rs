@@ -1,5 +1,6 @@
 use std::convert::{TryFrom, TryInto};
 
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use tendermint_proto::Protobuf;
 
@@ -44,12 +45,12 @@ impl Msg for MsgTimeoutOnClose {
     type ValidationError = Error;
     type Raw = RawMsgTimeoutOnClose;
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn route(&self) -> String {
 unreachable!() //         crate::keys::ROUTER_KEY.to_string()
     }
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn type_url(&self) -> String {
 unreachable!() //         TYPE_URL.to_string()
     }
@@ -88,7 +89,7 @@ impl TryFrom<RawMsgTimeoutOnClose> for MsgTimeoutOnClose {
 }
 
 impl From<MsgTimeoutOnClose> for RawMsgTimeoutOnClose {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn from(domain_msg: MsgTimeoutOnClose) -> Self {
 unreachable!() //         RawMsgTimeoutOnClose {
 //             packet: Some(domain_msg.packet.into()),

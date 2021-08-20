@@ -8,6 +8,9 @@ use std::{
     time::{Duration, Instant},
 };
 
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
+
 use bech32::{ToBase32, Variant};
 use bitcoin::hashes::hex::ToHex;
 use itertools::Itertools;
@@ -100,6 +103,10 @@ mod retry_strategy {
     use crate::util::retry::Fixed;
     use std::time::Duration;
 
+    #[cfg(feature="prusti")]
+    use prusti_contracts::*;
+
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn wait_for_block_commits(max_total_wait: Duration) -> impl Iterator<Item = Duration> {
         let backoff_millis = 300; // The periodic backoff
         let count: usize = (max_total_wait.as_millis() / backoff_millis as u128) as usize;
@@ -129,6 +136,12 @@ impl CosmosSdkChain {
     /// Emits a log warning in case anything is amiss.
     /// Exits early if any health check fails, without doing any
     /// further checks.
+
+    // PRUSTITODO: Broken MIR
+    #[cfg(feature="prusti")]
+    fn health_checkup(&self) {}
+
+    #[cfg(not(feature="prusti"))]
     fn health_checkup(&self) {
         async fn do_health_checkup(chain: &CosmosSdkChain) -> Result<(), Error> {
             let chain_id = chain.id();
@@ -1146,6 +1159,17 @@ impl Chain for CosmosSdkChain {
         Ok(connections)
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn query_connection(
+        &self,
+        connection_id: &ConnectionId,
+        height: ICSHeight,
+    ) -> Result<ConnectionEnd, Error> {
+        todo!();
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn query_connection(
         &self,
         connection_id: &ConnectionId,
@@ -1910,7 +1934,14 @@ async fn abci_query(
     Ok(response)
 }
 
+#[cfg(feature="prusti")]
+#[trusted]
+async fn broadcast_tx_sync(chain: &CosmosSdkChain, data: Vec<u8>) -> Result<Response, Error> {
+    todo!();
+}
+
 /// Perform a `broadcast_tx_sync`, and return the corresponding deserialized response data.
+#[cfg(not(feature="prusti"))]
 async fn broadcast_tx_sync(chain: &CosmosSdkChain, data: Vec<u8>) -> Result<Response, Error> {
     let response = chain
         .rpc_client()
@@ -1922,6 +1953,7 @@ async fn broadcast_tx_sync(chain: &CosmosSdkChain, data: Vec<u8>) -> Result<Resp
 }
 
 /// Uses the GRPC client to retrieve the account sequence
+#[cfg_attr(feature="prusti", trusted)]
 async fn query_account(chain: &CosmosSdkChain, address: String) -> Result<BaseAccount, Error> {
     let mut client = ibc_proto::cosmos::auth::v1beta1::query_client::QueryClient::connect(
         chain.grpc_addr.clone(),

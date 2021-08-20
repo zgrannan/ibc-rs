@@ -1,5 +1,6 @@
 use crate::ics04_channel::channel::validate_version;
 use crate::ics04_channel::error::Error;
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use crate::ics24_host::identifier::{ChannelId, PortId};
 use crate::proofs::Proofs;
@@ -84,7 +85,7 @@ impl Protobuf<RawMsgChannelOpenAck> for MsgChannelOpenAck {}
 impl TryFrom<RawMsgChannelOpenAck> for MsgChannelOpenAck {
     type Error = Error;
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn try_from(raw_msg: RawMsgChannelOpenAck) -> Result<Self, Self::Error> {
         let proofs = Proofs::new(
             raw_msg.proof_try.into(),
@@ -113,7 +114,7 @@ impl TryFrom<RawMsgChannelOpenAck> for MsgChannelOpenAck {
 }
 
 impl From<MsgChannelOpenAck> for RawMsgChannelOpenAck {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn from(domain_msg: MsgChannelOpenAck) -> Self {
         RawMsgChannelOpenAck {
             port_id: domain_msg.port_id.to_string(),

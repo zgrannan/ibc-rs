@@ -1,5 +1,6 @@
 use crate::events::IbcEvent;
 use crate::handler::{HandlerOutput, HandlerResult};
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use crate::ics04_channel::channel::State;
 use crate::ics04_channel::channel::{ChannelEnd, Counterparty, Order};
@@ -14,7 +15,7 @@ use crate::ics04_channel::{
     context::ChannelReader, error::Error, handler::timeout::TimeoutPacketResult,
 };
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
 pub fn process(
     ctx: &dyn ChannelReader,
     msg: MsgTimeoutOnClose,

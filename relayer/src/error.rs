@@ -1,5 +1,6 @@
 //! This module defines the various errors that be raised in the relayer.
 
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use crate::keyring::errors::Error as KeyringError;
 use crate::sdk_error::SdkError;

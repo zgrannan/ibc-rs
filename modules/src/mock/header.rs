@@ -2,6 +2,7 @@ use std::convert::TryFrom;
 
 use serde_derive::{Deserialize, Serialize};
 use tendermint_proto::Protobuf;
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 
 use ibc_proto::ibc::mock::Header as RawMockHeader;

@@ -1,5 +1,6 @@
 use std::convert::{TryFrom, TryInto};
 
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use bytes::Buf;
 use prost::Message;
@@ -28,14 +29,14 @@ pub struct Header {
 }
 
 impl std::fmt::Debug for Header {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, " Header {{...}}")
     }
 }
 
 impl Header {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     pub fn height(&self) -> Height {
         Height::new(
             ChainId::chain_version(self.signed_header.header.chain_id.as_str()),
@@ -91,7 +92,7 @@ impl Protobuf<RawHeader> for Header {}
 impl TryFrom<RawHeader> for Header {
     type Error = Error;
 
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn try_from(raw: RawHeader) -> Result<Self, Self::Error> {
         Ok(Self {
             signed_header: raw
@@ -117,7 +118,7 @@ impl TryFrom<RawHeader> for Header {
     }
 }
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
 pub fn decode_header<B: Buf>(buf: B) -> Result<Header, Error> {
     RawHeader::decode(buf).map_err(Error::decode)?.try_into()
 }

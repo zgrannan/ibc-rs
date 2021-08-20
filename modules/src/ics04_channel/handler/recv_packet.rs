@@ -1,5 +1,6 @@
 use crate::events::IbcEvent;
 use crate::handler::{HandlerOutput, HandlerResult};
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use crate::ics02_client::height::Height;
 use crate::ics03_connection::connection::State as ConnectionState;
@@ -22,7 +23,7 @@ pub struct RecvPacketResult {
     pub receipt: Option<Receipt>,
 }
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
 pub fn process(ctx: &dyn ChannelReader, msg: MsgRecvPacket) -> HandlerResult<PacketResult, Error> {
 panic!("No") // panic!("No") //     let mut output = HandlerOutput::builder();
 // // 

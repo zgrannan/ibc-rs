@@ -1,5 +1,6 @@
 use std::convert::TryFrom;
 use std::str::FromStr;
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 
 use serde::{Deserialize, Serialize};
@@ -26,7 +27,7 @@ pub struct ChainId {
 
 #[cfg(feature="prusti")]
 impl Serialize for ChainId {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer {
@@ -36,7 +37,7 @@ impl Serialize for ChainId {
 
 #[cfg(feature="prusti")]
 impl <'de> Deserialize<'de> for ChainId {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de> {
@@ -46,7 +47,7 @@ impl <'de> Deserialize<'de> for ChainId {
 
 #[cfg(feature="prusti")]
 impl std::fmt::Debug for ChainId {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         panic!("No")
     }
@@ -54,7 +55,7 @@ impl std::fmt::Debug for ChainId {
 
 #[cfg(feature="prusti")]
 impl PartialEq for ChainId {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn eq(&self, other: &ChainId) -> bool {
         panic!("No")
     }
@@ -69,7 +70,7 @@ impl Eq for ChainId {
 
 #[cfg(feature="prusti")]
 impl std::cmp::PartialOrd for ChainId {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         todo!()
     }
@@ -77,7 +78,7 @@ impl std::cmp::PartialOrd for ChainId {
 
 #[cfg(feature="prusti")]
 impl std::cmp::Ord for ChainId {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         todo!()
     }
@@ -102,7 +103,7 @@ impl ChainId {
     }
 
     /// Get a reference to the underlying string.
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     pub fn as_str(&self) -> &str {
         &self.id
     }
@@ -143,7 +144,7 @@ impl ChainId {
     /// assert_eq!(ChainId::is_epoch_format("chainA"), false);
     /// assert_eq!(ChainId::is_epoch_format("chainA-1"), true);
     /// ```
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn is_epoch_format(chain_id: &str) -> bool {
         let re = regex::Regex::new(r"^.+[^-]-{1}[1-9][0-9]*$").unwrap();
         re.is_match(chain_id)
@@ -168,28 +169,28 @@ impl FromStr for ChainId {
 }
 
 impl std::fmt::Display for ChainId {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "{}", self.id)
     }
 }
 
 impl From<ChainId> for tendermint::chain::Id {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn from(id: ChainId) -> Self {
         tendermint::chain::Id::from_str(id.as_str()).unwrap()
     }
 }
 
 impl From<tendermint::chain::Id> for ChainId {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn from(id: tendermint::chain::Id) -> Self {
         ChainId::from_str(id.as_str()).unwrap()
     }
 }
 
 impl Default for ChainId {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn default() -> Self {
         "defaultChainId".to_string().parse().unwrap()
     }
@@ -198,7 +199,7 @@ impl Default for ChainId {
 impl TryFrom<String> for ChainId {
     type Error = ValidationError;
 
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn try_from(value: String) -> Result<Self, Self::Error> {
         Self::from_str(value.as_str())
     }
@@ -211,7 +212,7 @@ pub struct ClientId(String);
 
 #[cfg(feature="prusti")]
 impl Ord for ClientId {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         todo!()
     }
@@ -219,7 +220,7 @@ impl Ord for ClientId {
 
 #[cfg(feature="prusti")]
 impl PartialOrd for ClientId {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         todo!()
     }
@@ -227,7 +228,7 @@ impl PartialOrd for ClientId {
 
 #[cfg(feature="prusti")]
 impl std::fmt::Debug for ClientId {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         panic!("No")
     }
@@ -246,7 +247,7 @@ impl ClientId {
     /// assert!(tm_client_id.is_ok());
     /// tm_client_id.map(|id| { assert_eq!(&id, "07-tendermint-0") });
     /// ```
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     pub fn new(ctype: ClientType, counter: u64) -> Result<Self, ValidationError> {
         let prefix = Self::prefix(ctype);
         let id = format!("{}-{}", prefix, counter);
@@ -254,7 +255,7 @@ impl ClientId {
     }
 
     /// Get this identifier as a borrowed `&str`
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn as_str(&self) -> &str {
         &self.0
     }
@@ -262,7 +263,7 @@ impl ClientId {
     /// Returns one of the prefixes that should be present in any client identifiers.
     /// The prefix is deterministic for a given chain type, hence all clients for a Tendermint-type
     /// chain, for example, will have the prefix '07-tendermint'.
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     pub fn prefix(client_type: ClientType) -> &'static str {
         match client_type {
             ClientType::Tendermint => ClientType::Tendermint.as_str(),
@@ -273,7 +274,7 @@ impl ClientId {
     }
 
     /// Get this identifier as a borrowed byte slice
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn as_bytes(&self) -> &[u8] {
         self.0.as_bytes()
     }
@@ -281,7 +282,7 @@ impl ClientId {
 
 /// This implementation provides a `to_string` method.
 impl std::fmt::Display for ClientId {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "{}", self.0)
     }
@@ -290,14 +291,14 @@ impl std::fmt::Display for ClientId {
 impl FromStr for ClientId {
     type Err = ValidationError;
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
 panic!("No") //         validate_client_identifier(s).map(|_| Self(s.to_string()))
     }
 }
 
 impl Default for ClientId {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn default() -> Self {
         Self::new(ClientType::Tendermint, 0).unwrap()
     }
@@ -312,7 +313,7 @@ impl Default for ClientId {
 /// client_id.map(|id| {assert_eq!(&id, "clientidtwo")});
 /// ```
 impl PartialEq<str> for ClientId {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn eq(&self, other: &str) -> bool {
         self.as_str().eq(other)
     }
@@ -326,7 +327,7 @@ pub struct ConnectionId(String);
 
 #[cfg(feature="prusti")]
 impl std::fmt::Debug for ConnectionId {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         panic!("No")
     }
@@ -334,7 +335,7 @@ impl std::fmt::Debug for ConnectionId {
 
 #[cfg(feature="prusti")]
 impl PartialOrd for ConnectionId {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         todo!()
     }
@@ -351,26 +352,26 @@ impl ConnectionId {
     /// let conn_id = ConnectionId::new(11);
     /// assert_eq!(&conn_id, "connection-11");
     /// ```
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     pub fn new(counter: u64) -> Self {
         let id = format!("{}-{}", Self::prefix(), counter);
         Self::from_str(id.as_str()).unwrap()
     }
 
     /// Returns the static prefix to be used across all connection identifiers.
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     pub fn prefix() -> &'static str {
         "connection"
     }
 
     /// Get this identifier as a borrowed `&str`
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn as_str(&self) -> &str {
         &self.0
     }
 
     /// Get this identifier as a borrowed byte slice
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     pub fn as_bytes(&self) -> &[u8] {
         self.0.as_bytes()
     }
@@ -378,7 +379,7 @@ impl ConnectionId {
 
 /// This implementation provides a `to_string` method.
 impl std::fmt::Display for ConnectionId {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "{}", self.0)
     }
@@ -387,14 +388,14 @@ impl std::fmt::Display for ConnectionId {
 impl FromStr for ConnectionId {
     type Err = ValidationError;
 
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
 panic!("No") //         validate_connection_identifier(s).map(|_| Self(s.to_string()))
     }
 }
 
 impl Default for ConnectionId {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn default() -> Self {
         Self::new(0)
     }
@@ -409,7 +410,7 @@ impl Default for ConnectionId {
 /// conn_id.map(|id| {assert_eq!(&id, "connectionId-0")});
 /// ```
 impl PartialEq<str> for ConnectionId {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn eq(&self, other: &str) -> bool {
         self.as_str().eq(other)
     }
@@ -420,7 +421,7 @@ impl PartialEq<str> for ConnectionId {
 
 #[cfg(feature="prusti")]
 impl Ord for ConnectionId {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         todo!()
     }
@@ -432,7 +433,7 @@ pub struct PortId(String);
 
 #[cfg(feature="prusti")]
 impl Ord for PortId {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         todo!()
     }
@@ -440,7 +441,7 @@ impl Ord for PortId {
 
 #[cfg(feature="prusti")]
 impl Serialize for PortId {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer {
@@ -450,7 +451,7 @@ impl Serialize for PortId {
 
 #[cfg(feature="prusti")]
 impl PartialOrd for PortId {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         todo!()
     }
@@ -460,7 +461,7 @@ impl PartialOrd for PortId {
 
 #[cfg(feature="prusti")]
 impl <'de> Deserialize<'de> for PortId {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de> {
@@ -470,7 +471,7 @@ impl <'de> Deserialize<'de> for PortId {
 
 #[cfg(feature="prusti")]
 impl std::fmt::Debug for PortId {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         panic!("No")
     }
@@ -478,13 +479,13 @@ impl std::fmt::Debug for PortId {
 
 impl PortId {
     /// Get this identifier as a borrowed `&str`
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn as_str(&self) -> &str {
         &self.0
     }
 
     /// Get this identifier as a borrowed byte slice
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     pub fn as_bytes(&self) -> &[u8] {
         self.0.as_bytes()
     }
@@ -492,7 +493,7 @@ impl PortId {
 
 /// This implementation provides a `to_string` method.
 impl std::fmt::Display for PortId {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "{}", self.0)
     }
@@ -501,14 +502,14 @@ impl std::fmt::Display for PortId {
 impl FromStr for PortId {
     type Err = ValidationError;
 
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
 panic!("No") //         validate_port_identifier(s).map(|_| Self(s.to_string()))
     }
 }
 
 impl Default for PortId {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn default() -> Self {
         "defaultPort".to_string().parse().unwrap()
     }
@@ -520,7 +521,7 @@ pub struct ChannelId(String);
 
 #[cfg(feature="prusti")]
 impl Serialize for ChannelId {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer {
@@ -531,7 +532,7 @@ impl Serialize for ChannelId {
 
 #[cfg(feature="prusti")]
 impl <'de> Deserialize<'de> for ChannelId {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de> {
@@ -541,7 +542,7 @@ impl <'de> Deserialize<'de> for ChannelId {
 
 #[cfg(feature="prusti")]
 impl std::fmt::Debug for ChannelId {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         panic!("No")
     }
@@ -549,7 +550,7 @@ impl std::fmt::Debug for ChannelId {
 
 #[cfg(feature="prusti")]
 impl Ord for ChannelId {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         todo!()
     }
@@ -557,7 +558,7 @@ impl Ord for ChannelId {
 
 #[cfg(feature="prusti")]
 impl PartialOrd for ChannelId {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         todo!()
     }
@@ -576,25 +577,25 @@ impl ChannelId {
     /// let chan_id = ChannelId::new(27);
     /// assert_eq!(&chan_id, "channel-27");
     /// ```
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     pub fn new(counter: u64) -> Self {
         let id = format!("{}-{}", Self::prefix(), counter);
         Self::from_str(id.as_str()).unwrap()
     }
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     pub fn prefix() -> &'static str {
         "channel"
     }
 
     /// Get this identifier as a borrowed `&str`
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     pub fn as_str(&self) -> &str {
 panic!("No") //         &self.0
     }
 
     /// Get this identifier as a borrowed byte slice
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn as_bytes(&self) -> &[u8] {
         self.0.as_bytes()
     }
@@ -602,7 +603,7 @@ panic!("No") //         &self.0
 
 /// This implementation provides a `to_string` method.
 impl std::fmt::Display for ChannelId {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "{}", self.0)
     }
@@ -611,14 +612,14 @@ impl std::fmt::Display for ChannelId {
 impl FromStr for ChannelId {
     type Err = ValidationError;
 
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
 panic!("No") //         validate_channel_identifier(s).map(|_| Self(s.to_string()))
     }
 }
 
 impl Default for ChannelId {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn default() -> Self {
 panic!("No") //         Self::new(0)
     }
@@ -626,7 +627,7 @@ panic!("No") //         Self::new(0)
 
 /// Equality check against string literal (satisfies &ChannelId == &str).
 impl PartialEq<str> for ChannelId {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn eq(&self, other: &str) -> bool {
         self.as_str().eq(other)
     }

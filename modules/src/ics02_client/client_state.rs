@@ -1,5 +1,6 @@
 use core::marker::{Send, Sync};
 use std::convert::{TryFrom, TryInto};
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use std::time::Duration;
 
@@ -38,7 +39,7 @@ pub trait ClientState: Clone + Send + Sync {
     fn is_frozen(&self) -> bool;
 
     /// Wrap into an `AnyClientState`
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn wrap_any(self) -> AnyClientState;
 }
 
@@ -54,7 +55,7 @@ pub enum AnyClientState {
 
 #[cfg(feature="prusti")]
 impl std::fmt::Debug for AnyClientState {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         panic!("No")
     }
@@ -112,7 +113,7 @@ impl Protobuf<Any> for AnyClientState {}
 impl TryFrom<Any> for AnyClientState {
     type Error = Error;
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn try_from(raw: Any) -> Result<Self, Self::Error> {
         match raw.type_url.as_str() {
             "" => Err(Error::empty_client_state_response()),
@@ -133,7 +134,7 @@ impl TryFrom<Any> for AnyClientState {
 }
 
 impl From<AnyClientState> for Any {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn from(value: AnyClientState) -> Self {
 unreachable!() //         match value {
 //             AnyClientState::Tendermint(value) => Any {
@@ -180,7 +181,7 @@ impl ClientState for AnyClientState {
         }
     }
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn wrap_any(self) -> AnyClientState {
         self
     }
@@ -196,7 +197,7 @@ pub struct IdentifiedAnyClientState {
 }
 
 impl IdentifiedAnyClientState {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     pub fn new(client_id: ClientId, client_state: AnyClientState) -> Self {
         IdentifiedAnyClientState {
             client_id,
@@ -210,7 +211,7 @@ impl Protobuf<IdentifiedClientState> for IdentifiedAnyClientState {}
 impl TryFrom<IdentifiedClientState> for IdentifiedAnyClientState {
     type Error = Error;
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn try_from(raw: IdentifiedClientState) -> Result<Self, Self::Error> {
 panic!("No") //         Ok(IdentifiedAnyClientState {
 //             client_id: raw.client_id.parse().map_err(|e: ValidationError| {

@@ -1,5 +1,6 @@
 //! Definition of domain type message `MsgUpdateAnyClient`.
 
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use std::convert::TryFrom;
 
@@ -52,7 +53,7 @@ impl Protobuf<RawMsgUpdateClient> for MsgUpdateAnyClient {}
 impl TryFrom<RawMsgUpdateClient> for MsgUpdateAnyClient {
     type Error = Error;
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn try_from(raw: RawMsgUpdateClient) -> Result<Self, Self::Error> {
         let raw_header = raw.header.ok_or_else(Error::missing_raw_header)?;
 

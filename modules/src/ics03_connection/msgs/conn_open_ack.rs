@@ -1,5 +1,6 @@
 use std::convert::{TryFrom, TryInto};
 
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use tendermint_proto::Protobuf;
 
@@ -128,7 +129,7 @@ impl TryFrom<RawMsgConnectionOpenAck> for MsgConnectionOpenAck {
 }
 
 impl From<MsgConnectionOpenAck> for RawMsgConnectionOpenAck {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn from(ics_msg: MsgConnectionOpenAck) -> Self {
 panic!("No") //         RawMsgConnectionOpenAck {
 //             connection_id: ics_msg.connection_id.as_str().to_string(),

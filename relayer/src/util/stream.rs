@@ -1,3 +1,6 @@
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
+
 use async_stream::stream;
 use futures::stream::Stream;
 
@@ -34,6 +37,7 @@ use futures::stream::Stream;
 ///     ]
 /// );
 /// ```
+#[cfg_attr(feature="prusti", trusted)]
 pub fn try_group_while<A, E, S, F>(
     input: S,
     group_these: F,

@@ -1,3 +1,4 @@
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use std::convert::TryFrom;
 use std::str::FromStr;
@@ -59,7 +60,7 @@ impl std::fmt::Display for PacketMsgType {
 pub struct Sequence(u64);
 
 impl std::fmt::Debug for Sequence {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         panic!("No")
     }
@@ -75,7 +76,7 @@ impl Default for Sequence {
 impl FromStr for Sequence {
     type Err = Error;
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
 panic!("No") //         Ok(Self::from(s.parse::<u64>().map_err(|e| {
 //             Error::invalid_string_as_sequence(s.to_string(), e)
@@ -88,7 +89,7 @@ impl Sequence {
         self.0 == 0
     }
 
-    #[requires(self.0 < u64::MAX)]
+    #[cfg_attr(feature="prusti", requires(self.0 < u64::MAX))]
     pub fn increment(&self) -> Sequence {
         Sequence(self.0 + 1)
     }
@@ -134,7 +135,7 @@ impl Packet {
 }
 
 impl std::fmt::Debug for Packet {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         todo!()
         // write!(
@@ -147,7 +148,7 @@ impl std::fmt::Debug for Packet {
 
 /// Custom debug output to omit the packet data
 impl std::fmt::Display for Packet {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         todo!()
         /*
@@ -184,7 +185,7 @@ impl Default for Packet {
 impl TryFrom<RawPacket> for Packet {
     type Error = Error;
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn try_from(raw_pkt: RawPacket) -> Result<Self, Self::Error> {
         if Sequence::from(raw_pkt.sequence).is_zero() {
             return Err(Error::zero_packet_sequence());
@@ -224,7 +225,7 @@ impl TryFrom<RawPacket> for Packet {
 }
 
 impl From<Packet> for RawPacket {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn from(packet: Packet) -> Self {
         RawPacket {
             sequence: packet.sequence.0,

@@ -1,3 +1,4 @@
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use std::time::Duration;
 

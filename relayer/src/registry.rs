@@ -1,5 +1,6 @@
 //! Registry for keeping track of [`ChainHandle`]s indexed by a `ChainId`.
 
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use std::{collections::HashMap, sync::Arc};
 
@@ -59,6 +60,7 @@ impl Registry {
     }
 
     /// Return an iterator overall the chain handles managed by the registry.
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn chains(&self) -> impl Iterator<Item = &Box<dyn ChainHandle>> {
         self.handles.values()
     }

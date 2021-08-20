@@ -1,5 +1,6 @@
 use std::{convert::Infallible, fmt::Display, str::FromStr};
 
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use serde::{Deserialize, Serialize};
 
@@ -9,19 +10,19 @@ use serde::{Deserialize, Serialize};
 pub struct Signer(String);
 
 impl Signer {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     pub fn new(s: impl ToString) -> Self {
 unreachable!() //         Self(s.to_string())
     }
 
-// #[trusted]
+// #[cfg_attr(feature="prusti", trusted)]
 //     pub fn as_str(&self) -> &str {
 // unreachable!() //         &self.0
 //     }
 }
 
 impl Display for Signer {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 unreachable!() //         write!(f, "{}", self.0)
     }

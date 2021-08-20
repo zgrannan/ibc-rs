@@ -1,5 +1,6 @@
 #![allow(clippy::borrowed_box)]
 
+
 use prost_types::Any;
 use serde::Serialize;
 use std::time::Duration;
@@ -31,6 +32,9 @@ pub mod error;
 pub use error::ChannelError;
 
 mod retry_strategy {
+    #[cfg(feature="prusti")]
+    use prusti_contracts::*;
+
     use std::time::Duration;
 
     use retry::delay::Fibonacci;
@@ -42,6 +46,7 @@ mod retry_strategy {
     const MAX_TOTAL_DELAY: Duration = Duration::from_secs(10 * 60); // 10 minutes
     const INITIAL_DELAY: Duration = Duration::from_secs(1); // 1 second
 
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn default() -> impl Iterator<Item = Duration> {
         clamp_total(Fibonacci::from(INITIAL_DELAY), MAX_DELAY, MAX_TOTAL_DELAY)
     }

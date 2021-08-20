@@ -3,6 +3,7 @@ use serde::Serialize;
 use crate::ics23_commitment::commitment::CommitmentProofBytes;
 use crate::Height;
 use flex_error::define_error;
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 
 define_error! {

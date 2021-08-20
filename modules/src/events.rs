@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use serde_derive::{Deserialize, Serialize};
 
@@ -76,7 +77,7 @@ pub enum IbcEventType {
 }
 
 impl IbcEventType {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn as_str(&self) -> &'static str {
 unreachable!() //         match *self {
 //             IbcEventType::CreateClient => "create_client",
@@ -123,7 +124,7 @@ pub enum IbcEvent {
 /// For use in debug messages
 pub struct PrettyEvents<'a>(pub &'a [IbcEvent]);
 impl<'a> fmt::Display for PrettyEvents<'a> {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
 unreachable!() //         writeln!(f, "events:")?;
 //         for v in self.0 {
@@ -135,14 +136,14 @@ unreachable!() //         writeln!(f, "events:")?;
 
 
 impl std::fmt::Debug for IbcEvent {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         unreachable!()
     }
 }
 
 impl fmt::Display for IbcEvent {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
 unreachable!() //         match self {
 //             IbcEvent::NewBlock(ev) => write!(f, "NewBlock({})", ev.height),
@@ -178,7 +179,7 @@ unreachable!() //         match self {
 }
 
 // This is tendermint specific
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
 pub fn from_tx_response_event(height: Height, event: &tendermint::abci::Event) -> Option<IbcEvent> {
 unreachable!() //     // Return the first hit we find
 //     if let Some(mut client_res) = ClientEvents::try_from_tx(event) {
@@ -196,7 +197,7 @@ unreachable!() //     // Return the first hit we find
 }
 
 impl IbcEvent {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     pub fn to_json(&self) -> String {
 unreachable!() //         format!("{:?}", self) // Fallback to debug printing
 //         // match serde_json::to_string(self) {
@@ -205,10 +206,10 @@ unreachable!() //         format!("{:?}", self) // Fallback to debug printing
 //         // }
     }
 
-    #[requires(!matches!(*self, IbcEvent::ChainError(_)))]
-    #[requires(!matches!(*self, IbcEvent::UpgradeClient(_)))]
-    #[requires(!matches!(*self, IbcEvent::Empty(_)))]
-    #[requires(!matches!(*self, IbcEvent::TimeoutOnClosePacket(_)))]
+    #[cfg_attr(feature="prusti", requires(!matches!(*self, IbcEvent::ChainError(_))))]
+    #[cfg_attr(feature="prusti", requires(!matches!(*self, IbcEvent::UpgradeClient(_))))]
+    #[cfg_attr(feature="prusti", requires(!matches!(*self, IbcEvent::Empty(_))))]
+    #[cfg_attr(feature="prusti", requires(!matches!(*self, IbcEvent::TimeoutOnClosePacket(_))))]
     pub fn height(&self) -> Height {
         match self {
             IbcEvent::NewBlock(bl) => bl.height(),
@@ -234,9 +235,9 @@ unreachable!() //         format!("{:?}", self) // Fallback to debug printing
         }
     }
 
-    #[requires(!matches!(*self, IbcEvent::ChainError(_)))]
-    #[requires(!matches!(*self, IbcEvent::Empty(_)))]
-    #[requires(!matches!(*self, IbcEvent::TimeoutOnClosePacket(_)))]
+    #[cfg_attr(feature="prusti", requires(!matches!(*self, IbcEvent::ChainError(_))))]
+    #[cfg_attr(feature="prusti", requires(!matches!(*self, IbcEvent::Empty(_))))]
+    #[cfg_attr(feature="prusti", requires(!matches!(*self, IbcEvent::TimeoutOnClosePacket(_))))]
     pub fn set_height(&mut self, height: Height) {
         match self {
             IbcEvent::NewBlock(ev) => ev.set_height(height),
@@ -263,7 +264,7 @@ unreachable!() //         format!("{:?}", self) // Fallback to debug printing
         }
     }
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     pub fn channel_attributes(&self) -> Option<&ChannelAttributes> {
 unreachable!() // panic!("No") //         match self {
 // //             IbcEvent::OpenInitChannel(ev) => Some(ev.attributes()),
@@ -273,7 +274,7 @@ unreachable!() // panic!("No") //         match self {
 // //             _ => None,
 // //         }
     }
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     pub fn connection_attributes(&self) -> Option<&ConnectionAttributes> {
 unreachable!() // panic!("No") //         match self {
 // //             IbcEvent::OpenInitConnection(ev) => Some(ev.attributes()),
@@ -309,7 +310,7 @@ impl RawObject {
     }
 }
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
 pub fn extract_events<S: ::std::hash::BuildHasher>(
     events: &HashMap<String, Vec<String>, S>,
     action_string: &str,
@@ -323,7 +324,7 @@ pub fn extract_events<S: ::std::hash::BuildHasher>(
     Err(Error::incorrect_event_type(action_string.to_string()))
 }
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
 pub fn extract_attribute(object: &RawObject, key: &str) -> Result<String, Error> {
     todo!()
     // let value = object
@@ -335,7 +336,7 @@ pub fn extract_attribute(object: &RawObject, key: &str) -> Result<String, Error>
     // Ok(value)
 }
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
 pub fn maybe_extract_attribute(object: &RawObject, key: &str) -> Option<String> {
    todo!()
    //  object.events.get(key).map(|tags| tags[object.idx].clone())
@@ -351,7 +352,7 @@ macro_rules! make_event {
         impl ::std::convert::TryFrom<$crate::events::RawObject> for $a {
             type Error = $crate::event::Error;
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
             fn try_from(result: $crate::events::RawObject) -> Result<Self, Self::Error> {
                 $crate::events::extract_events(&result.events, $b)?;
                 Ok($a {

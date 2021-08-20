@@ -1,5 +1,6 @@
 use std::convert::{TryFrom, TryInto};
 use std::str::FromStr;
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use std::time::Duration;
 use std::u64;
@@ -49,7 +50,7 @@ impl Protobuf<RawIdentifiedConnection> for IdentifiedConnectionEnd {}
 impl TryFrom<RawIdentifiedConnection> for IdentifiedConnectionEnd {
     type Error = Error;
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn try_from(value: RawIdentifiedConnection) -> Result<Self, Self::Error> {
         let raw_connection_end = RawConnectionEnd {
             client_id: value.client_id.to_string(),
@@ -67,7 +68,7 @@ impl TryFrom<RawIdentifiedConnection> for IdentifiedConnectionEnd {
 }
 
 impl From<IdentifiedConnectionEnd> for RawIdentifiedConnection {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn from(value: IdentifiedConnectionEnd) -> Self {
         RawIdentifiedConnection {
             id: value.connection_id.to_string(),
@@ -112,7 +113,7 @@ impl Protobuf<RawConnectionEnd> for ConnectionEnd {}
 
 impl TryFrom<RawConnectionEnd> for ConnectionEnd {
     type Error = Error;
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn try_from(value: RawConnectionEnd) -> Result<Self, Self::Error> {
         let state = value.state.try_into()?;
         if state == State::Uninitialized {
@@ -140,7 +141,7 @@ impl TryFrom<RawConnectionEnd> for ConnectionEnd {
 }
 
 impl From<ConnectionEnd> for RawConnectionEnd {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn from(value: ConnectionEnd) -> Self {
         RawConnectionEnd {
             client_id: value.client_id.to_string(),
@@ -253,7 +254,7 @@ pub struct Counterparty {
 }
 
 impl Default for Counterparty {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn default() -> Self {
         Counterparty {
             client_id: Default::default(),
@@ -270,7 +271,7 @@ impl Protobuf<RawCounterparty> for Counterparty {}
 impl TryFrom<RawCounterparty> for Counterparty {
     type Error = Error;
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn try_from(value: RawCounterparty) -> Result<Self, Self::Error> {
 panic!("No") //         let connection_id = Some(value.connection_id)
 //             .filter(|x| !x.is_empty())
@@ -290,7 +291,7 @@ panic!("No") //         let connection_id = Some(value.connection_id)
 }
 
 impl From<Counterparty> for RawCounterparty {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn from(value: Counterparty) -> Self {
 panic!("No") //         RawCounterparty {
 //             client_id: value.client_id.as_str().to_string(),
@@ -347,7 +348,7 @@ pub enum State {
 
 #[cfg(feature="prusti")]
 impl std::fmt::Debug for State {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         panic!("No")
     }

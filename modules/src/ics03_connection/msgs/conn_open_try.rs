@@ -4,6 +4,7 @@ use std::{
     time::Duration,
 };
 
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use tendermint_proto::Protobuf;
 
@@ -96,7 +97,7 @@ impl Protobuf<RawMsgConnectionOpenTry> for MsgConnectionOpenTry {}
 impl TryFrom<RawMsgConnectionOpenTry> for MsgConnectionOpenTry {
     type Error = Error;
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn try_from(msg: RawMsgConnectionOpenTry) -> Result<Self, Self::Error> {
 panic!("No") //         let previous_connection_id = Some(msg.previous_connection_id)
 //             .filter(|x| !x.is_empty())
@@ -159,7 +160,7 @@ panic!("No") //         let previous_connection_id = Some(msg.previous_connectio
 }
 
 impl From<MsgConnectionOpenTry> for RawMsgConnectionOpenTry {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn from(ics_msg: MsgConnectionOpenTry) -> Self {
 panic!("No") // panic!("No") //         RawMsgConnectionOpenTry {
 // //             client_id: ics_msg.client_id.as_str().to_string(),

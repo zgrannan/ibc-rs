@@ -1,4 +1,5 @@
 use flex_error::define_error;
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 
 define_error! {

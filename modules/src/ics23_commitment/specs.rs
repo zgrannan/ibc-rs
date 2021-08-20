@@ -1,5 +1,6 @@
 use ics23::ProofSpec;
 
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use ibc_proto::ics23::ProofSpec as ProtoProofSpec;
 
@@ -16,7 +17,7 @@ pub struct ProofSpecs {
 
 impl ProofSpecs {
     /// Returns the specification for Cosmos-SDK proofs
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     pub fn cosmos() -> Self {
 unreachable!() //         Self {
 //             specs: vec![
@@ -31,7 +32,7 @@ unreachable!() //         Self {
 /// to the corresponding proto type (vector of `ibc_proto::ProofSpec`).
 /// TODO: fix with <https://github.com/informalsystems/ibc-rs/issues/853>
 impl From<ProofSpecs> for Vec<ProtoProofSpec> {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn from(domain_specs: ProofSpecs) -> Self {
 unreachable!() //         let raw_specs = vec![];
 //         for ds in domain_specs.specs.iter() {

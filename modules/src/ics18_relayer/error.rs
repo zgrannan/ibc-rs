@@ -2,6 +2,7 @@ use crate::ics24_host::identifier::ClientId;
 use crate::ics26_routing::error::Error as RoutingError;
 use crate::Height;
 use flex_error::define_error;
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 
 define_error! {

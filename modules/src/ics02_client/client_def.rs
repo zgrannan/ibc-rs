@@ -1,5 +1,6 @@
 use ibc_proto::ibc::core::commitment::v1::MerkleProof;
 
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use crate::downcast;
 use crate::ics02_client::client_consensus::{AnyConsensusState, ConsensusState};
@@ -134,7 +135,7 @@ pub trait ClientDef: Clone {
 
     /// Verify a `proof` that a packet has not been received.
     #[allow(clippy::too_many_arguments)]
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn verify_packet_receipt_absence(
         &self,
         client_state: &Self::ClientState,
@@ -213,7 +214,7 @@ impl ClientDef for AnyClient {
         }
     }
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn verify_client_consensus_state(
         &self,
         client_state: &Self::ClientState,
@@ -262,7 +263,7 @@ impl ClientDef for AnyClient {
         }
     }
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn verify_connection_state(
         &self,
         client_state: &AnyClientState,
@@ -304,7 +305,7 @@ impl ClientDef for AnyClient {
         }
     }
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn verify_channel_state(
         &self,
         client_state: &AnyClientState,
@@ -349,7 +350,7 @@ impl ClientDef for AnyClient {
         }
     }
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn verify_client_full_state(
         &self,
         client_state: &Self::ClientState,
@@ -397,7 +398,7 @@ impl ClientDef for AnyClient {
             }
         }
     }
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn verify_packet_data(
         &self,
         client_state: &Self::ClientState,
@@ -446,7 +447,7 @@ impl ClientDef for AnyClient {
         }
     }
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn verify_packet_acknowledgement(
         &self,
         client_state: &Self::ClientState,
@@ -495,7 +496,7 @@ impl ClientDef for AnyClient {
         }
     }
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn verify_next_sequence_recv(
         &self,
         client_state: &Self::ClientState,
@@ -540,7 +541,7 @@ impl ClientDef for AnyClient {
             }
         }
     }
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn verify_packet_receipt_absence(
         &self,
         client_state: &Self::ClientState,
@@ -586,7 +587,7 @@ impl ClientDef for AnyClient {
         }
     }
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn verify_upgrade_and_update_state(
         &self,
         client_state: &Self::ClientState,

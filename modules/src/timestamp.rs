@@ -1,5 +1,6 @@
 use std::convert::TryInto;
 use std::fmt::Display;
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use std::num::{ParseIntError, TryFromIntError};
 use std::ops::{Add, Sub};
@@ -27,7 +28,7 @@ pub struct Timestamp {
 
 #[cfg(feature = "prusti")]
 impl std::fmt::Debug for Timestamp {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         panic!("No")
     }
@@ -79,7 +80,7 @@ impl Timestamp {
     /// from an `i64` value. In practice, `i64` still have sufficient precision for our purpose.
     /// However we have to handle the case of `u64` overflowing in `i64`, to prevent
     /// malicious packets from crashing the relayer.
-    #[ensures(nanoseconds <= i64::MAX as u64 ==> result.is_ok())]
+    #[cfg_attr(feature="prusti", ensures(nanoseconds <= i64::MAX as u64 ==> result.is_ok()))]
     pub fn from_nanoseconds(nanoseconds: u64) -> Result<Timestamp, TryFromIntError> {
         if nanoseconds == 0 {
             Ok(Timestamp { time: None })
@@ -121,8 +122,8 @@ impl Timestamp {
 
     /// Convert a `Timestamp` to `u64` value in nanoseconds. If no timestamp
     /// is set, the result is 0.
-    #[requires(self.time.is_some() ==> self.time.unwrap().timestamp_nanos() >= 0)]
-    #[trusted] // For some reason refactoring to `unwrap` causes a bug
+    #[cfg_attr(feature="prusti", requires(self.time.is_some() ==> self.time.unwrap().timestamp_nanos() >= 0))]
+    #[cfg_attr(feature="prusti", trusted)] // For some reason refactoring to `unwrap` causes a bug
     pub fn as_nanoseconds(&self) -> u64 {
       match self.time {
         Some(time) => time.timestamp_nanos() as u64,
@@ -152,7 +153,7 @@ impl Timestamp {
 }
 
 impl Display for Timestamp {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -188,7 +189,7 @@ impl Add<Duration> for Timestamp {
 impl Sub<Duration> for Timestamp {
     type Output = Result<Timestamp, TimestampOverflowError>;
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn sub(self, duration: Duration) -> Result<Timestamp, TimestampOverflowError> {
         match self.as_datetime() {
             Some(datetime) => {

@@ -1,3 +1,4 @@
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use std::collections::HashMap;
 use std::convert::Infallible;
@@ -65,14 +66,14 @@ impl From<MockClientState> for AnyClientState {
 impl TryFrom<RawMockClientState> for MockClientState {
     type Error = Error;
 
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn try_from(raw: RawMockClientState) -> Result<Self, Self::Error> {
         Ok(MockClientState(raw.header.unwrap().try_into()?))
     }
 }
 
 impl From<MockClientState> for RawMockClientState {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn from(value: MockClientState) -> Self {
         RawMockClientState {
             header: Some(ibc_proto::ibc::mock::Header {
@@ -84,7 +85,7 @@ impl From<MockClientState> for RawMockClientState {
 }
 
 impl ClientState for MockClientState {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn chain_id(&self) -> ChainId {
         todo!()
     }
@@ -149,7 +150,7 @@ impl TryFrom<RawMockConsensusState> for MockConsensusState {
 }
 
 impl From<MockConsensusState> for RawMockConsensusState {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn from(value: MockConsensusState) -> Self {
         RawMockConsensusState {
             header: Some(ibc_proto::ibc::mock::Header {

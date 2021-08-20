@@ -1,3 +1,4 @@
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use std::convert::{TryFrom, TryInto};
 
@@ -12,6 +13,7 @@ use crate::mock::header::MockHeader;
 use crate::Height;
 
 #[derive(Clone)]
+#[cfg_attr(not(feature="prusti"), derive(Debug))]
 #[cfg_attr(feature="prusti", derive(PrustiDebug))]
 pub struct Misbehaviour {
     pub client_id: ClientId,

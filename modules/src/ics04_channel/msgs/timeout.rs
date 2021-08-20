@@ -1,5 +1,6 @@
 use std::convert::{TryFrom, TryInto};
 
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use tendermint_proto::Protobuf;
 
@@ -44,12 +45,12 @@ impl Msg for MsgTimeout {
     type ValidationError = Error;
     type Raw = RawMsgTimeout;
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn route(&self) -> String {
 unreachable!() //         crate::keys::ROUTER_KEY.to_string()
     }
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn type_url(&self) -> String {
 unreachable!() //         TYPE_URL.to_string()
     }
@@ -60,7 +61,7 @@ impl Protobuf<RawMsgTimeout> for MsgTimeout {}
 impl TryFrom<RawMsgTimeout> for MsgTimeout {
     type Error = Error;
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn try_from(raw_msg: RawMsgTimeout) -> Result<Self, Self::Error> {
         let proofs = Proofs::new(
             raw_msg.proof_unreceived.into(),
@@ -89,7 +90,7 @@ impl TryFrom<RawMsgTimeout> for MsgTimeout {
 }
 
 impl From<MsgTimeout> for RawMsgTimeout {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn from(domain_msg: MsgTimeout) -> Self {
 unreachable!() //         RawMsgTimeout {
 //             packet: Some(domain_msg.packet.into()),

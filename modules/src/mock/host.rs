@@ -1,5 +1,6 @@
 //! Host chain types and methods, used by context mock.
 
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use std::convert::TryFrom;
 
@@ -37,7 +38,7 @@ pub enum HostBlock {
 
 impl HostBlock {
     /// Returns the height of a block.
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn height(&self) -> Height {
         match self {
             HostBlock::Mock(header) => header.height(),
@@ -62,7 +63,7 @@ impl HostBlock {
     }
 
     // #[requires(TestgenLightBlock::new_default(height).generate().is_ok())]
-    #[trusted] // Only for testing anyways
+    #[cfg_attr(feature="prusti", trusted)] // Only for testing anyways
     pub fn generate_tm_block(chain_id: ChainId, height: u64) -> TmLightBlock {
         let mut block = TestgenLightBlock::new_default(height).generate().unwrap();
         block.signed_header.header.chain_id = TMChainId::try_from(chain_id.to_string()).unwrap();

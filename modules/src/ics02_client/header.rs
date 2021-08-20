@@ -10,6 +10,7 @@ use crate::Height;
 use prost_types::Any;
 use serde_derive::{Deserialize, Serialize};
 use tendermint_proto::Protobuf;
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 
 pub const TENDERMINT_HEADER_TYPE_URL: &str = "/ibc.lightclients.tendermint.v1.Header";

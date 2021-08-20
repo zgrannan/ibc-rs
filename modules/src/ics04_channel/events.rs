@@ -1,4 +1,5 @@
 //! Types for the IBC events emitted from Tendermint Websocket by the channels module.
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use crate::events::{extract_attribute, maybe_extract_attribute, Error, IbcEvent, RawObject};
 use crate::ics02_client::height::Height;
@@ -164,7 +165,7 @@ pub struct Attributes {
 }
 
 #[cfg(feature="prusti")]
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
 fn extract_attributes(object: &RawObject, namespace: &str) -> Result<Attributes, Error> {
     unimplemented!()
 }
@@ -437,7 +438,7 @@ impl From<CloseInit> for IbcEvent {
 }
 
 impl std::fmt::Display for CloseInit {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         todo!()
         // write!(

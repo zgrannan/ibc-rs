@@ -3,6 +3,7 @@ use crate::ics02_client;
 use crate::ics03_connection;
 use crate::ics04_channel;
 use flex_error::{define_error, TraceError};
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 
 define_error! {

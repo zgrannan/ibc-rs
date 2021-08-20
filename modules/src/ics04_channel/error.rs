@@ -8,6 +8,7 @@ use crate::timestamp::Timestamp;
 use crate::Height;
 use flex_error::{define_error, TraceError};
 use tendermint_proto::Error as TendermintError;
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 
 define_error! {

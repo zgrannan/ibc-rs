@@ -4,6 +4,7 @@ use crate::ics24_host::identifier::{ClientId, ConnectionId};
 use crate::proofs::ProofError;
 use crate::Height;
 use flex_error::define_error;
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 
 define_error! {

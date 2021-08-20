@@ -1,4 +1,5 @@
-use prusti_contracts::trusted;
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
 
 use crate::application::ics20_fungible_token_transfer::context::Ics20Context;
 use crate::application::ics20_fungible_token_transfer::error::Error;
@@ -8,7 +9,7 @@ use crate::ics04_channel::handler::send_packet::send_packet;
 use crate::ics04_channel::packet::Packet;
 use crate::ics04_channel::packet::PacketResult;
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
 pub(crate) fn send_transfer<Ctx>(
     ctx: &Ctx,
     msg: MsgTransfer,

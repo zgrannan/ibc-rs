@@ -1,3 +1,6 @@
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
+
 use std::collections::HashMap;
 
 use crossbeam_channel::Sender;
@@ -89,6 +92,7 @@ impl WorkerMap {
     /// Returns all the [`Worker`] which are interested in new block events originating
     /// from the chain with the given [`ChainId`].
     /// See: [`Object::notify_new_block`]
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn to_notify<'a>(
         &'a self,
         src_chain_id: &'a ChainId,
@@ -202,6 +206,7 @@ impl WorkerMap {
     }
 
     /// Get an iterator over the worker map's objects.
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn objects(&self) -> impl Iterator<Item = (WorkerId, &Object)> {
         self.workers
             .iter()

@@ -1,3 +1,6 @@
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
+
 use std::time::Duration;
 
 pub use retry::{
@@ -27,6 +30,7 @@ impl ConstantGrowth {
         Self { delay, incr }
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn clamp(self, max_delay: Duration, max_retries: usize) -> impl Iterator<Item = Duration> {
         clamp(self, max_delay, max_retries)
     }
@@ -52,6 +56,7 @@ impl Iterator for ConstantGrowth {
     }
 }
 
+#[cfg_attr(feature="prusti", trusted)]
 pub fn clamp(
     strategy: impl Iterator<Item = Duration>,
     max_delay: Duration,
@@ -62,6 +67,7 @@ pub fn clamp(
         .map(move |delay| delay.min(max_delay))
 }
 
+#[cfg_attr(feature="prusti", trusted)]
 pub fn clamp_total(
     strategy: impl Iterator<Item = Duration>,
     max_delay: Duration,

@@ -1,5 +1,6 @@
 use std::cmp::Ordering;
 use std::convert::TryFrom;
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use std::num::ParseIntError;
 use std::str::FromStr;
@@ -41,7 +42,7 @@ impl Height {
         self.revision_height == 0
     }
 
-    #[requires(u64::MAX - self.revision_height >= delta)]
+    #[cfg_attr(feature="prusti", requires(u64::MAX - self.revision_height >= delta))]
     pub fn add(&self, delta: u64) -> Height {
         Height {
             revision_number: self.revision_number,
@@ -49,7 +50,7 @@ impl Height {
         }
     }
 
-    #[requires(self.revision_height < u64::MAX)]
+    #[cfg_attr(feature="prusti", requires(self.revision_height < u64::MAX))]
     pub fn increment(&self) -> Height {
         self.add(1)
     }
@@ -136,7 +137,7 @@ impl std::fmt::Debug for Height {
 
 /// Custom debug output to omit the packet data
 impl std::fmt::Display for Height {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
 panic!("No") //         write!(f, "{}-{}", self.revision_number, self.revision_height)
     }
@@ -157,7 +158,7 @@ define_error! {
 impl TryFrom<&str> for Height {
     type Error = HeightError;
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn try_from(value: &str) -> Result<Self, Self::Error> {
 panic!("No") // panic!("No") //         let split: Vec<&str> = value.split('-').collect();
 // //         Ok(Height {

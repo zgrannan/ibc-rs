@@ -1,5 +1,6 @@
 use std::convert::TryFrom;
 
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use tendermint_proto::Protobuf;
 
@@ -58,7 +59,7 @@ impl Protobuf<RawMsgChannelCloseInit> for MsgChannelCloseInit {}
 impl TryFrom<RawMsgChannelCloseInit> for MsgChannelCloseInit {
     type Error = Error;
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn try_from(raw_msg: RawMsgChannelCloseInit) -> Result<Self, Self::Error> {
         Ok(MsgChannelCloseInit {
             port_id: raw_msg.port_id.parse().map_err(Error::identifier)?,

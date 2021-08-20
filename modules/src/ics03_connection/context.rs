@@ -2,7 +2,8 @@
 //! the interface that any host chain must implement to be able to process any `ConnectionMsg`.
 //! See "ADR 003: IBC protocol implementation" for more details.
 
-use prusti_contracts::trusted;
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
 
 use crate::ics02_client::client_consensus::AnyConsensusState;
 use crate::ics02_client::client_state::AnyClientState;
@@ -66,7 +67,7 @@ pub trait ConnectionReader {
 /// A context supplying all the necessary write-only dependencies (i.e., storage writing facility)
 /// for processing any `ConnectionMsg`.
 pub trait ConnectionKeeper {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn store_connection_result(&mut self, result: ConnectionResult) -> Result<(), Error> {
 unreachable!() //         self.store_connection(result.connection_id.clone(), &result.connection_end)?;
 // 

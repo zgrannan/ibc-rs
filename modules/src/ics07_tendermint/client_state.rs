@@ -1,5 +1,6 @@
 use std::convert::{TryFrom, TryInto};
 use std::str::FromStr;
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use std::time::Duration;
 
@@ -164,7 +165,7 @@ impl crate::ics02_client::client_state::ClientState for ClientState {
 impl TryFrom<RawClientState> for ClientState {
     type Error = Error;
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn try_from(raw: RawClientState) -> Result<Self, Self::Error> {
         let trust_level = raw
             .trust_level

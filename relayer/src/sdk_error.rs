@@ -1,3 +1,4 @@
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use flex_error::define_error;
 use tendermint::abci::Code;

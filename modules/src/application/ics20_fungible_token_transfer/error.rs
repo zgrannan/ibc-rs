@@ -2,6 +2,7 @@ use crate::ics04_channel::error as channel_error;
 use crate::ics24_host::error::ValidationError;
 use crate::ics24_host::identifier::{ChannelId, PortId};
 use flex_error::define_error;
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 
 define_error! {

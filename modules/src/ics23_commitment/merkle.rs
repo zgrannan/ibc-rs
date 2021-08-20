@@ -1,3 +1,4 @@
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use tendermint::merkle::proof::Proof;
 
@@ -13,7 +14,7 @@ pub struct EmptyPrefixError;
 
 #[cfg(feature="prusti")]
 impl std::fmt::Debug for EmptyPrefixError {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         panic!("No")
     }

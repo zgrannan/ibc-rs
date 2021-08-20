@@ -1,6 +1,7 @@
 //! This module implements the processing logic for ICS4 (channel) messages.
 
-use prusti_contracts::trusted;
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
 
 use crate::handler::HandlerOutput;
 use crate::ics04_channel::channel::ChannelEnd;
@@ -47,7 +48,7 @@ pub struct ChannelResult {
 
 /// General entry point for processing any type of message related to the ICS4 channel open and
 /// channel close handshake protocols.
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
 pub fn channel_dispatch<Ctx>(
     ctx: &Ctx,
     msg: ChannelMsg,
@@ -66,7 +67,7 @@ unreachable!() //     match msg {
 }
 
 /// Dispatcher for processing any type of message related to the ICS4 packet protocols.
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
 pub fn packet_dispatch<Ctx>(ctx: &Ctx, msg: PacketMsg) -> Result<HandlerOutput<PacketResult>, Error>
 where
     Ctx: ChannelReader,

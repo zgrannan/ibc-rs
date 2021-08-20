@@ -1,3 +1,4 @@
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use core::marker::{Send, Sync};
 use std::convert::TryFrom;
@@ -78,7 +79,7 @@ impl AnyConsensusState {
 
 #[cfg(feature="prusti")]
 impl std::fmt::Debug for AnyConsensusState {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         panic!("No")
     }
@@ -177,7 +178,7 @@ impl ConsensusState for AnyConsensusState {
     //     todo!()
     // }
 
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn validate_basic(&self) -> Result<(), Infallible> {
         todo!()
     }

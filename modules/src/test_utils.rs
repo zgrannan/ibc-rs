@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use tendermint::{block, consensus, evidence, public_key::Algorithm};
 
@@ -25,14 +26,14 @@ pub fn default_consensus_params() -> consensus::Params {
     }
 }
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
 pub fn get_dummy_proof() -> Vec<u8> {
     "Y29uc2Vuc3VzU3RhdGUvaWJjb25lY2xpZW50LzIy"
         .as_bytes()
         .to_vec()
 }
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
 pub fn get_dummy_account_id() -> Signer {
     "0CDA3F47EF3C4906693B170EF650EB968C5F4B2C".parse().unwrap()
 }

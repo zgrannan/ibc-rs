@@ -1,5 +1,6 @@
 //! ICS3 verification functions, common across all four handlers of ICS3.
 
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use crate::ics02_client::client_consensus::ConsensusState;
 use crate::ics02_client::client_state::{AnyClientState, ClientState};
@@ -57,7 +58,7 @@ pub fn verify_proofs(
 /// Verifies the authenticity and semantic correctness of a commitment `proof`. The commitment
 /// claims to prove that an object of type connection exists on the source chain (i.e., the chain
 /// which created this proof). This object must match the state of `expected_conn`.
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
 pub fn verify_connection_proof(
     ctx: &dyn ConnectionReader,
     connection_end: &ConnectionEnd,
@@ -110,7 +111,7 @@ panic!("No") //     // Fetch the client state (IBC client on the local/host chai
 /// complete verification: that the client state the counterparty stores is valid (i.e., not frozen,
 /// at the same revision as the current chain, with matching chain identifiers, etc) and that the
 /// `proof` is correct.
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
 pub fn verify_client_proof(
     ctx: &dyn ConnectionReader,
     connection_end: &ConnectionEnd,
@@ -150,7 +151,7 @@ panic!("No") // panic!("No") // panic!("No") //     // Fetch the local client st
 // // //         })
 }
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
 pub fn verify_consensus_proof(
     ctx: &dyn ConnectionReader,
     connection_end: &ConnectionEnd,

@@ -1,5 +1,6 @@
 use crate::ics23_commitment::error::Error;
 use ibc_proto::ibc::core::commitment::v1::MerkleProof as RawMerkleProof;
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use serde::{Deserialize, Serialize};
 use std::{convert::TryFrom, fmt};
@@ -26,7 +27,7 @@ impl CommitmentRoot {
         }
     }
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     pub fn as_bytes(&self) -> &[u8] {
         &self.bytes
     }
@@ -79,7 +80,7 @@ impl From<CommitmentProofBytes> for Vec<u8> {
 // }
 
 impl From<RawMerkleProof> for CommitmentProofBytes {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn from(proof: RawMerkleProof) -> Self {
         let mut buf = Vec::new();
         prost::Message::encode(&proof, &mut buf).unwrap();
@@ -90,7 +91,7 @@ impl From<RawMerkleProof> for CommitmentProofBytes {
 impl TryFrom<CommitmentProofBytes> for RawMerkleProof {
     type Error = Error;
 
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn try_from(value: CommitmentProofBytes) -> Result<Self, Self::Error> {
         let value: Vec<u8> = value.into();
         let res: RawMerkleProof =
@@ -112,12 +113,12 @@ impl CommitmentPrefix {
         }
     }
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     pub fn is_empty(&self) -> bool {
         self.bytes.len() == 0
     }
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     pub fn as_bytes(&self) -> &[u8] {
         &self.bytes
     }

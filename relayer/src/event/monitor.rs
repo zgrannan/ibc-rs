@@ -1,4 +1,5 @@
 use std::{cmp::Ordering, sync::Arc};
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 
 use crossbeam_channel as channel;
@@ -440,6 +441,7 @@ impl EventMonitor {
 }
 
 /// Collect the IBC events from an RPC event
+#[cfg_attr(feature="prusti", trusted)]
 fn collect_events(
     chain_id: &ChainId,
     event: RpcEvent,
@@ -449,6 +451,7 @@ fn collect_events(
 }
 
 /// Convert a stream of RPC event into a stream of event batches
+#[cfg_attr(feature="prusti", trusted)]
 fn stream_batches(
     subscriptions: Box<SubscriptionStream>,
     chain_id: ChainId,
@@ -492,6 +495,7 @@ fn sort_events(events: &mut Vec<IbcEvent>) {
     })
 }
 
+#[cfg_attr(feature="prusti", trusted)]
 async fn run_driver(
     driver: WebSocketClientDriver,
     tx: mpsc::UnboundedSender<tendermint_rpc::Error>,

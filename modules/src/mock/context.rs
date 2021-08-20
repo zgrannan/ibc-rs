@@ -1,5 +1,6 @@
 //! Implementation of a global context mock. Used in testing handlers of all IBC modules.
 
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use std::cmp::min;
 use std::collections::HashMap;
@@ -38,6 +39,13 @@ use crate::mock::host::{HostBlock, HostType};
 use crate::signer::Signer;
 use crate::timestamp::Timestamp;
 use crate::Height;
+
+#[cfg(not(feature="prusti"))]
+macro_rules! body_invariant {
+    ($expression:expr) => {
+        assert!($expression);
+    }
+}
 
 /// A context implementing the dependencies necessary for testing any IBC module.
 #[derive(Clone)]
@@ -129,7 +137,7 @@ impl MockContext {
     /// `latest_height` determines the current height of the chain. This context
     /// has support to emulate two type of underlying chains: Mock or SyntheticTendermint.
     #[cfg(feature="prusti")]
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn new(
         host_id: ChainId,
         host_type: HostType,
@@ -319,10 +327,10 @@ impl MockContext {
         Self { timestamp, ..self }
     }
 
-    #[requires(self.max_history_size > 0)]
-    #[requires(target_height.revision_height <= u64::MAX)]
-    #[requires(target_height.revision_number == self.latest_height.revision_number)]
-    #[requires(target_height.revision_height >= self.latest_height.revision_height)]
+    #[cfg_attr(feature="prusti", requires(self.max_history_size > 0))]
+    #[cfg_attr(feature="prusti", requires(target_height.revision_height <= u64::MAX))]
+    #[cfg_attr(feature="prusti", requires(target_height.revision_number == self.latest_height.revision_number))]
+    #[cfg_attr(feature="prusti", requires(target_height.revision_height >= self.latest_height.revision_height))]
     pub fn with_height(self, target_height: Height) -> Self {
         if target_height.revision_number > self.latest_height.revision_number {
             unimplemented!()
@@ -375,9 +383,9 @@ impl MockContext {
     }
 
     /// Triggers the advancing of the host chain, by extending the history of blocks (or headers).
-    #[requires(self.latest_height.revision_height < u64::MAX)]
-    #[requires(self.max_history_size > 0)]
-    #[ensures(self.max_history_size == old(self.max_history_size))]
+    #[cfg_attr(feature="prusti", requires(self.latest_height.revision_height < u64::MAX))]
+    #[cfg_attr(feature="prusti", requires(self.max_history_size > 0))]
+    #[cfg_attr(feature="prusti", ensures(self.max_history_size == old(self.max_history_size)))]
     pub fn advance_host_chain_height(&mut self) {
         let new_block = HostBlock::generate_block(
             self.host_chain_id.clone(),
@@ -400,8 +408,8 @@ impl MockContext {
     /// A datagram passes from the relayer to the IBC module (on host chain).
     /// Alternative method to `Ics18Context::send` that does not exercise any serialization.
     /// Used in testing the Ics18 algorithms, hence this may return a Ics18Error.
-    #[requires(self.latest_height.revision_height < u64::MAX)]
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", requires(self.latest_height.revision_height < u64::MAX))]
     pub fn deliver(&mut self, msg: Ics26Envelope) -> Result<(), Ics18Error> {
         dispatch(self, msg).map_err(Ics18Error::transaction_failed)?; // How to verify this doesn't impact self.latest_height.revision_height?
         // Create a new block.
@@ -442,7 +450,7 @@ impl MockContext {
     }
 
     #[cfg(feature="prusti")]
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn consensus_states(&self, client_id: &ClientId) -> Vec<AnyConsensusStateWithHeight> { unimplemented!() }
 
     #[cfg(not(feature="prusti"))]
@@ -634,7 +642,7 @@ impl ChannelKeeper for MockContext {
         Ok(())
     }
 
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn increase_channel_counter(&mut self) {
         self.channel_ids_counter += 1;
     }
@@ -667,12 +675,12 @@ impl ConnectionReader for MockContext {
         ClientReader::client_state(self, client_id)
     }
 
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn host_current_height(&self) -> Height {
         self.latest_height
     }
 
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn host_oldest_height(&self) -> Height {
         // history must be non-empty, so `self.history[0]` is valid
         self.history[0].height()
@@ -722,7 +730,7 @@ impl ConnectionKeeper for MockContext {
         Ok(())
     }
 
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn increase_connection_counter(&mut self) {
         self.connection_ids_counter += 1;
     }
@@ -808,7 +816,7 @@ impl ClientKeeper for MockContext {
     }
 
     // #[requires(self.client_ids_counter < u64::MAX)]
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn increase_client_counter(&mut self) {
         self.client_ids_counter += 1
     }
@@ -829,7 +837,7 @@ impl Ics18Context for MockContext {
         block_ref.cloned().map(Into::into)
     }
 
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn send(&mut self, msgs: Vec<Any>) -> Result<Vec<IbcEvent>, Ics18Error> {
         // Forward call to Ics26 delivery method.
         let events = deliver(self, msgs).map_err(Ics18Error::transaction_failed)?;
@@ -838,7 +846,7 @@ impl Ics18Context for MockContext {
         Ok(events)
     }
 
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn signer(&self) -> Signer {
         "0CDA3F47EF3C4906693B170EF650EB968C5F4B2C".parse().unwrap()
     }

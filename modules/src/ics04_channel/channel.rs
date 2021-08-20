@@ -1,5 +1,6 @@
 use std::convert::{TryFrom, TryInto};
 use std::fmt;
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use std::str::FromStr;
 
@@ -40,7 +41,7 @@ impl Protobuf<RawIdentifiedChannel> for IdentifiedChannelEnd {}
 impl TryFrom<RawIdentifiedChannel> for IdentifiedChannelEnd {
     type Error = Error;
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn try_from(value: RawIdentifiedChannel) -> Result<Self, Self::Error> {
         let raw_channel_end = RawChannel {
             state: value.state,
@@ -59,7 +60,7 @@ impl TryFrom<RawIdentifiedChannel> for IdentifiedChannelEnd {
 }
 
 impl From<IdentifiedChannelEnd> for RawIdentifiedChannel {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn from(value: IdentifiedChannelEnd) -> Self {
 panic!("No") //         RawIdentifiedChannel {
 //             state: value.channel_end.state as i32,
@@ -106,7 +107,7 @@ impl Protobuf<RawChannel> for ChannelEnd {}
 impl TryFrom<RawChannel> for ChannelEnd {
     type Error = Error;
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn try_from(value: RawChannel) -> Result<Self, Self::Error> {
 panic!("No") //         let chan_state: State = State::from_i32(value.state)?;
 // 
@@ -143,7 +144,7 @@ panic!("No") //         let chan_state: State = State::from_i32(value.state)?;
 }
 
 impl From<ChannelEnd> for RawChannel {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn from(value: ChannelEnd) -> Self {
 panic!("No") //         RawChannel {
 //             state: value.state as i32,
@@ -207,12 +208,12 @@ impl ChannelEnd {
         &self.remote
     }
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     pub fn connection_hops(&self) -> &Vec<ConnectionId> {
         &self.connection_hops
     }
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     pub fn version(&self) -> String {
         self.version.parse().unwrap()
     }
@@ -241,12 +242,12 @@ impl ChannelEnd {
     }
 
     #[allow(clippy::ptr_arg)]
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     pub fn connection_hops_matches(&self, other: &Vec<ConnectionId>) -> bool {
         self.connection_hops.eq(other)
     }
 
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn counterparty_matches(&self, other: &Counterparty) -> bool {
         self.counterparty().eq(other)
     }
@@ -288,7 +289,7 @@ impl Counterparty {
         self.channel_id.as_ref()
     }
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     pub fn validate_basic(&self) -> Result<(), Error> {
         Ok(())
     }
@@ -299,7 +300,7 @@ impl Protobuf<RawCounterparty> for Counterparty {}
 impl TryFrom<RawCounterparty> for Counterparty {
     type Error = Error;
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn try_from(value: RawCounterparty) -> Result<Self, Self::Error> {
 panic!("No") //         let channel_id = Some(value.channel_id)
 //             .filter(|x| !x.is_empty())
@@ -314,7 +315,7 @@ panic!("No") //         let channel_id = Some(value.channel_id)
 }
 
 impl From<Counterparty> for RawCounterparty {
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
     fn from(value: Counterparty) -> Self {
 panic!("No") //         RawCounterparty {
 //             port_id: value.port_id.as_str().to_string(),
@@ -392,7 +393,7 @@ pub enum State {
 
 #[cfg(feature="prusti")]
 impl std::fmt::Debug for State {
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted)]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         panic!("No")
     }

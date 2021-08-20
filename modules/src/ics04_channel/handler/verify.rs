@@ -1,5 +1,6 @@
 use crate::ics02_client::client_state::ClientState;
 use crate::ics02_client::{client_def::AnyClient, client_def::ClientDef};
+#[cfg(feature="prusti")]
 use prusti_contracts::*;
 use crate::ics03_connection::connection::ConnectionEnd;
 use crate::ics04_channel::channel::ChannelEnd;
@@ -10,7 +11,7 @@ use crate::ics24_host::identifier::ClientId;
 use crate::proofs::Proofs;
 
 /// Entry point for verifying all proofs bundled in any ICS4 message for channel protocols.
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
 pub fn verify_channel_proofs(
     ctx: &dyn ChannelReader,
     channel_end: &ChannelEnd,
@@ -58,7 +59,7 @@ panic!("No") //     // This is the client which will perform proof verification.
 }
 
 /// Entry point for verifying all proofs bundled in a ICS4 packet recv. message.
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
 pub fn verify_packet_recv_proofs(
     ctx: &dyn ChannelReader,
     packet: &Packet,
@@ -109,7 +110,7 @@ panic!("No") // panic!("No") //     let client_state = ctx
 }
 
 /// Entry point for verifying all proofs bundled in an ICS4 packet ack message.
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
 pub fn verify_packet_acknowledgement_proofs(
     ctx: &dyn ChannelReader,
     packet: &Packet,
@@ -145,7 +146,7 @@ panic!("No") // panic!("No") //     let client_state = ctx
 }
 
 /// Entry point for verifying all timeout proofs.
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
 pub fn verify_next_sequence_recv(
     ctx: &dyn ChannelReader,
     client_id: ClientId,
@@ -179,7 +180,7 @@ panic!("No") // panic!("No") //     let client_state = ctx
 // //     Ok(())
 }
 
-#[trusted]
+#[cfg_attr(feature="prusti", trusted)]
 pub fn verify_packet_receipt_absence(
     ctx: &dyn ChannelReader,
     client_id: ClientId,
