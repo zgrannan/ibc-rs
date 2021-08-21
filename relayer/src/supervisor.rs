@@ -436,9 +436,14 @@ impl Supervisor {
             SupervisorCmd::DumpState(reply_to) => self.dump_state(reply_to),
         }
     }
+    #[cfg(feature="prusti")]
+    fn dump_state(&self, reply_to: Sender<SupervisorState>) -> CmdEffect {
+        CmdEffect::Nothing
+    }
 
     /// Dump the state of the supervisor into a [`SupervisorState`] value,
     /// and send it back through the given channel.
+    #[cfg(not(feature="prusti"))]
     fn dump_state(&self, reply_to: Sender<SupervisorState>) -> CmdEffect {
         let chains = self.registry.chains().map(|c| c.id()).collect_vec();
         let state = SupervisorState::new(chains, self.workers.objects());
@@ -633,13 +638,14 @@ impl Supervisor {
         }
 
         // If there is a NewBlock event, forward the event to any workers affected by it.
-        if let Some(IbcEvent::NewBlock(new_block)) = collected.new_block {
-            for worker in self.workers.to_notify(&src_chain.id()) {
-                worker
-                    .send_new_block(height, new_block)
-                    .map_err(Error::worker)?
-            }
-        }
+        // PRUSTITODO: Put this back in
+        // if let Some(IbcEvent::NewBlock(new_block)) = collected.new_block {
+        //     for worker in self.workers.to_notify(&src_chain.id()) {
+        //         worker
+        //             .send_new_block(height, new_block)
+        //             .map_err(Error::worker)?
+        //     }
+        // }
 
         Ok(())
     }

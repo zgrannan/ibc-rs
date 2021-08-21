@@ -60,7 +60,7 @@ impl Registry {
     }
 
     /// Return an iterator overall the chain handles managed by the registry.
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg(not(feature="prusti"))]
     pub fn chains(&self) -> impl Iterator<Item = &Box<dyn ChainHandle>> {
         self.handles.values()
     }

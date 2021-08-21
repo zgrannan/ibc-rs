@@ -37,7 +37,7 @@ use futures::stream::Stream;
 ///     ]
 /// );
 /// ```
-#[cfg_attr(feature="prusti", trusted)]
+#[cfg(not(feature="prusti"))]
 pub fn try_group_while<A, E, S, F>(
     input: S,
     group_these: F,

@@ -38,6 +38,12 @@ impl ConnectionWorker {
     }
 
     /// Run the event loop for events associated with a [`Connection`].
+    #[cfg(feature="prusti")]
+    pub(crate) fn run(self) -> Result<(), RunError> {
+        Ok(())
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub(crate) fn run(self) -> Result<(), RunError> {
         let a_chain = self.chains.a.clone();
         let b_chain = self.chains.b.clone();

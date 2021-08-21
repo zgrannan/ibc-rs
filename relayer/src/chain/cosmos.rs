@@ -106,7 +106,7 @@ mod retry_strategy {
     #[cfg(feature="prusti")]
     use prusti_contracts::*;
 
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg(not(feature="prusti"))]
     pub fn wait_for_block_commits(max_total_wait: Duration) -> impl Iterator<Item = Duration> {
         let backoff_millis = 300; // The periodic backoff
         let count: usize = (max_total_wait.as_millis() / backoff_millis as u128) as usize;
@@ -323,6 +323,13 @@ impl CosmosSdkChain {
         self.rt.block_on(f)
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn send_tx(&mut self, proto_msgs: Vec<Any>) -> Result<Response, Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn send_tx(&mut self, proto_msgs: Vec<Any>) -> Result<Response, Error> {
         crate::time!("send_tx");
         let account_seq = self.account_sequence()?;
@@ -446,6 +453,12 @@ impl CosmosSdkChain {
         self.config.max_tx_size.into()
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn query(&self, data: Path, height: ICSHeight, prove: bool) -> Result<QueryResponse, Error> {
+        todo!()
+    }
+    #[cfg(not(feature="prusti"))]
     fn query(&self, data: Path, height: ICSHeight, prove: bool) -> Result<QueryResponse, Error> {
         crate::time!("query");
 
@@ -465,7 +478,18 @@ impl CosmosSdkChain {
         Ok(response)
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn query_client_upgrade_proof(
+        &self,
+        data: ClientUpgradePath,
+        height: Height,
+    ) -> Result<(MerkleProof, ICSHeight), Error> {
+        todo!()
+    }
+
     // Perform an ABCI query against the client upgrade sub-store to fetch a proof.
+    #[cfg(not(feature="prusti"))]
     fn query_client_upgrade_proof(
         &self,
         data: ClientUpgradePath,
@@ -530,6 +554,13 @@ impl CosmosSdkChain {
         Ok((key, key_bytes))
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn account(&mut self) -> Result<&mut BaseAccount, Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn account(&mut self) -> Result<&mut BaseAccount, Error> {
         if self.account == None {
             let account = self.block_on(query_account(self, self.key()?.account))?;
@@ -629,6 +660,16 @@ impl CosmosSdkChain {
     /// Given a vector of `TxSyncResult` elements,
     /// each including a transaction response hash for one or more messages, periodically queries the chain
     /// with the transaction hashes to get the list of IbcEvents included in those transactions.
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn wait_for_block_commits(
+        &self,
+        mut tx_sync_results: Vec<TxSyncResult>,
+    ) -> Result<Vec<TxSyncResult>, Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn wait_for_block_commits(
         &self,
         mut tx_sync_results: Vec<TxSyncResult>,
@@ -1889,6 +1930,7 @@ fn all_ibc_events_from_tx_search_response(chain_id: &ChainId, response: ResultTx
 }
 
 /// Perform a generic `abci_query`, and return the corresponding deserialized response data.
+#[cfg(not(feature="prusti"))]
 async fn abci_query(
     chain: &CosmosSdkChain,
     path: TendermintABCIPath,
@@ -1934,12 +1976,6 @@ async fn abci_query(
     Ok(response)
 }
 
-#[cfg(feature="prusti")]
-#[trusted]
-async fn broadcast_tx_sync(chain: &CosmosSdkChain, data: Vec<u8>) -> Result<Response, Error> {
-    todo!();
-}
-
 /// Perform a `broadcast_tx_sync`, and return the corresponding deserialized response data.
 #[cfg(not(feature="prusti"))]
 async fn broadcast_tx_sync(chain: &CosmosSdkChain, data: Vec<u8>) -> Result<Response, Error> {
@@ -1953,7 +1989,7 @@ async fn broadcast_tx_sync(chain: &CosmosSdkChain, data: Vec<u8>) -> Result<Resp
 }
 
 /// Uses the GRPC client to retrieve the account sequence
-#[cfg_attr(feature="prusti", trusted)]
+#[cfg(not(feature="prusti"))]
 async fn query_account(chain: &CosmosSdkChain, address: String) -> Result<BaseAccount, Error> {
     let mut client = ibc_proto::cosmos::auth::v1beta1::query_client::QueryClient::connect(
         chain.grpc_addr.clone(),

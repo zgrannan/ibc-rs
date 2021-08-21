@@ -39,6 +39,7 @@ mod retry_strategy {
 
     use retry::delay::Fibonacci;
 
+    #[cfg(not(feature="prusti"))]
     use crate::util::retry::clamp_total;
 
     // Default parameters for the retrying mechanism
@@ -46,7 +47,7 @@ mod retry_strategy {
     const MAX_TOTAL_DELAY: Duration = Duration::from_secs(10 * 60); // 10 minutes
     const INITIAL_DELAY: Duration = Duration::from_secs(1); // 1 second
 
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg(not(feature="prusti"))]
     pub fn default() -> impl Iterator<Item = Duration> {
         clamp_total(Fibonacci::from(INITIAL_DELAY), MAX_DELAY, MAX_TOTAL_DELAY)
     }
@@ -370,6 +371,12 @@ impl Channel {
     }
 
     // Check that the channel was created on a_chain
+    #[cfg(feature="prusti")]
+    fn do_chan_open_init_and_send_with_retry(&mut self) -> Result<(), ChannelError> {
+        Ok(())
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn do_chan_open_init_and_send_with_retry(&mut self) -> Result<(), ChannelError> {
         retry_with_index(retry_strategy::default(), |_| {
             self.do_chan_open_init_and_send()
@@ -399,6 +406,12 @@ impl Channel {
         Ok(())
     }
 
+    #[cfg(feature="prusti")]
+    fn do_chan_open_try_and_send_with_retry(&mut self) -> Result<(), ChannelError> {
+        Ok(())
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn do_chan_open_try_and_send_with_retry(&mut self) -> Result<(), ChannelError> {
         retry_with_index(retry_strategy::default(), |_| {
             self.do_chan_open_try_and_send()
@@ -560,6 +573,11 @@ impl Channel {
     ///   (i.e., `OpenInit` and `OpenTry` have executed previously for this channel).
     ///
     /// Post-condition: the channel state is `Open` on both ends if successful.
+    #[cfg(feature="prusti")]
+    fn do_chan_open_finalize_with_retry(&self) -> Result<(), ChannelError> {
+      Ok(())
+    }
+    #[cfg(not(feature="prusti"))]
     fn do_chan_open_finalize_with_retry(&self) -> Result<(), ChannelError> {
         retry_with_index(retry_strategy::default(), |_| self.do_chan_open_finalize()).map_err(
             |err| {

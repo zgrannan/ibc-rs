@@ -23,12 +23,18 @@ use tendermint_rpc::{
 
 use ibc::{events::IbcEvent, ics02_client::height::Height, ics24_host::identifier::ChainId};
 
+#[cfg(feature="prusti")]
+use crate::util::{
+    retry::{retry_count, retry_with_index, RetryResult}
+};
+#[cfg(not(feature="prusti"))]
 use crate::util::{
     retry::{retry_count, retry_with_index, RetryResult},
     stream::try_group_while,
 };
 
 mod retry_strategy {
+    #[cfg(not(feature="prusti"))]
     use crate::util::retry::clamp_total;
     use retry::delay::Fibonacci;
     use std::time::Duration;
@@ -38,6 +44,7 @@ mod retry_strategy {
     const MAX_TOTAL_DELAY: Duration = Duration::from_secs(10 * 60); // 10 minutes
     const INITIAL_DELAY: Duration = Duration::from_secs(1); // 1 second
 
+    #[cfg(not(feature="prusti"))]
     pub fn default() -> impl Iterator<Item = Duration> {
         clamp_total(Fibonacci::from(INITIAL_DELAY), MAX_DELAY, MAX_TOTAL_DELAY)
     }
@@ -156,6 +163,17 @@ pub struct EventMonitor {
 
 impl EventMonitor {
     /// Create an event monitor, and connect to a node
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn new(
+        chain_id: ChainId,
+        node_addr: tendermint_rpc::Url,
+        rt: Arc<TokioRuntime>,
+    ) -> Result<(Self, EventReceiver, TxMonitorCmd)> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn new(
         chain_id: ChainId,
         node_addr: tendermint_rpc::Url,
@@ -230,6 +248,12 @@ impl EventMonitor {
         Ok(())
     }
 
+    #[cfg(feature="prusti")]
+    fn try_reconnect(&mut self) -> Result<()> {
+        Ok(())
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn try_reconnect(&mut self) -> Result<()> {
         trace!(
             "[{}] trying to reconnect to WebSocket endpoint {}",
@@ -283,6 +307,10 @@ impl EventMonitor {
     ///
     /// See the [`retry`](https://docs.rs/retry) crate and the
     /// [`crate::util::retry`] module for more information.
+    #[cfg(feature="prusti")]
+    fn reconnect(&mut self) {}
+
+    #[cfg(not(feature="prusti"))]
     fn reconnect(&mut self) {
         let result = retry_with_index(retry_strategy::default(), |_| {
             // Try to reconnect
@@ -342,6 +370,13 @@ impl EventMonitor {
         );
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn run_loop(&mut self) -> Next {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn run_loop(&mut self) -> Next {
         // Take ownership of the subscriptions
         let subscriptions =
@@ -441,7 +476,7 @@ impl EventMonitor {
 }
 
 /// Collect the IBC events from an RPC event
-#[cfg_attr(feature="prusti", trusted)]
+#[cfg(not(feature="prusti"))]
 fn collect_events(
     chain_id: &ChainId,
     event: RpcEvent,
@@ -451,7 +486,7 @@ fn collect_events(
 }
 
 /// Convert a stream of RPC event into a stream of event batches
-#[cfg_attr(feature="prusti", trusted)]
+#[cfg(not(feature="prusti"))]
 fn stream_batches(
     subscriptions: Box<SubscriptionStream>,
     chain_id: ChainId,
@@ -495,7 +530,7 @@ fn sort_events(events: &mut Vec<IbcEvent>) {
     })
 }
 
-#[cfg_attr(feature="prusti", trusted)]
+#[cfg(not(feature="prusti"))]
 async fn run_driver(
     driver: WebSocketClientDriver,
     tx: mpsc::UnboundedSender<tendermint_rpc::Error>,

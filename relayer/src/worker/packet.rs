@@ -48,6 +48,12 @@ impl PacketWorker {
     }
 
     /// Run the event loop for events associated with a [`Packet`].
+    #[cfg(feature="prusti")]
+    pub fn run(self) -> Result<(), RunError> {
+        Ok(())
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn run(self) -> Result<(), RunError> {
         let mut link = Link::new_from_opts(
             self.chains.a.clone(),
