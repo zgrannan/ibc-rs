@@ -1,3 +1,5 @@
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
 use std::{collections::BTreeMap, fmt};
 
 use ibc::ics24_host::identifier::ChainId;
@@ -29,6 +31,16 @@ pub struct SupervisorState {
 }
 
 impl SupervisorState {
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn new<'a>(
+        mut chains: Vec<ChainId>,
+        workers: impl Iterator<Item = (WorkerId, &'a Object)>,
+    ) -> Self {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn new<'a>(
         mut chains: Vec<ChainId>,
         workers: impl Iterator<Item = (WorkerId, &'a Object)>,
@@ -45,11 +57,14 @@ impl SupervisorState {
         Self { chains, workers }
     }
 
+    #[cfg(not(feature="prusti"))]
     pub fn print_info(&self) {
         self.to_string()
             .split('\n')
             .for_each(|line| info!("{}", line));
     }
+    #[cfg(feature="prusti")]
+    pub fn print_info(&self) { }
 }
 
 impl fmt::Display for SupervisorState {

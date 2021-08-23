@@ -1,3 +1,5 @@
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
 use std::fmt;
 
 use crossbeam_channel::Sender;
@@ -150,6 +152,13 @@ impl Worker {
         }
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn chains(&self) -> &ChainHandlePair {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn chains(&self) -> &ChainHandlePair {
         match self {
             Self::Client(_, w) => w.chains(),
@@ -159,6 +168,13 @@ impl Worker {
         }
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn object(&self) -> Object {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn object(&self) -> Object {
         match self {
             Worker::Client(_, w) => w.object().clone().into(),

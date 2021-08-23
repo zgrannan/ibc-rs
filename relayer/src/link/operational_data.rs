@@ -1,3 +1,6 @@
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
+
 use std::fmt;
 use std::time::Instant;
 
@@ -60,6 +63,7 @@ impl OperationalData {
         }
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn events(&self) -> Vec<IbcEvent> {
         self.batch.iter().map(|gm| gm.event.clone()).collect()
     }

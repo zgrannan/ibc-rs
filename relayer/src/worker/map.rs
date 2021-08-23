@@ -181,6 +181,13 @@ impl WorkerMap {
     }
 
     /// List the [`WorkerHandle`]s associated with the given chain.
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn workers_for_chain(&self, chain_id: &ChainId) -> Vec<&WorkerHandle> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn workers_for_chain(&self, chain_id: &ChainId) -> Vec<&WorkerHandle> {
         self.workers
             .iter()

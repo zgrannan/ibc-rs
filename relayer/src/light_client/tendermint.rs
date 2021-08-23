@@ -1,3 +1,6 @@
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
+
 use std::convert::TryFrom;
 
 use itertools::Itertools;
@@ -98,6 +101,7 @@ impl super::LightClient<CosmosSdkChain> for LightClient {
     ///
     /// ## TODO
     /// - [ ] Return intermediate headers as well
+    #[cfg_attr(feature="prusti", trusted)]
     fn check_misbehaviour(
         &mut self,
         update: UpdateClient,
@@ -164,6 +168,7 @@ impl super::LightClient<CosmosSdkChain> for LightClient {
 }
 
 impl LightClient {
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn from_config(config: &ChainConfig, peer_id: PeerId) -> Result<Self, Error> {
         let rpc_client = rpc::HttpClient::new(config.rpc_addr.clone())
             .map_err(|e| Error::rpc(config.rpc_addr.clone(), e))?;
@@ -177,6 +182,7 @@ impl LightClient {
         })
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     fn prepare_client(&self, client_state: &AnyClientState) -> Result<TmLightClient, Error> {
         let clock = components::clock::SystemClock;
         let hasher = operations::hasher::ProdHasher;
@@ -217,6 +223,7 @@ impl LightClient {
         Ok(LightClientState::new(store))
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     fn fetch_light_block(&self, height: AtHeight) -> Result<LightBlock, Error> {
         use tendermint_light_client::components::io::Io;
 

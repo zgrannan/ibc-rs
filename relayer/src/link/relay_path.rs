@@ -1,3 +1,6 @@
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
+
 use std::collections::HashMap;
 use std::time::Instant;
 use std::{fmt, thread};
@@ -66,79 +69,95 @@ impl RelayPath {
     }
 
     #[allow(clippy::borrowed_box)]
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn src_chain(&self) -> &Box<dyn ChainHandle> {
         self.channel.src_chain()
     }
 
     #[allow(clippy::borrowed_box)]
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn dst_chain(&self) -> &Box<dyn ChainHandle> {
         self.channel.dst_chain()
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn src_client_id(&self) -> &ClientId {
         self.channel.src_client_id()
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn dst_client_id(&self) -> &ClientId {
         self.channel.dst_client_id()
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn src_connection_id(&self) -> &ConnectionId {
         self.channel.src_connection_id()
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn dst_connection_id(&self) -> &ConnectionId {
         self.channel.dst_connection_id()
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn src_port_id(&self) -> &PortId {
         self.channel.src_port_id()
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn dst_port_id(&self) -> &PortId {
         self.channel.dst_port_id()
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn src_channel_id(&self) -> Result<&ChannelId, LinkError> {
         self.channel
             .src_channel_id()
             .ok_or_else(|| LinkError::missing_channel_id(self.src_chain().id()))
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn dst_channel_id(&self) -> Result<&ChannelId, LinkError> {
         self.channel
             .dst_channel_id()
             .ok_or_else(|| LinkError::missing_channel_id(self.dst_chain().id()))
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn channel(&self) -> &Channel {
         &self.channel
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     fn src_channel(&self, height: Height) -> Result<ChannelEnd, LinkError> {
         self.src_chain()
             .query_channel(self.src_port_id(), self.src_channel_id()?, height)
             .map_err(|e| LinkError::channel(ChannelError::query(self.src_chain().id(), e)))
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     fn dst_channel(&self, height: Height) -> Result<ChannelEnd, LinkError> {
         self.dst_chain()
             .query_channel(self.dst_port_id(), self.dst_channel_id()?, height)
             .map_err(|e| LinkError::channel(ChannelError::query(self.src_chain().id(), e)))
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     fn src_signer(&self) -> Result<Signer, LinkError> {
         self.src_chain()
             .get_signer()
             .map_err(|e| LinkError::signer(self.src_chain().id(), e))
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     fn dst_signer(&self) -> Result<Signer, LinkError> {
         self.dst_chain()
             .get_signer()
             .map_err(|e| LinkError::signer(self.dst_chain().id(), e))
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn dst_latest_height(&self) -> Result<Height, LinkError> {
         self.dst_chain()
             .query_latest_height()
@@ -273,6 +292,7 @@ impl RelayPath {
     }
 
     /// Generate & schedule operational data from the input `batch` of IBC events.
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn update_schedule(&mut self, batch: EventBatch) -> Result<(), LinkError> {
         // Collect relevant events from the incoming batch & adjust their height.
         let events = self.filter_events(&batch.events);

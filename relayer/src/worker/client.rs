@@ -41,6 +41,12 @@ impl ClientWorker {
     }
 
     /// Run the event loop for events associated with a [`Client`].
+    #[cfg(feature="prusti")]
+    pub fn run(self) -> Result<(), RunError> {
+        Ok(())
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn run(self) -> Result<(), RunError> {
         let mut client = ForeignClient::restore(
             self.client.dst_client_id.clone(),

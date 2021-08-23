@@ -31,6 +31,9 @@ use crate::util::retry::RetryResult;
 pub mod error;
 pub use error::ChannelError;
 
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
+
 mod retry_strategy {
     #[cfg(feature="prusti")]
     use prusti_contracts::*;
@@ -131,6 +134,7 @@ pub struct Channel {
 impl Channel {
     /// Creates a new channel on top of the existing connection. If the channel is not already
     /// set-up on both sides of the connection, this functions also fulfils the channel handshake.
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn new(
         connection: Connection,
         ordering: Order,
@@ -671,6 +675,7 @@ impl Channel {
     /// for the destination port's version.
     /// Note: This query is currently not available and it is hardcoded in the `module_version()`
     /// to be `ics20-1` for `transfer` port.
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn dst_version(&self) -> Result<String, ChannelError> {
         Ok(self.version.clone().unwrap_or(
             self.dst_chain()
@@ -681,6 +686,7 @@ impl Channel {
 
     /// Returns the channel version if already set, otherwise it queries the source chain
     /// for the source port's version.
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn src_version(&self) -> Result<String, ChannelError> {
         Ok(self.version.clone().unwrap_or(
             self.src_chain()
@@ -689,6 +695,7 @@ impl Channel {
         ))
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn build_chan_open_init(&self) -> Result<Vec<Any>, ChannelError> {
         let signer = self
             .dst_chain()
@@ -715,6 +722,7 @@ impl Channel {
         Ok(vec![new_msg.to_any()])
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn build_chan_open_init_and_send(&self) -> Result<IbcEvent, ChannelError> {
         let dst_msgs = self.build_chan_open_init()?;
 
@@ -872,6 +880,7 @@ impl Channel {
         Ok(msgs)
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn build_chan_open_try_and_send(&self) -> Result<IbcEvent, ChannelError> {
         let dst_msgs = self.build_chan_open_try()?;
 
@@ -1113,6 +1122,7 @@ impl Channel {
         Ok(vec![new_msg.to_any()])
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn build_chan_close_init_and_send(&self) -> Result<IbcEvent, ChannelError> {
         let dst_msgs = self.build_chan_close_init()?;
 
@@ -1192,6 +1202,7 @@ impl Channel {
         Ok(msgs)
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn build_chan_close_confirm_and_send(&self) -> Result<IbcEvent, ChannelError> {
         let dst_msgs = self.build_chan_close_confirm()?;
 

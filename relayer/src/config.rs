@@ -14,6 +14,8 @@ use ibc::timestamp::ZERO_DURATION;
 
 use crate::config::types::{MaxMsgNum, MaxTxSize};
 use crate::error::Error;
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct GasPrice {
@@ -116,6 +118,7 @@ pub struct Config {
 }
 
 impl Config {
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn has_chain(&self, id: &ChainId) -> bool {
         self.chains.iter().any(|c| c.id == *id)
     }
@@ -151,6 +154,7 @@ impl Config {
         self.global.strategy == Strategy::HandshakeAndPackets
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn chains_map(&self) -> HashMap<&ChainId, &ChainConfig> {
         self.chains.iter().map(|c| (&c.id, c)).collect()
     }
@@ -274,6 +278,7 @@ pub struct ChainConfig {
 }
 
 /// Attempt to load and parse the TOML config file as a `Config`.
+#[cfg_attr(feature="prusti", trusted)]
 pub fn load(path: impl AsRef<Path>) -> Result<Config, Error> {
     let config_toml = std::fs::read_to_string(&path).map_err(Error::config_io)?;
 

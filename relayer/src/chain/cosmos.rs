@@ -237,6 +237,7 @@ impl CosmosSdkChain {
     /// Emits a log warning in case any error is encountered and
     /// exits early without doing subsequent validations.
     pub fn validate_params(&self) {
+        #[cfg_attr(feature="prusti", trusted)]
         fn do_validate_params(chain: &CosmosSdkChain) -> Result<(), Error> {
             // Check on the configured max_tx_size against genesis block max_bytes parameter
             let genesis = chain.block_on(chain.rpc_client.genesis()).map_err(|e| {
@@ -308,6 +309,7 @@ impl CosmosSdkChain {
 
     /// Query the consensus parameters via an RPC query
     /// Specific to the SDK and used only for Tendermint client create
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn query_consensus_params(&self) -> Result<Params, Error> {
         crate::time!("query_consensus_params");
 
@@ -318,6 +320,7 @@ impl CosmosSdkChain {
     }
 
     /// Run a future to completion on the Tokio runtime.
+    #[cfg_attr(feature="prusti", trusted)]
     fn block_on<F: Future>(&self, f: F) -> F::Output {
         crate::time!("block_on");
         self.rt.block_on(f)
@@ -434,11 +437,13 @@ impl CosmosSdkChain {
     }
 
     /// The maximum fee the relayer pays for a transaction
+    #[cfg_attr(feature="prusti", trusted)]
     fn max_fee_in_coins(&self) -> Coin {
         calculate_fee(self.max_gas(), self.gas_price())
     }
 
     /// The fee in coins based on gas amount
+    #[cfg_attr(feature="prusti", trusted)]
     fn fee_from_gas_in_coins(&self, gas: u64) -> Coin {
         calculate_fee(gas, self.gas_price())
     }
@@ -536,6 +541,7 @@ impl CosmosSdkChain {
         Ok(response)
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     fn key(&self) -> Result<KeyEntry, Error> {
         self.keybase()
             .get_key(&self.config.key_name)
@@ -741,10 +747,12 @@ impl CosmosSdkChain {
     }
 }
 
+#[cfg_attr(feature="prusti", trusted)]
 fn empty_event_present(events: &[IbcEvent]) -> bool {
     events.iter().any(|ev| matches!(ev, IbcEvent::Empty(_)))
 }
 
+#[cfg_attr(feature="prusti", trusted)]
 fn all_tx_results_found(tx_sync_results: &[TxSyncResult]) -> bool {
     tx_sync_results
         .iter()
@@ -783,6 +791,7 @@ impl Chain for CosmosSdkChain {
         Ok(chain)
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     fn init_light_client(&self) -> Result<Box<dyn LightClient<Self>>, Error> {
         use tendermint_light_client::types::PeerId;
 
@@ -799,6 +808,16 @@ impl Chain for CosmosSdkChain {
         Ok(Box::new(light_client))
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn init_event_monitor(
+        &self,
+        rt: Arc<TokioRuntime>,
+    ) -> Result<(EventReceiver, TxMonitorCmd), Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn init_event_monitor(
         &self,
         rt: Arc<TokioRuntime>,
@@ -823,6 +842,7 @@ impl Chain for CosmosSdkChain {
         Ok(())
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     fn id(&self) -> &ChainId {
         &self.config().id
     }
@@ -919,6 +939,7 @@ impl Chain for CosmosSdkChain {
         Ok(key)
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     fn query_commitment_prefix(&self) -> Result<CommitmentPrefix, Error> {
         crate::time!("query_commitment_prefix");
 
@@ -929,6 +950,7 @@ impl Chain for CosmosSdkChain {
     }
 
     /// Query the latest height the chain is at via a RPC query
+    #[cfg_attr(feature="prusti", trusted)]
     fn query_latest_height(&self) -> Result<ICSHeight, Error> {
         crate::time!("query_latest_height");
 
@@ -986,6 +1008,7 @@ impl Chain for CosmosSdkChain {
         Ok(clients)
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     fn query_client_state(
         &self,
         client_id: &ClientId,
@@ -1133,6 +1156,16 @@ impl Chain for CosmosSdkChain {
         Ok(AnyConsensusState::Tendermint(consensus_state))
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn query_client_connections(
+        &self,
+        request: QueryClientConnectionsRequest,
+    ) -> Result<Vec<ConnectionId>, Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn query_client_connections(
         &self,
         request: QueryClientConnectionsRequest,
@@ -1524,6 +1557,7 @@ impl Chain for CosmosSdkChain {
     ///    Therefore, for packets we perform one tx_search for each sequence.
     ///    Alternatively, a single query for all packets could be performed but it would return all
     ///    packets ever sent.
+    #[cfg_attr(feature="prusti", trusted)]
     fn query_txs(&self, request: QueryTxRequest) -> Result<Vec<IbcEvent>, Error> {
         crate::time!("query_txs");
 
@@ -1841,6 +1875,17 @@ fn tx_hash_query(request: &QueryTxHash) -> Query {
 // was committed in some Tx along with the packet with sequence 4, the response
 // will include both packets. For this reason, we iterate all packets in the Tx,
 // searching for those that match (which must be a single one).
+#[cfg(feature="prusti")]
+fn packet_from_tx_search_response(
+    chain_id: &ChainId,
+    request: &QueryPacketEventDataRequest,
+    seq: Sequence,
+    response: ResultTx,
+) -> Option<IbcEvent> {
+    None
+}
+
+#[cfg(not(feature="prusti"))]
 fn packet_from_tx_search_response(
     chain_id: &ChainId,
     request: &QueryPacketEventDataRequest,
@@ -2015,6 +2060,7 @@ async fn query_account(chain: &CosmosSdkChain, address: String) -> Result<BaseAc
     Ok(base_account)
 }
 
+#[cfg_attr(feature="prusti", trusted)]
 fn encode_to_bech32(address: &str, account_prefix: &str) -> Result<String, Error> {
     let account = AccountId::from_str(address)
         .map_err(|e| Error::invalid_key_address(address.to_string(), e))?;
@@ -2028,6 +2074,7 @@ fn encode_to_bech32(address: &str, account_prefix: &str) -> Result<String, Error
 /// Returns the suffix counter for a CosmosSDK client id.
 /// Returns `None` if the client identifier is malformed
 /// and the suffix could not be parsed.
+#[cfg_attr(feature="prusti", trusted)]
 fn client_id_suffix(client_id: &ClientId) -> Option<u64> {
     client_id
         .as_str()
@@ -2056,6 +2103,8 @@ fn auth_info_and_bytes(signer_info: SignerInfo, fee: Fee) -> Result<(AuthInfo, V
     Ok((auth_info, auth_buf))
 }
 
+
+#[cfg_attr(feature="prusti", trusted)]
 fn tx_body_and_bytes(proto_msgs: Vec<Any>) -> Result<(TxBody, Vec<u8>), Error> {
     // Create TxBody
     let body = TxBody {

@@ -254,6 +254,14 @@ impl From<Packet> for Object {
 }
 
 impl Object {
+
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn src_chain_id(&self) -> &ChainId {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn src_chain_id(&self) -> &ChainId {
         match self {
             Self::Client(ref client) => &client.src_chain_id,
@@ -262,7 +270,13 @@ impl Object {
             Self::Packet(ref path) => &path.src_chain_id,
         }
     }
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn src_chain_id(&self) -> &ChainId {
+        todo!()
+    }
 
+    #[cfg(not(feature="prusti"))]
     pub fn dst_chain_id(&self) -> &ChainId {
         match self {
             Self::Client(ref client) => &client.dst_chain_id,

@@ -1,4 +1,6 @@
 //! Cosmos-SDK compatibility constants and helper methods.
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
 
 use thiserror::Error;
 
@@ -72,6 +74,13 @@ pub enum Diagnostic {
 /// Sdk module by name, as well as the constant
 /// [`SDK_MODULE_VERSION_REQ`] for version compatibility
 /// requirements.
+#[cfg(feature="prusti")]
+#[trusted]
+pub(crate) fn run_diagnostic(v: VersionInfo) -> Option<Diagnostic> {
+    None
+}
+
+#[cfg(not(feature="prusti"))]
 pub(crate) fn run_diagnostic(v: VersionInfo) -> Option<Diagnostic> {
     let app_info = AppInfo {
         app_name: v.app_name,

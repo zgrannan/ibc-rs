@@ -1,3 +1,6 @@
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
+
 use std::collections::HashMap;
 use std::ffi::OsStr;
 use std::fs::{self, File};
@@ -50,7 +53,9 @@ pub struct KeyEntry {
 }
 
 /// JSON key seed file
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature="prusti", derive(PrustiClone, PrustiPartialEq))]
+#[cfg_attr(not(feature="prusti"), derive(Clone, PartialEq))]
 pub struct KeyFile {
     pub name: String,
     pub r#type: String,
@@ -60,6 +65,7 @@ pub struct KeyFile {
 }
 
 impl KeyEntry {
+    #[cfg_attr(feature="prusti", trusted)]
     fn from_key_file(key_file: KeyFile, hd_path: &HDPath) -> Result<Self, Error> {
         // Decode the Bech32-encoded address from the key file
         let keyfile_address_bytes = decode_bech32(&key_file.address)?;
@@ -136,6 +142,7 @@ impl KeyStore for Memory {
         }
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     fn keys(&self) -> Result<Vec<(String, KeyEntry)>, Error> {
         Ok(self
             .keys
@@ -290,6 +297,7 @@ impl KeyRing {
     }
 
     /// Add a key entry in the store using a mnemonic.
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn key_from_mnemonic(
         &self,
         mnemonic_words: &str,
@@ -317,6 +325,7 @@ impl KeyRing {
     }
 
     /// Sign a message
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn sign_msg(&self, key_name: &str, msg: Vec<u8>) -> Result<Vec<u8>, Error> {
         let key = self.get_key(key_name)?;
 
@@ -328,6 +337,7 @@ impl KeyRing {
         Ok(signature.as_ref().to_vec())
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn account_prefix(&self) -> &str {
         match self {
             KeyRing::Memory(m) => &m.account_prefix,
@@ -336,7 +346,17 @@ impl KeyRing {
     }
 }
 
+#[cfg(feature="prusti")]
+#[trusted]
+fn private_key_from_mnemonic(
+    mnemonic_words: &str,
+    hd_path: &StandardHDPath,
+) -> Result<ExtendedPrivKey, Error> {
+    todo!()
+}
+
 /// Decode an extended private key from a mnemonic
+#[cfg(not(feature="prusti"))]
 fn private_key_from_mnemonic(
     mnemonic_words: &str,
     hd_path: &StandardHDPath,
@@ -354,6 +374,7 @@ fn private_key_from_mnemonic(
 }
 
 /// Return an address from a Public Key
+#[cfg_attr(feature="prusti", trusted)]
 fn get_address(pk: ExtendedPubKey) -> Vec<u8> {
     let mut hasher = Sha256::new();
     hasher.update(pk.public_key.to_bytes().as_slice());

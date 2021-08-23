@@ -1,3 +1,6 @@
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
+
 use ibc::{
     events::IbcEvent,
     ics03_connection::connection::State as ConnectionState,
@@ -67,6 +70,17 @@ impl Link {
         }
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn new_from_opts(
+        a_chain: Box<dyn ChainHandle>,
+        b_chain: Box<dyn ChainHandle>,
+        opts: LinkParameters,
+    ) -> Result<Link, LinkError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn new_from_opts(
         a_chain: Box<dyn ChainHandle>,
         b_chain: Box<dyn ChainHandle>,

@@ -193,6 +193,7 @@ define_error! {
 }
 
 #[derive(Clone, Debug)]
+#[cfg_attr(feature="prusti", derive(PrustiSerialize))]
 pub struct ConnectionSide {
     pub(crate) chain: Box<dyn ChainHandle>,
     client_id: ClientId,
@@ -216,6 +217,7 @@ impl ConnectionSide {
     }
 }
 
+#[cfg(not(feature="prusti"))]
 impl Serialize for ConnectionSide {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -725,6 +727,7 @@ impl Connection {
         })
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn build_conn_init(&self) -> Result<Vec<Any>, ConnectionError> {
         // Get signer
         let signer = self
@@ -757,6 +760,7 @@ impl Connection {
         Ok(vec![new_msg.to_any()])
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn build_conn_init_and_send(&self) -> Result<IbcEvent, ConnectionError> {
         let dst_msgs = self.build_conn_init()?;
 
@@ -884,6 +888,7 @@ impl Connection {
         Ok(msgs)
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn build_conn_try_and_send(&self) -> Result<IbcEvent, ConnectionError> {
         let dst_msgs = self.build_conn_try()?;
 
@@ -975,6 +980,7 @@ impl Connection {
         Ok(msgs)
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn build_conn_ack_and_send(&self) -> Result<IbcEvent, ConnectionError> {
         let dst_msgs = self.build_conn_ack()?;
 
@@ -1052,6 +1058,7 @@ impl Connection {
         Ok(msgs)
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn build_conn_confirm_and_send(&self) -> Result<IbcEvent, ConnectionError> {
         let dst_msgs = self.build_conn_confirm()?;
 

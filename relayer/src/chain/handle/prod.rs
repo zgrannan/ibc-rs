@@ -1,3 +1,5 @@
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
 use std::fmt::Debug;
 
 use crossbeam_channel as channel;
@@ -83,6 +85,13 @@ impl ChainHandle for ProdChainHandle {
         self.send(|reply_to| ChainRequest::Subscribe { reply_to })
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn send_msgs(&self, proto_msgs: Vec<prost_types::Any>) -> Result<Vec<IbcEvent>, Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn send_msgs(&self, proto_msgs: Vec<prost_types::Any>) -> Result<Vec<IbcEvent>, Error> {
         self.send(|reply_to| ChainRequest::SendMsgs {
             proto_msgs,

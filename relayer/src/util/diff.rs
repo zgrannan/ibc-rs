@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 use std::hash::Hash;
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
 
 /// A change between two dictionaries.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -37,6 +39,17 @@ impl<K> Change<K> {
 /// value according to its `Eq` instance.
 ///
 /// Returns a list of changes holding on to the key affected by the change.
+#[cfg(feature="prusti")]
+#[trusted]
+pub fn diff<'a, K, V>(prev: &'a HashMap<K, V>, next: &'a HashMap<K, V>) -> Vec<Change<&'a K>>
+where
+    K: Hash + Eq,
+    V: Eq,
+{
+    todo!()
+}
+
+#[cfg(not(feature="prusti"))]
 pub fn diff<'a, K, V>(prev: &'a HashMap<K, V>, next: &'a HashMap<K, V>) -> Vec<Change<&'a K>>
 where
     K: Hash + Eq,

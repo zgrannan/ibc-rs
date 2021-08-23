@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 use tracing::{error, trace};
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
 
 use ibc::{
     ics02_client::client_state::{ClientState, IdentifiedAnyClientState},
@@ -118,6 +120,17 @@ impl ChannelConnectionClient {
 
 /// Returns the [`ChannelConnectionClient`] associated with the
 /// provided port and channel id.
+#[cfg(feature="prusti")]
+#[trusted]
+pub fn channel_connection_client(
+    chain: &dyn ChainHandle,
+    port_id: &PortId,
+    channel_id: &ChannelId,
+) -> Result<ChannelConnectionClient, Error> {
+    todo!()
+}
+
+#[cfg(not(feature="prusti"))]
 pub fn channel_connection_client(
     chain: &dyn ChainHandle,
     port_id: &PortId,
@@ -242,6 +255,16 @@ pub fn channel_on_destination(
 /// that the counterparty field on that channel end matches an
 /// expected counterparty.
 /// Returns `Ok` if the counterparty matches, and `Err` otherwise.
+#[cfg(feature="prusti")]
+pub fn check_channel_counterparty(
+    target_chain: Box<dyn ChainHandle>,
+    target_pchan: &PortChannelId,
+    expected: &PortChannelId,
+) -> Result<(), ChannelError> {
+    Ok(())
+}
+
+#[cfg(not(feature="prusti"))]
 pub fn check_channel_counterparty(
     target_chain: Box<dyn ChainHandle>,
     target_pchan: &PortChannelId,

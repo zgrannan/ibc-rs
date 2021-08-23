@@ -3,6 +3,8 @@ use std::{sync::Arc, thread};
 use crossbeam_channel as channel;
 use tokio::runtime::Runtime as TokioRuntime;
 use tracing::error;
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
 
 use ibc::{
     events::IbcEvent,
@@ -164,6 +166,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
         Box::new(ProdChainHandle::new(chain_id, sender))
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     fn run(mut self) -> Result<(), Error> {
         loop {
             channel::select! {

@@ -358,6 +358,13 @@ impl Supervisor {
     }
 
     /// Run the supervisor event loop.
+
+    #[cfg(feature="prusti")]
+    pub fn run(mut self) -> Result<(), Error> {
+        Ok(())
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn run(mut self) -> Result<(), Error> {
         self.spawn_workers(SpawnMode::Startup);
 
