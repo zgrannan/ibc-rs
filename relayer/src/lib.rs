@@ -17,6 +17,7 @@
 //! [Hermes]: https://docs.rs/ibc-relayer-cli/0.2.0/
 
 pub mod chain;
+
 pub mod channel;
 pub mod config;
 pub mod connection;
@@ -33,6 +34,7 @@ pub mod sdk_error;
 pub mod supervisor;
 pub mod telemetry;
 pub mod transfer;
+#[cfg(not(feature="prusti"))]
 pub mod upgrade_chain;
 pub mod util;
 pub mod worker;

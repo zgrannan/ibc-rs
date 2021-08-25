@@ -107,6 +107,13 @@ impl ChainHandle for ProdChainHandle {
         self.send(|reply_to| ChainRequest::Key { reply_to })
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn module_version(&self, port_id: &PortId) -> Result<String, Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn module_version(&self, port_id: &PortId) -> Result<String, Error> {
         self.send(|reply_to| ChainRequest::ModuleVersion {
             port_id: port_id.clone(),
@@ -118,6 +125,16 @@ impl ChainHandle for ProdChainHandle {
         self.send(|reply_to| ChainRequest::QueryLatestHeight { reply_to })
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn query_clients(
+        &self,
+        request: QueryClientStatesRequest,
+    ) -> Result<Vec<IdentifiedAnyClientState>, Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn query_clients(
         &self,
         request: QueryClientStatesRequest,
@@ -125,6 +142,17 @@ impl ChainHandle for ProdChainHandle {
         self.send(|reply_to| ChainRequest::QueryClients { request, reply_to })
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn query_client_state(
+        &self,
+        client_id: &ClientId,
+        height: Height,
+    ) -> Result<AnyClientState, Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn query_client_state(
         &self,
         client_id: &ClientId,
@@ -137,6 +165,16 @@ impl ChainHandle for ProdChainHandle {
         })
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn query_client_connections(
+        &self,
+        request: QueryClientConnectionsRequest,
+    ) -> Result<Vec<ConnectionId>, Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn query_client_connections(
         &self,
         request: QueryClientConnectionsRequest,
@@ -144,6 +182,16 @@ impl ChainHandle for ProdChainHandle {
         self.send(|reply_to| ChainRequest::QueryClientConnections { request, reply_to })
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn query_consensus_states(
+        &self,
+        request: QueryConsensusStatesRequest,
+    ) -> Result<Vec<AnyConsensusStateWithHeight>, Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn query_consensus_states(
         &self,
         request: QueryConsensusStatesRequest,
@@ -151,6 +199,18 @@ impl ChainHandle for ProdChainHandle {
         self.send(|reply_to| ChainRequest::QueryConsensusStates { request, reply_to })
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn query_consensus_state(
+        &self,
+        client_id: ClientId,
+        consensus_height: Height,
+        query_height: Height,
+    ) -> Result<AnyConsensusState, Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn query_consensus_state(
         &self,
         client_id: ClientId,
@@ -165,6 +225,16 @@ impl ChainHandle for ProdChainHandle {
         })
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn query_upgraded_client_state(
+        &self,
+        height: Height,
+    ) -> Result<(AnyClientState, MerkleProof), Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn query_upgraded_client_state(
         &self,
         height: Height,
@@ -172,6 +242,16 @@ impl ChainHandle for ProdChainHandle {
         self.send(|reply_to| ChainRequest::QueryUpgradedClientState { height, reply_to })
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn query_upgraded_consensus_state(
+        &self,
+        height: Height,
+    ) -> Result<(AnyConsensusState, MerkleProof), Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn query_upgraded_consensus_state(
         &self,
         height: Height,
@@ -179,14 +259,39 @@ impl ChainHandle for ProdChainHandle {
         self.send(|reply_to| ChainRequest::QueryUpgradedConsensusState { height, reply_to })
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn query_commitment_prefix(&self) -> Result<CommitmentPrefix, Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn query_commitment_prefix(&self) -> Result<CommitmentPrefix, Error> {
         self.send(|reply_to| ChainRequest::QueryCommitmentPrefix { reply_to })
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn query_compatible_versions(&self) -> Result<Vec<Version>, Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn query_compatible_versions(&self) -> Result<Vec<Version>, Error> {
         self.send(|reply_to| ChainRequest::QueryCompatibleVersions { reply_to })
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn query_connection(
+        &self,
+        connection_id: &ConnectionId,
+        height: Height,
+    ) -> Result<ConnectionEnd, Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn query_connection(
         &self,
         connection_id: &ConnectionId,
@@ -199,6 +304,16 @@ impl ChainHandle for ProdChainHandle {
         })
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn query_connections(
+        &self,
+        request: QueryConnectionsRequest,
+    ) -> Result<Vec<IdentifiedConnectionEnd>, Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn query_connections(
         &self,
         request: QueryConnectionsRequest,
@@ -206,6 +321,16 @@ impl ChainHandle for ProdChainHandle {
         self.send(|reply_to| ChainRequest::QueryConnections { request, reply_to })
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn query_connection_channels(
+        &self,
+        request: QueryConnectionChannelsRequest,
+    ) -> Result<Vec<IdentifiedChannelEnd>, Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn query_connection_channels(
         &self,
         request: QueryConnectionChannelsRequest,
@@ -213,6 +338,16 @@ impl ChainHandle for ProdChainHandle {
         self.send(|reply_to| ChainRequest::QueryConnectionChannels { request, reply_to })
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn query_next_sequence_receive(
+        &self,
+        request: QueryNextSequenceReceiveRequest,
+    ) -> Result<Sequence, Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn query_next_sequence_receive(
         &self,
         request: QueryNextSequenceReceiveRequest,
@@ -220,6 +355,16 @@ impl ChainHandle for ProdChainHandle {
         self.send(|reply_to| ChainRequest::QueryNextSequenceReceive { request, reply_to })
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn query_channels(
+        &self,
+        request: QueryChannelsRequest,
+    ) -> Result<Vec<IdentifiedChannelEnd>, Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn query_channels(
         &self,
         request: QueryChannelsRequest,
@@ -227,6 +372,18 @@ impl ChainHandle for ProdChainHandle {
         self.send(|reply_to| ChainRequest::QueryChannels { request, reply_to })
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn query_channel(
+        &self,
+        port_id: &PortId,
+        channel_id: &ChannelId,
+        height: Height,
+    ) -> Result<ChannelEnd, Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn query_channel(
         &self,
         port_id: &PortId,
@@ -241,6 +398,16 @@ impl ChainHandle for ProdChainHandle {
         })
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn query_channel_client_state(
+        &self,
+        request: QueryChannelClientStateRequest,
+    ) -> Result<Option<IdentifiedAnyClientState>, Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn query_channel_client_state(
         &self,
         request: QueryChannelClientStateRequest,
@@ -248,6 +415,17 @@ impl ChainHandle for ProdChainHandle {
         self.send(|reply_to| ChainRequest::QueryChannelClientState { request, reply_to })
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn proven_client_state(
+        &self,
+        client_id: &ClientId,
+        height: Height,
+    ) -> Result<(AnyClientState, MerkleProof), Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn proven_client_state(
         &self,
         client_id: &ClientId,
@@ -260,6 +438,17 @@ impl ChainHandle for ProdChainHandle {
         })
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn proven_connection(
+        &self,
+        connection_id: &ConnectionId,
+        height: Height,
+    ) -> Result<(ConnectionEnd, MerkleProof), Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn proven_connection(
         &self,
         connection_id: &ConnectionId,
@@ -272,6 +461,18 @@ impl ChainHandle for ProdChainHandle {
         })
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn proven_client_consensus(
+        &self,
+        client_id: &ClientId,
+        consensus_height: Height,
+        height: Height,
+    ) -> Result<(AnyConsensusState, MerkleProof), Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn proven_client_consensus(
         &self,
         client_id: &ClientId,
@@ -286,6 +487,18 @@ impl ChainHandle for ProdChainHandle {
         })
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn build_header(
+        &self,
+        trusted_height: Height,
+        target_height: Height,
+        client_state: AnyClientState,
+    ) -> Result<(AnyHeader, Vec<AnyHeader>), Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn build_header(
         &self,
         trusted_height: Height,
@@ -300,10 +513,29 @@ impl ChainHandle for ProdChainHandle {
         })
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn build_client_state(&self, height: Height) -> Result<AnyClientState, Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn build_client_state(&self, height: Height) -> Result<AnyClientState, Error> {
         self.send(|reply_to| ChainRequest::BuildClientState { height, reply_to })
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn build_consensus_state(
+        &self,
+        trusted: Height,
+        target: Height,
+        client_state: AnyClientState,
+    ) -> Result<AnyConsensusState, Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn build_consensus_state(
         &self,
         trusted: Height,
@@ -318,6 +550,17 @@ impl ChainHandle for ProdChainHandle {
         })
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn check_misbehaviour(
+        &self,
+        update_event: UpdateClient,
+        client_state: AnyClientState,
+    ) -> Result<Option<MisbehaviourEvidence>, Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn check_misbehaviour(
         &self,
         update_event: UpdateClient,
@@ -330,6 +573,19 @@ impl ChainHandle for ProdChainHandle {
         })
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn build_connection_proofs_and_client_state(
+        &self,
+        message_type: ConnectionMsgType,
+        connection_id: &ConnectionId,
+        client_id: &ClientId,
+        height: Height,
+    ) -> Result<(Option<AnyClientState>, Proofs), Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn build_connection_proofs_and_client_state(
         &self,
         message_type: ConnectionMsgType,
@@ -348,6 +604,18 @@ impl ChainHandle for ProdChainHandle {
         )
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn build_channel_proofs(
+        &self,
+        port_id: &PortId,
+        channel_id: &ChannelId,
+        height: Height,
+    ) -> Result<Proofs, Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn build_channel_proofs(
         &self,
         port_id: &PortId,
@@ -362,6 +630,20 @@ impl ChainHandle for ProdChainHandle {
         })
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn build_packet_proofs(
+        &self,
+        packet_type: PacketMsgType,
+        port_id: &PortId,
+        channel_id: &ChannelId,
+        sequence: Sequence,
+        height: Height,
+    ) -> Result<(Vec<u8>, Proofs), Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn build_packet_proofs(
         &self,
         packet_type: PacketMsgType,
@@ -380,6 +662,16 @@ impl ChainHandle for ProdChainHandle {
         })
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn query_packet_commitments(
+        &self,
+        request: QueryPacketCommitmentsRequest,
+    ) -> Result<(Vec<PacketState>, Height), Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn query_packet_commitments(
         &self,
         request: QueryPacketCommitmentsRequest,
@@ -387,6 +679,16 @@ impl ChainHandle for ProdChainHandle {
         self.send(|reply_to| ChainRequest::QueryPacketCommitments { request, reply_to })
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn query_unreceived_packets(
+        &self,
+        request: QueryUnreceivedPacketsRequest,
+    ) -> Result<Vec<u64>, Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn query_unreceived_packets(
         &self,
         request: QueryUnreceivedPacketsRequest,
@@ -394,6 +696,16 @@ impl ChainHandle for ProdChainHandle {
         self.send(|reply_to| ChainRequest::QueryUnreceivedPackets { request, reply_to })
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn query_packet_acknowledgements(
+        &self,
+        request: QueryPacketAcknowledgementsRequest,
+    ) -> Result<(Vec<PacketState>, Height), Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn query_packet_acknowledgements(
         &self,
         request: QueryPacketAcknowledgementsRequest,
@@ -401,6 +713,16 @@ impl ChainHandle for ProdChainHandle {
         self.send(|reply_to| ChainRequest::QueryPacketAcknowledgement { request, reply_to })
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn query_unreceived_acknowledgement(
+        &self,
+        request: QueryUnreceivedAcksRequest,
+    ) -> Result<Vec<u64>, Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn query_unreceived_acknowledgement(
         &self,
         request: QueryUnreceivedAcksRequest,
@@ -408,6 +730,13 @@ impl ChainHandle for ProdChainHandle {
         self.send(|reply_to| ChainRequest::QueryUnreceivedAcknowledgement { request, reply_to })
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn query_txs(&self, request: QueryTxRequest) -> Result<Vec<IbcEvent>, Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn query_txs(&self, request: QueryTxRequest) -> Result<Vec<IbcEvent>, Error> {
         self.send(|reply_to| ChainRequest::QueryPacketEventData { request, reply_to })
     }

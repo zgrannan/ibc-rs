@@ -32,7 +32,9 @@ impl Permission {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, Eq, Hash)]
+#[cfg_attr(feature="prusti", derive(PrustiPartialEq))]
+#[cfg_attr(not(feature="prusti"), derive(PartialEq))]
 enum CacheKey {
     Client(ChainId, ClientId),
     Channel(ChainId, PortId, ChannelId),
@@ -265,6 +267,19 @@ impl FilterPolicy {
         )
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn control_channel(
+        &mut self,
+        registry: &mut Registry,
+        chain_id: &ChainId,
+        port_id: &PortId,
+        channel_id: &ChannelId,
+    ) -> Result<Permission, FilterError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn control_channel(
         &mut self,
         registry: &mut Registry,

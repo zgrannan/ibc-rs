@@ -1,3 +1,6 @@
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
+
 use itertools::Itertools;
 use tracing::{debug, error, warn};
 
@@ -458,6 +461,19 @@ impl<'a> SpawnContext<'a> {
     }
 
     /// Spawns all the [`Worker`]s that will handle a given channel for a given source chain.
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn spawn_workers_for_channel(
+        &mut self,
+        chain: Box<dyn ChainHandle>,
+        client: &IdentifiedAnyClientState,
+        connection: &IdentifiedConnectionEnd,
+        channel: IdentifiedChannelEnd,
+    ) -> Result<(), Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn spawn_workers_for_channel(
         &mut self,
         chain: Box<dyn ChainHandle>,

@@ -137,7 +137,9 @@ impl Packet {
 /// [`Worker`] is spawned and all [`IbcEvent`]s mapped
 /// to an [`Object`] are sent to the associated [`Worker`]
 /// for processing.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, Hash, Serialize, Deserialize)]
+#[cfg_attr(feature="prusti", derive(PrustiPartialEq, PrustiOrd, PrustiPartialOrd))]
+#[cfg_attr(not(feature="prusti"), derive(PartialEq, Ord, PartialOrd))]
 #[serde(tag = "type")]
 pub enum Object {
     /// See [`Client`].
@@ -272,7 +274,7 @@ impl Object {
     }
     #[cfg(feature="prusti")]
     #[trusted]
-    pub fn src_chain_id(&self) -> &ChainId {
+    pub fn dst_chain_id(&self) -> &ChainId {
         todo!()
     }
 
@@ -296,6 +298,16 @@ impl Object {
     }
 
     /// Build the object associated with the given [`UpdateClient`] event.
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn for_update_client(
+        e: &UpdateClient,
+        dst_chain: &dyn ChainHandle,
+    ) -> Result<Self, ObjectError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn for_update_client(
         e: &UpdateClient,
         dst_chain: &dyn ChainHandle,
@@ -322,6 +334,16 @@ impl Object {
     }
 
     /// Build the client object associated with the given channel event attributes.
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn client_from_chan_open_events(
+        e: &Attributes,          // The attributes of the emitted event
+        chain: &dyn ChainHandle, // The chain which emitted the event
+    ) -> Result<Self, ObjectError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn client_from_chan_open_events(
         e: &Attributes,          // The attributes of the emitted event
         chain: &dyn ChainHandle, // The chain which emitted the event
@@ -350,6 +372,16 @@ impl Object {
     }
 
     /// Build the Connection object associated with the given [`Open`] connection event.
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn connection_from_conn_open_events(
+        e: &ConnectionAttributes,
+        src_chain: &dyn ChainHandle,
+    ) -> Result<Self, ObjectError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn connection_from_conn_open_events(
         e: &ConnectionAttributes,
         src_chain: &dyn ChainHandle,
@@ -371,6 +403,16 @@ impl Object {
     }
 
     /// Build the Channel object associated with the given [`Open`] channel event.
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn channel_from_chan_open_events(
+        attributes: &Attributes,
+        src_chain: &dyn ChainHandle,
+    ) -> Result<Self, ObjectError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn channel_from_chan_open_events(
         attributes: &Attributes,
         src_chain: &dyn ChainHandle,
@@ -393,6 +435,16 @@ impl Object {
     }
 
     /// Build the Packet object associated with the given [`Open`] channel event.
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn packet_from_chan_open_events(
+        attributes: &Attributes,
+        src_chain: &dyn ChainHandle,
+    ) -> Result<Self, ObjectError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn packet_from_chan_open_events(
         attributes: &Attributes,
         src_chain: &dyn ChainHandle,

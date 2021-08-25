@@ -142,7 +142,13 @@ impl KeyStore for Memory {
         }
     }
 
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn keys(&self) -> Result<Vec<(String, KeyEntry)>, Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn keys(&self) -> Result<Vec<(String, KeyEntry)>, Error> {
         Ok(self
             .keys
@@ -190,6 +196,13 @@ impl KeyStore for Test {
         Ok(key_entry)
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn add_key(&mut self, key_name: &str, key_entry: KeyEntry) -> Result<(), Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn add_key(&mut self, key_name: &str, key_entry: KeyEntry) -> Result<(), Error> {
         let mut filename = self.store.join(key_name);
         filename.set_extension(KEYSTORE_FILE_EXTENSION);
@@ -205,6 +218,13 @@ impl KeyStore for Test {
         Ok(())
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn keys(&self) -> Result<Vec<(String, KeyEntry)>, Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn keys(&self) -> Result<Vec<(String, KeyEntry)>, Error> {
         let dir = fs::read_dir(&self.store).map_err(|e| {
             Error::key_file_io(
@@ -390,6 +410,13 @@ fn get_address(pk: ExtendedPubKey) -> Vec<u8> {
     rip_result.to_vec()
 }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+fn decode_bech32(input: &str) -> Result<Vec<u8>, Error> {
+    todo!()
+}
+
+    #[cfg(not(feature="prusti"))]
 fn decode_bech32(input: &str) -> Result<Vec<u8>, Error> {
     use bech32::FromBase32;
 

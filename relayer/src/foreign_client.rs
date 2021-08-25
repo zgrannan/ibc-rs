@@ -319,6 +319,13 @@ impl ForeignClient {
         }
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn upgrade(&self) -> Result<Vec<IbcEvent>, ForeignClientError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn upgrade(&self) -> Result<Vec<IbcEvent>, ForeignClientError> {
         // Fetch the latest height of the source chain.
         let src_height = self.src_chain.query_latest_height().map_err(|e| {
@@ -416,7 +423,13 @@ impl ForeignClient {
     }
 
     /// Lower-level interface for preparing a message to create a client.
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn build_create_client(&self) -> Result<MsgCreateAnyClient, ForeignClientError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn build_create_client(&self) -> Result<MsgCreateAnyClient, ForeignClientError> {
         // Get signer
         let signer = self.dst_chain.get_signer().map_err(|e| {
@@ -472,6 +485,13 @@ impl ForeignClient {
     }
 
     /// Returns the identifier of the newly created client.
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn build_create_client_and_send(&self) -> Result<IbcEvent, ForeignClientError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn build_create_client_and_send(&self) -> Result<IbcEvent, ForeignClientError> {
         let new_msg = self.build_create_client()?;
 
@@ -503,6 +523,13 @@ impl ForeignClient {
         Ok(())
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn refresh(&mut self) -> Result<Option<Vec<IbcEvent>>, ForeignClientError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn refresh(&mut self) -> Result<Option<Vec<IbcEvent>>, ForeignClientError> {
         let client_state = self
             .dst_chain
@@ -553,6 +580,17 @@ impl ForeignClient {
 
     /// Returns a vector with a message for updating the client to height `target_height`.
     /// If the client already stores consensus states for this height, returns an empty vector.
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn build_update_client_with_trusted(
+        &self,
+        target_height: Height,
+        trusted_height: Height,
+    ) -> Result<Vec<Any>, ForeignClientError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn build_update_client_with_trusted(
         &self,
         target_height: Height,
@@ -675,7 +713,17 @@ impl ForeignClient {
         self.build_update_client_and_send(Height::zero(), Height::zero())
     }
 
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn build_update_client_and_send(
+        &self,
+        height: Height,
+        trusted_height: Height,
+    ) -> Result<Vec<IbcEvent>, ForeignClientError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn build_update_client_and_send(
         &self,
         height: Height,
@@ -726,6 +774,16 @@ impl ForeignClient {
     /// specified height was created on chain.
     /// It is possible that the event cannot be retrieved if the information is not yet available
     /// on the full node. To handle this the query is retried a few times.
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn update_client_event(
+        &self,
+        consensus_height: Height,
+    ) -> Result<Option<UpdateClient>, ForeignClientError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn update_client_event(
         &self,
         consensus_height: Height,
@@ -790,7 +848,13 @@ impl ForeignClient {
     /// Retrieves all consensus states for this client and sorts them in descending height
     /// order. If consensus states are not pruned on chain, then last consensus state is the one
     /// installed by the `CreateClient` operation.
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn consensus_states(&self) -> Result<Vec<AnyConsensusStateWithHeight>, ForeignClientError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn consensus_states(&self) -> Result<Vec<AnyConsensusStateWithHeight>, ForeignClientError> {
         let mut consensus_states = self
             .dst_chain
@@ -806,7 +870,13 @@ impl ForeignClient {
     }
 
     /// Returns the consensus state at `height` or error if not found.
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn consensus_state(&self, height: Height) -> Result<AnyConsensusState, ForeignClientError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn consensus_state(&self, height: Height) -> Result<AnyConsensusState, ForeignClientError> {
         let res = self
             .dst_chain

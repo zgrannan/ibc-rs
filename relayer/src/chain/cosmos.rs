@@ -752,7 +752,13 @@ fn empty_event_present(events: &[IbcEvent]) -> bool {
     events.iter().any(|ev| matches!(ev, IbcEvent::Empty(_)))
 }
 
-#[cfg_attr(feature="prusti", trusted)]
+#[cfg(feature="prusti")]
+#[trusted]
+fn all_tx_results_found(tx_sync_results: &[TxSyncResult]) -> bool {
+    todo!()
+}
+
+#[cfg(not(feature="prusti"))]
 fn all_tx_results_found(tx_sync_results: &[TxSyncResult]) -> bool {
     tx_sync_results
         .iter()
@@ -1928,6 +1934,16 @@ fn packet_from_tx_search_response(
 // for client Y at consensus height H'. This is the reason the code iterates all event fields in the
 // returned Tx to retrieve the relevant ones.
 // Returns `None` if no matching event was found.
+#[cfg(feature="prusti")]
+fn update_client_from_tx_search_response(
+    chain_id: &ChainId,
+    request: &QueryClientEventRequest,
+    response: ResultTx,
+) -> Option<IbcEvent> {
+    None
+}
+
+#[cfg(not(feature="prusti"))]
 fn update_client_from_tx_search_response(
     chain_id: &ChainId,
     request: &QueryClientEventRequest,
@@ -2074,7 +2090,13 @@ fn encode_to_bech32(address: &str, account_prefix: &str) -> Result<String, Error
 /// Returns the suffix counter for a CosmosSDK client id.
 /// Returns `None` if the client identifier is malformed
 /// and the suffix could not be parsed.
-#[cfg_attr(feature="prusti", trusted)]
+#[cfg(feature="prusti")]
+#[trusted]
+fn client_id_suffix(client_id: &ClientId) -> Option<u64> {
+    todo!()
+}
+
+#[cfg(not(feature="prusti"))]
 fn client_id_suffix(client_id: &ClientId) -> Option<u64> {
     client_id
         .as_str()

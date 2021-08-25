@@ -4,7 +4,9 @@ use std::hash::Hash;
 use prusti_contracts::*;
 
 /// A change between two dictionaries.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Debug, Eq)]
+#[cfg_attr(not(feature="prusti"), derive(Ord, PartialOrd, PartialEq))]
+// #[cfg_attr(feature="prusti", derive(PrustiOrd, PrustiPartialOrd, PrustiPartialEq))]
 pub enum Change<K> {
     /// The entry with this key was added.
     Added(K),
@@ -13,6 +15,14 @@ pub enum Change<K> {
     /// The entry with this key was removed.
     Removed(K),
 }
+
+#[cfg(feature="prusti")]
+impl <K> PartialEq for Change<K> {
+    fn eq(&self, other: &Change<K>) -> bool {
+        false
+    }
+}
+
 
 impl<K> Change<K> {
     /// Return the key affected by this change.

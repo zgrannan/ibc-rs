@@ -134,7 +134,19 @@ pub struct Channel {
 impl Channel {
     /// Creates a new channel on top of the existing connection. If the channel is not already
     /// set-up on both sides of the connection, this functions also fulfils the channel handshake.
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn new(
+        connection: Connection,
+        ordering: Order,
+        a_port: PortId,
+        b_port: PortId,
+        version: Option<String>,
+    ) -> Result<Self, ChannelError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn new(
         connection: Connection,
         ordering: Order,
@@ -181,6 +193,17 @@ impl Channel {
         Ok(channel)
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn restore_from_event(
+        chain: Box<dyn ChainHandle>,
+        counterparty_chain: Box<dyn ChainHandle>,
+        channel_open_event: IbcEvent,
+    ) -> Result<Channel, ChannelError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn restore_from_event(
         chain: Box<dyn ChainHandle>,
         counterparty_chain: Box<dyn ChainHandle>,
@@ -236,6 +259,18 @@ impl Channel {
 
     /// Recreates a 'Channel' object from the worker's object built from chain state scanning.
     /// The channel must exist on chain and its connection must be initialized on both chains.
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn restore_from_state(
+        chain: Box<dyn ChainHandle>,
+        counterparty_chain: Box<dyn ChainHandle>,
+        channel: WorkerChannelObject,
+        height: Height,
+    ) -> Result<(Channel, State), ChannelError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn restore_from_state(
         chain: Box<dyn ChainHandle>,
         counterparty_chain: Box<dyn ChainHandle>,
@@ -446,6 +481,13 @@ impl Channel {
     ///         e.g., by a competing relayer.
     ///     - Rpc problems (a query or submitting a tx failed).
     /// In both `Err` cases, there should be retry calling this method.
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn do_chan_open_finalize(&self) -> Result<(), ChannelError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn do_chan_open_finalize(&self) -> Result<(), ChannelError> {
         fn query_channel_states(channel: &Channel) -> Result<(State, State), ChannelError> {
             let src_channel_id = channel
@@ -603,6 +645,13 @@ impl Channel {
         self.do_chan_open_finalize_with_retry()
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn counterparty_state(&self) -> Result<State, ChannelError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn counterparty_state(&self) -> Result<State, ChannelError> {
         // Source channel ID must be specified
         let channel_id = self
@@ -659,6 +708,13 @@ impl Channel {
         self.step_state(state, index)
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn build_update_client_on_dst(&self, height: Height) -> Result<Vec<Any>, ChannelError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn build_update_client_on_dst(&self, height: Height) -> Result<Vec<Any>, ChannelError> {
         let client = ForeignClient::restore(
             self.dst_client_id().clone(),
@@ -675,7 +731,13 @@ impl Channel {
     /// for the destination port's version.
     /// Note: This query is currently not available and it is hardcoded in the `module_version()`
     /// to be `ics20-1` for `transfer` port.
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn dst_version(&self) -> Result<String, ChannelError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn dst_version(&self) -> Result<String, ChannelError> {
         Ok(self.version.clone().unwrap_or(
             self.dst_chain()
@@ -686,7 +748,13 @@ impl Channel {
 
     /// Returns the channel version if already set, otherwise it queries the source chain
     /// for the source port's version.
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn src_version(&self) -> Result<String, ChannelError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn src_version(&self) -> Result<String, ChannelError> {
         Ok(self.version.clone().unwrap_or(
             self.src_chain()
@@ -695,7 +763,13 @@ impl Channel {
         ))
     }
 
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn build_chan_open_init(&self) -> Result<Vec<Any>, ChannelError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn build_chan_open_init(&self) -> Result<Vec<Any>, ChannelError> {
         let signer = self
             .dst_chain()
@@ -722,7 +796,13 @@ impl Channel {
         Ok(vec![new_msg.to_any()])
     }
 
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn build_chan_open_init_and_send(&self) -> Result<IbcEvent, ChannelError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn build_chan_open_init_and_send(&self) -> Result<IbcEvent, ChannelError> {
         let dst_msgs = self.build_chan_open_init()?;
 
@@ -753,6 +833,16 @@ impl Channel {
     /// built from the message type (`msg_type`) and options (`opts`).
     /// If the expected and the destination channels are compatible, it returns the expected channel
     /// Source and destination channel IDs must be specified.
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn validated_expected_channel(
+        &self,
+        msg_type: ChannelMsgType,
+    ) -> Result<ChannelEnd, ChannelError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn validated_expected_channel(
         &self,
         msg_type: ChannelMsgType,
@@ -803,6 +893,13 @@ impl Channel {
         Ok(dst_expected_channel)
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn build_chan_open_try(&self) -> Result<Vec<Any>, ChannelError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn build_chan_open_try(&self) -> Result<Vec<Any>, ChannelError> {
         // Source channel ID must be specified
         let src_channel_id = self
@@ -880,7 +977,13 @@ impl Channel {
         Ok(msgs)
     }
 
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn build_chan_open_try_and_send(&self) -> Result<IbcEvent, ChannelError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn build_chan_open_try_and_send(&self) -> Result<IbcEvent, ChannelError> {
         let dst_msgs = self.build_chan_open_try()?;
 
@@ -907,6 +1010,13 @@ impl Channel {
         }
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn build_chan_open_ack(&self) -> Result<Vec<Any>, ChannelError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn build_chan_open_ack(&self) -> Result<Vec<Any>, ChannelError> {
         // Source and destination channel IDs must be specified
         let src_channel_id = self
@@ -962,6 +1072,13 @@ impl Channel {
         Ok(msgs)
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn build_chan_open_ack_and_send(&self) -> Result<IbcEvent, ChannelError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn build_chan_open_ack_and_send(&self) -> Result<IbcEvent, ChannelError> {
         fn do_build_chan_open_ack_and_send(channel: &Channel) -> Result<IbcEvent, ChannelError> {
             let dst_msgs = channel.build_chan_open_ack()?;
@@ -1003,6 +1120,13 @@ impl Channel {
         })
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn build_chan_open_confirm(&self) -> Result<Vec<Any>, ChannelError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn build_chan_open_confirm(&self) -> Result<Vec<Any>, ChannelError> {
         // Source and destination channel IDs must be specified
         let src_channel_id = self
@@ -1056,6 +1180,13 @@ impl Channel {
         Ok(msgs)
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn build_chan_open_confirm_and_send(&self) -> Result<IbcEvent, ChannelError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn build_chan_open_confirm_and_send(&self) -> Result<IbcEvent, ChannelError> {
         fn do_build_chan_open_confirm_and_send(
             channel: &Channel,
@@ -1096,6 +1227,13 @@ impl Channel {
         })
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn build_chan_close_init(&self) -> Result<Vec<Any>, ChannelError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn build_chan_close_init(&self) -> Result<Vec<Any>, ChannelError> {
         // Destination channel ID must be specified
         let dst_channel_id = self
@@ -1122,7 +1260,13 @@ impl Channel {
         Ok(vec![new_msg.to_any()])
     }
 
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn build_chan_close_init_and_send(&self) -> Result<IbcEvent, ChannelError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn build_chan_close_init_and_send(&self) -> Result<IbcEvent, ChannelError> {
         let dst_msgs = self.build_chan_close_init()?;
 
@@ -1149,6 +1293,13 @@ impl Channel {
         }
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn build_chan_close_confirm(&self) -> Result<Vec<Any>, ChannelError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn build_chan_close_confirm(&self) -> Result<Vec<Any>, ChannelError> {
         // Source and destination channel IDs must be specified
         let src_channel_id = self
@@ -1202,7 +1353,13 @@ impl Channel {
         Ok(msgs)
     }
 
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn build_chan_close_confirm_and_send(&self) -> Result<IbcEvent, ChannelError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn build_chan_close_confirm_and_send(&self) -> Result<IbcEvent, ChannelError> {
         let dst_msgs = self.build_chan_close_confirm()?;
 

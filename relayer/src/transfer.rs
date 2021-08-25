@@ -66,6 +66,17 @@ pub struct TransferOptions {
     pub number_msgs: usize,
 }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+pub fn build_and_send_transfer_messages(
+    packet_src_chain: Box<dyn ChainHandle>, // the chain whose account is debited
+    packet_dst_chain: Box<dyn ChainHandle>, // the chain whose account eventually gets credited
+    opts: TransferOptions,
+) -> Result<Vec<IbcEvent>, PacketError> {
+    todo!()
+}
+
+    #[cfg(not(feature="prusti"))]
 pub fn build_and_send_transfer_messages(
     packet_src_chain: Box<dyn ChainHandle>, // the chain whose account is debited
     packet_dst_chain: Box<dyn ChainHandle>, // the chain whose account eventually gets credited

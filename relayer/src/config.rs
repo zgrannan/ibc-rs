@@ -118,15 +118,36 @@ pub struct Config {
 }
 
 impl Config {
-    #[cfg_attr(feature="prusti", trusted)]
+
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn has_chain(&self, id: &ChainId) -> bool {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn has_chain(&self, id: &ChainId) -> bool {
         self.chains.iter().any(|c| c.id == *id)
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn find_chain(&self, id: &ChainId) -> Option<&ChainConfig> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn find_chain(&self, id: &ChainId) -> Option<&ChainConfig> {
         self.chains.iter().find(|c| c.id == *id)
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn find_chain_mut(&mut self, id: &ChainId) -> Option<&mut ChainConfig> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn find_chain_mut(&mut self, id: &ChainId) -> Option<&mut ChainConfig> {
         self.chains.iter_mut().find(|c| c.id == *id)
     }

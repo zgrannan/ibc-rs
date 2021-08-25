@@ -51,7 +51,9 @@ mod retry_strategy {
 }
 
 define_error! {
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
+    #[cfg_attr(feature="prusti", derive(PrustiClone))]
+    #[cfg_attr(not(feature="prusti"), derive(Clone))]
     Error {
         WebSocketDriver
             [ TraceError<RpcError> ]

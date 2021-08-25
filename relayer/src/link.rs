@@ -40,6 +40,13 @@ impl Link {
         }
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn is_closed(&self) -> Result<bool, LinkError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn is_closed(&self) -> Result<bool, LinkError> {
         let a_channel_id = self.a_to_b.src_channel_id()?;
 

@@ -55,6 +55,18 @@ impl super::LightClient<CosmosSdkChain> for LightClient {
         Ok(Verified { target, supporting })
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn verify(
+        &mut self,
+        trusted: ibc::Height,
+        target: ibc::Height,
+        client_state: &AnyClientState,
+    ) -> Result<Verified<LightBlock>, Error> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn verify(
         &mut self,
         trusted: ibc::Height,

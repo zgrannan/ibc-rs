@@ -1,3 +1,6 @@
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
+
 use std::time::Duration;
 
 use crossbeam_channel::Receiver;
@@ -104,6 +107,13 @@ impl PacketWorker {
         }
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn step(&self, cmd: Option<WorkerCmd>, link: &mut Link, index: u64) -> RetryResult<Step, u64> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn step(&self, cmd: Option<WorkerCmd>, link: &mut Link, index: u64) -> RetryResult<Step, u64> {
         if let Some(cmd) = cmd {
             let result = match cmd {

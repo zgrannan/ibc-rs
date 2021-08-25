@@ -172,6 +172,13 @@ impl WorkerMap {
 
     /// List the [`Object`]s for which there is an associated worker
     /// for the given chain.
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn objects_for_chain(&self, chain_id: &ChainId) -> Vec<Object> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn objects_for_chain(&self, chain_id: &ChainId) -> Vec<Object> {
         self.workers
             .keys()

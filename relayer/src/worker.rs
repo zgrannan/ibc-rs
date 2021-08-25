@@ -43,6 +43,8 @@ impl WorkerId {
         Self(id)
     }
 
+    // Probably don't care about id wraparound
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn next(self) -> Self {
         Self(self.0 + 1)
     }
@@ -75,6 +77,20 @@ impl fmt::Display for Worker {
 
 impl Worker {
     /// Spawn a worker which relays events pertaining to an [`Object`] between two `chains`.
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn spawn(
+        chains: ChainHandlePair,
+        id: WorkerId,
+        object: Object,
+        msg_tx: Sender<WorkerMsg>,
+        telemetry: Telemetry,
+        config: &Config,
+    ) -> WorkerHandle {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn spawn(
         chains: ChainHandlePair,
         id: WorkerId,

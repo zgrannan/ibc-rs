@@ -107,6 +107,17 @@ impl Registry {
 
 /// Spawns a chain runtime from the configuration and given a chain identifier.
 /// Returns the corresponding handle if successful.
+    #[cfg(feature="prusti")]
+    #[trusted]
+pub fn spawn_chain_runtime(
+    config: &RwArc<Config>,
+    chain_id: &ChainId,
+    rt: Arc<TokioRuntime>,
+) -> Result<Box<dyn ChainHandle>, SpawnError> {
+    todo!()
+}
+
+    #[cfg(not(feature="prusti"))]
 pub fn spawn_chain_runtime(
     config: &RwArc<Config>,
     chain_id: &ChainId,

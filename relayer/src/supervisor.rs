@@ -1,3 +1,6 @@
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
+
 use std::{
     collections::HashMap,
     ops::Deref,
@@ -476,6 +479,13 @@ impl Supervisor {
     ///
     /// If the addition had any effect, returns [`CmdEffect::ConfigChanged`] as
     /// subscriptions need to be reset to take into account the newly added chain.
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn add_chain(&mut self, config: ChainConfig) -> CmdEffect {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn add_chain(&mut self, config: ChainConfig) -> CmdEffect {
         let id = config.id.clone();
 
@@ -522,6 +532,13 @@ impl Supervisor {
     ///
     /// If the removal had any effect, returns [`CmdEffect::ConfigChanged`] as
     /// subscriptions need to be reset to take into account the newly added chain.
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn remove_chain(&mut self, id: &ChainId) -> CmdEffect {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn remove_chain(&mut self, id: &ChainId) -> CmdEffect {
         if !self.config.read().expect("poisoned lock").has_chain(id) {
             info!(chain.id=%id, "skipping removal of non-existing chain");

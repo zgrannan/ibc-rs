@@ -278,6 +278,18 @@ impl Connection {
 
         Ok(c)
     }
+
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn restore_from_event(
+        chain: Box<dyn ChainHandle>,
+        counterparty_chain: Box<dyn ChainHandle>,
+        connection_open_event: IbcEvent,
+    ) -> Result<Connection, ConnectionError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn restore_from_event(
         chain: Box<dyn ChainHandle>,
         counterparty_chain: Box<dyn ChainHandle>,
@@ -370,6 +382,17 @@ impl Connection {
         Ok((handshake_connection, *a_connection.state()))
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn find(
+        a_client: ForeignClient,
+        b_client: ForeignClient,
+        conn_end_a: &IdentifiedConnectionEnd,
+    ) -> Result<Connection, ConnectionError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn find(
         a_client: ForeignClient,
         b_client: ForeignClient,
@@ -581,6 +604,13 @@ impl Connection {
         Err(ConnectionError::max_retry())
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn counterparty_state(&self) -> Result<State, ConnectionError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn counterparty_state(&self) -> Result<State, ConnectionError> {
         // Source connection ID must be specified
         let connection_id = self
@@ -642,6 +672,16 @@ impl Connection {
     /// Retrieves the connection from destination and compares against the expected connection
     /// built from the message type (`msg_type`) and options (`opts`).
     /// If the expected and the destination connections are compatible, it returns the expected connection
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn validated_expected_connection(
+        &self,
+        msg_type: ConnectionMsgType,
+    ) -> Result<ConnectionEnd, ConnectionError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn validated_expected_connection(
         &self,
         msg_type: ConnectionMsgType,
@@ -705,6 +745,13 @@ impl Connection {
         Ok(dst_expected_connection)
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn build_update_client_on_src(&self, height: Height) -> Result<Vec<Any>, ConnectionError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn build_update_client_on_src(&self, height: Height) -> Result<Vec<Any>, ConnectionError> {
         let client = self.restore_src_client();
         client.build_update_client(height).map_err(|e| {
@@ -716,6 +763,13 @@ impl Connection {
         })
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn build_update_client_on_dst(&self, height: Height) -> Result<Vec<Any>, ConnectionError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn build_update_client_on_dst(&self, height: Height) -> Result<Vec<Any>, ConnectionError> {
         let client = self.restore_dst_client();
         client.build_update_client(height).map_err(|e| {
@@ -727,7 +781,13 @@ impl Connection {
         })
     }
 
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn build_conn_init(&self) -> Result<Vec<Any>, ConnectionError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn build_conn_init(&self) -> Result<Vec<Any>, ConnectionError> {
         // Get signer
         let signer = self
@@ -760,7 +820,13 @@ impl Connection {
         Ok(vec![new_msg.to_any()])
     }
 
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn build_conn_init_and_send(&self) -> Result<IbcEvent, ConnectionError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn build_conn_init_and_send(&self) -> Result<IbcEvent, ConnectionError> {
         let dst_msgs = self.build_conn_init()?;
 
@@ -787,6 +853,13 @@ impl Connection {
     }
 
     /// Attempts to build a MsgConnOpenTry.
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn build_conn_try(&self) -> Result<Vec<Any>, ConnectionError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn build_conn_try(&self) -> Result<Vec<Any>, ConnectionError> {
         let src_connection_id = self
             .src_connection_id()
@@ -888,7 +961,13 @@ impl Connection {
         Ok(msgs)
     }
 
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn build_conn_try_and_send(&self) -> Result<IbcEvent, ConnectionError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn build_conn_try_and_send(&self) -> Result<IbcEvent, ConnectionError> {
         let dst_msgs = self.build_conn_try()?;
 
@@ -914,6 +993,13 @@ impl Connection {
     }
 
     /// Attempts to build a MsgConnOpenAck.
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn build_conn_ack(&self) -> Result<Vec<Any>, ConnectionError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn build_conn_ack(&self) -> Result<Vec<Any>, ConnectionError> {
         let src_connection_id = self
             .src_connection_id()
@@ -980,7 +1066,13 @@ impl Connection {
         Ok(msgs)
     }
 
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn build_conn_ack_and_send(&self) -> Result<IbcEvent, ConnectionError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn build_conn_ack_and_send(&self) -> Result<IbcEvent, ConnectionError> {
         let dst_msgs = self.build_conn_ack()?;
 
@@ -1006,6 +1098,13 @@ impl Connection {
     }
 
     /// Attempts to build a MsgConnOpenConfirm.
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn build_conn_confirm(&self) -> Result<Vec<Any>, ConnectionError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn build_conn_confirm(&self) -> Result<Vec<Any>, ConnectionError> {
         let src_connection_id = self
             .src_connection_id()
@@ -1058,7 +1157,13 @@ impl Connection {
         Ok(msgs)
     }
 
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn build_conn_confirm_and_send(&self) -> Result<IbcEvent, ConnectionError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn build_conn_confirm_and_send(&self) -> Result<IbcEvent, ConnectionError> {
         let dst_msgs = self.build_conn_confirm()?;
 

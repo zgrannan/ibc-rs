@@ -110,14 +110,26 @@ impl RelayPath {
         self.channel.dst_port_id()
     }
 
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn src_channel_id(&self) -> Result<&ChannelId, LinkError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn src_channel_id(&self) -> Result<&ChannelId, LinkError> {
         self.channel
             .src_channel_id()
             .ok_or_else(|| LinkError::missing_channel_id(self.src_chain().id()))
     }
 
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn dst_channel_id(&self) -> Result<&ChannelId, LinkError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn dst_channel_id(&self) -> Result<&ChannelId, LinkError> {
         self.channel
             .dst_channel_id()
@@ -129,35 +141,65 @@ impl RelayPath {
         &self.channel
     }
 
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn src_channel(&self, height: Height) -> Result<ChannelEnd, LinkError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn src_channel(&self, height: Height) -> Result<ChannelEnd, LinkError> {
         self.src_chain()
             .query_channel(self.src_port_id(), self.src_channel_id()?, height)
             .map_err(|e| LinkError::channel(ChannelError::query(self.src_chain().id(), e)))
     }
 
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn dst_channel(&self, height: Height) -> Result<ChannelEnd, LinkError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn dst_channel(&self, height: Height) -> Result<ChannelEnd, LinkError> {
         self.dst_chain()
             .query_channel(self.dst_port_id(), self.dst_channel_id()?, height)
             .map_err(|e| LinkError::channel(ChannelError::query(self.src_chain().id(), e)))
     }
 
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn src_signer(&self) -> Result<Signer, LinkError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn src_signer(&self) -> Result<Signer, LinkError> {
         self.src_chain()
             .get_signer()
             .map_err(|e| LinkError::signer(self.src_chain().id(), e))
     }
 
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn dst_signer(&self) -> Result<Signer, LinkError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn dst_signer(&self) -> Result<Signer, LinkError> {
         self.dst_chain()
             .get_signer()
             .map_err(|e| LinkError::signer(self.dst_chain().id(), e))
     }
 
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn dst_latest_height(&self) -> Result<Height, LinkError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn dst_latest_height(&self) -> Result<Height, LinkError> {
         self.dst_chain()
             .query_latest_height()
@@ -186,6 +228,13 @@ impl RelayPath {
             .map_err(LinkError::client)
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn build_chan_close_confirm_from_event(&self, event: &IbcEvent) -> Result<Any, LinkError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn build_chan_close_confirm_from_event(&self, event: &IbcEvent) -> Result<Any, LinkError> {
         let src_channel_id = self.src_channel_id()?;
         let proofs = self
@@ -251,6 +300,13 @@ impl RelayPath {
         result
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn relay_pending_packets(&mut self, height: Option<Height>) -> Result<(), LinkError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn relay_pending_packets(&mut self, height: Option<Height>) -> Result<(), LinkError> {
         for _ in 0..MAX_RETRIES {
             let cleared = self
@@ -267,6 +323,17 @@ impl RelayPath {
 
     /// Clears any packets that were sent before `height`, either if the `clear_packets` flag
     /// is set or if clearing is forced by the caller.
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn schedule_packet_clearing(
+        &mut self,
+        height: Option<Height>,
+        force: bool,
+    ) -> Result<(), LinkError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn schedule_packet_clearing(
         &mut self,
         height: Option<Height>,
@@ -866,6 +933,16 @@ impl RelayPath {
 
     /// Returns relevant packet events for building ack messages.
     /// Additionally returns the height (on source chain) corresponding to these events.
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn target_height_and_write_ack_events(
+        &self,
+        opt_query_height: Option<Height>,
+    ) -> Result<(Vec<IbcEvent>, Height), LinkError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn target_height_and_write_ack_events(
         &self,
         opt_query_height: Option<Height>,
@@ -1014,6 +1091,13 @@ impl RelayPath {
         Ok(())
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn build_recv_packet(&self, packet: &Packet, height: Height) -> Result<Option<Any>, LinkError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn build_recv_packet(&self, packet: &Packet, height: Height) -> Result<Option<Any>, LinkError> {
         let (_, proofs) = self
             .src_chain()
@@ -1038,6 +1122,16 @@ impl RelayPath {
         Ok(Some(msg.to_any()))
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn build_ack_from_recv_event(
+        &self,
+        event: &WriteAcknowledgement,
+    ) -> Result<Option<Any>, LinkError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn build_ack_from_recv_event(
         &self,
         event: &WriteAcknowledgement,
@@ -1072,6 +1166,17 @@ impl RelayPath {
         Ok(Some(msg.to_any()))
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn build_timeout_packet(
+        &self,
+        packet: &Packet,
+        height: Height,
+    ) -> Result<Option<Any>, LinkError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn build_timeout_packet(
         &self,
         packet: &Packet,
@@ -1120,6 +1225,17 @@ impl RelayPath {
         Ok(Some(msg.to_any()))
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn build_timeout_on_close_packet(
+        &self,
+        packet: &Packet,
+        height: Height,
+    ) -> Result<Option<Any>, LinkError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn build_timeout_on_close_packet(
         &self,
         packet: &Packet,
@@ -1339,6 +1455,15 @@ impl RelayPath {
     /// Pulls out the operational elements with elapsed delay period and that can
     /// now be processed. Does not block: if no OD fulfilled the delay period (or none is
     /// scheduled), returns immediately with `vec![]`.
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn try_fetch_scheduled_operational_data(
+        &mut self,
+    ) -> (Vec<OperationalData>, Vec<OperationalData>) {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn try_fetch_scheduled_operational_data(
         &mut self,
     ) -> (Vec<OperationalData>, Vec<OperationalData>) {
