@@ -590,6 +590,16 @@ impl RelayPath {
     ///
     /// Side effects: may schedule a new operational data targeting the source chain, comprising
     /// new timeout messages.
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn regenerate_operational_data(
+        &mut self,
+        initial_odata: OperationalData,
+    ) -> Option<OperationalData> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn regenerate_operational_data(
         &mut self,
         initial_odata: OperationalData,
