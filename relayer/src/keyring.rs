@@ -52,10 +52,17 @@ pub struct KeyEntry {
     pub address: Vec<u8>,
 }
 
-/// JSON key seed file
-#[derive(Debug, Eq, Serialize, Deserialize)]
-#[cfg_attr(feature="prusti", derive(PrustiClone, PrustiPartialEq))]
-#[cfg_attr(not(feature="prusti"), derive(Clone, PartialEq))]
+#[cfg(feature="prusti")]
+#[derive(Debug, Eq, Serialize, Deserialize, PrustiClone, PrustiPartialEq)]
+pub struct KeyFile {
+    pub name: String,
+    pub address: String,
+    pub pubkey: String,
+    pub mnemonic: String,
+}
+
+#[cfg(not(feature="prusti"))]
+#[derive(Debug, Eq, Serialize, Deserialize, Clone, PartialEq)]
 pub struct KeyFile {
     pub name: String,
     pub r#type: String,

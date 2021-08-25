@@ -392,6 +392,16 @@ impl RelayPath {
     ///
     /// For the source chain, the op. data will contain timeout packet messages (`MsgTimeoutOnClose`
     /// or `MsgTimeout`).
+    #[cfg(feature="prusti")]
+    #[trusted]
+    fn generate_operational_data(
+        &self,
+        input: Vec<IbcEvent>,
+    ) -> Result<(Option<OperationalData>, Option<OperationalData>), LinkError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     fn generate_operational_data(
         &self,
         input: Vec<IbcEvent>,
@@ -1494,6 +1504,13 @@ impl RelayPath {
     /// Fetches an operational data that has fulfilled its predefined delay period. May _block_
     /// waiting for the delay period to pass.
     /// Returns `None` if there is no operational data scheduled.
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub(crate) fn fetch_scheduled_operational_data(&mut self) -> Option<OperationalData> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub(crate) fn fetch_scheduled_operational_data(&mut self) -> Option<OperationalData> {
         let odata = self
             .src_operational_data

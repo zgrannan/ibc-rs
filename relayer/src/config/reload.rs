@@ -1,5 +1,8 @@
 //! Facility for reloading the relayer configuration.
 
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
+
 use std::{
     path::PathBuf,
     sync::{Arc, RwLock},
@@ -46,6 +49,7 @@ impl ConfigReload {
     /// the current configuration and a channel through which
     /// to send the computed [`ConfigUpdate`]s to the
     /// [`crate::supervisor::Supervisor`].
+    #[cfg(not(feature="prusti"))]
     pub fn new(
         path: impl Into<PathBuf>,
         current: Arc<RwLock<Config>>,
@@ -56,6 +60,16 @@ impl ConfigReload {
             current,
             tx_cmd,
         }
+    }
+
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn new<T>(
+        path: T,
+        current: Arc<RwLock<Config>>,
+        tx_cmd: Sender<SupervisorCmd>,
+    ) -> Self {
+        todo!()
     }
 
     /// Reload the configuration.

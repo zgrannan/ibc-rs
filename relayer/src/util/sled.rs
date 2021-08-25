@@ -1,12 +1,29 @@
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
+
 use serde::{de::DeserializeOwned, Serialize};
 use std::marker::PhantomData;
 
 use crate::error::Error;
 
+#[cfg(not(feature="prusti"))]
 pub fn single<V>(prefix: impl Into<Vec<u8>>) -> SingleDb<V> {
     SingleDb::new(prefix)
 }
 
+#[cfg(feature="prusti")]
+#[trusted]
+pub fn single<T, V>(prefix: T) -> SingleDb<V> {
+    todo!()
+}
+
+#[cfg(feature="prusti")]
+#[trusted]
+pub fn key_value<T, K, V>(prefix: T) -> KeyValueDb<K, V> {
+    todo!()
+}
+
+#[cfg(not(feature="prusti"))]
 pub fn key_value<K, V>(prefix: impl Into<Vec<u8>>) -> KeyValueDb<K, V> {
     KeyValueDb::new(prefix)
 }
@@ -33,6 +50,14 @@ pub struct KeyValueDb<K, V> {
 }
 
 impl<K, V> KeyValueDb<K, V> {
+
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn new<T>(prefix: T) -> Self {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn new(prefix: impl Into<Vec<u8>>) -> Self {
         Self {
             prefix: prefix.into(),
