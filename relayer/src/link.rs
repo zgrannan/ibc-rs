@@ -171,6 +171,13 @@ impl Link {
         Ok(Link::new(channel))
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn build_and_send_recv_packet_messages(&mut self) -> Result<Vec<IbcEvent>, LinkError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn build_and_send_recv_packet_messages(&mut self) -> Result<Vec<IbcEvent>, LinkError> {
         self.a_to_b.build_recv_packet_and_timeout_msgs(None)?;
 
@@ -185,6 +192,13 @@ impl Link {
         Ok(results)
     }
 
+    #[cfg(feature="prusti")]
+    #[trusted]
+    pub fn build_and_send_ack_packet_messages(&mut self) -> Result<Vec<IbcEvent>, LinkError> {
+        todo!()
+    }
+
+    #[cfg(not(feature="prusti"))]
     pub fn build_and_send_ack_packet_messages(&mut self) -> Result<Vec<IbcEvent>, LinkError> {
         self.a_to_b.build_packet_ack_msgs(None)?;
 

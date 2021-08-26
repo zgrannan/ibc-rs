@@ -1513,12 +1513,6 @@ impl RelayPath {
     /// Fetches an operational data that has fulfilled its predefined delay period. May _block_
     /// waiting for the delay period to pass.
     /// Returns `None` if there is no operational data scheduled.
-    #[cfg(feature="prusti")]
-    #[trusted]
-    pub(crate) fn fetch_scheduled_operational_data(&mut self) -> Option<OperationalData> {
-        todo!()
-    }
-
     #[cfg(not(feature="prusti"))]
     pub(crate) fn fetch_scheduled_operational_data(&mut self) -> Option<OperationalData> {
         let odata = self
