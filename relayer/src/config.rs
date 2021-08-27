@@ -278,7 +278,9 @@ impl Default for TelemetryConfig {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Serialize)]
+#[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
+#[cfg_attr(not(feature="prusti"), derive(Deserialize))]
 #[serde(deny_unknown_fields)]
 pub struct ChainConfig {
     pub id: ChainId,
