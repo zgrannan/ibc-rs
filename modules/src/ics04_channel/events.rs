@@ -41,6 +41,7 @@ const PKT_TIMEOUT_TIMESTAMP_ATTRIBUTE_KEY: &str = "packet_timeout_timestamp";
 
 const PKT_ACK_ATTRIBUTE_KEY: &str = "packet_ack";
 
+#[cfg_attr(feature="prusti", trusted)]
 pub fn try_from_tx(event: &tendermint::abci::Event) -> Option<IbcEvent> {
     match event.type_str.as_str() {
         OPEN_INIT_EVENT_TYPE => Some(IbcEvent::OpenInitChannel(OpenInit::from(

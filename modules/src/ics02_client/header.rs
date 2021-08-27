@@ -69,6 +69,7 @@ impl Protobuf<Any> for AnyHeader {}
 impl TryFrom<Any> for AnyHeader {
     type Error = Error;
 
+    #[cfg_attr(feature="prusti", trusted)]
     fn try_from(raw: Any) -> Result<Self, Error> {
         match raw.type_url.as_str() {
             TENDERMINT_HEADER_TYPE_URL => {

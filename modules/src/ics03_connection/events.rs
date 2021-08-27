@@ -19,6 +19,7 @@ const CLIENT_ID_ATTRIBUTE_KEY: &str = "client_id";
 const COUNTERPARTY_CONN_ID_ATTRIBUTE_KEY: &str = "counterparty_connection_id";
 const COUNTERPARTY_CLIENT_ID_ATTRIBUTE_KEY: &str = "counterparty_client_id";
 
+#[cfg_attr(feature="prusti", trusted)]
 pub fn try_from_tx(event: &tendermint::abci::Event) -> Option<IbcEvent> {
     match event.type_str.as_ref() {
         INIT_EVENT_TYPE => Some(IbcEvent::OpenInitConnection(OpenInit::from(

@@ -371,6 +371,7 @@ impl Order {
 impl FromStr for Order {
     type Err = Error;
 
+    #[trusted]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
             "uninitialized" => Ok(Self::None),

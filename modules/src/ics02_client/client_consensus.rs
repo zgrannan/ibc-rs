@@ -91,6 +91,7 @@ impl Protobuf<Any> for AnyConsensusState {}
 impl TryFrom<Any> for AnyConsensusState {
     type Error = Error;
 
+    #[cfg_attr(feature="prusti", trusted)]
     fn try_from(value: Any) -> Result<Self, Self::Error> {
         match value.type_url.as_str() {
             "" => Err(Error::empty_consensus_state_response()),

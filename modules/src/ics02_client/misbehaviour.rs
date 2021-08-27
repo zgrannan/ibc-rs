@@ -72,6 +72,7 @@ impl Protobuf<Any> for AnyMisbehaviour {}
 impl TryFrom<Any> for AnyMisbehaviour {
     type Error = Error;
 
+    #[cfg_attr(feature="prusti", trusted)]
     fn try_from(raw: Any) -> Result<Self, Error> {
         match raw.type_url.as_str() {
             TENDERMINT_MISBEHAVIOR_TYPE_URL => Ok(AnyMisbehaviour::Tendermint(
