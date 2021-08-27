@@ -24,7 +24,9 @@ use crate::error::Error as RelayerError;
 use crate::supervisor::Error as SupervisorError;
 
 /// Client
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
+#[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
+#[cfg_attr(not(feature="prusti"), derive(Deserialize))]
 pub struct Client {
     /// Destination chain identifier.
     /// This is the chain hosting the client.
@@ -48,7 +50,9 @@ impl Client {
 }
 
 /// Connection
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
+#[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
+#[cfg_attr(not(feature="prusti"), derive(Deserialize))]
 pub struct Connection {
     /// Destination chain identifier.
     pub dst_chain_id: ChainId,
@@ -70,7 +74,9 @@ impl Connection {
 }
 
 /// Channel
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
+#[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
+#[cfg_attr(not(feature="prusti"), derive(Deserialize))]
 pub struct Channel {
     /// Destination chain identifier.
     pub dst_chain_id: ChainId,
@@ -101,7 +107,9 @@ impl Channel {
 }
 
 /// A packet worker between a source and destination chain, and a specific channel and port.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
+#[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
+#[cfg_attr(not(feature="prusti"), derive(Deserialize))]
 pub struct Packet {
     /// Destination chain identifier.
     pub dst_chain_id: ChainId,

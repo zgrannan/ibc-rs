@@ -37,7 +37,9 @@ pub const KEYSTORE_FILE_EXTENSION: &str = "json";
 //          will force users to re-import their keys.
 // /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\
 /// Key entry stores the Private Key and Public Key as well the address
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+#[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
+#[cfg_attr(not(feature="prusti"), derive(Deserialize))]
 pub struct KeyEntry {
     /// Public key
     pub public_key: ExtendedPubKey,
@@ -53,7 +55,7 @@ pub struct KeyEntry {
 }
 
 #[cfg(feature="prusti")]
-#[derive(Debug, Eq, Serialize, Deserialize, PrustiClone, PrustiPartialEq)]
+#[derive(Debug, Eq, Serialize, PrustiDeserialize, PrustiClone, PrustiPartialEq)]
 pub struct KeyFile {
     pub name: String,
     pub address: String,
@@ -116,7 +118,9 @@ pub trait KeyStore {
     fn keys(&self) -> Result<Vec<(String, KeyEntry)>, Error>;
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize)]
+#[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
+#[cfg_attr(not(feature="prusti"), derive(Deserialize))]
 pub struct Memory {
     account_prefix: String,
     keys: HashMap<String, KeyEntry>,
@@ -165,7 +169,9 @@ impl KeyStore for Memory {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize)]
+#[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
+#[cfg_attr(not(feature="prusti"), derive(Deserialize))]
 pub struct Test {
     account_prefix: String,
     store: PathBuf,
@@ -434,6 +440,7 @@ fn decode_bech32(input: &str) -> Result<Vec<u8>, Error> {
     Ok(bytes)
 }
 
+#[cfg_attr(feature="prusti", trusted)]
 fn disk_store_path(folder_name: &str) -> Result<PathBuf, Error> {
     let home = dirs_next::home_dir().ok_or_else(Error::home_location_unavailable)?;
 

@@ -1,3 +1,6 @@
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
+
 use core::convert::TryFrom;
 use prost_types::Any;
 
@@ -26,6 +29,7 @@ pub enum Ics26Envelope {
 impl TryFrom<Any> for Ics26Envelope {
     type Error = Error;
 
+    #[cfg_attr(feature="prusti", trusted)]
     fn try_from(any_msg: Any) -> Result<Self, Self::Error> {
         match any_msg.type_url.as_str() {
             // ICS2 messages

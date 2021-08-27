@@ -12,7 +12,9 @@ use crate::{
     worker::WorkerId,
 };
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize)]
+#[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
+#[cfg_attr(not(feature="prusti"), derive(Deserialize))]
 pub struct WorkerDesc {
     pub id: WorkerId,
     pub object: Object,
@@ -24,7 +26,9 @@ impl WorkerDesc {
     }
 }
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize)]
+#[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
+#[cfg_attr(not(feature="prusti"), derive(Deserialize))]
 pub struct SupervisorState {
     pub chains: Vec<ChainId>,
     pub workers: BTreeMap<ObjectType, Vec<WorkerDesc>>,

@@ -1,3 +1,6 @@
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
+
 use std::str::FromStr;
 
 use serde::{Deserialize, Deserializer};
@@ -25,12 +28,14 @@ impl EncodedPubKey {
 /// A variant of [`EncodedPubKey`].
 /// A Protobuf `Any`, having support for deserialization from
 /// JSON + base64 (see `deserialize_key`).
-#[derive(Debug, Deserialize)]
+#[derive(Debug)]
+#[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
+#[cfg_attr(not(feature="prusti"), derive(Deserialize))]
 pub struct ProtoAny {
-    #[serde(alias = "@type")]
+    #[cfg_attr(not(feature="prusti"), serde(alias = "@type"))]
     tpe: String,
 
-    #[serde(deserialize_with = "deserialize_key")]
+    #[cfg_attr(not(feature="prusti"), serde(deserialize_with = "deserialize_key"))]
     key: Vec<u8>,
 }
 

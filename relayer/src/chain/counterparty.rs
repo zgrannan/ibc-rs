@@ -97,7 +97,9 @@ pub fn connection_state_on_destination(
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
+#[cfg_attr(not(feature="prusti"), derive(Deserialize))]
 pub struct ChannelConnectionClient {
     pub channel: IdentifiedChannelEnd,
     pub connection: IdentifiedConnectionEnd,

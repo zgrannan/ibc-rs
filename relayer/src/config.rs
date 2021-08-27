@@ -17,10 +17,21 @@ use crate::error::Error;
 #[cfg(feature="prusti")]
 use prusti_contracts::*;
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
+#[cfg_attr(not(feature="prusti"), derive(Deserialize))]
 pub struct GasPrice {
     pub price: f64,
     pub denom: String,
+}
+
+#[cfg(feature="prusti")]
+impl <'de> serde::Deserialize<'de> for GasPrice {
+    #[cfg_attr(feature="prusti", trusted)]
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de> {
+        todo!()
+    }
 }
 
 impl GasPrice {

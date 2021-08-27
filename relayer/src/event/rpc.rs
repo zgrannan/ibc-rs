@@ -1,3 +1,5 @@
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
 use std::{collections::HashMap, convert::TryFrom};
 
 use tendermint_rpc::event::{Event as RpcEvent, EventData as RpcEventData};
@@ -56,6 +58,7 @@ pub fn get_all_events(
     Ok(vals)
 }
 
+#[cfg_attr(feature="prusti", trusted)]
 pub fn build_event(mut object: RawObject) -> Result<IbcEvent, EventError> {
     match object.action.as_str() {
         // Client events
