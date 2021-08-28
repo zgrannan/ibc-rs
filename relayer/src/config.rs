@@ -46,13 +46,15 @@ impl fmt::Display for GasPrice {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(
+#[derive(Clone, Debug, Serialize)]
+#[cfg_attr(not(feature="prusti"), derive(Deserialize))]
+#[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
+#[cfg_attr(not(feature="prusti"), serde(
     rename_all = "lowercase",
     tag = "policy",
     content = "list",
     deny_unknown_fields
-)]
+))]
 pub enum PacketFilter {
     Allow(ChannelsSpec),
     Deny(ChannelsSpec),
@@ -78,8 +80,10 @@ impl PacketFilter {
     }
 }
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[derive(Clone, Debug, Default, Serialize)]
+#[cfg_attr(not(feature="prusti"), serde(deny_unknown_fields))]
+#[cfg_attr(not(feature="prusti"), derive(Deserialize))]
+#[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
 pub struct ChannelsSpec(HashSet<(PortId, ChannelId)>);
 
 impl ChannelsSpec {
@@ -117,8 +121,10 @@ pub mod default {
     }
 }
 
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
+#[derive(Clone, Debug, Default, Serialize)]
+#[cfg_attr(not(feature="prusti"), derive(Deserialize))]
+#[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
+#[cfg_attr(not(feature="prusti"), serde(deny_unknown_fields))]
 pub struct Config {
     #[serde(default)]
     pub global: GlobalConfig,
@@ -192,7 +198,9 @@ impl Config {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
+#[cfg_attr(not(feature="prusti"), derive(Deserialize))]
+#[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
 pub enum Strategy {
     #[serde(rename = "packets")]
     Packets,
@@ -210,7 +218,9 @@ impl Default for Strategy {
 /// Log levels are wrappers over [`tracing_core::Level`].
 ///
 /// [`tracing_core::Level`]: https://docs.rs/tracing-core/0.1.17/tracing_core/struct.Level.html
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
+#[cfg_attr(not(feature="prusti"), derive(Deserialize))]
+#[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
 #[serde(rename_all = "lowercase")]
 pub enum LogLevel {
     Trace,
@@ -238,7 +248,9 @@ impl fmt::Display for LogLevel {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Serialize)]
+#[cfg_attr(not(feature="prusti"), derive(Deserialize))]
+#[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
 #[serde(default, deny_unknown_fields)]
 pub struct GlobalConfig {
     pub strategy: Strategy,
@@ -260,7 +272,9 @@ impl Default for GlobalConfig {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Serialize)]
+#[cfg_attr(not(feature="prusti"), derive(Deserialize))]
+#[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
 #[serde(deny_unknown_fields)]
 pub struct TelemetryConfig {
     pub enabled: bool,
