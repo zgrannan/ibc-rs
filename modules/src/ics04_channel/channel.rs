@@ -208,16 +208,17 @@ impl ChannelEnd {
         &self.remote
     }
 
-#[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn connection_hops(&self) -> &Vec<ConnectionId> {
         &self.connection_hops
     }
 
-#[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn version(&self) -> String {
         self.version.parse().unwrap()
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn validate_basic(&self) -> Result<(), Error> {
         if self.connection_hops.len() != 1 {
             return Err(Error::invalid_connection_hops_length(
