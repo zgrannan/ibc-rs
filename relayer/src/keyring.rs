@@ -54,17 +54,8 @@ pub struct KeyEntry {
     pub address: Vec<u8>,
 }
 
-#[cfg(feature="prusti")]
-#[derive(Debug, Eq, Serialize, PrustiDeserialize, PrustiClone, PrustiPartialEq)]
-pub struct KeyFile {
-    pub name: String,
-    pub address: String,
-    pub pubkey: String,
-    pub mnemonic: String,
-}
-
-#[cfg(not(feature="prusti"))]
-#[derive(Debug, Eq, Serialize, Deserialize, Clone, PartialEq)]
+#[cfg_attr(feature="prusti", derive(Debug, Eq, Serialize, PrustiDeserialize, PrustiClone, PrustiPartialEq))]
+#[cfg_attr(not(feature="prusti"), derive(Debug, Eq, Serialize, Deserialize, Clone, PartialEq))]
 pub struct KeyFile {
     pub name: String,
     pub r#type: String,

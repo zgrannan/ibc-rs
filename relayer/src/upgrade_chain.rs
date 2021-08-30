@@ -48,6 +48,7 @@ pub struct UpdatePlanOptions {
     pub height_offset: u64,
 }
 
+#[cfg_attr(feature="prusti", trusted)]
 pub fn build_and_send_upgrade_chain_message(
     mut dst_chain: CosmosSdkChain, // the chain whose account is debited
     src_chain: CosmosSdkChain,     // the chain where the transfer is sent

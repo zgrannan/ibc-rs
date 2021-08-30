@@ -16,6 +16,9 @@
 //!
 //! [Hermes]: https://docs.rs/ibc-relayer-cli/0.2.0/
 
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
+
 pub mod chain;
 
 pub mod channel;
@@ -34,7 +37,25 @@ pub mod sdk_error;
 pub mod supervisor;
 pub mod telemetry;
 pub mod transfer;
-#[cfg(not(feature="prusti"))]
 pub mod upgrade_chain;
 pub mod util;
 pub mod worker;
+
+#[cfg(feature="prusti")]
+#[extern_spec]
+impl<T, E: std::fmt::Debug> Result<T, E> {
+    #[pure]
+    pub fn is_ok(&self) -> bool {
+        match self {
+            Ok(_) => true,
+            Err(_) => false
+        }
+    }
+    #[requires(self.is_ok())]
+    pub fn unwrap(self) -> T {
+        match self {
+            Ok(t) => t,
+            Err(e) => unreachable!()
+        }
+    }
+}

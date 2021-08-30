@@ -46,6 +46,7 @@ define_error! {
 
 impl Registry {
     /// Construct a new [`Registry`] using the provided [`Config`]
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn new(config: RwArc<Config>) -> Self {
         Self {
             config,
@@ -117,7 +118,7 @@ pub fn spawn_chain_runtime(
     todo!()
 }
 
-    #[cfg(not(feature="prusti"))]
+#[cfg(not(feature="prusti"))]
 pub fn spawn_chain_runtime(
     config: &RwArc<Config>,
     chain_id: &ChainId,

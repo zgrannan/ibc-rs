@@ -548,6 +548,8 @@ impl CosmosSdkChain {
             .map_err(Error::key_base)
     }
 
+    // TODO: Perhaps this actually can be verified.
+    #[cfg_attr(feature="prusti", trusted)]
     fn key_bytes(&self, key: &KeyEntry) -> Result<Vec<u8>, Error> {
         let mut pk_buf = Vec::new();
         prost::Message::encode(&key.public_key.public_key.to_bytes(), &mut pk_buf).unwrap();
