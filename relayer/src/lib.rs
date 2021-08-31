@@ -41,6 +41,19 @@ pub mod upgrade_chain;
 pub mod util;
 pub mod worker;
 
+#[cfg(feature = "prusti")]
+#[extern_spec]
+impl <T> std::option::Option<T> {
+    #[pure]
+    #[ensures(matches!(*self, Some(_)) == result)]
+    pub fn is_some(&self) -> bool;
+
+    #[pure]
+    #[requires(self.is_some())]
+    pub fn unwrap(self) -> T;
+
+}
+
 #[cfg(feature="prusti")]
 #[extern_spec]
 impl<T, E: std::fmt::Debug> Result<T, E> {
