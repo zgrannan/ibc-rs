@@ -58,6 +58,7 @@ pub struct KeyEntry {
 #[cfg_attr(not(feature="prusti"), derive(Debug, Eq, Serialize, Deserialize, Clone, PartialEq))]
 pub struct KeyFile {
     pub name: String,
+    #[cfg(not(feature="prusti"))]
     pub r#type: String,
     pub address: String,
     pub pubkey: String,
