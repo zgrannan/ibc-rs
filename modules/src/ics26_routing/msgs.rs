@@ -17,7 +17,8 @@ use crate::ics26_routing::error::Error;
 use tendermint_proto::Protobuf;
 
 /// Enumeration of all messages that the local ICS26 module is capable of routing.
-#[derive(Clone)]
+#[cfg_attr(not(feature="prusti"), derive(Clone))]
+#[cfg_attr(feature="prusti", derive(PrustiClone))]
 pub enum Ics26Envelope {
     Ics2Msg(ClientMsg),
     Ics3Msg(ConnectionMsg),

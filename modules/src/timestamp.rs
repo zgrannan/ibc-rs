@@ -23,7 +23,7 @@ pub const ZERO_DURATION: Duration = Duration::from_secs(0);
 #[derive(Eq, PartialEq, Copy, Clone, Hash)]
 #[cfg_attr(not(feature="prusti"), derive(Debug), derive(Deserialize), derive(Serialize))]
 pub struct Timestamp {
-    time: Option<DateTime<Utc>>,
+    pub time: Option<DateTime<Utc>>,
 }
 
 #[cfg(feature = "prusti")]

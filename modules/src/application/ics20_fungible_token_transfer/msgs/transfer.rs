@@ -20,7 +20,9 @@ pub const TYPE_URL: &str = "/ibc.applications.transfer.v1.MsgTransfer";
 ///
 /// Message definition for the "packet receiving" datagram.
 ///
-#[derive(Clone)]
+#[cfg_attr(feature="prusti", invariant(self.timeout_timestamp.time.is_some() ==> self.timeout_timestamp.time.unwrap().timestamp_nanos() >= 0))]
+#[cfg_attr(feature="prusti", derive(PrustiClone))]
+#[cfg_attr(not(feature="prusti"), derive(Clone))]
 pub struct MsgTransfer {
     /// the port on which the packet will be sent
     pub source_port: PortId,
@@ -91,7 +93,7 @@ panic!("No") // panic!("No") // panic!("No") //         let timeout_timestamp = 
 }
 
 impl From<MsgTransfer> for RawMsgTransfer {
-    #[cfg_attr(feature="prusti", trusted)]
+    // #[cfg_attr(feature="prusti", trusted)]
     fn from(domain_msg: MsgTransfer) -> Self {
         RawMsgTransfer {
             source_port: domain_msg.source_port.to_string(),

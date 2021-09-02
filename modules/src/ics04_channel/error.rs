@@ -317,6 +317,7 @@ define_error! {
 }
 
 impl Error {
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn chan_open_confirm_proof_verification(e: Error) -> Error {
         e.add_trace(&"Handshake proof verification fails at ChannelOpenConfirm")
     }

@@ -21,7 +21,8 @@ use crate::tx_msg::Msg;
 pub(crate) const TYPE_URL: &str = "/ibc.core.client.v1.MsgUpgradeClient";
 
 /// A type of message that triggers the upgrade of an on-chain (IBC) client.
-#[derive(Clone)]
+#[cfg_attr(feature="prusti", derive(PrustiClone))]
+#[cfg_attr(not(feature="prusti"), derive(Clone))]
 pub struct MsgUpgradeAnyClient {
     pub client_id: ClientId,
     pub client_state: AnyClientState,
@@ -31,6 +32,7 @@ pub struct MsgUpgradeAnyClient {
     pub signer: Signer,
 }
 impl MsgUpgradeAnyClient {
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn new(
         client_id: ClientId,
         client_state: AnyClientState,
@@ -54,10 +56,12 @@ impl Msg for MsgUpgradeAnyClient {
     type ValidationError = crate::ics24_host::error::ValidationError;
     type Raw = RawMsgUpgradeClient;
 
+    #[cfg_attr(feature="prusti", trusted)]
     fn route(&self) -> String {
         crate::keys::ROUTER_KEY.to_string()
     }
 
+    #[cfg_attr(feature="prusti", trusted)]
     fn type_url(&self) -> String {
         TYPE_URL.to_string()
     }
@@ -66,6 +70,7 @@ impl Msg for MsgUpgradeAnyClient {
 impl Protobuf<RawMsgUpgradeClient> for MsgUpgradeAnyClient {}
 
 impl From<MsgUpgradeAnyClient> for RawMsgUpgradeClient {
+    #[cfg_attr(feature="prusti", trusted)]
     fn from(dm_msg: MsgUpgradeAnyClient) -> RawMsgUpgradeClient {
         let c_bytes: CommitmentProofBytes = dm_msg.proof_upgrade_client.into();
         let cs_bytes: CommitmentProofBytes = dm_msg.proof_upgrade_consensus_state.into();
@@ -84,7 +89,7 @@ impl From<MsgUpgradeAnyClient> for RawMsgUpgradeClient {
 impl TryFrom<RawMsgUpgradeClient> for MsgUpgradeAnyClient {
     type Error = Error;
 
-#[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted)]
     fn try_from(proto_msg: RawMsgUpgradeClient) -> Result<Self, Self::Error> {
         let raw_client_state = proto_msg
             .client_state

@@ -86,9 +86,9 @@ impl From<IdentifiedConnectionEnd> for RawIdentifiedConnection {
     }
 }
 
-#[derive(Eq, PartialEq, Clone, Hash)]
-#[cfg_attr(not(feature="prusti"), derive(Debug), derive(Deserialize), derive(Serialize))]
-#[cfg_attr(feature="prusti", derive(PrustiDebug), derive(PrustiDeserialize), derive(PrustiSerialize))]
+#[derive(Hash)]
+#[cfg_attr(not(feature="prusti"), derive(Debug), derive(Deserialize), derive(Serialize), derive(Eq), derive(PartialEq), derive(Clone))]
+#[cfg_attr(feature="prusti", derive(PrustiDebug), derive(PrustiDeserialize), derive(PrustiSerialize), derive(PrustiEq), derive(PrustiPartialEq), derive(PrustiClone))]
 pub struct ConnectionEnd {
     pub state: State,
     client_id: ClientId,
@@ -98,6 +98,7 @@ pub struct ConnectionEnd {
 }
 
 impl Default for ConnectionEnd {
+    #[cfg_attr(feature="prusti", trusted)]
     fn default() -> Self {
         Self {
             state: State::Uninitialized,
@@ -113,7 +114,7 @@ impl Protobuf<RawConnectionEnd> for ConnectionEnd {}
 
 impl TryFrom<RawConnectionEnd> for ConnectionEnd {
     type Error = Error;
-#[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted)]
     fn try_from(value: RawConnectionEnd) -> Result<Self, Self::Error> {
         let state = value.state.try_into()?;
         if state == State::Uninitialized {
@@ -195,6 +196,7 @@ impl ConnectionEnd {
     }
 
     /// Helper function to compare the counterparty of this end with another counterparty.
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn counterparty_matches(&self, other: &Counterparty) -> bool {
         self.counterparty.eq(other)
     }
@@ -228,6 +230,7 @@ impl ConnectionEnd {
     }
 
     /// Getter for the counterparty.
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn counterparty(&self) -> &Counterparty {
         &self.counterparty
     }

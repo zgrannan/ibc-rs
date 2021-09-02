@@ -1,3 +1,6 @@
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
+
 use core::convert::TryInto;
 use prost_types::Any;
 
@@ -49,6 +52,7 @@ pub fn decode(message: Any) -> Result<Ics26Envelope, Error> {
 /// Top-level ICS dispatch function. Routes incoming IBC messages to their corresponding module.
 /// Returns a handler output with empty result of type `HandlerOutput<()>` which contains the log
 /// and events produced after processing the input `msg`.
+#[cfg_attr(feature="prusti", trusted)]
 pub fn dispatch<Ctx>(ctx: &mut Ctx, msg: Ics26Envelope) -> Result<HandlerOutput<()>, Error>
 where
     Ctx: Ics26Context,
