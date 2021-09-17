@@ -46,6 +46,7 @@ define_error! {
 }
 
 impl WorkerError {
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn send<T>(e: crossbeam_channel::SendError<T>) -> WorkerError {
         WorkerError::channel_send(format!("{}", e))
     }

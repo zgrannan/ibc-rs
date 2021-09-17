@@ -414,6 +414,7 @@ define_error! {
 }
 
 impl Error {
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn send<T>(_: crossbeam_channel::SendError<T>) -> Error {
         Error::channel_send()
     }

@@ -23,6 +23,7 @@ pub enum Permission {
 }
 
 impl Permission {
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn and(self, other: &Self) -> Self {
         if matches!(self, Self::Allow) && matches!(other, Self::Allow) {
             Self::Allow
@@ -77,6 +78,7 @@ impl FilterPolicy {
     ///
     /// May encounter errors caused by failed queries. Any such error
     /// is propagated and nothing is cached.
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn control_connection_end_and_client(
         &mut self,
         registry: &mut Registry,
@@ -134,6 +136,7 @@ impl FilterPolicy {
     /// be allowed or not.
     /// Returns `true` if client is allowed, `false` otherwise.
     /// Caches the result.
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn control_client(
         &mut self,
         host_chain: &ChainId,
@@ -186,6 +189,7 @@ impl FilterPolicy {
         permission
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn control_client_object(
         &mut self,
         registry: &mut Registry,
@@ -221,6 +225,7 @@ impl FilterPolicy {
         Ok(self.control_client(&obj.dst_chain_id, &obj.dst_client_id, &client_state))
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn control_conn_object(
         &mut self,
         registry: &mut Registry,
@@ -343,6 +348,7 @@ impl FilterPolicy {
         Ok(permission)
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn control_chan_object(
         &mut self,
         registry: &mut Registry,
@@ -356,6 +362,7 @@ impl FilterPolicy {
         )
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn control_packet_object(
         &mut self,
         registry: &mut Registry,

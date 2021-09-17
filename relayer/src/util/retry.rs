@@ -8,6 +8,7 @@ pub use retry::{
     retry_with_index, Error as RetryError, OperationResult as RetryResult,
 };
 
+#[cfg_attr(feature="prusti_fast", trusted)]
 pub fn retry_count<E>(err: &RetryError<E>) -> u64 {
     match err {
         RetryError::Operation {
@@ -26,6 +27,7 @@ pub struct ConstantGrowth {
 }
 
 impl ConstantGrowth {
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub const fn new(delay: Duration, incr: Duration) -> Self {
         Self { delay, incr }
     }
@@ -37,6 +39,7 @@ impl ConstantGrowth {
 }
 
 impl From<Duration> for ConstantGrowth {
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn from(delay: Duration) -> Self {
         Self::new(delay, Duration::from_secs(1))
     }
@@ -45,6 +48,7 @@ impl From<Duration> for ConstantGrowth {
 impl Iterator for ConstantGrowth {
     type Item = Duration;
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn next(&mut self) -> Option<Duration> {
         let delay = self.delay;
 
@@ -57,6 +61,7 @@ impl Iterator for ConstantGrowth {
 }
 
 #[cfg(not(feature="prusti"))]
+#[cfg_attr(feature="prusti_fast", trusted)]
 pub fn clamp(
     strategy: impl Iterator<Item = Duration>,
     max_delay: Duration,
@@ -68,6 +73,7 @@ pub fn clamp(
 }
 
 #[cfg(not(feature="prusti"))]
+#[cfg_attr(feature="prusti_fast", trusted)]
 pub fn clamp_total(
     strategy: impl Iterator<Item = Duration>,
     max_delay: Duration,

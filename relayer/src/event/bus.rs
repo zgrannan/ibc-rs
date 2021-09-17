@@ -1,3 +1,5 @@
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
 use std::collections::VecDeque;
 
 use crossbeam_channel as channel;
@@ -7,24 +9,28 @@ pub struct EventBus<T> {
 }
 
 impl<T> Default for EventBus<T> {
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn default() -> Self {
         Self::new()
     }
 }
 
 impl<T> EventBus<T> {
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn new() -> Self {
         Self {
             txs: VecDeque::new(),
         }
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn subscribe(&mut self) -> channel::Receiver<T> {
         let (tx, rx) = channel::unbounded();
         self.txs.push_back(tx);
         rx
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn broadcast(&mut self, value: T)
     where
         T: Clone,

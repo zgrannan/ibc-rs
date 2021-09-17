@@ -45,6 +45,7 @@ mod retry_strategy {
     const INITIAL_DELAY: Duration = Duration::from_secs(1); // 1 second
 
     #[cfg(not(feature="prusti"))]
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn default() -> impl Iterator<Item = Duration> {
         clamp_total(Fibonacci::from(INITIAL_DELAY), MAX_DELAY, MAX_TOTAL_DELAY)
     }
@@ -97,6 +98,7 @@ define_error! {
 }
 
 impl Error {
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn canceled_or_generic(e: RpcError) -> Self {
         match (e.code(), e.data()) {
             (Code::ServerError, Some(msg)) if msg.contains("subscription was cancelled") => {
@@ -216,6 +218,7 @@ impl EventMonitor {
     ///
     /// ## Note
     /// For this change to take effect, one has to [`subscribe`] again.
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn set_queries(&mut self, queries: Vec<Query>) {
         self.event_queries = queries;
     }
@@ -224,11 +227,13 @@ impl EventMonitor {
     ///
     /// ## Note
     /// For this change to take effect, one has to [`subscribe`] again.
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn add_query(&mut self, query: Query) {
         self.event_queries.push(query);
     }
 
     /// Clear the current subscriptions, and subscribe again to all queries.
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn subscribe(&mut self) -> Result<()> {
         let mut subscriptions = vec![];
 
@@ -256,6 +261,7 @@ impl EventMonitor {
     }
 
     #[cfg(not(feature="prusti"))]
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn try_reconnect(&mut self) -> Result<()> {
         trace!(
             "[{}] trying to reconnect to WebSocket endpoint {}",
@@ -300,6 +306,7 @@ impl EventMonitor {
     }
 
     /// Try to resubscribe to events
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn try_resubscribe(&mut self) -> Result<()> {
         trace!("[{}] trying to resubscribe to events", self.chain_id);
         self.subscribe()
@@ -313,6 +320,7 @@ impl EventMonitor {
     fn reconnect(&mut self) {}
 
     #[cfg(not(feature="prusti"))]
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn reconnect(&mut self) {
         let result = retry_with_index(retry_strategy::default(), |_| {
             // Try to reconnect
@@ -346,6 +354,7 @@ impl EventMonitor {
 
     /// Event monitor loop
     #[allow(clippy::while_let_loop)]
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn run(mut self) {
         debug!("[{}] starting event monitor", self.chain_id);
 
@@ -459,6 +468,7 @@ impl EventMonitor {
     /// and to trigger a clearing of packets, as this typically means that we have
     /// missed a bunch of events which were emitted after the subscrption was closed.
     /// In that case, this error will be handled in [`Supervisor::handle_batch`].
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn propagate_error(&self, error: Error) -> Result<()> {
         self.tx_batch
             .send(Err(error))
@@ -468,6 +478,7 @@ impl EventMonitor {
     }
 
     /// Collect the IBC events from the subscriptions
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn process_batch(&self, batch: EventBatch) -> Result<()> {
         self.tx_batch
             .send(Ok(batch))
@@ -479,6 +490,7 @@ impl EventMonitor {
 
 /// Collect the IBC events from an RPC event
 #[cfg(not(feature="prusti"))]
+#[cfg_attr(feature="prusti_fast", trusted)]
 fn collect_events(
     chain_id: &ChainId,
     event: RpcEvent,
@@ -489,6 +501,7 @@ fn collect_events(
 
 /// Convert a stream of RPC event into a stream of event batches
 #[cfg(not(feature="prusti"))]
+#[cfg_attr(feature="prusti_fast", trusted)]
 fn stream_batches(
     subscriptions: Box<SubscriptionStream>,
     chain_id: ChainId,
@@ -525,6 +538,7 @@ fn stream_batches(
 
 /// Sort the given events by putting the NewBlock event first,
 /// and leaving the other events as is.
+#[cfg_attr(feature="prusti_fast", trusted)]
 fn sort_events(events: &mut Vec<IbcEvent>) {
     events.sort_by(|a, b| match (a, b) {
         (IbcEvent::NewBlock(_), _) => Ordering::Less,
@@ -533,6 +547,7 @@ fn sort_events(events: &mut Vec<IbcEvent>) {
 }
 
 #[cfg(not(feature="prusti"))]
+#[cfg_attr(feature="prusti_fast", trusted)]
 async fn run_driver(
     driver: WebSocketClientDriver,
     tx: mpsc::UnboundedSender<tendermint_rpc::Error>,

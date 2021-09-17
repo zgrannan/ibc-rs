@@ -65,6 +65,7 @@ impl Chain for MockChain {
     type ConsensusState = TendermintConsensusState;
     type ClientState = TendermintClientState;
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn bootstrap(config: ChainConfig, _rt: Arc<Runtime>) -> Result<Self, Error> {
         let (sender, receiver) = channel::unbounded();
         Ok(MockChain {
@@ -80,10 +81,12 @@ impl Chain for MockChain {
         })
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn init_light_client(&self) -> Result<Box<dyn LightClient<Self>>, Error> {
         Ok(Box::new(MockLightClient::new(self)))
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn init_event_monitor(
         &self,
         _rt: Arc<Runtime>,
@@ -92,22 +95,27 @@ impl Chain for MockChain {
         Ok((self.event_receiver.clone(), tx))
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn id(&self) -> &ChainId {
         &self.config.id
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn shutdown(self) -> Result<(), Error> {
         Ok(())
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn keybase(&self) -> &KeyRing {
         unimplemented!()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn keybase_mut(&mut self) -> &mut KeyRing {
         unimplemented!()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn send_msgs(&mut self, proto_msgs: Vec<Any>) -> Result<Vec<IbcEvent>, Error> {
         // Use the ICS18Context interface to submit the set of messages.
         let events = self.context.send(proto_msgs).map_err(Error::ics18)?;
@@ -115,22 +123,27 @@ impl Chain for MockChain {
         Ok(events)
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn get_signer(&mut self) -> Result<Signer, Error> {
         Ok(get_dummy_account_id())
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn get_key(&mut self) -> Result<KeyEntry, Error> {
         unimplemented!()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn query_commitment_prefix(&self) -> Result<CommitmentPrefix, Error> {
         unimplemented!()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn query_latest_height(&self) -> Result<Height, Error> {
         Ok(self.context.query_latest_height())
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn query_clients(
         &self,
         _request: QueryClientStatesRequest,
@@ -138,6 +151,7 @@ impl Chain for MockChain {
         unimplemented!()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn query_client_state(
         &self,
         client_id: &ClientId,
@@ -153,6 +167,7 @@ impl Chain for MockChain {
         Ok(client_state)
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn query_upgraded_client_state(
         &self,
         _height: Height,
@@ -160,6 +175,7 @@ impl Chain for MockChain {
         unimplemented!()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn query_connection(
         &self,
         _connection_id: &ConnectionId,
@@ -168,6 +184,7 @@ impl Chain for MockChain {
         unimplemented!()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn query_client_connections(
         &self,
         _request: QueryClientConnectionsRequest,
@@ -175,6 +192,7 @@ impl Chain for MockChain {
         unimplemented!()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn query_connections(
         &self,
         _request: QueryConnectionsRequest,
@@ -182,6 +200,7 @@ impl Chain for MockChain {
         unimplemented!()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn query_connection_channels(
         &self,
         _request: QueryConnectionChannelsRequest,
@@ -189,6 +208,7 @@ impl Chain for MockChain {
         unimplemented!()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn query_channels(
         &self,
         _request: QueryChannelsRequest,
@@ -196,6 +216,7 @@ impl Chain for MockChain {
         unimplemented!()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn query_channel(
         &self,
         _port_id: &PortId,
@@ -205,6 +226,7 @@ impl Chain for MockChain {
         unimplemented!()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn query_channel_client_state(
         &self,
         _request: QueryChannelClientStateRequest,
@@ -212,6 +234,7 @@ impl Chain for MockChain {
         unimplemented!()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn query_packet_commitments(
         &self,
         _request: QueryPacketCommitmentsRequest,
@@ -219,6 +242,7 @@ impl Chain for MockChain {
         unimplemented!()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn query_unreceived_packets(
         &self,
         _request: QueryUnreceivedPacketsRequest,
@@ -226,6 +250,7 @@ impl Chain for MockChain {
         unimplemented!()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn query_packet_acknowledgements(
         &self,
         _request: QueryPacketAcknowledgementsRequest,
@@ -233,6 +258,7 @@ impl Chain for MockChain {
         unimplemented!()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn query_unreceived_acknowledgements(
         &self,
         _request: QueryUnreceivedAcksRequest,
@@ -240,6 +266,7 @@ impl Chain for MockChain {
         unimplemented!()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn query_next_sequence_receive(
         &self,
         _request: QueryNextSequenceReceiveRequest,
@@ -247,10 +274,12 @@ impl Chain for MockChain {
         unimplemented!()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn query_txs(&self, _request: QueryTxRequest) -> Result<Vec<IbcEvent>, Error> {
         unimplemented!()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn proven_client_state(
         &self,
         _client_id: &ClientId,
@@ -259,6 +288,7 @@ impl Chain for MockChain {
         unimplemented!()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn proven_connection(
         &self,
         _connection_id: &ConnectionId,
@@ -267,6 +297,7 @@ impl Chain for MockChain {
         unimplemented!()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn proven_client_consensus(
         &self,
         _client_id: &ClientId,
@@ -276,6 +307,7 @@ impl Chain for MockChain {
         unimplemented!()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn proven_channel(
         &self,
         _port_id: &PortId,
@@ -285,6 +317,7 @@ impl Chain for MockChain {
         unimplemented!()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn proven_packet(
         &self,
         _packet_type: PacketMsgType,
@@ -296,6 +329,7 @@ impl Chain for MockChain {
         unimplemented!()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn build_client_state(&self, height: Height) -> Result<Self::ClientState, Error> {
         let client_state = TendermintClientState::new(
             self.id().clone(),
@@ -316,6 +350,7 @@ impl Chain for MockChain {
         Ok(client_state)
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn build_consensus_state(
         &self,
         light_block: Self::LightBlock,
@@ -323,6 +358,7 @@ impl Chain for MockChain {
         Ok(Self::ConsensusState::from(light_block.signed_header.header))
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn build_header(
         &self,
         trusted_height: Height,
@@ -355,6 +391,7 @@ impl Chain for MockChain {
         Ok((target_header, supporting_headers))
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn query_consensus_states(
         &self,
         request: QueryConsensusStatesRequest,
@@ -365,6 +402,7 @@ impl Chain for MockChain {
     }
 
     /// Performs a query to retrieve the identifiers of all connections.
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn query_consensus_state(
         &self,
         _client_id: ClientId,
@@ -374,6 +412,7 @@ impl Chain for MockChain {
         unimplemented!()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn query_upgraded_consensus_state(
         &self,
         _height: Height,

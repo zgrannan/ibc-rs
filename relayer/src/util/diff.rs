@@ -18,6 +18,7 @@ pub enum Change<K> {
 
 #[cfg(feature="prusti")]
 impl <K> PartialEq for Change<K> {
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn eq(&self, other: &Change<K>) -> bool {
         false
     }
@@ -26,6 +27,7 @@ impl <K> PartialEq for Change<K> {
 
 impl<K> Change<K> {
     /// Return the key affected by this change.
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn key(&self) -> &K {
         match self {
             Self::Added(ref k) => k,
@@ -35,6 +37,7 @@ impl<K> Change<K> {
     }
 
     /// Return the key affected by this change.
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn into_key(self) -> K {
         match self {
             Self::Added(k) => k,
@@ -72,6 +75,7 @@ where
 /// An entry is deemed to have been updated when `!eq(prev_value, next_value)`.
 ///
 /// Returns a list of changes holding on to the key affected by the change.
+#[cfg_attr(feature="prusti_fast", trusted)]
 pub fn gdiff<'a, K, V, F>(
     prev: &'a HashMap<K, V>,
     next: &'a HashMap<K, V>,

@@ -34,6 +34,7 @@ pub struct Link {
 }
 
 impl Link {
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn new(channel: Channel) -> Self {
         Self {
             a_to_b: RelayPath::new(channel),

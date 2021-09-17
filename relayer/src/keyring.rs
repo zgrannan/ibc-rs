@@ -265,6 +265,7 @@ pub enum KeyRing {
 }
 
 impl KeyRing {
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn new(store: Store, account_prefix: &str, chain_id: &ChainId) -> Result<Self, Error> {
         match store {
             Store::Memory => Ok(Self::Memory(Memory::new(account_prefix.to_string()))),
@@ -289,6 +290,7 @@ impl KeyRing {
         }
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn get_key(&self, key_name: &str) -> Result<KeyEntry, Error> {
         match self {
             KeyRing::Memory(m) => m.get_key(key_name),
@@ -311,6 +313,7 @@ impl KeyRing {
     }
 
     /// Get key from seed file
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn key_from_seed_file(
         &self,
         key_file_content: &str,

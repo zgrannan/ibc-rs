@@ -1,3 +1,6 @@
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
+
 use std::sync::Arc;
 
 use prost_types::Any;
@@ -115,6 +118,7 @@ pub trait Chain: Sized {
 
     fn query_commitment_prefix(&self) -> Result<CommitmentPrefix, Error>;
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn query_compatible_versions(&self) -> Result<Vec<Version>, Error> {
         // TODO - do a real chain query
         Ok(get_compatible_versions())
@@ -197,6 +201,7 @@ pub trait Chain: Sized {
     ) -> Result<ChannelEnd, Error>;
 
     // TODO: Introduce a newtype for the module version string
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn query_module_version(&self, port_id: &PortId) -> String {
         // TODO - query the chain, currently hardcoded
         if port_id.as_str() == "transfer" {
@@ -298,6 +303,7 @@ pub trait Chain: Sized {
 
     /// Builds the required proofs and the client state for connection handshake messages.
     /// The proofs and client state must be obtained from queries at same height.
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn build_connection_proofs_and_client_state(
         &self,
         message_type: ConnectionMsgType,
@@ -372,6 +378,7 @@ pub trait Chain: Sized {
     }
 
     /// Builds the proof for channel handshake messages.
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn build_channel_proofs(
         &self,
         port_id: &PortId,
@@ -387,6 +394,7 @@ pub trait Chain: Sized {
     }
 
     /// Builds the proof for packet messages.
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn build_packet_proofs(
         &self,
         packet_type: PacketMsgType,

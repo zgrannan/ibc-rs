@@ -39,6 +39,7 @@ pub use packet::PacketWorker;
 pub struct WorkerId(u64);
 
 impl WorkerId {
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn new(id: u64) -> Self {
         Self(id)
     }
@@ -70,6 +71,7 @@ pub enum Worker {
 }
 
 impl fmt::Display for Worker {
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "[{} <-> {}]", self.chains().a.id(), self.chains().b.id(),)
     }
@@ -133,6 +135,7 @@ impl Worker {
     }
 
     /// Run the worker event loop.
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn run(self, msg_tx: Sender<WorkerMsg>) {
         let id = self.id();
         let object = self.object();
@@ -159,6 +162,7 @@ impl Worker {
         info!("[{}] worker stopped", name);
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn id(&self) -> WorkerId {
         match self {
             Self::Client(id, _) => *id,

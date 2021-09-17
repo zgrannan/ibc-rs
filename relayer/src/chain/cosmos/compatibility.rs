@@ -37,6 +37,7 @@ pub struct AppInfo {
 }
 
 impl std::fmt::Display for AppInfo {
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}:{}-{}", self.app_name, self.version, self.git_commit)
     }

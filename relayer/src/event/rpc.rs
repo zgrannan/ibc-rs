@@ -14,6 +14,7 @@ use ibc::{
     ics04_channel::events as ChannelEvents,
 };
 
+#[cfg_attr(feature="prusti_fast", trusted)]
 pub fn get_all_events(
     chain_id: &ChainId,
     result: RpcEvent,
@@ -211,6 +212,7 @@ pub fn build_event(mut object: RawObject) -> Result<IbcEvent, EventError> {
 /// "connection_open_init.connection_id"          -> "ancaconnonetestsec",
 /// "connection_open_init.counterparty_client_id" -> "testclientsec", "testclientsecsec",
 /// ```
+#[cfg_attr(feature="prusti_fast", trusted)]
 fn extract_helper(events: &HashMap<String, Vec<String>>) -> Result<Vec<(String, u32)>, String> {
     let actions = events.get("message.action").ok_or("Incorrect Event Type")?;
 

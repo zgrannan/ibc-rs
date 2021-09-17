@@ -56,12 +56,14 @@ impl Registry {
     }
 
     /// Return the size of the registry, i.e., the number of distinct chain runtimes.
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn size(&self) -> usize {
         self.handles.len()
     }
 
     /// Return an iterator overall the chain handles managed by the registry.
     #[cfg(not(feature="prusti"))]
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn chains(&self) -> impl Iterator<Item = &Box<dyn ChainHandle>> {
         self.handles.values()
     }
@@ -70,6 +72,7 @@ impl Registry {
     ///
     /// If there is no handle yet, this will first spawn the runtime and then
     /// return its handle.
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn get_or_spawn(&mut self, chain_id: &ChainId) -> Result<Box<dyn ChainHandle>, SpawnError> {
         self.spawn(chain_id)?;
 
@@ -85,6 +88,7 @@ impl Registry {
     /// only if the registry does not contain a handle for that runtime already.
     ///
     /// Returns whether or not the runtime was actually spawned.
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn spawn(&mut self, chain_id: &ChainId) -> Result<bool, SpawnError> {
         if !self.handles.contains_key(chain_id) {
             let handle = spawn_chain_runtime(&self.config, chain_id, self.rt.clone())?;
@@ -97,6 +101,7 @@ impl Registry {
     }
 
     /// Shutdown the runtime associated with the given chain identifier.
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn shutdown(&mut self, chain_id: &ChainId) {
         if let Some(handle) = self.handles.remove(chain_id) {
             if let Err(e) = handle.shutdown() {

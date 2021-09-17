@@ -34,6 +34,7 @@ pub struct PacketWorker {
 }
 
 impl PacketWorker {
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn new(
         path: Packet,
         chains: ChainHandlePair,
@@ -57,6 +58,7 @@ impl PacketWorker {
     }
 
     #[cfg(not(feature="prusti"))]
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn run(self) -> Result<(), RunError> {
         let mut link = Link::new_from_opts(
             self.chains.a.clone(),
@@ -172,16 +174,19 @@ impl PacketWorker {
     }
 
     /// Get a reference to the uni chan path worker's chains.
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn chains(&self) -> &ChainHandlePair {
         &self.chains
     }
 
     /// Get a reference to the client worker's object.
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn object(&self) -> &Packet {
         &self.path
     }
 
     #[cfg(feature = "telemetry")]
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn packet_metrics(&self, summary: &RelaySummary) {
         self.receive_packet_metrics(summary);
         self.acknowledgment_metrics(summary);
@@ -189,6 +194,7 @@ impl PacketWorker {
     }
 
     #[cfg(feature = "telemetry")]
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn receive_packet_metrics(&self, summary: &RelaySummary) {
         use ibc::events::IbcEvent::WriteAcknowledgement;
 
@@ -207,6 +213,7 @@ impl PacketWorker {
     }
 
     #[cfg(feature = "telemetry")]
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn acknowledgment_metrics(&self, summary: &RelaySummary) {
         use ibc::events::IbcEvent::AcknowledgePacket;
 
@@ -225,6 +232,7 @@ impl PacketWorker {
     }
 
     #[cfg(feature = "telemetry")]
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn timeout_metrics(&self, summary: &RelaySummary) {
         use ibc::events::IbcEvent::TimeoutPacket;
         let count = summary

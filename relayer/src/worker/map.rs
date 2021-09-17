@@ -30,6 +30,7 @@ pub struct WorkerMap {
 impl WorkerMap {
     /// Create a new worker map, which will spawn workers with
     /// the given channel for sending messages back to the [`Supervisor`].
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn new(msg_tx: Sender<WorkerMsg>, telemetry: Telemetry) -> Self {
         Self {
             workers: HashMap::new(),
@@ -40,12 +41,14 @@ impl WorkerMap {
     }
 
     /// Returns `true` if there is a spawned [`Worker`] associated with the given [`Object`].
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn contains(&self, object: &Object) -> bool {
         self.workers.contains_key(object)
     }
 
     /// Remove the [`Worker`] associated with the given [`Object`] from
     /// the map and wait for its thread to terminate.
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn remove_stopped(&mut self, id: WorkerId, object: Object) -> bool {
         match self.workers.remove(&object) {
             Some(handle) if handle.id() == id => {
@@ -93,6 +96,7 @@ impl WorkerMap {
     /// from the chain with the given [`ChainId`].
     /// See: [`Object::notify_new_block`]
     #[cfg(not(feature="prusti"))]
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn to_notify<'a>(
         &'a self,
         src_chain_id: &'a ChainId,
@@ -110,6 +114,7 @@ impl WorkerMap {
     /// with the given [`Object`].
     ///
     /// This function will spawn a new [`Worker`] if one does not exists already.
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn get_or_spawn(
         &mut self,
         object: Object,
@@ -128,6 +133,7 @@ impl WorkerMap {
     /// Spawn a new [`Worker`], only if one does not exists already.
     ///
     /// Returns whether or not the worker was actually spawned.
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn spawn(
         &mut self,
         src: Box<dyn ChainHandle>,
@@ -145,6 +151,7 @@ impl WorkerMap {
     }
 
     /// Force spawn a worker for the given [`Object`].
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn spawn_worker(
         &mut self,
         src: Box<dyn ChainHandle>,
@@ -164,6 +171,7 @@ impl WorkerMap {
         )
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn next_worker_id(&mut self) -> WorkerId {
         let id = self.latest_worker_id.next();
         self.latest_worker_id = id;
@@ -203,6 +211,7 @@ impl WorkerMap {
     }
 
     /// Shutdown the worker associated with the given [`Object`].
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn shutdown_worker(&mut self, object: &Object) {
         if let Some(handle) = self.workers.remove(object) {
             telemetry!(self.telemetry.worker(metric_type(object), -1));
@@ -221,6 +230,7 @@ impl WorkerMap {
 
     /// Get an iterator over the worker map's objects.
     #[cfg(not(feature="prusti"))]
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn objects(&self) -> impl Iterator<Item = (WorkerId, &Object)> {
         self.workers
             .iter()
@@ -229,6 +239,7 @@ impl WorkerMap {
 }
 
 #[cfg(feature = "telemetry")]
+#[cfg_attr(feature="prusti_fast", trusted)]
 fn metric_type(o: &Object) -> ibc_telemetry::state::WorkerType {
     use ibc_telemetry::state::WorkerType::*;
     match o {

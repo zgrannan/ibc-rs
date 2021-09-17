@@ -51,11 +51,13 @@ mod retry_strategy {
     const INITIAL_DELAY: Duration = Duration::from_secs(1); // 1 second
 
     #[cfg(not(feature="prusti"))]
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn default() -> impl Iterator<Item = Duration> {
         clamp_total(Fibonacci::from(INITIAL_DELAY), MAX_DELAY, MAX_TOTAL_DELAY)
     }
 }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
 pub fn from_retry_error(e: retry::Error<ChannelError>, description: String) -> ChannelError {
     match e {
         retry::Error::Operation {
@@ -101,22 +103,27 @@ impl ChannelSide {
         }
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn chain_id(&self) -> ChainId {
         self.chain.id()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn client_id(&self) -> &ClientId {
         &self.client_id
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn connection_id(&self) -> &ConnectionId {
         &self.connection_id
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn port_id(&self) -> &PortId {
         &self.port_id
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn channel_id(&self) -> Option<&ChannelId> {
         self.channel_id.as_ref()
     }
@@ -347,46 +354,57 @@ impl Channel {
         Ok((handshake_channel, a_channel.state))
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn src_chain(&self) -> &Box<dyn ChainHandle> {
         &self.a_side.chain
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn dst_chain(&self) -> &Box<dyn ChainHandle> {
         &self.b_side.chain
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn src_client_id(&self) -> &ClientId {
         &self.a_side.client_id
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn dst_client_id(&self) -> &ClientId {
         &self.b_side.client_id
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn src_connection_id(&self) -> &ConnectionId {
         &self.a_side.connection_id
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn dst_connection_id(&self) -> &ConnectionId {
         &self.b_side.connection_id
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn src_port_id(&self) -> &PortId {
         &self.a_side.port_id
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn dst_port_id(&self) -> &PortId {
         &self.b_side.port_id
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn src_channel_id(&self) -> Option<&ChannelId> {
         self.a_side.channel_id()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn dst_channel_id(&self) -> Option<&ChannelId> {
         self.b_side.channel_id()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn flipped(&self) -> Channel {
         Channel {
             ordering: self.ordering,
@@ -397,6 +415,7 @@ impl Channel {
         }
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn do_chan_open_init_and_send(&mut self) -> Result<(), ChannelError> {
         let event = self.flipped().build_chan_open_init_and_send()?;
 
@@ -416,6 +435,7 @@ impl Channel {
     }
 
     #[cfg(not(feature="prusti"))]
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn do_chan_open_init_and_send_with_retry(&mut self) -> Result<(), ChannelError> {
         retry_with_index(retry_strategy::default(), |_| {
             self.do_chan_open_init_and_send()
@@ -432,6 +452,7 @@ impl Channel {
         Ok(())
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn do_chan_open_try_and_send(&mut self) -> Result<(), ChannelError> {
         let event = self.build_chan_open_try_and_send().map_err(|e| {
             error!("Failed ChanTry {:?}: {:?}", self.b_side, e);
@@ -451,6 +472,7 @@ impl Channel {
     }
 
     #[cfg(not(feature="prusti"))]
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn do_chan_open_try_and_send_with_retry(&mut self) -> Result<(), ChannelError> {
         retry_with_index(retry_strategy::default(), |_| {
             self.do_chan_open_try_and_send()
@@ -624,6 +646,7 @@ impl Channel {
       Ok(())
     }
     #[cfg(not(feature="prusti"))]
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn do_chan_open_finalize_with_retry(&self) -> Result<(), ChannelError> {
         retry_with_index(retry_strategy::default(), |_| self.do_chan_open_finalize()).map_err(
             |err| {
@@ -639,6 +662,7 @@ impl Channel {
     }
 
     /// Executes the channel handshake protocol (ICS004)
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn handshake(&mut self) -> Result<(), ChannelError> {
         self.do_chan_open_init_and_send_with_retry()?;
         self.do_chan_open_try_and_send_with_retry()?;
@@ -670,6 +694,7 @@ impl Channel {
         .map_err(|e| ChannelError::query_channel(channel_id.clone(), e))
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn handshake_step(&mut self, state: State) -> Result<Vec<IbcEvent>, ChannelError> {
         match (state, self.counterparty_state()?) {
             (State::Init, State::Uninitialized) => Ok(vec![self.build_chan_open_try_and_send()?]),
@@ -681,6 +706,7 @@ impl Channel {
         }
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn step_state(&mut self, state: State, index: u64) -> RetryResult<(), u64> {
         let done = '🥳';
 
@@ -696,6 +722,7 @@ impl Channel {
         }
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn step_event(&mut self, event: IbcEvent, index: u64) -> RetryResult<(), u64> {
         let state = match event {
             IbcEvent::OpenInitChannel(_) => State::Init,
@@ -1387,6 +1414,7 @@ impl Channel {
     }
 }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
 pub fn extract_channel_id(event: &IbcEvent) -> Result<&ChannelId, ChannelError> {
     match event {
         IbcEvent::OpenInitChannel(ev) => ev.channel_id(),
@@ -1407,6 +1435,7 @@ pub enum ChannelMsgType {
     CloseConfirm,
 }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
 fn check_destination_channel_state(
     channel_id: ChannelId,
     existing_channel: ChannelEnd,

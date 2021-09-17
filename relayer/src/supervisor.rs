@@ -96,6 +96,7 @@ impl Supervisor {
     /// Returns `true` if the relayer should filter based on
     /// client state attributes, e.g., trust threshold.
     /// Returns `false` otherwise.
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn client_filter_enabled(&self) -> bool {
         // Currently just a wrapper over the global filter.
         self.config.read().expect("poisoned lock").global.filter
@@ -104,10 +105,12 @@ impl Supervisor {
     /// Returns `true` if the relayer should filter based on
     /// channel identifiers.
     /// Returns `false` otherwise.
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn channel_filter_enabled(&self) -> bool {
         self.config.read().expect("poisoned lock").global.filter
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn relay_packets_on_channel(
         &self,
         chain_id: &ChainId,
@@ -125,6 +128,7 @@ impl Supervisor {
             .packets_on_channel_allowed(chain_id, port_id, channel_id)
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn relay_on_object(&mut self, chain_id: &ChainId, object: &Object) -> bool {
         // No filter is enabled, bail fast.
         if !self.channel_filter_enabled() && !self.client_filter_enabled() {
@@ -178,6 +182,7 @@ impl Supervisor {
 
     /// Collect the events we are interested in from an [`EventBatch`],
     /// and maps each [`IbcEvent`] to their corresponding [`Object`].
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn collect_events(
         &self,
         src_chain: &dyn ChainHandle,
@@ -344,6 +349,7 @@ impl Supervisor {
     }
 
     /// Create a new `SpawnContext` for spawning workers.
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn spawn_context(&mut self, mode: SpawnMode) -> SpawnContext<'_> {
         SpawnContext::new(
             &self.config,
@@ -356,6 +362,7 @@ impl Supervisor {
 
     /// Spawn all the workers necessary for the relayer to connect
     /// and relay between all the chains in the configurations.
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn spawn_workers(&mut self, mode: SpawnMode) {
         self.spawn_context(mode).spawn_workers();
     }
@@ -368,6 +375,7 @@ impl Supervisor {
     }
 
     #[cfg(not(feature="prusti"))]
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn run(mut self) -> Result<(), Error> {
         self.spawn_workers(SpawnMode::Startup);
 
@@ -401,6 +409,7 @@ impl Supervisor {
     }
 
     /// Subscribe to the events emitted by the chains the supervisor is connected to.
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn init_subscriptions(&mut self) -> Result<Vec<(BoxHandle, Subscription)>, Error> {
         let chains = &self.config.read().expect("poisoned lock").chains;
 
@@ -440,6 +449,7 @@ impl Supervisor {
     ///
     /// Returns an [`CmdEffect`] which instructs the caller as to
     /// whether or not the event subscriptions needs to be reset or not.
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn handle_cmd(&mut self, cmd: SupervisorCmd) -> CmdEffect {
         match cmd {
             SupervisorCmd::UpdateConfig(update) => self.update_config(update),
@@ -454,6 +464,7 @@ impl Supervisor {
     /// Dump the state of the supervisor into a [`SupervisorState`] value,
     /// and send it back through the given channel.
     #[cfg(not(feature="prusti"))]
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn dump_state(&self, reply_to: Sender<SupervisorState>) -> CmdEffect {
         let chains = self.registry.chains().map(|c| c.id()).collect_vec();
         let state = SupervisorState::new(chains, self.workers.objects());
@@ -466,6 +477,7 @@ impl Supervisor {
     ///
     /// Returns an [`CmdEffect`] which instructs the caller as to
     /// whether or not the event subscriptions needs to be reset or not.
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn update_config(&mut self, update: ConfigUpdate) -> CmdEffect {
         match update {
             ConfigUpdate::Add(config) => self.add_chain(config),
@@ -569,6 +581,7 @@ impl Supervisor {
     ///
     /// If the update had any effect, returns [`CmdEffect::ConfigChanged`] as
     /// subscriptions need to be reset to take into account the newly added chain.
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn update_chain(&mut self, config: ChainConfig) -> CmdEffect {
         info!(chain.id=%config.id, "updating existing chain");
 
@@ -578,6 +591,7 @@ impl Supervisor {
     }
 
     /// Process the given [`WorkerMsg`] sent by a worker.
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn handle_worker_msg(&mut self, msg: WorkerMsg) {
         match msg {
             WorkerMsg::Stopped(id, object) => {
@@ -588,6 +602,7 @@ impl Supervisor {
 
     /// Process the given batch if it does not contain any errors,
     /// output the errors on the console otherwise.
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn handle_batch(&mut self, chain: Box<dyn ChainHandle>, batch: ArcBatch) {
         let chain_id = chain.id();
 
@@ -614,6 +629,7 @@ impl Supervisor {
     }
 
     /// Process a batch of events received from a chain.
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn process_batch(
         &mut self,
         src_chain: Box<dyn ChainHandle>,
@@ -674,6 +690,7 @@ impl Supervisor {
         Ok(())
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn clear_pending_packets(&mut self, chain_id: &ChainId) -> Result<(), Error> {
         for worker in self.workers.workers_for_chain(chain_id) {
             worker.clear_pending_packets().map_err(Error::worker)?;
@@ -697,6 +714,7 @@ pub struct CollectedEvents {
 }
 
 impl CollectedEvents {
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn new(height: Height, chain_id: ChainId) -> Self {
         Self {
             height,
@@ -707,6 +725,7 @@ impl CollectedEvents {
     }
 
     /// Whether the collected events include a [`NewBlock`] event.
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn has_new_block(&self) -> bool {
         self.new_block.is_some()
     }

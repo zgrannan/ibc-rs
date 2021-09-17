@@ -1,3 +1,6 @@
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
+
 use std::{thread, time::Duration};
 
 use crossbeam_channel::Receiver;
@@ -26,6 +29,7 @@ pub struct ClientWorker {
 }
 
 impl ClientWorker {
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn new(
         client: Client,
         chains: ChainHandlePair,
@@ -47,6 +51,7 @@ impl ClientWorker {
     }
 
     #[cfg(not(feature="prusti"))]
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn run(self) -> Result<(), RunError> {
         let mut client = ForeignClient::restore(
             self.client.dst_client_id.clone(),
@@ -105,6 +110,7 @@ impl ClientWorker {
         Ok(())
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn process_cmd(&self, cmd: WorkerCmd, client: &ForeignClient) -> Next {
         match cmd {
             WorkerCmd::IbcEvents { batch } => {
@@ -138,6 +144,7 @@ impl ClientWorker {
         }
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn detect_misbehaviour(&self, client: &ForeignClient, update: Option<UpdateClient>) -> bool {
         match client.detect_misbehaviour_and_submit_evidence(update) {
             MisbehaviourResults::ValidClient => false,
@@ -158,11 +165,13 @@ impl ClientWorker {
     }
 
     /// Get a reference to the client worker's chains.
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn chains(&self) -> &ChainHandlePair {
         &self.chains
     }
 
     /// Get a reference to the client worker's object.
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn object(&self) -> &Client {
         &self.client
     }

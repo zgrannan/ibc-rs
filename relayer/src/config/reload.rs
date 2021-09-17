@@ -79,6 +79,7 @@ impl ConfigReload {
     /// [`ConfigUpdate`]s to the [`crate::supervisor::Supervisor`].
     ///
     /// See also: [`ConfigReload::update_config`]
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn reload(&self) -> Result<bool, Error> {
         let new_config = super::load(&self.path).map_err(Error::LoadFailed)?;
         self.update_config(new_config)
@@ -86,6 +87,7 @@ impl ConfigReload {
 
     /// Compute a diff between the current configuration and the given one,
     /// and send the computed [`ConfigUpdate`]s to the [`crate::supervisor::Supervisor`].
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn update_config(&self, new: Config) -> Result<bool, Error> {
         let updates = self.compute_updates(&new)?;
 
@@ -109,6 +111,7 @@ impl ConfigReload {
     /// Compute a set of configuration updates that, when applied to the
     /// current configuration by the supervisor, will result in the given
     /// configuration.
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn compute_updates(&self, new: &Config) -> Result<Vec<ConfigUpdate>, Error> {
         let cur = self.current.read().map_err(|_| Error::PoisonedLock)?;
 
@@ -143,6 +146,7 @@ impl ConfigReload {
 
 // Compare configs for equality using their JSON representation until
 // https://github.com/informalsystems/tendermint-rs/issues/919 is fixed.
+#[cfg_attr(feature="prusti_fast", trusted)]
 fn config_eq(a: &ChainConfig, b: &ChainConfig) -> bool {
     match (serde_json::to_value(a), serde_json::to_value(b)) {
         (Ok(a), Ok(b)) => a == b,

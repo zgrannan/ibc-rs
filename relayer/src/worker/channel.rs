@@ -1,3 +1,6 @@
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
+
 use std::{thread, time::Duration};
 
 use crossbeam_channel::Receiver;
@@ -23,6 +26,7 @@ pub struct ChannelWorker {
 }
 
 impl ChannelWorker {
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn new(
         channel: Channel,
         chains: ChainHandlePair,
@@ -44,6 +48,7 @@ impl ChannelWorker {
     }
 
     #[cfg(not(feature="prusti"))]
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub(crate) fn run(self) -> Result<(), RunError> {
         let a_chain = self.chains.a.clone();
         let b_chain = self.chains.b.clone();
@@ -132,11 +137,13 @@ impl ChannelWorker {
     }
 
     /// Get a reference to the uni chan path worker's chains.
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn chains(&self) -> &ChainHandlePair {
         &self.chains
     }
 
     /// Get a reference to the client worker's object.
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn object(&self) -> &Channel {
         &self.channel
     }

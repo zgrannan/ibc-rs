@@ -1,3 +1,5 @@
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
 use crossbeam_channel::Sender;
 use ibc::ics24_host::identifier::ChainId;
 
@@ -25,6 +27,7 @@ pub enum CmdEffect {
 }
 
 impl CmdEffect {
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn or(self, other: Self) -> Self {
         match (self, other) {
             (CmdEffect::ConfigChanged, _) => CmdEffect::ConfigChanged,

@@ -3,6 +3,10 @@
 import json
 import sys
 
+VERIFIED = "VERIFIED"
+VERIFIED_FAST = "VERIFIED_FAST"
+SKIPPED = "SKIPPED"
+
 def acc(node, *path):
     result = node
     for e in path:
@@ -16,7 +20,7 @@ def acc(node, *path):
             raise err
     return result
 
-def is_trusted_attr_args(args):
+def attr_arg_name_eq(args, name):
     fields = args["fields"][2]["0"]
     feature_word = fields[0][0]["fields"][0]["kind"]["fields"][0] == "feature"
     if not feature_word:
@@ -24,8 +28,13 @@ def is_trusted_attr_args(args):
     eq = acc(fields[1][0], "fields", 0, "kind") == "Eq"
     if not eq:
         return False
-    prusti_word = acc(fields[2][0], "fields", 0, "kind", "fields", 0, "symbol") == "prusti"
-    return prusti_word
+    return acc(fields[2][0], "fields", 0, "kind", "fields", 0, "symbol") == name
+
+def is_verified_fast_attr_args(args):
+    return attr_arg_name_eq(args, "prusti_fast")
+
+def is_trusted_attr_args(args):
+    return attr_arg_name_eq(args, "prusti")
 
 def is_test_attr_args(args):
     fields = args["fields"][2]["0"]
@@ -43,14 +52,26 @@ def is_trusted_attr(field):
     else:
         return False
 
+def is_verified_fast_attr(field):
+    attr_fn_name = get_attr_fn_name(field)
+    if attr_fn_name == "cfg_attr":
+        return is_verified_fast_attr_args(field["args"])
+    else:
+        return False
+
 def is_test_attr(field):
     is_cfg_attr = get_attr_fn_name(field) == "cfg"
     if not is_cfg_attr:
         return False
     return is_test_attr_args(field["args"])
 
-def check_is_trusted(node):
-    return check_has_attr(node, is_trusted_attr)
+def get_label(node):
+    if check_has_attr(node, is_trusted_attr):
+        return SKIPPED
+    elif check_has_attr(node, is_verified_fast_attr):
+        return VERIFIED_FAST
+    else:
+        return VERIFIED
 
 def check_is_test(node):
     return check_has_attr(node, is_test_attr)
@@ -68,7 +89,6 @@ def check_has_attr(node, check):
 def should_skip(variant):
     return variant == "Use" or variant == "Const" or variant == "Struct" or variant == "TyAlias" or variant == "Enum" or variant == "MacCall" or variant == "MacroDef"
 
-result = {}
 
 def get_name(node):
     return node["ident"]["name"]
@@ -78,6 +98,9 @@ def extend_path(path, name):
         return name
     else:
         return path + "." + name
+
+result = {}
+
 
 def visit(node, path):
     variant = node["kind"]["variant"]
@@ -106,21 +129,25 @@ def visit(node, path):
             visit(child, extend_path(path, get_name(node)))
         return
     if variant == "Fn":
+        if not node["kind"]["fields"][0]["3"]: # Interface
+            return
+        # print(json.dumps(node))
+        # print(",")
         full_name = extend_path(path, get_name(node))
-        is_trusted = check_is_trusted(node)
-        if full_name in result and result[full_name]:
+        label = get_label(node)
+        char_number = node["ident"]["span"]["lo"]
+        if full_name in result and result[full_name][0] == SKIPPED:
             return
         else:
-            result[full_name] = is_trusted
+            result[full_name] = (label, char_number)
         return
     raise Exception(f"Unknown AST node type {variant}")
 
 ast = json.loads(sys.stdin.read())
+# print("[")
 for node in ast["items"]:
     visit(node, "")
+# print("0]")
 
-for name, trusted in result.items():
-    if trusted:
-        print(f"{name} skipped")
-    else:
-        print(f"{name} verified")
+for name, (label, line_number) in result.items():
+    print(f"{name} {label} {line_number}")

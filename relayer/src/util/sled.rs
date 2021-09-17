@@ -34,10 +34,12 @@ impl<V> SingleDb<V>
 where
     V: Serialize + DeserializeOwned,
 {
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn get(&self, db: &sled::Db) -> Result<Option<V>, Error> {
         self.fetch(db, &())
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn set(&self, db: &sled::Db, value: &V) -> Result<(), Error> {
         self.insert(db, &(), value)
     }
@@ -71,12 +73,14 @@ where
     K: Serialize,
     V: Serialize + DeserializeOwned,
 {
+#[cfg_attr(feature="prusti_fast", trusted)]
     fn prefixed_key(&self, mut key_bytes: Vec<u8>) -> Vec<u8> {
         let mut prefix_bytes = self.prefix.clone();
         prefix_bytes.append(&mut key_bytes);
         prefix_bytes
     }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn fetch(&self, db: &sled::Db, key: &K) -> Result<Option<V>, Error> {
         let key_bytes = serde_cbor::to_vec(&key).map_err(Error::cbor)?;
 
@@ -104,6 +108,7 @@ where
     //     Ok(exists)
     // }
 
+#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn insert(&self, db: &sled::Db, key: &K, value: &V) -> Result<(), Error> {
         let key_bytes = serde_cbor::to_vec(&key).map_err(Error::cbor)?;
 

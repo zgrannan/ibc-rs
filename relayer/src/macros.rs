@@ -16,6 +16,7 @@ pub mod profiling {
     }
 
     impl Timer {
+#[cfg_attr(feature="prusti_fast", trusted)]
         pub fn new(name: String) -> Self {
             let depth = DEPTH.with(|d| d.fetch_add(1, Relaxed));
             let pad = "   ".repeat(depth);
@@ -30,6 +31,7 @@ pub mod profiling {
     }
 
     impl Drop for Timer {
+#[cfg_attr(feature="prusti_fast", trusted)]
         fn drop(&mut self) {
             let elapsed = self.start.elapsed().as_millis();
 
