@@ -52,7 +52,7 @@ pub struct ProdChainHandle {
 }
 
 impl ProdChainHandle {
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn new(chain_id: ChainId, sender: channel::Sender<ChainRequest>) -> Self {
         Self {
             chain_id,
@@ -60,7 +60,7 @@ impl ProdChainHandle {
         }
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn send<F, O>(&self, f: F) -> Result<O, Error>
     where
         F: FnOnce(ReplyTo<O>) -> ChainRequest,
@@ -76,17 +76,17 @@ impl ProdChainHandle {
 }
 
 impl ChainHandle for ProdChainHandle {
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn id(&self) -> ChainId {
         self.chain_id.clone()
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn shutdown(&self) -> Result<(), Error> {
         self.send(|reply_to| ChainRequest::Shutdown { reply_to })
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn subscribe(&self) -> Result<Subscription, Error> {
         self.send(|reply_to| ChainRequest::Subscribe { reply_to })
     }
@@ -105,12 +105,12 @@ impl ChainHandle for ProdChainHandle {
         })
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn get_signer(&self) -> Result<Signer, Error> {
         self.send(|reply_to| ChainRequest::Signer { reply_to })
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn get_key(&self) -> Result<KeyEntry, Error> {
         self.send(|reply_to| ChainRequest::Key { reply_to })
     }
@@ -129,7 +129,7 @@ impl ChainHandle for ProdChainHandle {
         })
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_latest_height(&self) -> Result<Height, Error> {
         self.send(|reply_to| ChainRequest::QueryLatestHeight { reply_to })
     }

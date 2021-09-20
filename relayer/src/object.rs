@@ -135,11 +135,11 @@ impl Packet {
             self.src_channel_id, self.src_port_id, self.src_chain_id, self.dst_chain_id,
         )
     }
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn src_port_id(&self) -> &PortId {
         &self.src_port_id
     }
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn src_channel_id(&self) -> &ChannelId {
         &self.src_channel_id
     }
@@ -206,7 +206,7 @@ impl Object {
     /// Returns `true` if this [`Object`] is for a [`Worker`] which is interested
     /// in new block events originating from the chain with the given [`ChainId`].
     /// Returns `false` otherwise.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn notify_new_block(&self, src_chain_id: &ChainId) -> bool {
         match self {
             Object::Client(_) => false,
@@ -217,7 +217,7 @@ impl Object {
     }
 
     /// Returns whether or not this object pertains to the given chain.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn for_chain(&self, chain_id: &ChainId) -> bool {
         match self {
             Object::Client(c) => &c.src_chain_id == chain_id || &c.dst_chain_id == chain_id,
@@ -228,7 +228,7 @@ impl Object {
     }
 
     /// Return the type of object
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn object_type(&self) -> ObjectType {
         match self {
             Object::Client(_) => ObjectType::Client,
@@ -267,7 +267,7 @@ impl From<Channel> for Object {
 }
 
 impl From<Packet> for Object {
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(p: Packet) -> Self {
         Self::Packet(p)
     }
@@ -306,7 +306,7 @@ impl Object {
         }
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn short_name(&self) -> String {
         match self {
             Self::Client(ref client) => client.short_name(),
@@ -486,7 +486,7 @@ impl Object {
     }
 
     /// Build the object associated with the given [`SendPacket`] event.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn for_send_packet(
         e: &SendPacket,
         src_chain: &dyn ChainHandle,
@@ -508,7 +508,7 @@ impl Object {
     }
 
     /// Build the object associated with the given [`WriteAcknowledgement`] event.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn for_write_ack(
         e: &WriteAcknowledgement,
         src_chain: &dyn ChainHandle,
@@ -530,7 +530,7 @@ impl Object {
     }
 
     /// Build the object associated with the given [`TimeoutPacket`] event.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn for_timeout_packet(
         e: &TimeoutPacket,
         src_chain: &dyn ChainHandle,
@@ -552,7 +552,7 @@ impl Object {
     }
 
     /// Build the object associated with the given [`CloseInit`] event.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn for_close_init_channel(
         e: &CloseInit,
         src_chain: &dyn ChainHandle,

@@ -17,7 +17,7 @@ pub enum EncodedPubKey {
 }
 
 impl EncodedPubKey {
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn into_bytes(self) -> Vec<u8> {
         match self {
             EncodedPubKey::Bech32(vec) => vec,
@@ -43,7 +43,7 @@ pub struct ProtoAny {
 
 /// This method is the workhorse for deserializing
 /// the `key` field from a public key.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 fn deserialize_key<'de, D>(deser: D) -> Result<Vec<u8>, D::Error>
 where
     D: Deserializer<'de>,
@@ -60,7 +60,7 @@ where
 impl FromStr for EncodedPubKey {
     type Err = Error;
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         // Try to deserialize into a JSON Value.
         let maybe_json: Result<ProtoAny, _> = serde_json::from_str(s);

@@ -94,7 +94,7 @@ pub struct ChainRuntime<C: Chain> {
 
 impl<C: Chain + Send + 'static> ChainRuntime<C> {
     /// Spawns a new runtime for a specific Chain implementation.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn spawn(
         config: ChainConfig,
         rt: Arc<TokioRuntime>,
@@ -115,7 +115,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
     }
 
     /// Initializes a runtime for a given chain, and spawns the associated thread
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn init(
         chain: C,
         light_client: Box<dyn LightClient<C>>,
@@ -140,7 +140,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
     }
 
     /// Basic constructor
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn new(
         chain: C,
         light_client: Box<dyn LightClient<C>>,
@@ -162,7 +162,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
         }
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn handle(&self) -> Box<dyn ChainHandle> {
         let chain_id = self.chain.id().clone();
         let sender = self.request_sender.clone();
@@ -356,7 +356,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn subscribe(&mut self, reply_to: ReplyTo<Subscription>) -> Result<(), Error> {
         let subscription = self.event_bus.subscribe();
 
@@ -365,7 +365,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn send_msgs(
         &mut self,
         proto_msgs: Vec<prost_types::Any>,
@@ -378,7 +378,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_latest_height(&self, reply_to: ReplyTo<Height>) -> Result<(), Error> {
         let latest_height = self.chain.query_latest_height();
 
@@ -387,7 +387,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn get_signer(&mut self, reply_to: ReplyTo<Signer>) -> Result<(), Error> {
         let result = self.chain.get_signer();
 
@@ -396,7 +396,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn get_key(&mut self, reply_to: ReplyTo<KeyEntry>) -> Result<(), Error> {
         let result = self.chain.get_key();
 
@@ -405,7 +405,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn module_version(&self, port_id: PortId, reply_to: ReplyTo<String>) -> Result<(), Error> {
         let result = self.chain.query_module_version(&port_id);
 
@@ -414,7 +414,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn build_header(
         &mut self,
         trusted_height: Height,
@@ -442,7 +442,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
     }
 
     /// Constructs a client state for the given height
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn build_client_state(
         &self,
         height: Height,
@@ -459,7 +459,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
     }
 
     /// Constructs a consensus state for the given height
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn build_consensus_state(
         &mut self,
         trusted: Height,
@@ -480,7 +480,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
     }
 
     /// Constructs AnyMisbehaviour for the update event
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn check_misbehaviour(
         &mut self,
         update_event: UpdateClient,
@@ -496,7 +496,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn build_connection_proofs_and_client_state(
         &self,
         message_type: ConnectionMsgType,
@@ -520,7 +520,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_clients(
         &self,
         request: QueryClientStatesRequest,
@@ -533,7 +533,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_client_connections(
         &self,
         request: QueryClientConnectionsRequest,
@@ -546,7 +546,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_client_state(
         &self,
         client_id: ClientId,
@@ -563,7 +563,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_upgraded_client_state(
         &self,
         height: Height,
@@ -579,7 +579,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_consensus_states(
         &self,
         request: QueryConsensusStatesRequest,
@@ -592,7 +592,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_consensus_state(
         &self,
         client_id: ClientId,
@@ -609,7 +609,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_upgraded_consensus_state(
         &self,
         height: Height,
@@ -625,7 +625,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_commitment_prefix(&self, reply_to: ReplyTo<CommitmentPrefix>) -> Result<(), Error> {
         let prefix = self.chain.query_commitment_prefix();
 
@@ -634,7 +634,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_compatible_versions(&self, reply_to: ReplyTo<Vec<Version>>) -> Result<(), Error> {
         let versions = self.chain.query_compatible_versions();
 
@@ -643,7 +643,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_connection(
         &self,
         connection_id: ConnectionId,
@@ -657,7 +657,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_connections(
         &self,
         request: QueryConnectionsRequest,
@@ -670,7 +670,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_connection_channels(
         &self,
         request: QueryConnectionChannelsRequest,
@@ -683,7 +683,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_channels(
         &self,
         request: QueryChannelsRequest,
@@ -696,7 +696,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_channel(
         &self,
         port_id: PortId,
@@ -711,7 +711,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_channel_client_state(
         &self,
         request: QueryChannelClientStateRequest,
@@ -724,7 +724,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn proven_client_state(
         &self,
         client_id: ClientId,
@@ -741,7 +741,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn proven_connection(
         &self,
         connection_id: ConnectionId,
@@ -755,7 +755,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn proven_client_consensus(
         &self,
         client_id: ClientId,
@@ -773,7 +773,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn build_channel_proofs(
         &self,
         port_id: PortId,
@@ -790,7 +790,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn build_packet_proofs(
         &self,
         packet_type: PacketMsgType,
@@ -809,7 +809,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_packet_commitments(
         &self,
         request: QueryPacketCommitmentsRequest,
@@ -822,7 +822,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_unreceived_packets(
         &self,
         request: QueryUnreceivedPacketsRequest,
@@ -835,7 +835,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_packet_acknowledgements(
         &self,
         request: QueryPacketAcknowledgementsRequest,
@@ -848,7 +848,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_unreceived_acknowledgement(
         &self,
         request: QueryUnreceivedAcksRequest,
@@ -861,7 +861,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_next_sequence_receive(
         &self,
         request: QueryNextSequenceReceiveRequest,
@@ -874,7 +874,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_txs(
         &self,
         request: QueryTxRequest,

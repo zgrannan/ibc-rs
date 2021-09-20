@@ -236,7 +236,7 @@ pub struct ForeignClient {
 /// chain, and the second chain identifier is the
 /// destination (which hosts the client) chain.
 impl fmt::Display for ForeignClient {
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
@@ -252,7 +252,7 @@ impl ForeignClient {
     /// Creates a new foreign client on `dst_chain`. Blocks until the client is created, or
     /// an error occurs.
     /// Post-condition: `dst_chain` hosts an IBC client for `src_chain`.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn new(
         dst_chain: Box<dyn ChainHandle>,
         src_chain: Box<dyn ChainHandle>,
@@ -273,7 +273,7 @@ impl ForeignClient {
         Ok(client)
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn restore(
         id: ClientId,
         dst_chain: Box<dyn ChainHandle>,
@@ -291,7 +291,7 @@ impl ForeignClient {
     /// identifier for the target chain of this client (i.e., the chain whose headers this client is
     /// verifying) is consistent with `expected_target_chain`, and if so, return a new
     /// `ForeignClient` representing this client.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn find(
         expected_target_chain: Box<dyn ChainHandle>,
         host_chain: Box<dyn ChainHandle>,
@@ -414,18 +414,18 @@ impl ForeignClient {
     }
 
     /// Returns a handle to the chain hosting this client.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn dst_chain(&self) -> Box<dyn ChainHandle> {
         self.dst_chain.clone()
     }
 
     /// Returns a handle to the chain whose headers this client is sourcing (the source chain).
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn src_chain(&self) -> Box<dyn ChainHandle> {
         self.src_chain.clone()
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn id(&self) -> &ClientId {
         &self.id
     }
@@ -519,7 +519,7 @@ impl ForeignClient {
     }
 
     /// Sends the client creation transaction & subsequently sets the id of this ForeignClient
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn create(&mut self) -> Result<(), ForeignClientError> {
         let event = self.build_create_client_and_send().map_err(|e| {
             error!("[{}]  failed CreateClient: {}", self, e);
@@ -580,7 +580,7 @@ impl ForeignClient {
     }
 
     /// Wrapper for build_update_client_with_trusted.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn build_update_client(
         &self,
         target_height: Height,
@@ -719,7 +719,7 @@ impl ForeignClient {
         Ok(msgs)
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn build_latest_update_client_and_send(&self) -> Result<Vec<IbcEvent>, ForeignClientError> {
         self.build_update_client_and_send(Height::zero(), Height::zero())
     }
@@ -773,7 +773,7 @@ impl ForeignClient {
     }
 
     /// Attempts to update a client using header from the latest height of its source chain.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn update(&self) -> Result<(), ForeignClientError> {
         let res = self.build_latest_update_client_and_send()?;
 
@@ -947,7 +947,7 @@ impl ForeignClient {
     /// - a lot of the logic here is derived from the behavior of the only implemented client
     /// (ics07-tendermint) and might not be general enough.
     ///
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn detect_misbehaviour(
         &self,
         mut update: Option<UpdateClient>,
@@ -1122,7 +1122,7 @@ impl ForeignClient {
         Ok(events)
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn detect_misbehaviour_and_submit_evidence(
         &self,
         update_event: Option<UpdateClient>,
@@ -1194,7 +1194,7 @@ pub enum MisbehaviourResults {
     VerificationError,
 }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 pub fn extract_client_id(event: &IbcEvent) -> Result<&ClientId, ForeignClientError> {
     match event {
         IbcEvent::CreateClient(ev) => Ok(ev.client_id()),

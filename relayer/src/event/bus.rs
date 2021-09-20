@@ -9,28 +9,28 @@ pub struct EventBus<T> {
 }
 
 impl<T> Default for EventBus<T> {
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn default() -> Self {
         Self::new()
     }
 }
 
 impl<T> EventBus<T> {
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn new() -> Self {
         Self {
             txs: VecDeque::new(),
         }
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn subscribe(&mut self) -> channel::Receiver<T> {
         let (tx, rx) = channel::unbounded();
         self.txs.push_back(tx);
         rx
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn broadcast(&mut self, value: T)
     where
         T: Clone,

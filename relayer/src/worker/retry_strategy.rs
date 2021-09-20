@@ -11,7 +11,7 @@ const INITIAL_DELAY: Duration = Duration::from_millis(200);
 const MAX_RETRY_DURATION: Duration = Duration::from_secs(2);
 
 #[cfg(not(feature="prusti"))]
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 pub fn worker_default_strategy() -> impl Iterator<Item = Duration> {
     let strategy = ConstantGrowth::new(INITIAL_DELAY, DELAY_INCR);
     clamp_total(strategy, MAX_DELAY, MAX_RETRY_DURATION)

@@ -56,7 +56,7 @@ pub struct OperationalData {
 }
 
 impl OperationalData {
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn new(proofs_height: Height, target: OperationalDataTarget) -> Self {
         OperationalData {
             proofs_height,
@@ -73,7 +73,7 @@ impl OperationalData {
 
     /// Returns all the messages in this operational data, plus prepending the client update message
     /// if necessary.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn assemble_msgs(&self, relay_path: &RelayPath) -> Result<Vec<Any>, LinkError> {
         if self.batch.is_empty() {
             warn!("assemble_msgs() method call on an empty OperationalData!");
@@ -118,7 +118,7 @@ impl OperationalData {
 }
 
 impl fmt::Display for OperationalData {
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,

@@ -36,7 +36,7 @@ impl <'de> serde::Deserialize<'de> for GasPrice {
 }
 
 impl GasPrice {
-#[cfg_attr(feature="prusti_fast", trusted)]
+    #[cfg_attr(feature="prusti_fast", trusted)]
     pub const fn new(price: f64, denom: String) -> Self {
         Self { price, denom }
     }
@@ -73,7 +73,7 @@ impl Default for PacketFilter {
 impl PacketFilter {
     /// Returns true if the packets can be relayed on the channel with [`PortId`] and [`ChannelId`],
     /// false otherwise.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn is_allowed(&self, port_id: &PortId, channel_id: &ChannelId) -> bool {
         match self {
             PacketFilter::Allow(spec) => spec.contains(&(port_id.clone(), channel_id.clone())),
@@ -90,7 +90,7 @@ impl PacketFilter {
 pub struct ChannelsSpec(HashSet<(PortId, ChannelId)>);
 
 impl ChannelsSpec {
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn contains(&self, channel_port: &(PortId, ChannelId)) -> bool {
         self.0.contains(channel_port)
     }
@@ -100,32 +100,32 @@ impl ChannelsSpec {
 pub mod default {
     use super::*;
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn filter() -> bool {
         false
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn clear_packets_interval() -> u64 {
         100
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn rpc_timeout() -> Duration {
         Duration::from_secs(10)
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn trusting_period() -> Duration {
         Duration::from_secs(336 * 60 * 60) // 336 hours ~ 14 days
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn clock_drift() -> Duration {
         Duration::from_secs(5)
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn connection_delay() -> Duration {
         ZERO_DURATION
     }
@@ -182,7 +182,7 @@ impl Config {
     /// Returns true if filtering is disabled or if packets are allowed on
     /// the channel [`PortId`] [`ChannelId`] on [`ChainId`].
     /// Returns false otherwise.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn packets_on_channel_allowed(
         &self,
         chain_id: &ChainId,
@@ -199,7 +199,7 @@ impl Config {
         }
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn handshake_enabled(&self) -> bool {
         self.global.strategy == Strategy::HandshakeAndPackets
     }
@@ -249,7 +249,7 @@ impl Default for LogLevel {
 }
 
 impl fmt::Display for LogLevel {
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             LogLevel::Trace => write!(f, "trace"),
@@ -296,7 +296,7 @@ pub struct TelemetryConfig {
 }
 
 impl Default for TelemetryConfig {
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn default() -> Self {
         Self {
             enabled: false,
@@ -350,7 +350,7 @@ pub fn load(path: impl AsRef<Path>) -> Result<Config, Error> {
 }
 
 /// Serialize the given `Config` as TOML to the given config file.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 pub fn store(config: &Config, path: impl AsRef<Path>) -> Result<(), Error> {
     let mut file = if path.as_ref().exists() {
         fs::OpenOptions::new().write(true).truncate(true).open(path)

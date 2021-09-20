@@ -2,7 +2,7 @@
 use prusti_contracts::*;
 
 pub trait SplitResults: Iterator {
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn split_results<T, E>(self) -> (Vec<T>, Vec<E>)
     where
         Self: Iterator<Item = Result<T, E>> + Sized,

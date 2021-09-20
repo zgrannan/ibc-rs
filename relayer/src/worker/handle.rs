@@ -27,7 +27,7 @@ pub struct WorkerHandle {
 }
 
 impl fmt::Debug for WorkerHandle {
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("WorkerHandle")
             .field("id", &self.id)
@@ -37,7 +37,7 @@ impl fmt::Debug for WorkerHandle {
 }
 
 impl WorkerHandle {
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn new(
         id: WorkerId,
         object: Object,
@@ -53,7 +53,7 @@ impl WorkerHandle {
     }
 
     /// Send a batch of events to the worker.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn send_events(
         &self,
         height: Height,
@@ -72,7 +72,7 @@ impl WorkerHandle {
     }
 
     /// Send a batch of [`NewBlock`] event to the worker.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn send_new_block(&self, height: Height, new_block: NewBlock) -> Result<(), WorkerError> {
         self.tx
             .send(WorkerCmd::NewBlock { height, new_block })
@@ -80,7 +80,7 @@ impl WorkerHandle {
     }
 
     /// Instruct the worker to clear pending packets.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn clear_pending_packets(&self) -> Result<(), WorkerError> {
         self.tx
             .send(WorkerCmd::ClearPendingPackets)
@@ -88,13 +88,13 @@ impl WorkerHandle {
     }
 
     /// Shutdown the worker.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn shutdown(&self) -> Result<(), WorkerError> {
         self.tx.send(WorkerCmd::Shutdown).map_err(WorkerError::send)
     }
 
     /// Wait for the worker thread to finish.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn join(self) -> thread::Result<()> {
         trace!(worker = %self.object.short_name(), "worker::handle: waiting for worker loop to end");
         let res = self.thread_handle.join();
@@ -103,13 +103,13 @@ impl WorkerHandle {
     }
 
     /// Get the worker's id.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn id(&self) -> WorkerId {
         self.id
     }
 
     /// Get a reference to the worker's object.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn object(&self) -> &Object {
         &self.object
     }

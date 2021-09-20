@@ -114,7 +114,7 @@ define_error! {
 
 // The error code mapping follows the Go code at
 // ibc-go/modules/core/02-client/types/errors.go
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 fn client_error_from_code(code: u32) -> ClientError {
     match code {
         2 => ClientError::light_client_already_exists(),

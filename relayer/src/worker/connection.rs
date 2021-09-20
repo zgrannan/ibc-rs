@@ -26,7 +26,7 @@ pub struct ConnectionWorker {
 }
 
 impl ConnectionWorker {
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn new(
         connection: Connection,
         chains: ChainHandlePair,
@@ -48,7 +48,7 @@ impl ConnectionWorker {
     }
 
     #[cfg(not(feature="prusti"))]
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub(crate) fn run(self) -> Result<(), RunError> {
         let a_chain = self.chains.a.clone();
         let b_chain = self.chains.b.clone();
@@ -144,13 +144,13 @@ impl ConnectionWorker {
     }
 
     /// Get a reference to the uni chan path worker's chains.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn chains(&self) -> &ChainHandlePair {
         &self.chains
     }
 
     /// Get a reference to the client worker's object.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn object(&self) -> &Connection {
         &self.connection
     }

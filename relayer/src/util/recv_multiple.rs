@@ -3,7 +3,7 @@ use prusti_contracts::*;
 
 use crossbeam_channel::{Receiver, Select};
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 pub fn try_recv_multiple<K, T>(rs: &[(K, Receiver<T>)]) -> Option<(&K, T)> {
     // Build a list of operations.
     let mut sel = Select::new();

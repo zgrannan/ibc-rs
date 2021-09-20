@@ -64,14 +64,14 @@ impl MaxTxSize {
 }
 
 impl Default for MaxTxSize {
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn default() -> Self {
         Self(Self::DEFAULT)
     }
 }
 
 impl<'de> Deserialize<'de> for MaxTxSize {
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
@@ -90,7 +90,7 @@ impl<'de> Deserialize<'de> for MaxTxSize {
 }
 
 impl Serialize for MaxTxSize {
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -100,7 +100,7 @@ impl Serialize for MaxTxSize {
 }
 
 impl From<MaxTxSize> for usize {
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(m: MaxTxSize) -> Self {
         m.0
     }

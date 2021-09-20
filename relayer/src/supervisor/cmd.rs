@@ -27,7 +27,7 @@ pub enum CmdEffect {
 }
 
 impl CmdEffect {
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn or(self, other: Self) -> Self {
         match (self, other) {
             (CmdEffect::ConfigChanged, _) => CmdEffect::ConfigChanged,

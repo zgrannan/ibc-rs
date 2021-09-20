@@ -107,7 +107,7 @@ mod retry_strategy {
     use prusti_contracts::*;
 
     #[cfg(not(feature="prusti"))]
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn wait_for_block_commits(max_total_wait: Duration) -> impl Iterator<Item = Duration> {
         let backoff_millis = 300; // The periodic backoff
         let count: usize = (max_total_wait.as_millis() / backoff_millis as u128) as usize;
@@ -143,7 +143,7 @@ impl CosmosSdkChain {
     fn health_checkup(&self) {}
 
     #[cfg(not(feature="prusti"))]
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn health_checkup(&self) {
         async fn do_health_checkup(chain: &CosmosSdkChain) -> Result<(), Error> {
             let chain_id = chain.id();
@@ -238,7 +238,7 @@ impl CosmosSdkChain {
     ///
     /// Emits a log warning in case any error is encountered and
     /// exits early without doing subsequent validations.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn validate_params(&self) {
         #[cfg_attr(feature="prusti", trusted)]
         fn do_validate_params(chain: &CosmosSdkChain) -> Result<(), Error> {
@@ -274,7 +274,7 @@ impl CosmosSdkChain {
     }
 
     /// The unbonding period of this chain
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn unbonding_period(&self) -> Result<Duration, Error> {
         crate::time!("unbonding_period");
 
@@ -303,12 +303,12 @@ impl CosmosSdkChain {
         Ok(Duration::new(res.seconds as u64, res.nanos as u32))
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn rpc_client(&self) -> &HttpClient {
         &self.rpc_client
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn config(&self) -> &ChainConfig {
         &self.config
     }
@@ -416,19 +416,19 @@ impl CosmosSdkChain {
     }
 
     /// The maximum amount of gas the relayer is willing to pay for a transaction
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn max_gas(&self) -> u64 {
         self.config.max_gas.unwrap_or(DEFAULT_MAX_GAS)
     }
 
     /// The gas price
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn gas_price(&self) -> &GasPrice {
         &self.config.gas_price
     }
 
     /// The gas price adjustment
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn gas_adjustment(&self) -> f64 {
         self.config
             .gas_adjustment
@@ -438,7 +438,7 @@ impl CosmosSdkChain {
     /// Adjusts the fee based on the configured `gas_adjustment` to prevent out of gas errors.
     /// The actual gas cost, when a transaction is executed, may be slightly higher than the
     /// one returned by the simulation.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn apply_adjustment_to_gas(&self, gas_amount: u64) -> u64 {
         min(
             gas_amount + mul_ceil(gas_amount, self.gas_adjustment()),
@@ -459,13 +459,13 @@ impl CosmosSdkChain {
     }
 
     /// The maximum number of messages included in a transaction
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn max_msg_num(&self) -> usize {
         self.config.max_msg_num.into()
     }
 
     /// The maximum size of any transaction sent by the relayer to this chain
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn max_tx_size(&self) -> usize {
         self.config.max_tx_size.into()
     }
@@ -533,7 +533,7 @@ impl CosmosSdkChain {
         Ok((proof, height))
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn send_tx_simulate(&self, request: SimulateRequest) -> Result<SimulateResponse, Error> {
         crate::time!("tx simulate");
 
@@ -569,7 +569,7 @@ impl CosmosSdkChain {
         Ok(pk_buf)
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn key_and_bytes(&self) -> Result<(KeyEntry, Vec<u8>), Error> {
         let key = self.key()?;
         let key_bytes = self.key_bytes(&key)?;
@@ -603,23 +603,23 @@ impl CosmosSdkChain {
             .expect("account was supposedly just cached"))
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn account_number(&mut self) -> Result<u64, Error> {
         Ok(self.account()?.account_number)
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn account_sequence(&mut self) -> Result<u64, Error> {
         Ok(self.account()?.sequence)
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn incr_account_sequence(&mut self) -> Result<(), Error> {
         self.account()?.sequence += 1;
         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn signer(&self, sequence: u64) -> Result<SignerInfo, Error> {
         let (_key, pk_buf) = self.key_and_bytes()?;
         // Create a MsgSend proto Any message
@@ -639,7 +639,7 @@ impl CosmosSdkChain {
         Ok(signer_info)
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn default_fee(&self) -> Fee {
         Fee {
             amount: vec![self.max_fee_in_coins()],
@@ -649,7 +649,7 @@ impl CosmosSdkChain {
         }
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn fee_with_gas(&self, gas_limit: u64) -> Fee {
         let adjusted_gas_limit = self.apply_adjustment_to_gas(gas_limit);
         Fee {
@@ -659,7 +659,7 @@ impl CosmosSdkChain {
         }
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn signed_doc(
         &self,
         body_bytes: Vec<u8>,
@@ -794,7 +794,7 @@ impl Chain for CosmosSdkChain {
     type ConsensusState = TMConsensusState;
     type ClientState = ClientState;
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn bootstrap(config: ChainConfig, rt: Arc<TokioRuntime>) -> Result<Self, Error> {
         let rpc_client = HttpClient::new(config.rpc_addr.clone())
             .map_err(|e| Error::rpc(config.rpc_addr.clone(), e))?;
@@ -868,7 +868,7 @@ impl Chain for CosmosSdkChain {
         Ok((event_receiver, monitor_tx))
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn shutdown(self) -> Result<(), Error> {
         Ok(())
     }
@@ -878,12 +878,12 @@ impl Chain for CosmosSdkChain {
         &self.config().id
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn keybase(&self) -> &KeyRing {
         &self.keybase
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn keybase_mut(&mut self) -> &mut KeyRing {
         &mut self.keybase
     }
@@ -896,7 +896,7 @@ impl Chain for CosmosSdkChain {
     /// then it returns error.
     /// TODO - more work is required here for a smarter split maybe iteratively accumulating/ evaluating
     /// msgs in a Tx until any of the max size, max num msgs, max fee are exceeded.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn send_msgs(&mut self, proto_msgs: Vec<Any>) -> Result<Vec<IbcEvent>, Error> {
         crate::time!("send_msgs");
 
@@ -947,7 +947,7 @@ impl Chain for CosmosSdkChain {
     }
 
     /// Get the account for the signer
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn get_signer(&mut self) -> Result<Signer, Error> {
         crate::time!("get_signer");
 
@@ -962,7 +962,7 @@ impl Chain for CosmosSdkChain {
     }
 
     /// Get the signing key
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn get_key(&mut self) -> Result<KeyEntry, Error> {
         crate::time!("get_key");
 
@@ -1007,7 +1007,7 @@ impl Chain for CosmosSdkChain {
         })
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_clients(
         &self,
         request: QueryClientStatesRequest,
@@ -1061,7 +1061,7 @@ impl Chain for CosmosSdkChain {
         Ok(client_state)
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_upgraded_client_state(
         &self,
         height: ICSHeight,
@@ -1104,7 +1104,7 @@ impl Chain for CosmosSdkChain {
         Ok((tm_client_state, proof))
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_upgraded_consensus_state(
         &self,
         height: ICSHeight,
@@ -1151,7 +1151,7 @@ impl Chain for CosmosSdkChain {
     }
 
     /// Performs a query to retrieve the identifiers of all connections.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_consensus_states(
         &self,
         request: QueryConsensusStatesRequest,
@@ -1182,7 +1182,7 @@ impl Chain for CosmosSdkChain {
         Ok(consensus_states)
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_consensus_state(
         &self,
         client_id: ClientId,
@@ -1241,7 +1241,7 @@ impl Chain for CosmosSdkChain {
         Ok(ids)
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_connections(
         &self,
         request: QueryConnectionsRequest,
@@ -1343,7 +1343,7 @@ impl Chain for CosmosSdkChain {
         self.block_on(async { do_query_connection(self, connection_id, height).await })
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_connection_channels(
         &self,
         request: QueryConnectionChannelsRequest,
@@ -1376,7 +1376,7 @@ impl Chain for CosmosSdkChain {
         Ok(channels)
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_channels(
         &self,
         request: QueryChannelsRequest,
@@ -1406,7 +1406,7 @@ impl Chain for CosmosSdkChain {
         Ok(channels)
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_channel(
         &self,
         port_id: &PortId,
@@ -1423,7 +1423,7 @@ impl Chain for CosmosSdkChain {
         Ok(channel_end)
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_channel_client_state(
         &self,
         request: QueryChannelClientStateRequest,
@@ -1453,7 +1453,7 @@ impl Chain for CosmosSdkChain {
     }
 
     /// Queries the packet commitment hashes associated with a channel.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_packet_commitments(
         &self,
         request: QueryPacketCommitmentsRequest,
@@ -1486,7 +1486,7 @@ impl Chain for CosmosSdkChain {
     }
 
     /// Queries the unreceived packet sequences associated with a channel.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_unreceived_packets(
         &self,
         request: QueryUnreceivedPacketsRequest,
@@ -1513,7 +1513,7 @@ impl Chain for CosmosSdkChain {
     }
 
     /// Queries the packet acknowledgment hashes associated with a channel.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_packet_acknowledgements(
         &self,
         request: QueryPacketAcknowledgementsRequest,
@@ -1546,7 +1546,7 @@ impl Chain for CosmosSdkChain {
     }
 
     /// Queries the unreceived acknowledgements sequences associated with a channel.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_unreceived_acknowledgements(
         &self,
         request: QueryUnreceivedAcksRequest,
@@ -1572,7 +1572,7 @@ impl Chain for CosmosSdkChain {
         Ok(response.sequences)
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_next_sequence_receive(
         &self,
         request: QueryNextSequenceReceiveRequest,
@@ -1707,7 +1707,7 @@ impl Chain for CosmosSdkChain {
         }
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn proven_client_state(
         &self,
         client_id: &ClientId,
@@ -1728,7 +1728,7 @@ impl Chain for CosmosSdkChain {
         ))
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn proven_client_consensus(
         &self,
         client_id: &ClientId,
@@ -1759,7 +1759,7 @@ impl Chain for CosmosSdkChain {
         ))
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn proven_connection(
         &self,
         connection_id: &ConnectionId,
@@ -1774,7 +1774,7 @@ impl Chain for CosmosSdkChain {
         ))
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn proven_channel(
         &self,
         port_id: &PortId,
@@ -1795,7 +1795,7 @@ impl Chain for CosmosSdkChain {
         ))
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn proven_packet(
         &self,
         packet_type: PacketMsgType,
@@ -1838,7 +1838,7 @@ impl Chain for CosmosSdkChain {
         Ok((res.value, commitment_proof_bytes))
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn build_client_state(&self, height: ICSHeight) -> Result<Self::ClientState, Error> {
         // Build the client state.
         ClientState::new(
@@ -1858,7 +1858,7 @@ impl Chain for CosmosSdkChain {
         .map_err(Error::ics07)
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn build_consensus_state(
         &self,
         light_block: Self::LightBlock,
@@ -1868,7 +1868,7 @@ impl Chain for CosmosSdkChain {
         Ok(TMConsensusState::from(light_block.signed_header.header))
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn build_header(
         &self,
         trusted_height: ICSHeight,
@@ -1886,7 +1886,7 @@ impl Chain for CosmosSdkChain {
     }
 }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 fn packet_query(request: &QueryPacketEventDataRequest, seq: Sequence) -> Query {
     tendermint_rpc::query::Query::eq(
         format!("{}.packet_src_channel", request.event_id.as_str()),
@@ -1910,7 +1910,7 @@ fn packet_query(request: &QueryPacketEventDataRequest, seq: Sequence) -> Query {
     )
 }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 fn header_query(request: &QueryClientEventRequest) -> Query {
     tendermint_rpc::query::Query::eq(
         format!("{}.client_id", request.event_id.as_str()),
@@ -1925,7 +1925,7 @@ fn header_query(request: &QueryClientEventRequest) -> Query {
     )
 }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 fn tx_hash_query(request: &QueryTxHash) -> Query {
     tendermint_rpc::query::Query::eq("tx.hash", request.0.to_string())
 }
@@ -1948,7 +1948,7 @@ fn packet_from_tx_search_response(
 }
 
 #[cfg(not(feature="prusti"))]
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 fn packet_from_tx_search_response(
     chain_id: &ChainId,
     request: &QueryPacketEventDataRequest,
@@ -2001,7 +2001,7 @@ fn update_client_from_tx_search_response(
 }
 
 #[cfg(not(feature="prusti"))]
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 fn update_client_from_tx_search_response(
     chain_id: &ChainId,
     request: &QueryClientEventRequest,
@@ -2029,7 +2029,7 @@ fn update_client_from_tx_search_response(
         .map(IbcEvent::UpdateClient)
 }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 fn all_ibc_events_from_tx_search_response(chain_id: &ChainId, response: ResultTx) -> Vec<IbcEvent> {
     let height = ICSHeight::new(chain_id.version(), u64::from(response.height));
     let deliver_tx_result = response.tx_result;
@@ -2051,7 +2051,7 @@ fn all_ibc_events_from_tx_search_response(chain_id: &ChainId, response: ResultTx
 
 /// Perform a generic `abci_query`, and return the corresponding deserialized response data.
 #[cfg(not(feature="prusti"))]
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 async fn abci_query(
     chain: &CosmosSdkChain,
     path: TendermintABCIPath,
@@ -2099,7 +2099,7 @@ async fn abci_query(
 
 /// Perform a `broadcast_tx_sync`, and return the corresponding deserialized response data.
 #[cfg(not(feature="prusti"))]
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 async fn broadcast_tx_sync(chain: &CosmosSdkChain, data: Vec<u8>) -> Result<Response, Error> {
     let response = chain
         .rpc_client()
@@ -2112,7 +2112,7 @@ async fn broadcast_tx_sync(chain: &CosmosSdkChain, data: Vec<u8>) -> Result<Resp
 
 /// Uses the GRPC client to retrieve the account sequence
 #[cfg(not(feature="prusti"))]
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 async fn query_account(chain: &CosmosSdkChain, address: String) -> Result<BaseAccount, Error> {
     let mut client = ibc_proto::cosmos::auth::v1beta1::query_client::QueryClient::connect(
         chain.grpc_addr.clone(),
@@ -2175,7 +2175,7 @@ pub struct TxSyncResult {
     events: Vec<IbcEvent>,
 }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 fn auth_info_and_bytes(signer_info: SignerInfo, fee: Fee) -> Result<(AuthInfo, Vec<u8>), Error> {
     let auth_info = AuthInfo {
         signer_infos: vec![signer_info],
@@ -2205,7 +2205,7 @@ fn tx_body_and_bytes(proto_msgs: Vec<Any>) -> Result<(TxBody, Vec<u8>), Error> {
     Ok((body, body_buf))
 }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 fn calculate_fee(adjusted_gas_amount: u64, gas_price: &GasPrice) -> Coin {
     let fee_amount = mul_ceil(adjusted_gas_amount, gas_price.price);
 
@@ -2216,7 +2216,7 @@ fn calculate_fee(adjusted_gas_amount: u64, gas_price: &GasPrice) -> Coin {
 }
 
 /// Multiply `a` with `f` and round to result up to the nearest integer.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 fn mul_ceil(a: u64, f: f64) -> u64 {
     use fraction::Fraction as F;
 

@@ -20,7 +20,7 @@ pub struct LightClient {
 }
 
 impl LightClient {
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn new(chain: &MockChain) -> LightClient {
         LightClient {
             chain_id: chain.id().clone(),
@@ -28,14 +28,14 @@ impl LightClient {
     }
 
     /// Returns a LightBlock at the requested height `h`.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn light_block(&self, h: Height) -> TmLightBlock {
         HostBlock::generate_tm_block(self.chain_id.clone(), h.revision_height)
     }
 }
 
 impl super::LightClient<MockChain> for LightClient {
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn verify(
         &mut self,
         _trusted: Height,
@@ -48,12 +48,12 @@ impl super::LightClient<MockChain> for LightClient {
         })
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn fetch(&mut self, height: Height) -> Result<TmLightBlock, Error> {
         Ok(self.light_block(height))
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn check_misbehaviour(
         &mut self,
         _update: UpdateClient,
@@ -62,7 +62,7 @@ impl super::LightClient<MockChain> for LightClient {
         unimplemented!()
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn header_and_minimal_set(
         &mut self,
         trusted_height: Height,

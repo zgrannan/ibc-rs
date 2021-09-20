@@ -35,7 +35,7 @@ pub struct PacketWorker {
 }
 
 impl PacketWorker {
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn new(
         path: Packet,
         chains: ChainHandlePair,
@@ -59,7 +59,7 @@ impl PacketWorker {
     }
 
     #[cfg(not(feature="prusti"))]
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn run(self) -> Result<(), RunError> {
         let mut link = Link::new_from_opts(
             self.chains.a.clone(),
@@ -175,19 +175,19 @@ impl PacketWorker {
     }
 
     /// Get a reference to the uni chan path worker's chains.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn chains(&self) -> &ChainHandlePair {
         &self.chains
     }
 
     /// Get a reference to the client worker's object.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn object(&self) -> &Packet {
         &self.path
     }
 
     #[cfg(feature = "telemetry")]
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn packet_metrics(&self, summary: &RelaySummary) {
         self.receive_packet_metrics(summary);
         self.acknowledgment_metrics(summary);
@@ -195,7 +195,7 @@ impl PacketWorker {
     }
 
     #[cfg(feature = "telemetry")]
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn receive_packet_metrics(&self, summary: &RelaySummary) {
         use ibc::events::IbcEvent::WriteAcknowledgement;
 
@@ -214,7 +214,7 @@ impl PacketWorker {
     }
 
     #[cfg(feature = "telemetry")]
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn acknowledgment_metrics(&self, summary: &RelaySummary) {
         use ibc::events::IbcEvent::AcknowledgePacket;
 
@@ -233,7 +233,7 @@ impl PacketWorker {
     }
 
     #[cfg(feature = "telemetry")]
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn timeout_metrics(&self, summary: &RelaySummary) {
         use ibc::events::IbcEvent::TimeoutPacket;
         let count = summary

@@ -44,7 +44,7 @@ pub struct LightClient {
 }
 
 impl super::LightClient<CosmosSdkChain> for LightClient {
-    #[cfg_attr(feature="prusti_fast", trusted)]
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn header_and_minimal_set(
         &mut self,
         trusted: ibc::Height,
@@ -101,7 +101,7 @@ impl super::LightClient<CosmosSdkChain> for LightClient {
         Ok(Verified { target, supporting })
     }
 
-    #[cfg_attr(feature="prusti_fast", trusted)]
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn fetch(&mut self, height: ibc::Height) -> Result<LightBlock, Error> {
         trace!(%height, "fetching header");
 
@@ -116,7 +116,7 @@ impl super::LightClient<CosmosSdkChain> for LightClient {
     /// ## TODO
     /// - [ ] Return intermediate headers as well
     // #[cfg_attr(feature="prusti", trusted)]
-    // #[cfg_attr(feature="prusti_fast", trusted)]
+    // #[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn check_misbehaviour(
         &mut self,
         update: UpdateClient,
@@ -226,7 +226,7 @@ impl LightClient {
         ))
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn prepare_state(&self, trusted: ibc::Height) -> Result<LightClientState, Error> {
         let trusted_height =
             TMHeight::try_from(trusted.revision_height).map_err(Error::invalid_height)?;
@@ -248,7 +248,7 @@ impl LightClient {
             .map_err(|e| Error::light_client_io(self.chain_id.to_string(), e))
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn adjust_headers(
         &mut self,
         trusted_height: ibc::Height,

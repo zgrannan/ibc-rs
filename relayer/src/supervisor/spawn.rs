@@ -48,7 +48,7 @@ pub struct SpawnContext<'a> {
 }
 
 impl<'a> SpawnContext<'a> {
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn new(
         config: &'a RwArc<Config>,
         registry: &'a mut Registry,
@@ -65,13 +65,13 @@ impl<'a> SpawnContext<'a> {
         }
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn client_filter_enabled(&self) -> bool {
         // Currently just a wrapper over the global filter.
         self.config.read().expect("poisoned lock").global.filter
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn spawn_workers(&mut self) {
         let chain_ids = self
             .config
@@ -88,7 +88,7 @@ impl<'a> SpawnContext<'a> {
         }
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn spawn_workers_from_chain_to_chain(
         &mut self,
         from_chain_id: &ChainId,
@@ -129,7 +129,7 @@ impl<'a> SpawnContext<'a> {
         }
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn spawn_workers_for_chain(&mut self, chain_id: &ChainId) {
         let clients_req = QueryClientStatesRequest {
             pagination: ibc_proto::cosmos::base::query::pagination::all(),
@@ -185,7 +185,7 @@ impl<'a> SpawnContext<'a> {
         }
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn spawn_workers_for_client(
         &mut self,
         chain: Box<dyn ChainHandle>,
@@ -252,7 +252,7 @@ impl<'a> SpawnContext<'a> {
         }
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn spawn_workers_for_connection(
         &mut self,
         chain: Box<dyn ChainHandle>,
@@ -389,7 +389,7 @@ impl<'a> SpawnContext<'a> {
         }
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn counterparty_connection_state(
         &mut self,
         client: IdentifiedAnyClientState,
@@ -403,7 +403,7 @@ impl<'a> SpawnContext<'a> {
         connection_state_on_destination(connection, counterparty_chain.as_ref())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn spawn_connection_workers(
         &mut self,
         chain: Box<dyn ChainHandle>,
@@ -579,7 +579,7 @@ impl<'a> SpawnContext<'a> {
         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn relay_packets_on_channel(
         &mut self,
         chain: &dyn ChainHandle,
@@ -589,7 +589,7 @@ impl<'a> SpawnContext<'a> {
         config.packets_on_channel_allowed(&chain.id(), &channel.port_id, &channel.channel_id)
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn shutdown_workers_for_chain(&mut self, chain_id: &ChainId) {
         let affected_workers = self.workers.objects_for_chain(chain_id);
         for object in affected_workers {

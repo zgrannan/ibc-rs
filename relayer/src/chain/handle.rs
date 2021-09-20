@@ -67,7 +67,7 @@ pub struct ChainHandlePair {
 
 impl ChainHandlePair {
     /// Swap the two handles.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn swap(self) -> Self {
         Self {
             a: self.b,
@@ -77,7 +77,7 @@ impl ChainHandlePair {
 }
 
 impl Debug for ChainHandlePair {
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("ChainHandlePair")
             .field("a", &self.a.id())
@@ -91,7 +91,7 @@ pub type Subscription = channel::Receiver<Arc<MonitorResult<EventBatch>>>;
 pub type ReplyTo<T> = channel::Sender<Result<T, Error>>;
 pub type Reply<T> = channel::Receiver<Result<T, Error>>;
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 pub fn reply_channel<T>() -> (ReplyTo<T>, Reply<T>) {
     channel::bounded(1)
 }
@@ -504,7 +504,7 @@ pub trait ChainHandle: DynClone + Send + Sync + Debug {
 }
 
 impl Serialize for dyn ChainHandle {
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
     where
         S: Serializer,

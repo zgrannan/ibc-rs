@@ -69,12 +69,12 @@ impl SupervisorState {
             .for_each(|line| info!("{}", line));
     }
     #[cfg(feature="prusti")]
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn print_info(&self) { }
 }
 
 impl fmt::Display for SupervisorState {
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f)?;
         writeln!(f, "* Chains: {}", self.chains.iter().join(", "))?;

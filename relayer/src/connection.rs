@@ -213,7 +213,7 @@ impl ConnectionSide {
             connection_id,
         }
     }
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn connection_id(&self) -> Option<&ConnectionId> {
         self.connection_id.as_ref()
     }
@@ -221,7 +221,7 @@ impl ConnectionSide {
 
 #[cfg(not(feature="prusti"))]
 impl Serialize for ConnectionSide {
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
@@ -252,7 +252,7 @@ pub struct Connection {
 impl Connection {
     /// Create a new connection, ensuring that the handshake has succeeded and the two connection
     /// ends exist on each side.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn new(
         a_client: ForeignClient,
         b_client: ForeignClient,
@@ -327,7 +327,7 @@ impl Connection {
 
     /// Recreates a 'Connection' object from the worker's object built from chain state scanning.
     /// The connection must exist on chain.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn restore_from_state(
         chain: Box<dyn ChainHandle>,
         counterparty_chain: Box<dyn ChainHandle>,
@@ -453,7 +453,7 @@ impl Connection {
     }
 
     // Verifies that the two clients are mutually consistent, i.e., they serve the same two chains.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn validate_clients(
         a_client: &ForeignClient,
         b_client: &ForeignClient,
@@ -475,37 +475,37 @@ impl Connection {
         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn src_chain(&self) -> Box<dyn ChainHandle> {
         self.a_side.chain.clone()
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn dst_chain(&self) -> Box<dyn ChainHandle> {
         self.b_side.chain.clone()
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn src_client_id(&self) -> &ClientId {
         &self.a_side.client_id
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn dst_client_id(&self) -> &ClientId {
         &self.b_side.client_id
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn src_connection_id(&self) -> Option<&ConnectionId> {
         self.a_side.connection_id()
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn dst_connection_id(&self) -> Option<&ConnectionId> {
         self.b_side.connection_id()
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn flipped(&self) -> Connection {
         Connection {
             a_side: self.b_side.clone(),
@@ -515,7 +515,7 @@ impl Connection {
     }
 
     /// Executes a connection handshake protocol (ICS 003) for this connection object
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn handshake(&mut self) -> Result<(), ConnectionError> {
         let done = '🥂';
 
@@ -646,7 +646,7 @@ impl Connection {
             .map_err(ConnectionError::supervisor)
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn handshake_step(&mut self, state: State) -> Result<Vec<IbcEvent>, ConnectionError> {
         match (state, self.counterparty_state()?) {
             (State::Init, State::Uninitialized) => Ok(vec![self.build_conn_try_and_send()?]),
@@ -658,7 +658,7 @@ impl Connection {
         }
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn step_state(&mut self, state: State, index: u64) -> RetryResult<(), u64> {
         let done = '🥳';
 
@@ -674,7 +674,7 @@ impl Connection {
         }
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn step_event(&mut self, event: IbcEvent, index: u64) -> RetryResult<(), u64> {
         let state = match event {
             IbcEvent::OpenInitConnection(_) => State::Init,
@@ -1206,7 +1206,7 @@ impl Connection {
         }
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn restore_src_client(&self) -> ForeignClient {
         ForeignClient::restore(
             self.src_client_id().clone(),
@@ -1215,7 +1215,7 @@ impl Connection {
         )
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn restore_dst_client(&self) -> ForeignClient {
         ForeignClient::restore(
             self.dst_client_id().clone(),
@@ -1225,7 +1225,7 @@ impl Connection {
     }
 }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 fn extract_connection_id(event: &IbcEvent) -> Result<&ConnectionId, ConnectionError> {
     match event {
         IbcEvent::OpenInitConnection(ev) => ev.connection_id().as_ref(),
@@ -1245,7 +1245,7 @@ pub enum ConnectionMsgType {
     OpenConfirm,
 }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 fn check_destination_connection_state(
     connection_id: ConnectionId,
     existing_connection: ConnectionEnd,

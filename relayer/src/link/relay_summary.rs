@@ -11,17 +11,17 @@ pub struct RelaySummary {
 }
 
 impl RelaySummary {
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn empty() -> Self {
         Self { events: vec![] }
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn from_events(events: Vec<IbcEvent>) -> Self {
         Self { events }
     }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn extend(&mut self, other: RelaySummary) {
         self.events.extend(other.events)
     }

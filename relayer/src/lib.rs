@@ -57,7 +57,6 @@ impl <T> std::option::Option<T> {
 #[extern_spec]
 impl<T, E: std::fmt::Debug> Result<T, E> {
     #[pure]
-#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn is_ok(&self) -> bool {
         match self {
             Ok(_) => true,
@@ -65,7 +64,6 @@ impl<T, E: std::fmt::Debug> Result<T, E> {
         }
     }
     #[requires(self.is_ok())]
-#[cfg_attr(feature="prusti_fast", trusted)]
     pub fn unwrap(self) -> T {
         match self {
             Ok(t) => t,

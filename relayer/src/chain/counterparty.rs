@@ -21,7 +21,7 @@ use crate::supervisor::Error;
 
 use super::handle::ChainHandle;
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 pub fn counterparty_chain_from_connection(
     src_chain: &dyn ChainHandle,
     src_connection_id: &ConnectionId,
@@ -42,7 +42,7 @@ pub fn counterparty_chain_from_connection(
     Ok(client_state.chain_id())
 }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 fn connection_on_destination(
     connection_id_on_source: &ConnectionId,
     counterparty_client_id: &ClientId,
@@ -71,7 +71,7 @@ fn connection_on_destination(
     Ok(None)
 }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 pub fn connection_state_on_destination(
     connection: IdentifiedConnectionEnd,
     counterparty_chain: &dyn ChainHandle,
@@ -111,7 +111,7 @@ pub struct ChannelConnectionClient {
 }
 
 impl ChannelConnectionClient {
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn new(
         channel: IdentifiedChannelEnd,
         connection: IdentifiedConnectionEnd,
@@ -184,7 +184,7 @@ pub fn channel_connection_client(
     Ok(ChannelConnectionClient::new(channel, connection, client))
 }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 pub fn counterparty_chain_from_channel(
     src_chain: &dyn ChainHandle,
     src_channel_id: &ChannelId,
@@ -194,7 +194,7 @@ pub fn counterparty_chain_from_channel(
         .map(|c| c.client.client_state.chain_id())
 }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 fn fetch_channel_on_destination(
     port_id: &PortId,
     channel_id: &ChannelId,
@@ -221,7 +221,7 @@ fn fetch_channel_on_destination(
     Ok(None)
 }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 pub fn channel_state_on_destination(
     channel: &IdentifiedChannelEnd,
     connection: &IdentifiedConnectionEnd,
@@ -234,7 +234,7 @@ pub fn channel_state_on_destination(
     ))
 }
 
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 pub fn channel_on_destination(
     channel: &IdentifiedChannelEnd,
     connection: &IdentifiedConnectionEnd,
@@ -276,7 +276,7 @@ pub fn check_channel_counterparty(
 }
 
 #[cfg(not(feature="prusti"))]
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 pub fn check_channel_counterparty(
     target_chain: Box<dyn ChainHandle>,
     target_pchan: &PortChannelId,
