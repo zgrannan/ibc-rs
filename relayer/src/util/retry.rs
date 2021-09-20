@@ -20,7 +20,8 @@ pub fn retry_count<E>(err: &RetryError<E>) -> u64 {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
+#[cfg_attr(feature="prusti", derive(Copy,PrustiClone,PrustiDebug))]
+#[cfg_attr(not(feature="prusti"), derive(Copy,Clone,Debug))]
 pub struct ConstantGrowth {
     delay: Duration,
     incr: Duration,

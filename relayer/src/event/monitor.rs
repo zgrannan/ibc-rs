@@ -45,16 +45,14 @@ mod retry_strategy {
     const INITIAL_DELAY: Duration = Duration::from_secs(1); // 1 second
 
     #[cfg(not(feature="prusti"))]
-#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn default() -> impl Iterator<Item = Duration> {
         clamp_total(Fibonacci::from(INITIAL_DELAY), MAX_DELAY, MAX_TOTAL_DELAY)
     }
 }
 
 define_error! {
-    #[derive(Debug)]
-    #[cfg_attr(feature="prusti", derive(PrustiClone))]
-    #[cfg_attr(not(feature="prusti"), derive(Clone))]
+    #[cfg_attr(feature="prusti", derive(PrustiDebug, PrustiClone))]
+    #[cfg_attr(not(feature="prusti"), derive(Debug, Clone))]
     Error {
         WebSocketDriver
             [ TraceError<RpcError> ]

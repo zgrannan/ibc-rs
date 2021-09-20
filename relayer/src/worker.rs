@@ -34,8 +34,9 @@ pub use channel::ChannelWorker;
 mod packet;
 pub use packet::PacketWorker;
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
-#[serde(transparent)]
+#[cfg_attr(feature="prusti", derive(Copy,PrustiClone,PrustiDebug,PrustiPartialEq,PrustiEq,PrustiPartialOrd,PrustiOrd,PrustiHash,PrustiSerialize,PrustiDeserialize))]
+#[cfg_attr(not(feature="prusti"), derive(Copy,Clone,Debug,PartialEq,Eq,PartialOrd,Ord,Hash,Serialize,Deserialize))]
+#[cfg_attr(not(feature="prusti"), serde(transparent))]
 pub struct WorkerId(u64);
 
 impl WorkerId {

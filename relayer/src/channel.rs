@@ -1429,7 +1429,8 @@ pub fn extract_channel_id(event: &IbcEvent) -> Result<&ChannelId, ChannelError> 
 }
 
 /// Enumeration of proof carrying ICS4 message, helper for relayer.
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature="prusti", derive(Copy,PrustiClone,PrustiDebug,PrustiPartialEq,PrustiEq))]
+#[cfg_attr(not(feature="prusti"), derive(Copy,Clone,Debug,PartialEq,Eq))]
 pub enum ChannelMsgType {
     OpenTry,
     OpenAck,

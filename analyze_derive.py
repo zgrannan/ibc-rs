@@ -111,12 +111,17 @@ result = {}
 def get_arg(f):
     return f[0]["fields"][0]["kind"]
 
+def get_prusti_trait_name(trait_name):
+    if trait_name == "Copy" or trait_name == "Default":
+        return trait_name
+    else:
+        return "Prusti" + trait_name
 
 def visit(node):
     variant = node["kind"]["variant"]
     if should_skip(variant):
         return
-    if variant == "Struct" or variant == "Enum":
+    if variant == "Struct" or variant == "Enum" or variant == "Impl":
         for attr in node["attrs"]:
             for field in attr["kind"]["fields"]:
                 if "path" not in field or field["path"]["segments"][0]["ident"]["name"] != "derive":
@@ -125,9 +130,7 @@ def visit(node):
                 fields = field["args"]["fields"][2]['0']
                 args = [get_arg(f) for f in fields]
                 derived = [arg["fields"][0] for arg in args if arg != "Comma"]
-                if "Default" in derived or "Copy" in derived:
-                    continue
-                prusti_derived = ["Prusti" + t for t in derived]
+                prusti_derived = [get_prusti_trait_name(t) for t in derived]
                 pd = ",".join(prusti_derived)
                 d = ",".join(derived)
                 print(char_number)

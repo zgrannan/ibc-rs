@@ -8,7 +8,8 @@ use prusti_contracts::*;
 use serde::de::Unexpected;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
-#[derive(Debug, Clone, Copy)]
+#[cfg_attr(feature="prusti", derive(PrustiDebug,PrustiClone,Copy))]
+#[cfg_attr(not(feature="prusti"), derive(Debug,Clone,Copy))]
 pub struct MaxMsgNum(usize);
 
 impl MaxMsgNum {
@@ -55,7 +56,8 @@ impl From<MaxMsgNum> for usize {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[cfg_attr(feature="prusti", derive(PrustiDebug,PrustiClone,Copy))]
+#[cfg_attr(not(feature="prusti"), derive(Debug,Clone,Copy))]
 pub struct MaxTxSize(usize);
 
 impl MaxTxSize {

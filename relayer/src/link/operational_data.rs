@@ -13,7 +13,8 @@ use ibc::Height;
 use crate::link::error::LinkError;
 use crate::link::RelayPath;
 
-#[derive(Clone, Copy, PartialEq)]
+#[cfg_attr(feature="prusti", derive(PrustiClone,Copy,PrustiPartialEq))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Copy,PartialEq))]
 pub enum OperationalDataTarget {
     Source,
     Destination,

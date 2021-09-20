@@ -255,7 +255,8 @@ impl KeyStore for Test {
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature="prusti", derive(Copy,PrustiClone,PrustiDebug,PrustiPartialEq,PrustiEq,PrustiHash))]
+#[cfg_attr(not(feature="prusti"), derive(Copy,Clone,Debug,PartialEq,Eq,Hash))]
 pub enum Store {
     Memory,
     Test,

@@ -241,7 +241,8 @@ impl Object {
 }
 
 /// The type of [`Object`].
-#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[cfg_attr(feature="prusti", derive(Copy,PrustiClone,PrustiDebug,PrustiHash,PrustiPartialEq,PrustiEq,PrustiPartialOrd,PrustiOrd,PrustiSerialize,PrustiDeserialize))]
+#[cfg_attr(not(feature="prusti"), derive(Copy,Clone,Debug,Hash,PartialEq,Eq,PartialOrd,Ord,Serialize,Deserialize))]
 pub enum ObjectType {
     Client,
     Channel,

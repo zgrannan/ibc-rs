@@ -84,7 +84,8 @@ impl PacketFilter {
     }
 }
 
-#[derive(Clone, Debug, Default, Serialize)]
+#[cfg_attr(feature="prusti", derive(PrustiClone,PrustiDebug,Default,PrustiSerialize))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug,Default,Serialize))]
 #[cfg_attr(not(feature="prusti"), serde(deny_unknown_fields))]
 #[cfg_attr(not(feature="prusti"), derive(Deserialize))]
 #[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
@@ -132,7 +133,8 @@ pub mod default {
     }
 }
 
-#[derive(Clone, Debug, Default, Serialize)]
+#[cfg_attr(feature="prusti", derive(PrustiClone,PrustiDebug,Default,PrustiSerialize))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug,Default,Serialize))]
 #[cfg_attr(not(feature="prusti"), derive(Deserialize))]
 #[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
 #[cfg_attr(not(feature="prusti"), serde(deny_unknown_fields))]

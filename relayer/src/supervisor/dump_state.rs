@@ -27,7 +27,8 @@ impl WorkerDesc {
     }
 }
 
-#[derive(Clone, Debug, Default, Serialize)]
+#[cfg_attr(feature="prusti", derive(PrustiClone,PrustiDebug,Default,PrustiSerialize))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug,Default,Serialize))]
 #[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
 #[cfg_attr(not(feature="prusti"), derive(Deserialize))]
 pub struct SupervisorState {

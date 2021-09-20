@@ -16,7 +16,8 @@ use crate::error::Error as RelayerError;
 use crate::object;
 use crate::registry::{Registry, SpawnError};
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature="prusti", derive(Copy,PrustiClone,PrustiDebug,PrustiPartialEq,PrustiEq))]
+#[cfg_attr(not(feature="prusti"), derive(Copy,Clone,Debug,PartialEq,Eq))]
 pub enum Permission {
     Allow,
     Deny,
@@ -62,7 +63,8 @@ define_error! {
 
 /// A cache storing filtering status (allow or deny) for
 /// arbitrary identifiers.
-#[derive(Default, Debug)]
+#[cfg_attr(feature="prusti", derive(Default,PrustiDebug))]
+#[cfg_attr(not(feature="prusti"), derive(Default,Debug))]
 pub struct FilterPolicy {
     /// A cache associating a generic identifying key, such as
     /// client id, channel id, or connection id, with an

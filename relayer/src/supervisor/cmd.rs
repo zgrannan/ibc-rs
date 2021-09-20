@@ -22,7 +22,8 @@ pub enum SupervisorCmd {
     DumpState(Sender<SupervisorState>),
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature="prusti", derive(Copy,PrustiClone,PrustiDebug,PrustiPartialEq,PrustiEq))]
+#[cfg_attr(not(feature="prusti"), derive(Copy,Clone,Debug,PartialEq,Eq))]
 pub enum CmdEffect {
     ConfigChanged,
     Nothing,
