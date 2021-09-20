@@ -22,7 +22,8 @@ use crate::{
 
 use super::{ChainConfig, Config};
 
-#[derive(Debug, Error)]
+#[cfg_attr(feature="prusti", derive(PrustiDebug,Error))]
+#[cfg_attr(not(feature="prusti"), derive(Debug,Error))]
 pub enum Error {
     #[error("failed to load configuration from disk")]
     LoadFailed(#[source] crate::error::Error),

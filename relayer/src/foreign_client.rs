@@ -1186,7 +1186,8 @@ impl ForeignClient {
     }
 }
 
-#[derive(Clone, Debug)]
+#[cfg_attr(feature="prusti", derive(PrustiClone,PrustiDebug))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug))]
 pub enum MisbehaviourResults {
     CannotExecute,
     EvidenceSubmitted(Vec<IbcEvent>),

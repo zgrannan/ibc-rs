@@ -10,7 +10,8 @@ use tracing::{error, trace};
 use super::decode_bech32;
 use super::errors::Error;
 
-#[derive(Debug)]
+#[cfg_attr(feature="prusti", derive(PrustiDebug))]
+#[cfg_attr(not(feature="prusti"), derive(Debug))]
 pub enum EncodedPubKey {
     Bech32(Vec<u8>),
     Proto(ProtoAny),

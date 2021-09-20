@@ -261,7 +261,8 @@ pub enum Store {
     Test,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[cfg_attr(feature="prusti", derive(PrustiClone,PrustiDebug,PrustiSerialize,PrustiDeserialize))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug,Serialize,Deserialize))]
 pub enum KeyRing {
     Memory(Memory),
     Test(Test),

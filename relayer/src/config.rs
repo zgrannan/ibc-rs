@@ -48,7 +48,8 @@ impl fmt::Display for GasPrice {
     }
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[cfg_attr(feature="prusti", derive(PrustiClone,PrustiDebug,PrustiSerialize))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug,Serialize))]
 #[cfg_attr(not(feature="prusti"), derive(Deserialize))]
 #[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
 #[cfg_attr(not(feature="prusti"), serde(
@@ -136,11 +137,11 @@ pub mod default {
 #[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
 #[cfg_attr(not(feature="prusti"), serde(deny_unknown_fields))]
 pub struct Config {
-    #[serde(default)]
+    #[cfg_attr(not(feature="prusti"), serde(default))]
     pub global: GlobalConfig,
-    #[serde(default)]
+    #[cfg_attr(not(feature="prusti"), serde(default))]
     pub telemetry: TelemetryConfig,
-    #[serde(default = "Vec::new", skip_serializing_if = "Vec::is_empty")]
+    #[cfg_attr(not(feature="prusti"), serde(default = "Vec::new", skip_serializing_if = "Vec::is_empty"))]
     pub chains: Vec<ChainConfig>,
 }
 
@@ -210,14 +211,15 @@ impl Config {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[cfg_attr(feature="prusti", derive(PrustiClone,PrustiDebug,PrustiPartialEq,PrustiSerialize))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug,PartialEq,Serialize))]
 #[cfg_attr(not(feature="prusti"), derive(Deserialize))]
 #[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
 pub enum Strategy {
-    #[serde(rename = "packets")]
+    #[cfg_attr(not(feature="prusti"), serde(rename = "packets"))]
     Packets,
 
-    #[serde(rename = "all")]
+    #[cfg_attr(not(feature="prusti"), serde(rename = "all"))]
     HandshakeAndPackets,
 }
 
@@ -230,10 +232,11 @@ impl Default for Strategy {
 /// Log levels are wrappers over [`tracing_core::Level`].
 ///
 /// [`tracing_core::Level`]: https://docs.rs/tracing-core/0.1.17/tracing_core/struct.Level.html
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[cfg_attr(feature="prusti", derive(PrustiClone,PrustiDebug,PrustiPartialEq,PrustiSerialize))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug,PartialEq,Serialize))]
 #[cfg_attr(not(feature="prusti"), derive(Deserialize))]
 #[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
-#[serde(rename_all = "lowercase")]
+#[cfg_attr(not(feature="prusti"), serde(rename_all = "lowercase"))]
 pub enum LogLevel {
     Trace,
     Debug,
@@ -261,16 +264,17 @@ impl fmt::Display for LogLevel {
     }
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[cfg_attr(feature="prusti", derive(PrustiClone,PrustiDebug,PrustiSerialize))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug,Serialize))]
 #[cfg_attr(not(feature="prusti"), derive(Deserialize))]
 #[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
-#[serde(default, deny_unknown_fields)]
+#[cfg_attr(not(feature="prusti"), serde(default, deny_unknown_fields))]
 pub struct GlobalConfig {
     pub strategy: Strategy,
     pub log_level: LogLevel,
-    #[serde(default = "default::filter")]
+    #[cfg_attr(not(feature="prusti"), serde(default = "default::filter"))]
     pub filter: bool,
-    #[serde(default = "default::clear_packets_interval")]
+    #[cfg_attr(not(feature="prusti"), serde(default = "default::clear_packets_interval"))]
     pub clear_packets_interval: u64,
 }
 
@@ -285,10 +289,11 @@ impl Default for GlobalConfig {
     }
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[cfg_attr(feature="prusti", derive(PrustiClone,PrustiDebug,PrustiSerialize))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug,Serialize))]
 #[cfg_attr(not(feature="prusti"), derive(Deserialize))]
 #[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
-#[serde(deny_unknown_fields)]
+#[cfg_attr(not(feature="prusti"), serde(deny_unknown_fields))]
 pub struct TelemetryConfig {
     pub enabled: bool,
     pub host: String,
@@ -306,7 +311,8 @@ impl Default for TelemetryConfig {
     }
 }
 
-#[derive(Clone, Debug)]
+#[cfg_attr(feature="prusti", derive(PrustiClone,PrustiDebug))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug))]
 #[cfg_attr(feature="prusti", derive(PrustiSerialize,PrustiDeserialize))]
 #[cfg_attr(not(feature="prusti"), derive(Deserialize, Serialize))]
 #[cfg_attr(not(feature="prusti"), serde(deny_unknown_fields))]

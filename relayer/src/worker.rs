@@ -57,7 +57,8 @@ impl fmt::Display for WorkerId {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature="prusti", derive(PrustiClone,PrustiDebug,PrustiPartialEq,PrustiEq))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug,PartialEq,Eq))]
 pub enum WorkerMsg {
     Stopped(WorkerId, Object),
 }

@@ -33,7 +33,8 @@ impl Permission {
     }
 }
 
-#[derive(Clone, Debug, Eq, Hash)]
+#[cfg_attr(feature="prusti", derive(PrustiClone,PrustiDebug,PrustiEq,PrustiHash))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug,Eq,Hash))]
 #[cfg_attr(feature="prusti", derive(PrustiPartialEq))]
 #[cfg_attr(not(feature="prusti"), derive(PartialEq))]
 enum CacheKey {

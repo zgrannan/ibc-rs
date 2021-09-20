@@ -127,7 +127,8 @@ pub type EventSender = channel::Sender<Result<EventBatch>>;
 pub type EventReceiver = channel::Receiver<Result<EventBatch>>;
 pub type TxMonitorCmd = channel::Sender<MonitorCmd>;
 
-#[derive(Debug)]
+#[cfg_attr(feature="prusti", derive(PrustiDebug))]
+#[cfg_attr(not(feature="prusti"), derive(Debug))]
 pub enum MonitorCmd {
     Shutdown,
 }

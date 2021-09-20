@@ -90,7 +90,6 @@ def should_skip(variant):
     return variant == "Use" \
         or variant == "Const" \
         or variant == "TyAlias" \
-        or variant == "Enum" \
         or variant == "MacCall" \
         or variant == "MacroDef" \
         or variant == "Impl" \
@@ -117,7 +116,7 @@ def visit(node):
     variant = node["kind"]["variant"]
     if should_skip(variant):
         return
-    if variant == "Struct":
+    if variant == "Struct" or variant == "Enum":
         for attr in node["attrs"]:
             for field in attr["kind"]["fields"]:
                 if "path" not in field or field["path"]["segments"][0]["ident"]["name"] != "derive":
@@ -126,7 +125,7 @@ def visit(node):
                 fields = field["args"]["fields"][2]['0']
                 args = [get_arg(f) for f in fields]
                 derived = [arg["fields"][0] for arg in args if arg != "Comma"]
-                if "Default" in derived in "Hash" in derived or "Copy" in derived:
+                if "Default" in derived or "Copy" in derived:
                     continue
                 prusti_derived = ["Prusti" + t for t in derived]
                 pd = ",".join(prusti_derived)

@@ -7,14 +7,16 @@ use crate::config::ChainConfig;
 
 use super::dump_state::SupervisorState;
 
-#[derive(Clone, Debug)]
+#[cfg_attr(feature="prusti", derive(PrustiClone,PrustiDebug))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug))]
 pub enum ConfigUpdate {
     Add(ChainConfig),
     Remove(ChainId),
     Update(ChainConfig),
 }
 
-#[derive(Clone, Debug)]
+#[cfg_attr(feature="prusti", derive(PrustiClone,PrustiDebug))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug))]
 pub enum SupervisorCmd {
     UpdateConfig(ConfigUpdate),
     DumpState(Sender<SupervisorState>),

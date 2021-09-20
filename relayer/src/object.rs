@@ -151,10 +151,11 @@ impl Packet {
 /// [`Worker`] is spawned and all [`IbcEvent`]s mapped
 /// to an [`Object`] are sent to the associated [`Worker`]
 /// for processing.
-#[derive(Debug, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature="prusti", derive(PrustiDebug,PrustiEq,PrustiSerialize,PrustiDeserialize))]
+#[cfg_attr(not(feature="prusti"), derive(Debug,Eq,Serialize,Deserialize))]
 #[cfg_attr(feature="prusti", derive(PrustiHash, PrustiClone, PrustiPartialEq, PrustiOrd, PrustiPartialOrd))]
 #[cfg_attr(not(feature="prusti"), derive(Clone, Hash, PartialEq, Ord, PartialOrd))]
-#[serde(tag = "type")]
+#[cfg_attr(not(feature="prusti"), serde(tag = "type"))]
 pub enum Object {
     /// See [`Client`].
     Client(Client),

@@ -44,7 +44,8 @@ impl std::fmt::Display for AppInfo {
     }
 }
 
-#[derive(Error, Debug)]
+#[cfg_attr(feature="prusti", derive(Error,PrustiDebug))]
+#[cfg_attr(not(feature="prusti"), derive(Error,Debug))]
 pub enum Diagnostic {
     #[error("no SDK module '{pattern}' was found for application {app}")]
     SdkModuleNotFound { pattern: String, app: AppInfo },

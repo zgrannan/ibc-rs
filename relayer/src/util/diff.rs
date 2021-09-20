@@ -4,7 +4,8 @@ use std::hash::Hash;
 use prusti_contracts::*;
 
 /// A change between two dictionaries.
-#[derive(Clone, Debug, Eq)]
+#[cfg_attr(feature="prusti", derive(Clone,Debug,Eq))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug,Eq))]
 #[cfg_attr(not(feature="prusti"), derive(Ord, PartialOrd, PartialEq))]
 // #[cfg_attr(feature="prusti", derive(PrustiOrd, PrustiPartialOrd, PrustiPartialEq))]
 pub enum Change<K> {

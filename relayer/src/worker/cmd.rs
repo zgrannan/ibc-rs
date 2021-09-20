@@ -1,9 +1,13 @@
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
+
 use ibc::{ics02_client::events::NewBlock, Height};
 
 use crate::event::monitor::EventBatch;
 
 /// A command for a [`Worker`].
-#[derive(Debug, Clone)]
+#[cfg_attr(feature="prusti", derive(PrustiDebug,PrustiClone))]
+#[cfg_attr(not(feature="prusti"), derive(Debug,Clone))]
 pub enum WorkerCmd {
     /// A batch of packet events need to be relayed
     IbcEvents { batch: EventBatch },
