@@ -55,7 +55,7 @@ pub struct KeyEntry {
     pub address: Vec<u8>,
 }
 
-#[cfg_attr(feature="prusti", derive(Debug, Eq, Serialize, PrustiDeserialize, PrustiClone, PrustiPartialEq))]
+#[cfg_attr(feature="prusti", derive(PrustiDebug, PrustiEq, PrustiSerialize, PrustiDeserialize, PrustiClone, PrustiPartialEq))]
 #[cfg_attr(not(feature="prusti"), derive(Debug, Eq, Serialize, Deserialize, Clone, PartialEq))]
 pub struct KeyFile {
     pub name: String,
@@ -121,6 +121,7 @@ pub struct Memory {
 }
 
 impl Memory {
+    #[cfg_attr(feature="prusti", trusted_skip)]
     pub fn new(account_prefix: String) -> Self {
         Self {
             account_prefix,
@@ -130,6 +131,7 @@ impl Memory {
 }
 
 impl KeyStore for Memory {
+    #[cfg_attr(feature="prusti", trusted_skip)]
     fn get_key(&self, key_name: &str) -> Result<KeyEntry, Error> {
         self.keys
             .get(key_name)
@@ -137,6 +139,7 @@ impl KeyStore for Memory {
             .ok_or_else(Error::key_not_found)
     }
 
+    #[cfg_attr(feature="prusti", trusted_skip)]
     fn add_key(&mut self, key_name: &str, key_entry: KeyEntry) -> Result<(), Error> {
         if self.keys.contains_key(key_name) {
             Err(Error::key_already_exist())
@@ -147,13 +150,7 @@ impl KeyStore for Memory {
         }
     }
 
-    #[cfg(feature="prusti")]
-    #[trusted]
-    fn keys(&self) -> Result<Vec<(String, KeyEntry)>, Error> {
-        todo!()
-    }
-
-    #[cfg(not(feature="prusti"))]
+    #[cfg_attr(feature="prusti", trusted_skip)]
     fn keys(&self) -> Result<Vec<(String, KeyEntry)>, Error> {
         Ok(self
             .keys
@@ -182,6 +179,7 @@ impl Test {
 }
 
 impl KeyStore for Test {
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn get_key(&self, key_name: &str) -> Result<KeyEntry, Error> {
         let mut key_file = self.store.join(key_name);
         key_file.set_extension(KEYSTORE_FILE_EXTENSION);
@@ -204,13 +202,7 @@ impl KeyStore for Test {
         Ok(key_entry)
     }
 
-    #[cfg(feature="prusti")]
-    #[trusted]
-    fn add_key(&mut self, key_name: &str, key_entry: KeyEntry) -> Result<(), Error> {
-        todo!()
-    }
-
-    #[cfg(not(feature="prusti"))]
+    #[cfg_attr(feature="prusti", trusted_skip)]
     fn add_key(&mut self, key_name: &str, key_entry: KeyEntry) -> Result<(), Error> {
         let mut filename = self.store.join(key_name);
         filename.set_extension(KEYSTORE_FILE_EXTENSION);
@@ -226,13 +218,7 @@ impl KeyStore for Test {
         Ok(())
     }
 
-    #[cfg(feature="prusti")]
-    #[trusted]
-    fn keys(&self) -> Result<Vec<(String, KeyEntry)>, Error> {
-        todo!()
-    }
-
-    #[cfg(not(feature="prusti"))]
+    #[cfg_attr(feature="prusti", trusted_skip)]
     fn keys(&self) -> Result<Vec<(String, KeyEntry)>, Error> {
         let dir = fs::read_dir(&self.store).map_err(|e| {
             Error::key_file_io(
@@ -270,7 +256,7 @@ pub enum KeyRing {
 }
 
 impl KeyRing {
-#[cfg_attr(feature="prusti_fast", trusted_skip)]
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn new(store: Store, account_prefix: &str, chain_id: &ChainId) -> Result<Self, Error> {
         match store {
             Store::Memory => Ok(Self::Memory(Memory::new(account_prefix.to_string()))),
@@ -295,7 +281,7 @@ impl KeyRing {
         }
     }
 
-#[cfg_attr(feature="prusti_fast", trusted_skip)]
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn get_key(&self, key_name: &str) -> Result<KeyEntry, Error> {
         match self {
             KeyRing::Memory(m) => m.get_key(key_name),
@@ -303,6 +289,7 @@ impl KeyRing {
         }
     }
 
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn add_key(&mut self, key_name: &str, key_entry: KeyEntry) -> Result<(), Error> {
         match self {
             KeyRing::Memory(m) => m.add_key(key_name, key_entry),
@@ -310,6 +297,7 @@ impl KeyRing {
         }
     }
 
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn keys(&self) -> Result<Vec<(String, KeyEntry)>, Error> {
         match self {
             KeyRing::Memory(m) => m.keys(),
@@ -423,13 +411,7 @@ fn get_address(pk: ExtendedPubKey) -> Vec<u8> {
     rip_result.to_vec()
 }
 
-    #[cfg(feature="prusti")]
-    #[trusted]
-fn decode_bech32(input: &str) -> Result<Vec<u8>, Error> {
-    todo!()
-}
-
-    #[cfg(not(feature="prusti"))]
+#[cfg_attr(feature="prusti", trusted_skip)]
 fn decode_bech32(input: &str) -> Result<Vec<u8>, Error> {
     use bech32::FromBase32;
 

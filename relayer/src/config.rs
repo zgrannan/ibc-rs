@@ -43,6 +43,7 @@ impl GasPrice {
 }
 
 impl fmt::Display for GasPrice {
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}{}", self.price, self.denom)
     }

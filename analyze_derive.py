@@ -92,7 +92,6 @@ def should_skip(variant):
         or variant == "TyAlias" \
         or variant == "MacCall" \
         or variant == "MacroDef" \
-        or variant == "Impl" \
         or variant == "Trait" \
         or variant == "Fn"
 

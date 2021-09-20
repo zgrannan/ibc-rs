@@ -19,7 +19,7 @@ pub enum Change<K> {
 
 #[cfg(feature="prusti")]
 impl <K> PartialEq for Change<K> {
-#[cfg_attr(feature="prusti_fast", trusted_skip)]
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn eq(&self, other: &Change<K>) -> bool {
         false
     }
@@ -28,7 +28,7 @@ impl <K> PartialEq for Change<K> {
 
 impl<K> Change<K> {
     /// Return the key affected by this change.
-#[cfg_attr(feature="prusti_fast", trusted_skip)]
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn key(&self) -> &K {
         match self {
             Self::Added(ref k) => k,

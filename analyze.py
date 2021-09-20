@@ -45,7 +45,7 @@ def get_attr_fn_name(field):
 
 def is_trusted_attr(field):
     attr_fn_name = get_attr_fn_name(field)
-    if attr_fn_name == "trusted":
+    if attr_fn_name == "trusted" or attr_fn_name == "trusted_skip":
         return True
     elif attr_fn_name == "cfg_attr":
         return is_trusted_attr_args(field["args"])

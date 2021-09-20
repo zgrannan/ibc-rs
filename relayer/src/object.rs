@@ -129,17 +129,20 @@ pub struct Packet {
 }
 
 impl Packet {
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn short_name(&self) -> String {
         format!(
             "packet::{}/{}:{}->{}",
             self.src_channel_id, self.src_port_id, self.src_chain_id, self.dst_chain_id,
         )
     }
-#[cfg_attr(feature="prusti_fast", trusted_skip)]
+
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn src_port_id(&self) -> &PortId {
         &self.src_port_id
     }
-#[cfg_attr(feature="prusti_fast", trusted_skip)]
+
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn src_channel_id(&self) -> &ChannelId {
         &self.src_channel_id
     }
