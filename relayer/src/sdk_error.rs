@@ -155,7 +155,7 @@ fn client_error_from_code(code: u32) -> ClientError {
 //
 // TODO: investigate ways to automatically generate the mapping by parsing
 // the errors.go source code directly
-#[cfg_attr(feature="prusti", trusted)]
+#[cfg_attr(feature="prusti", trusted_skip)]
 pub fn sdk_error_from_tx_result(result: &TxResult) -> SdkError {
     match result.code {
         Code::Ok => SdkError::unexpected_ok(),

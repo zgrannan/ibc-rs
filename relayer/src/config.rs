@@ -27,7 +27,7 @@ pub struct GasPrice {
 
 #[cfg(feature="prusti")]
 impl <'de> serde::Deserialize<'de> for GasPrice {
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted_skip)]
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de> {
@@ -205,7 +205,7 @@ impl Config {
         self.global.strategy == Strategy::HandshakeAndPackets
     }
 
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted_skip)]
     pub fn chains_map(&self) -> HashMap<&ChainId, &ChainConfig> {
         self.chains.iter().map(|c| (&c.id, c)).collect()
     }
@@ -346,7 +346,7 @@ pub struct ChainConfig {
 }
 
 /// Attempt to load and parse the TOML config file as a `Config`.
-#[cfg_attr(feature="prusti", trusted)]
+#[cfg_attr(feature="prusti", trusted_skip)]
 pub fn load(path: impl AsRef<Path>) -> Result<Config, Error> {
     let config_toml = std::fs::read_to_string(&path).map_err(Error::config_io)?;
 

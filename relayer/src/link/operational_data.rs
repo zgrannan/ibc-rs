@@ -66,7 +66,7 @@ impl OperationalData {
         }
     }
 
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted_skip)]
     pub fn events(&self) -> Vec<IbcEvent> {
         self.batch.iter().map(|gm| gm.event.clone()).collect()
     }

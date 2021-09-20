@@ -70,43 +70,43 @@ impl RelayPath {
     }
 
     #[allow(clippy::borrowed_box)]
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted_skip)]
     pub fn src_chain(&self) -> &Box<dyn ChainHandle> {
         self.channel.src_chain()
     }
 
     #[allow(clippy::borrowed_box)]
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted_skip)]
     pub fn dst_chain(&self) -> &Box<dyn ChainHandle> {
         self.channel.dst_chain()
     }
 
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted_skip)]
     pub fn src_client_id(&self) -> &ClientId {
         self.channel.src_client_id()
     }
 
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted_skip)]
     pub fn dst_client_id(&self) -> &ClientId {
         self.channel.dst_client_id()
     }
 
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted_skip)]
     pub fn src_connection_id(&self) -> &ConnectionId {
         self.channel.src_connection_id()
     }
 
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted_skip)]
     pub fn dst_connection_id(&self) -> &ConnectionId {
         self.channel.dst_connection_id()
     }
 
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted_skip)]
     pub fn src_port_id(&self) -> &PortId {
         self.channel.src_port_id()
     }
 
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted_skip)]
     pub fn dst_port_id(&self) -> &PortId {
         self.channel.dst_port_id()
     }
@@ -137,7 +137,7 @@ impl RelayPath {
             .ok_or_else(|| LinkError::missing_channel_id(self.dst_chain().id()))
     }
 
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted_skip)]
     pub fn channel(&self) -> &Channel {
         &self.channel
     }
@@ -365,7 +365,7 @@ impl RelayPath {
     }
 
     /// Generate & schedule operational data from the input `batch` of IBC events.
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted_skip)]
     pub fn update_schedule(&mut self, batch: EventBatch) -> Result<(), LinkError> {
         // Collect relevant events from the incoming batch & adjust their height.
         let events = self.filter_events(&batch.events);

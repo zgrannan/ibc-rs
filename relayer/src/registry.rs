@@ -46,7 +46,7 @@ define_error! {
 
 impl Registry {
     /// Construct a new [`Registry`] using the provided [`Config`]
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted_skip)]
     pub fn new(config: RwArc<Config>) -> Self {
         Self {
             config,

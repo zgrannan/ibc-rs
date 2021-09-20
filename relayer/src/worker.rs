@@ -45,7 +45,7 @@ impl WorkerId {
     }
 
     // Probably don't care about id wraparound
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted_skip)]
     pub fn next(self) -> Self {
         Self(self.0 + 1)
     }

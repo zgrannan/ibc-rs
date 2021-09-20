@@ -67,7 +67,7 @@ pub struct KeyFile {
 }
 
 impl KeyEntry {
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted_skip)]
     fn from_key_file(key_file: KeyFile, hd_path: &HDPath) -> Result<Self, Error> {
         // Decode the Bech32-encoded address from the key file
         let keyfile_address_bytes = decode_bech32(&key_file.address)?;
@@ -329,7 +329,7 @@ impl KeyRing {
     }
 
     /// Add a key entry in the store using a mnemonic.
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted_skip)]
     pub fn key_from_mnemonic(
         &self,
         mnemonic_words: &str,
@@ -357,7 +357,7 @@ impl KeyRing {
     }
 
     /// Sign a message
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted_skip)]
     pub fn sign_msg(&self, key_name: &str, msg: Vec<u8>) -> Result<Vec<u8>, Error> {
         let key = self.get_key(key_name)?;
 
@@ -369,7 +369,7 @@ impl KeyRing {
         Ok(signature.as_ref().to_vec())
     }
 
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted_skip)]
     pub fn account_prefix(&self) -> &str {
         match self {
             KeyRing::Memory(m) => &m.account_prefix,
@@ -406,7 +406,7 @@ fn private_key_from_mnemonic(
 }
 
 /// Return an address from a Public Key
-#[cfg_attr(feature="prusti", trusted)]
+#[cfg_attr(feature="prusti", trusted_skip)]
 fn get_address(pk: ExtendedPubKey) -> Vec<u8> {
     let mut hasher = Sha256::new();
     hasher.update(pk.public_key.to_bytes().as_slice());
@@ -439,7 +439,7 @@ fn decode_bech32(input: &str) -> Result<Vec<u8>, Error> {
     Ok(bytes)
 }
 
-#[cfg_attr(feature="prusti", trusted)]
+#[cfg_attr(feature="prusti", trusted_skip)]
 fn disk_store_path(folder_name: &str) -> Result<PathBuf, Error> {
     let home = dirs_next::home_dir().ok_or_else(Error::home_location_unavailable)?;
 

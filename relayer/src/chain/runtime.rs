@@ -170,7 +170,7 @@ impl<C: Chain + Send + 'static> ChainRuntime<C> {
         Box::new(ProdChainHandle::new(chain_id, sender))
     }
 
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted_skip)]
     fn run(mut self) -> Result<(), Error> {
         loop {
             channel::select! {

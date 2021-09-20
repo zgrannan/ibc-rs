@@ -902,7 +902,7 @@ impl ForeignClient {
 
     /// Retrieves all consensus heights for this client sorted in descending
     /// order.
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted_skip)]
     fn consensus_state_heights(&self) -> Result<Vec<Height>, ForeignClientError> {
         let consensus_state_heights: Vec<Height> = self
             .consensus_states()?
@@ -1072,7 +1072,7 @@ impl ForeignClient {
         Ok(None)
     }
 
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted_skip)]
     fn submit_evidence(
         &self,
         evidence: MisbehaviourEvidence,

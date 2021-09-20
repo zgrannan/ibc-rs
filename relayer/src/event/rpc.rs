@@ -59,7 +59,7 @@ pub fn get_all_events(
     Ok(vals)
 }
 
-#[cfg_attr(feature="prusti", trusted)]
+#[cfg_attr(feature="prusti", trusted_skip)]
 pub fn build_event(mut object: RawObject) -> Result<IbcEvent, EventError> {
     match object.action.as_str() {
         // Client events
