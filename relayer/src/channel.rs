@@ -77,7 +77,8 @@ pub fn from_retry_error(e: retry::Error<ChannelError>, description: String) -> C
     }
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[cfg_attr(feature="prusti", derive(PrustiClone,PrustiDebug,PrustiSerialize))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug,Serialize))]
 pub struct ChannelSide {
     pub chain: Box<dyn ChainHandle>,
     client_id: ClientId,
@@ -129,7 +130,8 @@ impl ChannelSide {
     }
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[cfg_attr(feature="prusti", derive(PrustiClone,PrustiDebug,PrustiSerialize))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug,Serialize))]
 pub struct Channel {
     pub ordering: Order,
     pub a_side: ChannelSide,

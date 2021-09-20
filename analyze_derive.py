@@ -87,7 +87,15 @@ def check_has_attr(node, check):
 
 
 def should_skip(variant):
-    return variant == "Use" or variant == "Const" or variant == "TyAlias" or variant == "Enum" or variant == "MacCall" or variant == "MacroDef" or variant == "Impl" or variant == "Fn"
+    return variant == "Use" \
+        or variant == "Const" \
+        or variant == "TyAlias" \
+        or variant == "Enum" \
+        or variant == "MacCall" \
+        or variant == "MacroDef" \
+        or variant == "Impl" \
+        or variant == "Trait" \
+        or variant == "Fn"
 
 
 def get_name(node):
@@ -118,12 +126,14 @@ def visit(node):
                 fields = field["args"]["fields"][2]['0']
                 args = [get_arg(f) for f in fields]
                 derived = [arg["fields"][0] for arg in args if arg != "Comma"]
+                if "Default" in derived in "Hash" in derived or "Copy" in derived:
+                    continue
                 prusti_derived = ["Prusti" + t for t in derived]
                 pd = ",".join(prusti_derived)
                 d = ",".join(derived)
                 print(char_number)
-                print(f'#[cfg_attr(not(feature="prusti"), derive({d}))')
-                print(f'#[cfg_attr(feature="prusti", derive({pd}))')
+                print(f'#[cfg_attr(not(feature="prusti"), derive({d}))]')
+                print(f'#[cfg_attr(feature="prusti", derive({pd}))]')
                 sys.exit(0)
         return
     if variant == "Mod":

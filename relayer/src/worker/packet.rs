@@ -24,7 +24,8 @@ enum Step {
     Shutdown,
 }
 
-#[derive(Debug)]
+#[cfg_attr(feature="prusti", derive(PrustiDebug))]
+#[cfg_attr(not(feature="prusti"), derive(Debug))]
 pub struct PacketWorker {
     path: Packet,
     chains: ChainHandlePair,

@@ -54,7 +54,8 @@ pub mod mock;
 
 /// Generic query response type
 /// TODO - will slowly move to GRPC protobuf specs for queries
-#[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature="prusti", derive(PrustiClone,PrustiDebug,PrustiPartialEq))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug,PartialEq))]
 pub struct QueryResponse {
     pub value: Vec<u8>,
     pub proof: Option<MerkleProof>,
@@ -62,7 +63,8 @@ pub struct QueryResponse {
 }
 
 /// Packet query options
-#[derive(Debug)]
+#[cfg_attr(feature="prusti", derive(PrustiDebug))]
+#[cfg_attr(not(feature="prusti"), derive(Debug))]
 pub struct QueryPacketOptions {
     pub port_id: PortId,
     pub channel_id: ChannelId,

@@ -36,7 +36,8 @@ pub enum Error {
 
 /// Facility for reloading the relayer configuration.
 /// See [`ConfigReload::reload`].
-#[derive(Clone, Debug)]
+#[cfg_attr(feature="prusti", derive(PrustiClone,PrustiDebug))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug))]
 pub struct ConfigReload {
     path: PathBuf,
     current: Arc<RwLock<Config>>,

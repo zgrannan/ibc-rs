@@ -1,3 +1,5 @@
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
 use ibc::ics02_client::client_state::AnyClientState;
 use ibc::ics02_client::misbehaviour::MisbehaviourEvidence;
 
@@ -15,7 +17,7 @@ pub trait LightBlock<C: Chain>: Send + Sync {
     fn signed_header(&self) -> &C::Header;
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug,PartialEq,Eq))]
 pub struct Verified<H> {
     /// Verified target
     pub target: H,

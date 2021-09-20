@@ -29,7 +29,8 @@ impl EncodedPubKey {
 /// A variant of [`EncodedPubKey`].
 /// A Protobuf `Any`, having support for deserialization from
 /// JSON + base64 (see `deserialize_key`).
-#[derive(Debug)]
+#[cfg_attr(feature="prusti", derive(PrustiDebug))]
+#[cfg_attr(not(feature="prusti"), derive(Debug))]
 #[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
 #[cfg_attr(not(feature="prusti"), derive(Deserialize))]
 pub struct ProtoAny {

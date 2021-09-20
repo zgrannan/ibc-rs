@@ -214,7 +214,8 @@ define_error! {
     }
 }
 
-#[derive(Clone, Debug)]
+#[cfg_attr(feature="prusti", derive(PrustiClone,PrustiDebug))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug))]
 pub struct ForeignClient {
     /// The identifier of this client. The host chain determines this id upon client creation,
     /// so we may be using the default value temporarily.

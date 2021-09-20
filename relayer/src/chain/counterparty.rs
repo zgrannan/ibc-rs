@@ -100,7 +100,8 @@ pub fn connection_state_on_destination(
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[cfg_attr(feature="prusti", derive(PrustiDebug,PrustiClone,PrustiPartialEq,PrustiEq,PrustiSerialize))]
+#[cfg_attr(not(feature="prusti"), derive(Debug,Clone,PartialEq,Eq,Serialize))]
 #[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
 #[cfg_attr(not(feature="prusti"), derive(Deserialize))]
 pub struct ChannelConnectionClient {

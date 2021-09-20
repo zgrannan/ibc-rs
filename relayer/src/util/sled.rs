@@ -45,7 +45,7 @@ where
     }
 }
 
-#[derive(Clone, Debug)]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug))]
 pub struct KeyValueDb<K, V> {
     prefix: Vec<u8>,
     marker: PhantomData<(K, V)>,

@@ -37,7 +37,8 @@ pub const KEYSTORE_FILE_EXTENSION: &str = "json";
 //          will force users to re-import their keys.
 // /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\
 /// Key entry stores the Private Key and Public Key as well the address
-#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+#[cfg_attr(feature="prusti", derive(PrustiClone,PrustiDebug,PrustiPartialEq,PrustiEq,PrustiSerialize))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug,PartialEq,Eq,Serialize))]
 #[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
 #[cfg_attr(not(feature="prusti"), derive(Deserialize))]
 pub struct KeyEntry {
@@ -110,7 +111,8 @@ pub trait KeyStore {
     fn keys(&self) -> Result<Vec<(String, KeyEntry)>, Error>;
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[cfg_attr(feature="prusti", derive(PrustiClone,PrustiDebug,PrustiSerialize))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug,Serialize))]
 #[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
 #[cfg_attr(not(feature="prusti"), derive(Deserialize))]
 pub struct Memory {
@@ -161,7 +163,8 @@ impl KeyStore for Memory {
     }
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[cfg_attr(feature="prusti", derive(PrustiClone,PrustiDebug,PrustiSerialize))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug,Serialize))]
 #[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
 #[cfg_attr(not(feature="prusti"), derive(Deserialize))]
 pub struct Test {

@@ -2,7 +2,8 @@
 use prusti_contracts::*;
 use ibc::events::IbcEvent;
 
-#[derive(Clone, Debug)]
+#[cfg_attr(feature="prusti", derive(PrustiClone,PrustiDebug))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug))]
 pub struct RelaySummary {
     pub events: Vec<IbcEvent>,
     // errors: todo!(),

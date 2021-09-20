@@ -29,7 +29,8 @@ const SDK_MODULE_VERSION_REQ: &str = ">=0.41.3, <=0.42.6";
 
 /// Helper struct to capture all the reported information of an
 /// IBC application, e.g., `gaiad`.
-#[derive(Clone, Debug)]
+#[cfg_attr(feature="prusti", derive(PrustiClone,PrustiDebug))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug))]
 pub struct AppInfo {
     app_name: String,
     version: String,

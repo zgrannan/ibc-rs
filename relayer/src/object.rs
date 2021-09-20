@@ -24,7 +24,8 @@ use crate::error::Error as RelayerError;
 use crate::supervisor::Error as SupervisorError;
 
 /// Client
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
+#[cfg_attr(feature="prusti", derive(PrustiDebug,PrustiPartialEq,PrustiEq,PrustiPartialOrd,PrustiOrd,PrustiSerialize))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug,PartialEq,Eq,PartialOrd,Ord,Hash,Serialize))]
 #[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
 #[cfg_attr(not(feature="prusti"), derive(Deserialize))]
 pub struct Client {
@@ -50,7 +51,8 @@ impl Client {
 }
 
 /// Connection
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
+#[cfg_attr(feature="prusti", derive(PrustiDebug,PrustiPartialEq,PrustiEq,PrustiPartialOrd,PrustiOrd,PrustiSerialize))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug,PartialEq,Eq,PartialOrd,Ord,Hash,Serialize))]
 #[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
 #[cfg_attr(not(feature="prusti"), derive(Deserialize))]
 pub struct Connection {
@@ -74,7 +76,8 @@ impl Connection {
 }
 
 /// Channel
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
+#[cfg_attr(feature="prusti", derive(PrustiDebug,PrustiPartialEq,PrustiEq,PrustiPartialOrd,PrustiOrd,PrustiSerialize))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug,PartialEq,Eq,PartialOrd,Ord,Hash,Serialize))]
 #[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
 #[cfg_attr(not(feature="prusti"), derive(Deserialize))]
 pub struct Channel {
@@ -107,7 +110,8 @@ impl Channel {
 }
 
 /// A packet worker between a source and destination chain, and a specific channel and port.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
+#[cfg_attr(feature="prusti", derive(PrustiDebug,PrustiPartialEq,PrustiEq,PrustiPartialOrd,PrustiOrd,PrustiSerialize))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug,PartialEq,Eq,PartialOrd,Ord,Hash,Serialize))]
 #[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
 #[cfg_attr(not(feature="prusti"), derive(Deserialize))]
 pub struct Packet {
@@ -147,9 +151,9 @@ impl Packet {
 /// [`Worker`] is spawned and all [`IbcEvent`]s mapped
 /// to an [`Object`] are sent to the associated [`Worker`]
 /// for processing.
-#[derive(Clone, Debug, Eq, Hash, Serialize, Deserialize)]
-#[cfg_attr(feature="prusti", derive(PrustiPartialEq, PrustiOrd, PrustiPartialOrd))]
-#[cfg_attr(not(feature="prusti"), derive(PartialEq, Ord, PartialOrd))]
+#[derive(Debug, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature="prusti", derive(PrustiHash, PrustiClone, PrustiPartialEq, PrustiOrd, PrustiPartialOrd))]
+#[cfg_attr(not(feature="prusti"), derive(Clone, Hash, PartialEq, Ord, PartialOrd))]
 #[serde(tag = "type")]
 pub enum Object {
     /// See [`Client`].

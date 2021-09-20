@@ -192,7 +192,8 @@ define_error! {
     }
 }
 
-#[derive(Clone, Debug)]
+#[cfg_attr(feature="prusti", derive(PrustiClone,PrustiDebug))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug))]
 #[cfg_attr(feature="prusti", derive(PrustiSerialize))]
 pub struct ConnectionSide {
     pub(crate) chain: Box<dyn ChainHandle>,
@@ -240,7 +241,8 @@ impl Serialize for ConnectionSide {
     }
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[cfg_attr(feature="prusti", derive(PrustiClone,PrustiDebug,PrustiSerialize))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug,Serialize))]
 pub struct Connection {
     pub delay_period: Duration,
     pub a_side: ConnectionSide,

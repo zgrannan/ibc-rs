@@ -19,7 +19,8 @@ use crate::{
 use super::{Worker, WorkerHandle, WorkerId, WorkerMsg};
 
 /// Manage the lifecycle of [`Worker`]s associated with [`Object`]s.
-#[derive(Debug)]
+#[cfg_attr(feature="prusti", derive(PrustiDebug))]
+#[cfg_attr(not(feature="prusti"), derive(Debug))]
 pub struct WorkerMap {
     workers: HashMap<Object, WorkerHandle>,
     latest_worker_id: WorkerId,

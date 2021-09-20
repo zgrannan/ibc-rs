@@ -701,7 +701,8 @@ impl Supervisor {
 }
 
 /// Describes the result of [`collect_events`].
-#[derive(Clone, Debug)]
+#[cfg_attr(feature="prusti", derive(PrustiClone,PrustiDebug))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug))]
 pub struct CollectedEvents {
     /// The height at which these events were emitted from the chain.
     pub height: Height,

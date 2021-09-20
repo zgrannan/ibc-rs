@@ -12,7 +12,8 @@ use crate::{
     worker::WorkerId,
 };
 
-#[derive(Clone, Debug, Serialize)]
+#[cfg_attr(feature="prusti", derive(PrustiClone,PrustiDebug,PrustiSerialize))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug,Serialize))]
 #[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
 #[cfg_attr(not(feature="prusti"), derive(Deserialize))]
 pub struct WorkerDesc {

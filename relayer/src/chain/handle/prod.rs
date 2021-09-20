@@ -41,7 +41,8 @@ use crate::{connection::ConnectionMsgType, error::Error, keyring::KeyEntry};
 
 use super::{reply_channel, ChainHandle, ChainRequest, ReplyTo, Subscription};
 
-#[derive(Debug, Clone)]
+#[cfg_attr(feature="prusti", derive(PrustiDebug,PrustiClone))]
+#[cfg_attr(not(feature="prusti"), derive(Debug,Clone))]
 pub struct ProdChainHandle {
     /// Chain identifier
     chain_id: ChainId,

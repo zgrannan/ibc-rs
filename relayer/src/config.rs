@@ -17,7 +17,8 @@ use crate::error::Error;
 #[cfg(feature="prusti")]
 use prusti_contracts::*;
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[cfg_attr(feature="prusti", derive(PrustiClone,PrustiDebug,PrustiPartialEq))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug,PartialEq,Serialize))]
 #[cfg_attr(not(feature="prusti"), derive(Deserialize))]
 pub struct GasPrice {
     pub price: f64,
@@ -305,36 +306,36 @@ impl Default for TelemetryConfig {
     }
 }
 
-#[derive(Clone, Debug, Serialize)]
-#[cfg_attr(feature="prusti", derive(PrustiDeserialize))]
-#[cfg_attr(not(feature="prusti"), derive(Deserialize))]
-#[serde(deny_unknown_fields)]
+#[derive(Clone, Debug)]
+#[cfg_attr(feature="prusti", derive(PrustiSerialize,PrustiDeserialize))]
+#[cfg_attr(not(feature="prusti"), derive(Deserialize, Serialize))]
+#[cfg_attr(not(feature="prusti"), serde(deny_unknown_fields))]
 pub struct ChainConfig {
     pub id: ChainId,
     pub rpc_addr: tendermint_rpc::Url,
     pub websocket_addr: tendermint_rpc::Url,
     pub grpc_addr: tendermint_rpc::Url,
-    #[serde(default = "default::rpc_timeout", with = "humantime_serde")]
+    #[cfg_attr(not(feature="prusti"), serde(default = "default::rpc_timeout", with = "humantime_serde"))]
     pub rpc_timeout: Duration,
     pub account_prefix: String,
     pub key_name: String,
     pub store_prefix: String,
     pub max_gas: Option<u64>,
     pub gas_adjustment: Option<f64>,
-    #[serde(default)]
+    #[cfg_attr(not(feature="prusti"), serde(default))]
     pub max_msg_num: MaxMsgNum,
-    #[serde(default)]
+    #[cfg_attr(not(feature="prusti"), serde(default))]
     pub max_tx_size: MaxTxSize,
-    #[serde(default = "default::clock_drift", with = "humantime_serde")]
+    #[cfg_attr(not(feature="prusti"), serde(default = "default::clock_drift", with = "humantime_serde"))]
     pub clock_drift: Duration,
-    #[serde(default = "default::trusting_period", with = "humantime_serde")]
+    #[cfg_attr(not(feature="prusti"), serde(default = "default::trusting_period", with = "humantime_serde"))]
     pub trusting_period: Duration,
 
     // these two need to be last otherwise we run into `ValueAfterTable` error when serializing to TOML
-    #[serde(default)]
+    #[cfg_attr(not(feature="prusti"), serde(default))]
     pub trust_threshold: TrustThreshold,
     pub gas_price: GasPrice,
-    #[serde(default)]
+    #[cfg_attr(not(feature="prusti"), serde(default))]
     pub packet_filter: PacketFilter,
 }
 
@@ -362,7 +363,7 @@ pub fn store(config: &Config, path: impl AsRef<Path>) -> Result<(), Error> {
 }
 
 /// Serialize the given `Config` as TOML to the given writer.
-#[cfg_attr(feature="prusti_fast", trusted)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 pub(crate) fn store_writer(config: &Config, mut writer: impl Write) -> Result<(), Error> {
     let toml_config = toml::to_string_pretty(&config).map_err(Error::config_encode)?;
 

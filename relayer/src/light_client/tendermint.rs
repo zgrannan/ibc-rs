@@ -116,7 +116,7 @@ impl super::LightClient<CosmosSdkChain> for LightClient {
     /// ## TODO
     /// - [ ] Return intermediate headers as well
     // #[cfg_attr(feature="prusti", trusted)]
-#[cfg_attr(feature="prusti_fast", trusted)]
+    // #[cfg_attr(feature="prusti_fast", trusted)]
     fn check_misbehaviour(
         &mut self,
         update: UpdateClient,

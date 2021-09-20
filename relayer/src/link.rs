@@ -23,7 +23,8 @@ mod relay_summary;
 // Re-export the telemetries summary
 pub use relay_summary::RelaySummary;
 
-#[derive(Clone, Debug)]
+#[cfg_attr(feature="prusti", derive(PrustiClone,PrustiDebug))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug))]
 pub struct LinkParameters {
     pub src_port_id: PortId,
     pub src_channel_id: ChannelId,

@@ -112,7 +112,8 @@ impl Error {
 pub type Result<T> = std::result::Result<T, Error>;
 
 /// A batch of events from a chain at a specific height
-#[derive(Clone, Debug)]
+#[cfg_attr(feature="prusti", derive(PrustiClone,PrustiDebug))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug))]
 pub struct EventBatch {
     pub chain_id: ChainId,
     pub height: Height,

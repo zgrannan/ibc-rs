@@ -39,7 +39,8 @@ define_error! {
     }
 }
 
-#[derive(Clone, Debug)]
+#[cfg_attr(feature="prusti", derive(PrustiClone,PrustiDebug))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug))]
 pub struct UpdatePlanOptions {
     pub src_chain_config: ChainConfig,
     pub dst_chain_config: ChainConfig,

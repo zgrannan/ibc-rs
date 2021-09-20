@@ -30,7 +30,8 @@ impl fmt::Display for OperationalDataTarget {
 
 /// A packet messages that is prepared for sending to a chain, but has not been sent yet.
 /// Comprises both the proto-encoded packet message, alongside the event which generated it.
-#[derive(Clone)]
+#[cfg_attr(feature="prusti", derive(PrustiClone))]
+#[cfg_attr(not(feature="prusti"), derive(Clone))]
 pub struct TransitMessage {
     pub event: IbcEvent,
     pub msg: Any,
@@ -43,7 +44,8 @@ pub struct TransitMessage {
 ///     - `proofs_height`: represents the height for the proofs in all the messages.
 ///       Note: this is the height at which the proofs are queried. A client consensus state at
 ///       `proofs_height + 1` must exist on-chain in order to verify the proofs.
-#[derive(Clone)]
+#[cfg_attr(feature="prusti", derive(PrustiClone))]
+#[cfg_attr(not(feature="prusti"), derive(Clone))]
 pub struct OperationalData {
     pub proofs_height: Height,
     pub batch: Vec<TransitMessage>,

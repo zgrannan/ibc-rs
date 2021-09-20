@@ -1,10 +1,13 @@
 // If the `telemetry` feature is enabled, re-export the `ibc-telemetry` state.
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
 #[cfg(feature = "telemetry")]
 pub type Telemetry = std::sync::Arc<ibc_telemetry::TelemetryState>;
 
 // Otherwise, define and export a dummy type.
 #[cfg(not(feature = "telemetry"))]
-#[derive(Clone, Debug)]
+#[cfg_attr(feature="prusti", derive(PrustiClone,PrustiDebug))]
+#[cfg_attr(not(feature="prusti"), derive(Clone,Debug))]
 pub struct TelemetryDisabled;
 
 #[cfg(not(feature = "telemetry"))]

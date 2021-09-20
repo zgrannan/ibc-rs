@@ -58,7 +58,8 @@ use crate::{
 mod prod;
 
 /// A pair of [`ChainHandle`]s.
-#[derive(Clone)]
+#[cfg_attr(feature="prusti", derive(PrustiClone))]
+#[cfg_attr(not(feature="prusti"), derive(Clone))]
 pub struct ChainHandlePair {
     pub a: Box<dyn ChainHandle>,
     pub b: Box<dyn ChainHandle>,
