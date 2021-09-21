@@ -88,6 +88,7 @@ pub struct ChannelSide {
 }
 
 impl ChannelSide {
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn new(
         chain: Box<dyn ChainHandle>,
         client_id: ClientId,

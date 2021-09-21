@@ -67,17 +67,21 @@ semver = "1.0"
 # prusti-contracts = { path = "../../prusti-dev/prusti-contracts"}
 
 [dependencies.tendermint]
+path = "../../tendermint-rs/tendermint"
 version = "=0.21.0"
 
 [dependencies.tendermint-rpc]
+path = "../../tendermint-rs/rpc"
 version = "=0.21.0"
 features = ["http-client", "websocket-client"]
 
 [dependencies.tendermint-light-client]
+path = "../../tendermint-rs/light-client"
 version = "=0.21.0"
 features = ["unstable"]
 
 [dependencies.tendermint-proto]
+path = "../../tendermint-rs/proto"
 version = "=0.21.0"
 
 [dev-dependencies]
@@ -88,4 +92,4 @@ tracing-subscriber = "0.2.19"
 test-env-log = { version = "0.2.7", features = ["trace"] }
 
 # Needed for generating (synthetic) light blocks.
-tendermint-testgen = { version = "=0.21.0" }
+tendermint-testgen = { version = "=0.21.0", path = "../../tendermint-rs/testgen" }

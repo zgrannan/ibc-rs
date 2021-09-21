@@ -1,13 +1,13 @@
 [workspace]
 
 members = [
-    "modules",
     "relayer",
     "relayer-cli",
     "telemetry",
 ]
 
 exclude = [
+    "modules",
     "no-std-check",
     "proto",
     "proto-compiler"
