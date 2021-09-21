@@ -53,6 +53,7 @@ impl WorkerId {
 }
 
 impl fmt::Display for WorkerId {
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
     }
@@ -73,7 +74,7 @@ pub enum Worker {
 }
 
 impl fmt::Display for Worker {
-#[cfg_attr(feature="prusti_fast", trusted_skip)]
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "[{} <-> {}]", self.chains().a.id(), self.chains().b.id(),)
     }

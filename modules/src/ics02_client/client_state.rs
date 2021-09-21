@@ -62,6 +62,15 @@ impl std::fmt::Debug for AnyClientState {
 }
 
 impl AnyClientState {
+    #[cfg_attr(feature="prusti", pure)]
+    pub fn trusting_period(&self) -> Duration {
+       match self {
+           Self::Tendermint(tm_state) => tm_state.trusting_period,
+            #[cfg(any(test, feature = "mocks"))]
+            AnyClientState::Mock(_) => Duration::new(0, 0),
+       }
+    }
+
     pub fn latest_height(&self) -> Height {
         match self {
             Self::Tendermint(tm_state) => tm_state.latest_height(),

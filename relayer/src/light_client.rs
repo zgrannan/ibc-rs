@@ -45,6 +45,7 @@ pub trait LightClient<C: Chain>: Send + Sync {
 
     /// Given a client update event that includes the header used in a client update,
     /// look for misbehaviour by fetching a header at same or latest height.
+    #[ensures(false)]
     fn check_misbehaviour(
         &mut self,
         update: UpdateClient,

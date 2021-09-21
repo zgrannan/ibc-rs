@@ -47,3 +47,13 @@ macro_rules! downcast {
         None
     }
 }
+
+#[macro_export]
+macro_rules! handle_result {
+    ($parse_result: expr) => {
+        match $parse_result {
+            Ok(data) => data,
+            Err(err) => return err.to_compile_error(),
+        }
+    };
+}

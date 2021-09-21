@@ -202,6 +202,7 @@ pub struct ConnectionSide {
 }
 
 impl ConnectionSide {
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn new(
         chain: Box<dyn ChainHandle>,
         client_id: ClientId,
@@ -213,7 +214,7 @@ impl ConnectionSide {
             connection_id,
         }
     }
-#[cfg_attr(feature="prusti_fast", trusted_skip)]
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn connection_id(&self) -> Option<&ConnectionId> {
         self.connection_id.as_ref()
     }

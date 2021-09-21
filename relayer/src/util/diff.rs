@@ -21,7 +21,7 @@ pub enum Change<K> {
 impl <K> PartialEq for Change<K> {
     #[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn eq(&self, other: &Change<K>) -> bool {
-        false
+        todo!()
     }
 }
 

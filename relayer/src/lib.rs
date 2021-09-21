@@ -5,6 +5,7 @@
     unused_import_braces,
     rust_2018_idioms
 )]
+#![feature(type_ascription)]
 // TODO: disable unwraps:
 //  https://github.com/informalsystems/ibc-rs/issues/987
 // #![cfg_attr(not(test), deny(clippy::unwrap_used))]
@@ -63,7 +64,9 @@ impl<T, E: std::fmt::Debug> Result<T, E> {
             Err(_) => false
         }
     }
+
     #[requires(self.is_ok())]
+    #[pure]
     pub fn unwrap(self) -> T {
         match self {
             Ok(t) => t,

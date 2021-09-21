@@ -1,6 +1,8 @@
 #[cfg(feature="prusti")]
 use prusti_contracts::*;
 
+use tendermint_light_client::contracts::is_within_trust_period;
+use tendermint_light_client::types::Time;
 use std::convert::TryFrom;
 
 use itertools::Itertools;
@@ -56,49 +58,14 @@ impl super::LightClient<CosmosSdkChain> for LightClient {
         Ok(Verified { target, supporting })
     }
 
-    #[cfg(feature="prusti")]
-    #[trusted]
+    #[cfg_attr(feature="prusti", trusted_skip)]
     fn verify(
         &mut self,
         trusted: ibc::Height,
         target: ibc::Height,
         client_state: &AnyClientState,
     ) -> Result<Verified<LightBlock>, Error> {
-        todo!()
-    }
-
-    #[cfg(not(feature="prusti"))]
-    fn verify(
-        &mut self,
-        trusted: ibc::Height,
-        target: ibc::Height,
-        client_state: &AnyClientState,
-    ) -> Result<Verified<LightBlock>, Error> {
-        trace!(%trusted, %target, "light client verification");
-
-        let target_height =
-            TMHeight::try_from(target.revision_height).map_err(Error::invalid_height)?;
-
-        let client = self.prepare_client(client_state)?;
-        let mut state = self.prepare_state(trusted)?;
-
-        // Verify the target header
-        let target = client
-            .verify_to_target(target_height, &mut state)
-            .map_err(|e| Error::light_client(self.chain_id.to_string(), e))?;
-
-        // Collect the verification trace for the target block
-        let target_trace = state.get_trace(target.height());
-
-        // Compute the minimal supporting set, sorted by ascending height
-        let supporting = target_trace
-            .into_iter()
-            .filter(|lb| lb.height() != target.height())
-            .unique_by(LightBlock::height)
-            .sorted_by_key(LightBlock::height)
-            .collect_vec();
-
-        Ok(Verified { target, supporting })
+        self.verify0(trusted, target, client_state)
     }
 
     #[cfg_attr(feature="prusti_fast", trusted_skip)]
@@ -122,21 +89,130 @@ impl super::LightClient<CosmosSdkChain> for LightClient {
         update: UpdateClient,
         client_state: &AnyClientState,
     ) -> Result<Option<MisbehaviourEvidence>, Error> {
+        self.check_misbehaviour(update, client_state)
+    }
+}
+
+#[cfg(feature="prusti")]
+#[extern_spec]
+mod tendermint {
+    mod Time {
+
+        use prusti_contracts::*;
+        use tendermint_light_client::types::Time;
+
+        #[pure]
+        pub fn now() -> Time;
+    }
+}
+
+#[cfg(feature="prusti")]
+#[extern_spec]
+impl ibc::ics02_client::client_state::AnyClientState {
+    #[pure]
+    pub fn trusting_period(&self) -> std::time::Duration;
+}
+
+#[cfg(feature="prusti")]
+#[extern_spec]
+mod tendermint_light_client {
+    mod contracts {
+
+        use prusti_contracts::*;
+        use tendermint_light_client::types::Time;
+        use tendermint_light_client::types::LightBlock;
+        use std::time::Duration;
+
+        #[pure]
+        pub fn is_within_trust_period(
+            light_block: &LightBlock,
+            trusting_period: Duration,
+            now: Time) -> bool;
+    }
+}
+
+#[cfg(feature="prusti")]
+#[pure]
+fn get_verified_target(v: Result<Verified<LightBlock>, Error>) -> LightBlock {
+  match v {
+      Ok(r) => r.target,
+      Err(_) => unreachable!()
+  }
+}
+
+impl LightClient {
+
+    #[ensures(result.is_ok() ==>
+        is_within_trust_period(
+          &get_verified_target(result),
+          client_state.trusting_period(),
+          Time::now()
+        )
+     )]
+    fn verify0(
+        &mut self,
+        trusted: ibc::Height,
+        target: ibc::Height,
+        client_state: &AnyClientState,
+    ) -> Result<Verified<LightBlock>, Error> {
+        // trace!(%trusted, %target, "light client verification");
+
+        let target_height =
+           match TMHeight::try_from(target.revision_height).map_err(Error::invalid_height) {
+               Err(e) => return Err(e),
+               Ok(th) => th
+           };
+
+        let client = match self.prepare_client(client_state) {
+           Err(e) => return Err(e),
+           Ok(th) => th
+        };
+
+        let mut state = match self.prepare_state(trusted) {
+           Err(e) => return Err(e),
+           Ok(th) => th
+        };
+
+        // Verify the target header
+        let target = match client.verify_to_target(target_height, &mut state) {
+            Ok(t) => t,
+            Err(e) => return Err(Error::light_client(self.chain_id.to_string(), e))
+        };
+
+        // Collect the verification trace for the target block
+        let target_trace = state.get_trace(target.height());
+
+        // Compute the minimal supporting set, sorted by ascending height
+        let supporting = target_trace
+            .into_iter()
+            // PRUSTI .filter(|lb| lb.height() != target.height())
+            .unique_by(LightBlock::height)
+            .sorted_by_key(LightBlock::height)
+            .collect_vec();
+
+        Ok(Verified { target, supporting })
+    }
+
+    fn check_misbehaviour0(
+        &mut self,
+        update: UpdateClient,
+        client_state: &AnyClientState,
+    ) -> Result<Option<MisbehaviourEvidence>, Error> {
         crate::time!("light client check_misbehaviour");
 
-        let update_header = update.header.clone().ok_or_else(|| {
+        let update_header = update.header.clone().ok_or(
             Error::misbehaviour(format!(
                 "missing header in update client event {}",
                 self.chain_id
             ))
-        })?;
+        )?;
 
-        let update_header = downcast!(update_header => AnyHeader::Tendermint).ok_or_else(|| {
+        let update_header = downcast!(update_header => AnyHeader::Tendermint).ok_or(
             Error::misbehaviour(format!(
                 "header type incompatible for chain {}",
                 self.chain_id
             ))
-        })?;
+        )?;
 
         let latest_chain_block = self.fetch_light_block(AtHeight::Highest)?;
         let latest_chain_height =
@@ -160,7 +236,7 @@ impl super::LightClient<CosmosSdkChain> for LightClient {
         }
 
         let Verified { target, supporting } =
-            self.verify(trusted_height, target_height, client_state)?;
+            self.verify0(trusted_height, target_height, client_state)?;
 
         if !headers_compatible(&target.signed_header, &update_header.signed_header) {
             let (witness, supporting) = self.adjust_headers(trusted_height, target, supporting)?;

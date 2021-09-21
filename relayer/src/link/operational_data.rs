@@ -21,6 +21,7 @@ pub enum OperationalDataTarget {
 }
 
 impl fmt::Display for OperationalDataTarget {
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             OperationalDataTarget::Source => write!(f, "Source"),
