@@ -20,6 +20,7 @@ use tendermint_rpc as rpc;
 
 use ibc::{
     downcast,
+    handle_result,
     ics02_client::{
         client_state::AnyClientState,
         client_type::ClientType,
@@ -115,6 +116,30 @@ impl ibc::ics02_client::client_state::AnyClientState {
 
 #[cfg(feature="prusti")]
 #[extern_spec]
+impl tendermint_light_client::light_client::LightClient {
+
+    #[ensures(result.options.trusting_period == options.trusting_period)]
+    pub fn new(
+       options: TmOptions
+    ) -> tendermint_light_client::light_client::LightClient;
+
+    #[ensures(
+        result.is_ok() ==>
+        is_within_trust_period(
+          &result.unwrap(),
+          self.options.trusting_period,
+          Time::now()
+        )
+    )]
+    pub fn verify_to_target(
+        &self,
+        target_height: tendermint::block::Height,
+        state: &mut tendermint_light_client::state::State,
+    ) -> Result<LightBlock, tendermint_light_client::errors::Error>;
+}
+
+#[cfg(feature="prusti")]
+#[extern_spec]
 mod tendermint_light_client {
     mod contracts {
 
@@ -132,8 +157,9 @@ mod tendermint_light_client {
 }
 
 #[cfg(feature="prusti")]
+#[requires(v.is_ok())]
 #[pure]
-fn get_verified_target(v: Result<Verified<LightBlock>, Error>) -> LightBlock {
+fn get_verified_target(v: &Result<Verified<LightBlock>, Error>) -> LightBlock {
   match v {
       Ok(r) => r.target,
       Err(_) => unreachable!()
@@ -144,7 +170,7 @@ impl LightClient {
 
     #[ensures(result.is_ok() ==>
         is_within_trust_period(
-          &get_verified_target(result),
+          &get_verified_target(&result),
           client_state.trusting_period(),
           Time::now()
         )
@@ -273,17 +299,19 @@ impl LightClient {
         })
     }
 
-    #[cfg_attr(feature="prusti", trusted_skip)]
+    #[ensures(result.is_ok() ==>
+        result.unwrap().options.trusting_period == client_state.trusting_period())
+    ]
     fn prepare_client(&self, client_state: &AnyClientState) -> Result<TmLightClient, Error> {
-        let clock = components::clock::SystemClock;
-        let hasher = operations::hasher::ProdHasher;
-        let verifier = components::verifier::ProdVerifier::default();
-        let scheduler = components::scheduler::basic_bisecting_schedule;
+        // let clock = components::clock::SystemClock;
+        // let hasher = operations::hasher::ProdHasher;
+        // let verifier = components::verifier::ProdVerifier::default();
+        // let scheduler = components::scheduler::basic_bisecting_schedule;
 
-        let client_state =
-            downcast!(client_state => AnyClientState::Tendermint).ok_or_else(|| {
-                Error::client_type_mismatch(ClientType::Tendermint, client_state.client_type())
-            })?;
+        let client_state = match client_state {
+            AnyClientState::Tendermint(cs) => cs,
+            _ =>  return Err(Error::client_type_mismatch(ClientType::Tendermint, client_state.client_type()))
+        };
 
         let params = TmOptions {
             trust_threshold: client_state.trust_level,
@@ -291,15 +319,17 @@ impl LightClient {
             clock_drift: client_state.max_clock_drift,
         };
 
-        Ok(TmLightClient::new(
-            self.peer_id,
-            params,
-            clock,
-            scheduler,
-            verifier,
-            hasher,
-            self.io.clone(),
-        ))
+        // Ok(TmLightClient::new(
+        //     self.peer_id,
+        //     params,
+        //     clock,
+        //     scheduler,
+        //     verifier,
+        //     hasher,
+        //     self.io.clone(),
+        // ))
+
+        Ok(TmLightClient::new(params))
     }
 
 #[cfg_attr(feature="prusti_fast", trusted_skip)]

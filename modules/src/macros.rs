@@ -50,10 +50,10 @@ macro_rules! downcast {
 
 #[macro_export]
 macro_rules! handle_result {
-    ($parse_result: expr) => {
-        match $parse_result {
+    ($e: expr) => {
+        match $e {
             Ok(data) => data,
-            Err(err) => return err.to_compile_error(),
+            Err(err) => return Err(err)
         }
     };
 }
