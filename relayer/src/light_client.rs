@@ -18,7 +18,6 @@ pub trait LightBlock<C: Chain>: Send + Sync {
 }
 
 #[cfg_attr(not(feature="prusti"), derive(Clone,Debug,PartialEq,Eq))]
-#[cfg_attr(feature="prusti", derive(Copy))]
 pub struct Verified<H> {
     /// Verified target
     pub target: H,

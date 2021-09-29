@@ -56,8 +56,9 @@ impl <T> std::option::Option<T> {
 
 #[cfg(feature="prusti")]
 #[extern_spec]
-impl<T, E: std::fmt::Debug> Result<T, E> {
+impl<T : Copy, E: Copy + std::fmt::Debug> Result<T, E> {
     #[pure]
+    #[ensures(matches!(*self, Ok(_)) == result)]
     pub fn is_ok(&self) -> bool {
         match self {
             Ok(_) => true,
@@ -65,12 +66,4 @@ impl<T, E: std::fmt::Debug> Result<T, E> {
         }
     }
 
-    #[requires(self.is_ok())]
-    #[pure]
-    pub fn unwrap(self) -> T {
-        match self {
-            Ok(t) => t,
-            Err(e) => unreachable!()
-        }
-    }
 }

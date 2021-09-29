@@ -41,6 +41,9 @@ use crate::{chain::CosmosSdkChain, config::ChainConfig, error::Error};
 use super::Verified;
 
 pub struct LightClient {
+    #[cfg(feature="prusti")]
+    chain_id: u32,
+    #[cfg(not(feature="prusti"))]
     chain_id: ChainId,
     peer_id: PeerId,
     io: components::io::ProdIo,
@@ -108,10 +111,34 @@ mod tendermint {
 }
 
 #[cfg(feature="prusti")]
+type Duration = i32;
+
+#[cfg(not(feature="prusti"))]
+type Duration = std::time::Duration;
+
+#[cfg(feature="prusti")]
 #[extern_spec]
 impl ibc::ics02_client::client_state::AnyClientState {
     #[pure]
-    pub fn trusting_period(&self) -> std::time::Duration;
+    #[ensures(result == cs_trusting_period(&self))]
+    pub fn trusting_period(&self) -> Duration;
+}
+
+#[cfg_attr(feature="prusti", pure)]
+pub fn cs_trusting_period(cs: &AnyClientState) -> i32 {
+    match cs {
+        AnyClientState::Tendermint(tm_state) => tm_state.trusting_period,
+        _ => 0
+    }
+}
+
+#[pure]
+#[requires(r.is_ok())]
+fn unwrap_verified(r: &Result<LightBlock, tendermint_light_client::errors::Error>) -> &LightBlock {
+   match r {
+      Ok(block) => block,
+      Err(_) => unreachable!()
+   }
 }
 
 #[cfg(feature="prusti")]
@@ -126,9 +153,9 @@ impl tendermint_light_client::light_client::LightClient {
     #[ensures(
         result.is_ok() ==>
         is_within_trust_period(
-          &result.unwrap(),
+          unwrap_verified(&result),
           self.options.trusting_period,
-          Time::now()
+          0
         )
     )]
     pub fn verify_to_target(
@@ -146,14 +173,34 @@ mod tendermint_light_client {
         use prusti_contracts::*;
         use tendermint_light_client::types::Time;
         use tendermint_light_client::types::LightBlock;
-        use std::time::Duration;
 
         #[pure]
         pub fn is_within_trust_period(
             light_block: &LightBlock,
-            trusting_period: Duration,
-            now: Time) -> bool;
+            trusting_period: i32,
+            now: u32) -> bool;
     }
+}
+
+#[trusted]
+#[ensures(v)]
+fn assume(v: bool) {
+
+}
+#[trusted]
+#[requires(v)]
+fn assert(v: bool) {
+
+}
+
+#[cfg(feature="prusti")]
+#[pure]
+#[requires(matches!(v, Ok(_)))]
+fn get_options(v: &Result<TmLightClient, Error>) -> TmOptions {
+  match v {
+      Ok(r) => r.options,
+      Err(_) => unreachable!()
+  }
 }
 
 #[cfg(feature="prusti")]
@@ -172,7 +219,7 @@ impl LightClient {
         is_within_trust_period(
           &get_verified_target(&result),
           client_state.trusting_period(),
-          Time::now()
+          0
         )
      )]
     fn verify0(
@@ -219,6 +266,8 @@ impl LightClient {
         Ok(Verified { target, supporting })
     }
 
+
+    #[ensures(check_misbehaviour_spec(client_state, &result))]
     fn check_misbehaviour0(
         &mut self,
         update: UpdateClient,
@@ -226,23 +275,20 @@ impl LightClient {
     ) -> Result<Option<MisbehaviourEvidence>, Error> {
         crate::time!("light client check_misbehaviour");
 
-        let update_header = update.header.clone().ok_or(
-            Error::misbehaviour(format!(
-                "missing header in update client event {}",
-                self.chain_id
-            ))
-        )?;
+        let update_header = match update.header.clone() {
+           Some(header) => header,
+           None =>
+            return Err(Error::misbehaviour("missing header in update client event".to_string()))
+        };
 
-        let update_header = downcast!(update_header => AnyHeader::Tendermint).ok_or(
-            Error::misbehaviour(format!(
-                "header type incompatible for chain {}",
-                self.chain_id
-            ))
-        )?;
+        let update_header = match update_header {
+            AnyHeader::Tendermint(header) => header,
+            _ => return Err(Error::misbehaviour("header type incompatible for chain".to_string()))
+        };
 
-        let latest_chain_block = self.fetch_light_block(AtHeight::Highest)?;
+        let latest_chain_block = handle_result!(self.fetch_light_block(AtHeight::Highest));
         let latest_chain_height =
-            ibc::Height::new(self.chain_id.version(), latest_chain_block.height().into());
+            ibc::Height::new(0, latest_chain_block.height().into());
 
         // set the target height to the minimum between the update height and latest chain height
         let target_height = std::cmp::min(update.consensus_height(), latest_chain_height);
@@ -261,14 +307,15 @@ impl LightClient {
             return Ok(None);
         }
 
+
         let Verified { target, supporting } =
-            self.verify0(trusted_height, target_height, client_state)?;
+            handle_result!(self.verify0(trusted_height, target_height, client_state));
 
         if !headers_compatible(&target.signed_header, &update_header.signed_header) {
-            let (witness, supporting) = self.adjust_headers(trusted_height, target, supporting)?;
+            let (witness, supporting) = handle_result!(self.adjust_headers(trusted_height, target, supporting));
 
             let misbehaviour = TmMisbehaviour {
-                client_id: update.client_id().clone(),
+                client_id: 0,
                 header1: update_header,
                 header2: witness,
             }
@@ -299,25 +346,26 @@ impl LightClient {
         })
     }
 
-    #[ensures(result.is_ok() ==>
-        result.unwrap().options.trusting_period == client_state.trusting_period())
-    ]
+    #[ensures(result.is_ok() ==> get_options(&result).trusting_period == client_state.trusting_period())]
     fn prepare_client(&self, client_state: &AnyClientState) -> Result<TmLightClient, Error> {
         // let clock = components::clock::SystemClock;
         // let hasher = operations::hasher::ProdHasher;
         // let verifier = components::verifier::ProdVerifier::default();
         // let scheduler = components::scheduler::basic_bisecting_schedule;
 
-        let client_state = match client_state {
+        let tcs = match client_state {
             AnyClientState::Tendermint(cs) => cs,
             _ =>  return Err(Error::client_type_mismatch(ClientType::Tendermint, client_state.client_type()))
         };
 
         let params = TmOptions {
-            trust_threshold: client_state.trust_level,
-            trusting_period: client_state.trusting_period,
-            clock_drift: client_state.max_clock_drift,
+            trust_threshold: tcs.trust_level,
+            trusting_period: tcs.trusting_period,
+            clock_drift: tcs.max_clock_drift,
         };
+
+        assert(params.trusting_period == client_state.trusting_period());
+
 
         // Ok(TmLightClient::new(
         //     self.peer_id,
@@ -418,5 +466,20 @@ impl LightClient {
         };
 
         Ok((target_header, supporting_headers))
+    }
+}
+
+#[pure]
+fn get_witness(m: AnyMisbehaviour) -> &LightBlock {
+   m match {
+       AnyMisbehaviour::Tendermint(t) => t.header
+   }
+}
+
+#[pure]
+fn check_misbehaviour_spec(client_state: &AnyClientState, r: &Result<Option<MisbehaviourEvidence>, Error>) -> bool {
+    match r {
+        Ok(Some(m)) => is_within_trust_period(m., client_state.trusting_period(), 0)),
+        _ => true
     }
 }
