@@ -230,8 +230,8 @@ fn get_verified_target(v: &Result<Verified<LightBlock>, Error>) -> LightBlock {
 
 #[pure]
 #[trusted]
-fn get_verified_supporting_header_time(m: &Verified<LightBlock>, i: usize) -> Time {
-    m.supporting[i].signed_header.header.time
+fn get_verified_supporting_header_time(m: &Vec<LightBlock>, i: usize) -> Time {
+    m[i].signed_header.header.time
 }
 
 impl LightClient {
@@ -337,19 +337,20 @@ impl LightClient {
         let Verified { target, supporting } =
             handle_result!(self.verify0(trusted_height, target_height, client_state));
 
+        assert(target.signed_header.header.time > get_verified_supporting_header_time(&supporting, 0));
+
         if !headers_compatible(&target.signed_header, &update_header.signed_header) {
             let (witness, supporting) = handle_result!(self.adjust_headers(trusted_height, target, supporting));
 
-            let misbehaviour = TmMisbehaviour {
+            let misbehaviour = AnyMisbehaviour::Tendermint(TmMisbehaviour {
                 client_id: 0,
                 header1: update_header,
                 header2: witness,
-            }
-            .wrap_any();
+            });
 
             let result = MisbehaviourEvidence {
                 misbehaviour,
-                supporting_headers: supporting.into_iter().map(TmHeader::wrap_any).collect(),
+                supporting_headers: to_any_headers(supporting)
             };
 
             assume(misbehaviour_invariant(&result));
@@ -528,6 +529,12 @@ fn is_monotonic_bft_time(untrusted: &TmHeader, trusted: &TmHeader) -> bool {
 
 #[pure]
 #[trusted]
+fn get_header_time(headers: &Vec<TmHeader>, index: usize) -> Time {
+    headers[index].signed_header.header.time
+}
+
+#[pure]
+#[trusted]
 fn get_supporting_header_time(headers: &Vec<AnyHeader>, index: usize) -> Time {
     match &headers[index] {
         AnyHeader::Tendermint(header) => header.signed_header.header.time,
@@ -540,7 +547,7 @@ fn get_supporting_header_time(headers: &Vec<AnyHeader>, index: usize) -> Time {
 fn misbehaviour_invariant(m: &MisbehaviourEvidence) -> bool {
    let supporting_header_time = get_supporting_header_time(&m.supporting_headers, 0);
    let witness_time = match &m.misbehaviour {
-       AnyMisbehaviour::Tendermint(t) => t.header1.time(),
+       AnyMisbehaviour::Tendermint(t) => t.header2.signed_header.header.time,
        _ => unreachable!()
    };
    witness_time > supporting_header_time
@@ -554,28 +561,25 @@ fn header_within_trust_period(header: &TmHeader, trusting_period: Duration, now:
 }
 
 #[pure]
-#[trusted]
-fn signed_headers_equal(lhs: &SignedHeader, rhs: &SignedHeader) -> bool {
-   true
+fn adjust_headers_spec(target: &LightBlock, r: &Result<(TmHeader, Vec<TmHeader>), Error>) -> bool {
+    match r {
+        Ok((header, sup)) => header.signed_header == target.signed_header &&
+            header.signed_header.header.time > get_header_time(sup, 0),
+        _ => true
+    }
 }
 
-
-#[pure]
-fn adjust_headers_spec(target: &LightBlock, r: &Result<(TmHeader, Vec<TmHeader>), Error>) -> bool {
-    true
-    // match r {
-    //     Ok((header, _)) => signed_headers_equal(
-    //         &header.signed_header,  &target.signed_header
-    //     ),
-    //     _ => true
-    // }
+#[trusted]
+#[ensures(get_header_time(old(&vec), 0) == get_supporting_header_time(&result, 0))]
+fn to_any_headers(vec: Vec<TmHeader>) -> Vec<AnyHeader> {
+    vec.into_iter().map(TmHeader::wrap_any).collect()
 }
 
 
 #[pure]
 fn verify_spec(r: &Result<Verified<LightBlock>, Error>) -> bool {
    match r {
-       Ok(v) => v.target.signed_header.header.time > get_verified_supporting_header_time(v, 0),
+       Ok(v) => v.target.signed_header.header.time > get_verified_supporting_header_time(&v.supporting, 0),
        _ => true
    }
 }

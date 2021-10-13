@@ -4,7 +4,7 @@ use std::hash::Hash;
 use prusti_contracts::*;
 
 /// A change between two dictionaries.
-#[cfg_attr(feature="prusti", derive(Clone,Debug,Eq))]
+#[cfg_attr(feature="prusti", derive(Clone,Eq))]
 #[cfg_attr(not(feature="prusti"), derive(Clone,Debug,Eq))]
 #[cfg_attr(not(feature="prusti"), derive(Ord, PartialOrd, PartialEq))]
 // #[cfg_attr(feature="prusti", derive(PrustiOrd, PrustiPartialOrd, PrustiPartialEq))]
@@ -15,6 +15,18 @@ pub enum Change<K> {
     Updated(K),
     /// The entry with this key was removed.
     Removed(K),
+}
+
+#[cfg(feature="prusti")]
+impl <K> std::fmt::Debug for Change<K> {
+    #[trusted_skip]
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Added(arg0) => f.debug_tuple("Added").field(arg0).finish(),
+            Self::Updated(arg0) => f.debug_tuple("Updated").field(arg0).finish(),
+            Self::Removed(arg0) => f.debug_tuple("Removed").field(arg0).finish(),
+        }
+    }
 }
 
 #[cfg(feature="prusti")]
