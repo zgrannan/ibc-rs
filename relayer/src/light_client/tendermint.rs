@@ -234,6 +234,21 @@ fn get_verified_supporting_header_time(m: &Vec<LightBlock>, i: usize) -> Time {
     m[i].signed_header.header.time
 }
 
+#[trusted]
+#[ensures(target.signed_header.header.time > get_verified_supporting_header_time(&result, 0))]
+fn get_supporting(target: &LightBlock, state: &LightClientState) -> Vec<LightBlock> {
+    // Collect the verification trace for the target block
+    let target_trace = state.get_trace(target.height());
+
+    // Compute the minimal supporting set, sorted by ascending height
+    target_trace
+        .into_iter()
+        // .filter(|lb| lb.height() != target.height())
+        .unique_by(LightBlock::height)
+        .sorted_by_key(LightBlock::height)
+        .collect_vec()
+}
+
 impl LightClient {
 
     // #[ensures(result.is_ok() ==>
@@ -243,7 +258,6 @@ impl LightClient {
     //       0
     //     )
     //  )]
-    #[trusted]
     #[ensures(verify_spec(&result))]
     fn verify0(
         &mut self,
@@ -276,15 +290,8 @@ impl LightClient {
         };
 
         // Collect the verification trace for the target block
-        let target_trace = state.get_trace(target.height());
-
         // Compute the minimal supporting set, sorted by ascending height
-        let supporting = target_trace
-            .into_iter()
-            // PRUSTI .filter(|lb| lb.height() != target.height())
-            .unique_by(LightBlock::height)
-            .sorted_by_key(LightBlock::height)
-            .collect_vec();
+        let supporting = get_supporting(&target, &state);
 
         Ok(Verified { target, supporting })
     }
@@ -352,8 +359,6 @@ impl LightClient {
                 misbehaviour,
                 supporting_headers: to_any_headers(supporting)
             };
-
-            assume(misbehaviour_invariant(&result));
 
             Ok(Some(result))
         } else {
