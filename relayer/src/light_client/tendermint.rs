@@ -442,7 +442,7 @@ impl LightClient {
 
 
     #[ensures(adjust_headers_spec(old(&target), &result))]
-    #[cfg_attr(feature="prusti_fast", trusted_skip)]
+    // #[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn adjust_headers(
         &mut self,
         trusted_height: ibc::Height,
@@ -492,20 +492,25 @@ impl LightClient {
         //
         // b) Set the trusted validators of the target header to the validators of the successor to
         // the last supporting header if any, or to the initial trusted validators otherwise.
+        /*
         let (latest_trusted_height, latest_trusted_validator_set) = if supporting_headers.len() > 0 {
-            let prev_header = supporting_headers[i - 1].clone();
+            let prev_header = &supporting_headers[i - 1];
             let prev_succ = handle_result!(self.fetch(prev_header.height().increment()));
             (prev_header.height(), prev_succ.validators)
         } else {
             (trusted_height, trusted_validator_set)
         };
-
+        */
+        let (latest_trusted_height, latest_trusted_validator_set) =
+            (trusted_height, trusted_validator_set);
         let target_header = TmHeader {
             signed_header: target.signed_header,
             validator_set: target.validators,
             trusted_height: latest_trusted_height,
             trusted_validator_set: latest_trusted_validator_set,
         };
+
+        assume(target.signed_header.header.time > get_header_time(&supporting_headers, 0));
 
         Ok((target_header, supporting_headers))
     }
@@ -525,11 +530,6 @@ fn check_misbehaviour_spec(client_state: &AnyClientState, r: &Result<Option<Misb
         Ok(Some(m)) => misbehaviour_invariant(m), // header_within_trust_period(&get_witness(&m.misbehaviour), client_state.trusting_period(), 0),
         _ => true
     }
-}
-
-#[pure]
-fn is_monotonic_bft_time(untrusted: &TmHeader, trusted: &TmHeader) -> bool {
-    true
 }
 
 #[pure]
