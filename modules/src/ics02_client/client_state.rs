@@ -2,7 +2,10 @@ use core::marker::{Send, Sync};
 use std::convert::{TryFrom, TryInto};
 #[cfg(feature="prusti")]
 use prusti_contracts::*;
+#[cfg(feature="original")]
 use std::time::Duration;
+#[cfg(not(feature="original"))]
+type Duration = i32;
 
 use prost_types::Any;
 use serde::{Deserialize, Serialize};
@@ -67,7 +70,12 @@ impl AnyClientState {
        match self {
            Self::Tendermint(tm_state) => tm_state.trusting_period,
             #[cfg(any(test, feature = "mocks"))]
+            #[cfg(feature="original")]
             AnyClientState::Mock(_) => Duration::new(0, 0),
+
+            #[cfg(any(test, feature = "mocks"))]
+            #[cfg(not(feature="original"))]
+            AnyClientState::Mock(_) => 0
        }
     }
 
@@ -98,6 +106,12 @@ impl AnyClientState {
         }
     }
 
+    #[cfg(not(feature="original"))]
+    pub fn refresh_period(&self) -> Option<Duration> {
+        unimplemented!()
+    }
+
+    #[cfg(feature="original")]
     pub fn refresh_period(&self) -> Option<Duration> {
         match self {
             AnyClientState::Tendermint(tm_state) => tm_state.refresh_time(),
@@ -107,6 +121,12 @@ impl AnyClientState {
         }
     }
 
+    #[cfg(not(feature="original"))]
+    pub fn expired(&self, elapsed_since_latest: Duration) -> bool {
+        unimplemented!()
+    }
+
+    #[cfg(feature="original")]
     pub fn expired(&self, elapsed_since_latest: Duration) -> bool {
         match self {
             AnyClientState::Tendermint(tm_state) => tm_state.expired(elapsed_since_latest),

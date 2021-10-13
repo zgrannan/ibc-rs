@@ -43,6 +43,9 @@ sha2 = { version = "0.9.3", optional = true }
 flex-error = { version = "0.4.1", default-features = false , path = "../../flex-error/flex-error"}
 # prusti-contracts = { path = "../../prusti-dev/prusti-contracts"}
 
+[patch.crates-io]
+prost-derive = "0.8.0"
+
 [dependencies.tendermint]
 path = "../../tendermint-rs/tendermint"
 version = "=0.21.0"

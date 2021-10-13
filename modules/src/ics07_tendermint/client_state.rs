@@ -21,11 +21,18 @@ use crate::ics24_host::identifier::ChainId;
 use crate::timestamp::ZERO_DURATION;
 use crate::Height;
 
+type FakeDuration = i32;
+
+
 #[cfg_attr(not(feature="prusti"), derive(Debug), derive(Deserialize), derive(Serialize), derive(PartialEq), derive(Eq))]
 #[derive(Clone)]
 pub struct ClientState {
     pub chain_id: ChainId,
     pub trust_level: TrustThreshold,
+    #[cfg(not(feature="original"))]
+    pub trusting_period: FakeDuration,
+
+    #[cfg(feature="original")]
     pub trusting_period: Duration,
     pub unbonding_period: Duration,
     pub max_clock_drift: Duration,
@@ -46,6 +53,22 @@ pub struct AllowUpdate {
 impl Protobuf<RawClientState> for ClientState {}
 
 impl ClientState {
+    #[cfg(not(feature="original"))]
+    pub fn new(
+        chain_id: ChainId,
+        trust_level: TrustThreshold,
+        trusting_period: Duration,
+        unbonding_period: Duration,
+        max_clock_drift: Duration,
+        latest_height: Height,
+        frozen_height: Height,
+        upgrade_path: Vec<String>,
+        allow_update: AllowUpdate,
+    ) -> Result<ClientState, Error> {
+        unimplemented!()
+    }
+
+    #[cfg(feature="original")]
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         chain_id: ChainId,
@@ -115,6 +138,14 @@ impl ClientState {
         }
     }
 
+    #[cfg(not(feature="original"))]
+    /// Helper function to verify the upgrade client procedure.
+    /// Resets all fields except the blockchain-specific ones.
+    pub fn zero_custom_fields(mut client_state: Self) -> Self {
+        unimplemented!()
+    }
+
+    #[cfg(feature="original")]
     /// Helper function to verify the upgrade client procedure.
     /// Resets all fields except the blockchain-specific ones.
     pub fn zero_custom_fields(mut client_state: Self) -> Self {
@@ -127,11 +158,26 @@ impl ClientState {
         client_state
     }
 
+    #[cfg(not(feature="original"))]
+    /// Get the refresh time to ensure the state does not expire
+    pub fn refresh_time(&self) -> Option<Duration> {
+        unimplemented!()
+    }
+
+    #[cfg(feature="original")]
     /// Get the refresh time to ensure the state does not expire
     pub fn refresh_time(&self) -> Option<Duration> {
         Some(2 * self.trusting_period / 3)
     }
 
+    #[cfg(not(feature="original"))]
+    /// Check if the state is expired when `elapsed` time has passed since the latest consensus
+    /// state timestamp
+    pub fn expired(&self, elapsed: Duration) -> bool {
+        unimplemented!()
+    }
+
+    #[cfg(feature="original")]
     /// Check if the state is expired when `elapsed` time has passed since the latest consensus
     /// state timestamp
     pub fn expired(&self, elapsed: Duration) -> bool {
@@ -165,7 +211,13 @@ impl crate::ics02_client::client_state::ClientState for ClientState {
 impl TryFrom<RawClientState> for ClientState {
     type Error = Error;
 
-#[cfg_attr(feature="prusti", trusted)]
+    #[cfg(not(feature="original"))]
+    fn try_from(raw: RawClientState) -> Result<Self, Self::Error> {
+        unimplemented!()
+    }
+
+    #[cfg(feature="original")]
+    #[cfg_attr(feature="prusti", trusted)]
     fn try_from(raw: RawClientState) -> Result<Self, Self::Error> {
         let trust_level = raw
             .trust_level
@@ -210,6 +262,11 @@ impl TryFrom<RawClientState> for ClientState {
 }
 
 impl From<ClientState> for RawClientState {
+    #[cfg(not(feature="original"))]
+    fn from(value: ClientState) -> Self {
+        unimplemented!()
+    }
+    #[cfg(feature="original")]
     fn from(value: ClientState) -> Self {
         RawClientState {
             chain_id: value.chain_id.to_string(),

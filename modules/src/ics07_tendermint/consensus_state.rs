@@ -91,7 +91,7 @@ impl TryFrom<RawConsensusState> for ConsensusState {
 }
 
 impl From<ConsensusState> for RawConsensusState {
-#[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted)]
     fn from(value: ConsensusState) -> Self {
         RawConsensusState {
             timestamp: Some(Timestamp::from(SystemTime::from(value.timestamp))),
@@ -104,7 +104,14 @@ impl From<ConsensusState> for RawConsensusState {
 }
 
 impl From<tendermint::block::Header> for ConsensusState {
-#[cfg_attr(feature="prusti", trusted)]
+
+    #[cfg(not(feature="original"))]
+    fn from(header: tendermint::block::Header) -> Self {
+        unimplemented!()
+    }
+
+    #[cfg(feature="original")]
+    #[cfg_attr(feature="prusti", trusted)]
     fn from(header: tendermint::block::Header) -> Self {
         Self {
             root: CommitmentRoot::from_bytes(header.app_hash.as_ref()),

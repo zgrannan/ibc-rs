@@ -36,7 +36,7 @@ impl std::fmt::Debug for Header {
 }
 
 impl Header {
-#[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn height(&self) -> Height {
         Height::new(
             ChainId::chain_version(self.signed_header.header.chain_id.as_str()),
@@ -44,6 +44,12 @@ impl Header {
         )
     }
 
+    #[cfg(not(feature="original"))]
+    pub fn time(&self) -> i32 {
+        unimplemented!()
+    }
+
+    #[cfg(feature="original")]
     pub fn time(&self) -> Time {
         self.signed_header.header.time
     }

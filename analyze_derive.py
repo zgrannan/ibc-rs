@@ -92,6 +92,7 @@ def should_skip(variant):
         or variant == "TyAlias" \
         or variant == "MacCall" \
         or variant == "MacroDef" \
+        or variant == "Impl" \
         or variant == "Trait" \
         or variant == "Fn"
 
@@ -120,7 +121,7 @@ def visit(node):
     variant = node["kind"]["variant"]
     if should_skip(variant):
         return
-    if variant == "Struct" or variant == "Enum" or variant == "Impl":
+    if variant == "Struct" or variant == "Enum":
         for attr in node["attrs"]:
             for field in attr["kind"]["fields"]:
                 if "path" not in field or field["path"]["segments"][0]["ident"]["name"] != "derive":

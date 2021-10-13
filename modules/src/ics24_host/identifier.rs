@@ -21,7 +21,11 @@ use super::validate::*;
 #[derive(Clone, Hash)]
 // #[serde(from = "tendermint::chain::Id", into = "tendermint::chain::Id")]
 pub struct ChainId {
+    #[cfg(not(feature="prusti"))]
     id: String,
+
+    #[cfg(feature="prusti")]
+    id: u32,
     version: u64,
 }
 

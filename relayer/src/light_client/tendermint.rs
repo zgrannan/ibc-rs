@@ -1,8 +1,13 @@
 #[cfg(feature="prusti")]
 use prusti_contracts::*;
 
+use ibc::ics02_client::misbehaviour::AnyMisbehaviour;
+use tendermint::block::signed_header::SignedHeader;
 use tendermint_light_client::contracts::is_within_trust_period;
+
+#[cfg(not(feature="prusti"))]
 use tendermint_light_client::types::Time;
+
 use std::convert::TryFrom;
 
 use itertools::Itertools;
@@ -113,6 +118,9 @@ mod tendermint {
 #[cfg(feature="prusti")]
 type Duration = i32;
 
+#[cfg(feature="prusti")]
+type Time = i32;
+
 #[cfg(not(feature="prusti"))]
 type Duration = std::time::Duration;
 
@@ -122,6 +130,13 @@ impl ibc::ics02_client::client_state::AnyClientState {
     #[pure]
     #[ensures(result == cs_trusting_period(&self))]
     pub fn trusting_period(&self) -> Duration;
+}
+
+#[cfg(feature="prusti")]
+#[extern_spec]
+impl ibc::ics07_tendermint::header::Header {
+    #[pure]
+    pub fn time(&self) -> Time;
 }
 
 #[cfg_attr(feature="prusti", pure)]
@@ -213,15 +228,23 @@ fn get_verified_target(v: &Result<Verified<LightBlock>, Error>) -> LightBlock {
   }
 }
 
+#[pure]
+#[trusted]
+fn get_verified_supporting_header_time(m: &Verified<LightBlock>, i: usize) -> Time {
+    m.supporting[i].signed_header.header.time
+}
+
 impl LightClient {
 
-    #[ensures(result.is_ok() ==>
-        is_within_trust_period(
-          &get_verified_target(&result),
-          client_state.trusting_period(),
-          0
-        )
-     )]
+    // #[ensures(result.is_ok() ==>
+    //     is_within_trust_period(
+    //       &get_verified_target(&result),
+    //       client_state.trusting_period(),
+    //       0
+    //     )
+    //  )]
+    #[trusted]
+    #[ensures(verify_spec(&result))]
     fn verify0(
         &mut self,
         trusted: ibc::Height,
@@ -267,13 +290,13 @@ impl LightClient {
     }
 
 
-    #[ensures(check_misbehaviour_spec(client_state, &result))]
+    #[ensures(check_misbehaviour_spec(old(client_state), &result))]
     fn check_misbehaviour0(
         &mut self,
         update: UpdateClient,
         client_state: &AnyClientState,
     ) -> Result<Option<MisbehaviourEvidence>, Error> {
-        crate::time!("light client check_misbehaviour");
+        // crate::time!("light client check_misbehaviour");
 
         let update_header = match update.header.clone() {
            Some(header) => header,
@@ -286,9 +309,12 @@ impl LightClient {
             _ => return Err(Error::misbehaviour("header type incompatible for chain".to_string()))
         };
 
+        /*
         let latest_chain_block = handle_result!(self.fetch_light_block(AtHeight::Highest));
         let latest_chain_height =
             ibc::Height::new(0, latest_chain_block.height().into());
+        */
+        let latest_chain_height = update_header.trusted_height;
 
         // set the target height to the minimum between the update height and latest chain height
         let target_height = std::cmp::min(update.consensus_height(), latest_chain_height);
@@ -321,10 +347,14 @@ impl LightClient {
             }
             .wrap_any();
 
-            Ok(Some(MisbehaviourEvidence {
+            let result = MisbehaviourEvidence {
                 misbehaviour,
                 supporting_headers: supporting.into_iter().map(TmHeader::wrap_any).collect(),
-            }))
+            };
+
+            assume(misbehaviour_invariant(&result));
+
+            Ok(Some(result))
         } else {
             Ok(None)
         }
@@ -346,7 +376,8 @@ impl LightClient {
         })
     }
 
-    #[ensures(result.is_ok() ==> get_options(&result).trusting_period == client_state.trusting_period())]
+    // #[ensures(result.is_ok() ==> get_options(&result).trusting_period == client_state.trusting_period())]
+    #[cfg_attr(feature="prusti", trusted_skip)]
     fn prepare_client(&self, client_state: &AnyClientState) -> Result<TmLightClient, Error> {
         // let clock = components::clock::SystemClock;
         // let hasher = operations::hasher::ProdHasher;
@@ -393,16 +424,19 @@ impl LightClient {
         Ok(LightClientState::new(store))
     }
 
-    #[cfg_attr(feature="prusti", trusted_skip)]
-    fn fetch_light_block(&self, height: AtHeight) -> Result<LightBlock, Error> {
-        use tendermint_light_client::components::io::Io;
+    // #[cfg_attr(feature="prusti", trusted_skip)]
+    // fn fetch_light_block(&self, height: AtHeight) -> Result<LightBlock, Error> {
+    //     use tendermint_light_client::components::io::Io;
 
-        self.io
-            .fetch_light_block(height)
-            .map_err(|e| Error::light_client_io(self.chain_id.to_string(), e))
-    }
+    //     self.io
+    //         .fetch_light_block(height)
+    //         .map_err(|e| Error::light_client_io(self.chain_id.to_string(), e))
+    // }
 
-#[cfg_attr(feature="prusti_fast", trusted_skip)]
+
+
+    #[ensures(adjust_headers_spec(old(&target), &result))]
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn adjust_headers(
         &mut self,
         trusted_height: ibc::Height,
@@ -411,23 +445,25 @@ impl LightClient {
     ) -> Result<(TmHeader, Vec<TmHeader>), Error> {
         use super::LightClient;
 
-        trace!(
-            trusted = %trusted_height, target = %target.height(),
-            "adjusting headers with {} supporting headers", supporting.len()
-        );
+        // trace!(
+        //     trusted = %trusted_height, target = %target.height(),
+        //     "adjusting headers with {} supporting headers", supporting.len()
+        // );
 
         // Get the light block at trusted_height + 1 from chain.
         //
         // NOTE: This is needed to get the next validator set. While there is a next validator set
         //       in the light block at trusted height, the proposer is not known/set in this set.
-        let trusted_validator_set = self.fetch(trusted_height.increment())?.validators;
+        let trusted_validator_set = handle_result!(self.fetch(trusted_height.increment())).validators;
 
         let mut supporting_headers = Vec::with_capacity(supporting.len());
 
         let mut current_trusted_height = trusted_height;
         let mut current_trusted_validators = trusted_validator_set.clone();
 
-        for support in supporting {
+        let mut i = 0;
+        while i < supporting.len() {
+            let support = supporting[i];
             let header = TmHeader {
                 signed_header: support.signed_header.clone(),
                 validator_set: support.validators,
@@ -439,9 +475,10 @@ impl LightClient {
             current_trusted_height = header.height();
 
             // Therefore we can now trust the next validator set, see NOTE above.
-            current_trusted_validators = self.fetch(header.height().increment())?.validators;
+            current_trusted_validators = handle_result!(self.fetch(header.height().increment())).validators;
 
             supporting_headers.push(header);
+            i += 1;
         }
 
         // a) Set the trusted height of the target header to the height of the previous
@@ -449,13 +486,12 @@ impl LightClient {
         //
         // b) Set the trusted validators of the target header to the validators of the successor to
         // the last supporting header if any, or to the initial trusted validators otherwise.
-        let (latest_trusted_height, latest_trusted_validator_set) = match supporting_headers.last()
-        {
-            Some(prev_header) => {
-                let prev_succ = self.fetch(prev_header.height().increment())?;
-                (prev_header.height(), prev_succ.validators)
-            }
-            None => (trusted_height, trusted_validator_set),
+        let (latest_trusted_height, latest_trusted_validator_set) = if supporting_headers.len() > 0 {
+            let prev_header = supporting_headers[i - 1].clone();
+            let prev_succ = handle_result!(self.fetch(prev_header.height().increment()));
+            (prev_header.height(), prev_succ.validators)
+        } else {
+            (trusted_height, trusted_validator_set)
         };
 
         let target_header = TmHeader {
@@ -469,17 +505,77 @@ impl LightClient {
     }
 }
 
-#[pure]
-fn get_witness(m: AnyMisbehaviour) -> &LightBlock {
-   m match {
-       AnyMisbehaviour::Tendermint(t) => t.header
-   }
-}
+// #[pure]
+// fn get_witness(m: &AnyMisbehaviour) -> &TmHeader {
+//    match m {
+//        AnyMisbehaviour::Tendermint(t) => &t.header1,
+//        _ => unreachable!()
+//    }
+// }
 
 #[pure]
 fn check_misbehaviour_spec(client_state: &AnyClientState, r: &Result<Option<MisbehaviourEvidence>, Error>) -> bool {
     match r {
-        Ok(Some(m)) => is_within_trust_period(m., client_state.trusting_period(), 0)),
+        Ok(Some(m)) => misbehaviour_invariant(m), // header_within_trust_period(&get_witness(&m.misbehaviour), client_state.trusting_period(), 0),
         _ => true
     }
+}
+
+#[pure]
+fn is_monotonic_bft_time(untrusted: &TmHeader, trusted: &TmHeader) -> bool {
+    true
+}
+
+#[pure]
+#[trusted]
+fn get_supporting_header_time(headers: &Vec<AnyHeader>, index: usize) -> Time {
+    match &headers[index] {
+        AnyHeader::Tendermint(header) => header.signed_header.header.time,
+        _ => unreachable!()
+    }
+}
+
+#[pure]
+#[requires(matches!(&m.misbehaviour, AnyMisbehaviour::Tendermint(_)))]
+fn misbehaviour_invariant(m: &MisbehaviourEvidence) -> bool {
+   let supporting_header_time = get_supporting_header_time(&m.supporting_headers, 0);
+   let witness_time = match &m.misbehaviour {
+       AnyMisbehaviour::Tendermint(t) => t.header1.time(),
+       _ => unreachable!()
+   };
+   witness_time > supporting_header_time
+}
+
+#[pure]
+fn header_within_trust_period(header: &TmHeader, trusting_period: Duration, now: Time) -> bool {
+    true
+    // let header_time = header.signed_header.header.time;
+    // header_time > now - trusting_period
+}
+
+#[pure]
+#[trusted]
+fn signed_headers_equal(lhs: &SignedHeader, rhs: &SignedHeader) -> bool {
+   true
+}
+
+
+#[pure]
+fn adjust_headers_spec(target: &LightBlock, r: &Result<(TmHeader, Vec<TmHeader>), Error>) -> bool {
+    true
+    // match r {
+    //     Ok((header, _)) => signed_headers_equal(
+    //         &header.signed_header,  &target.signed_header
+    //     ),
+    //     _ => true
+    // }
+}
+
+
+#[pure]
+fn verify_spec(r: &Result<Verified<LightBlock>, Error>) -> bool {
+   match r {
+       Ok(v) => v.target.signed_header.header.time > get_verified_supporting_header_time(v, 0),
+       _ => true
+   }
 }

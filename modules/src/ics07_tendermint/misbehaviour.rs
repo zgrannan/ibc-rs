@@ -15,12 +15,22 @@ use crate::Height;
 #[derive(Clone)]
 #[cfg_attr(not(feature="prusti"), derive(Debug))]
 pub struct Misbehaviour {
+    #[cfg(feature="original")]
     pub client_id: ClientId,
+    #[cfg(not(feature="original"))]
+    pub client_id: u32,
     pub header1: Header,
     pub header2: Header,
 }
 
 impl crate::ics02_client::misbehaviour::Misbehaviour for Misbehaviour {
+
+    #[cfg(not(feature="original"))]
+    fn client_id(&self) -> &ClientId {
+        unimplemented!()
+    }
+
+    #[cfg(feature="original")]
     fn client_id(&self) -> &ClientId {
         &self.client_id
     }
