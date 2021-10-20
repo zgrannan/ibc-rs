@@ -135,6 +135,7 @@ impl ibc::ics02_client::client_state::AnyClientState {
 #[cfg(feature="prusti")]
 #[extern_spec]
 impl <T, A: std::alloc::Allocator> std::vec::Vec<T, A> {
+
     #[pure]
     pub fn len(&self) -> usize;
 
@@ -603,7 +604,7 @@ predicate! {
     fn misbehaviour_invariant(m: &MisbehaviourEvidence) -> bool {
     forall(
         |i : usize|
-        (i < m.supporting_headers.len() ==>
+        (0 <= i && i < m.supporting_headers.len() ==>
           get_supporting_header_time(&m.supporting_headers, i) < get_witness_time(&m.misbehaviour)))
     }
 }
@@ -636,6 +637,7 @@ predicate! {
 #[trusted]
 #[ensures(
     forall(|i: usize| (i < old(vec.len())) ==> (get_header_time(old(&vec), i) == get_supporting_header_time(&result, i))))]
+#[ensures(old(vec.len()) == result.len())]
 fn to_any_headers(vec: Vec<TmHeader>) -> Vec<AnyHeader> {
     vec.into_iter().map(TmHeader::wrap_any).collect()
 }
