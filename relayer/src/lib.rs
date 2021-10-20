@@ -6,6 +6,7 @@
     rust_2018_idioms
 )]
 #![feature(type_ascription)]
+#![feature(allocator_api)]
 // TODO: disable unwraps:
 //  https://github.com/informalsystems/ibc-rs/issues/987
 // #![cfg_attr(not(test), deny(clippy::unwrap_used))]

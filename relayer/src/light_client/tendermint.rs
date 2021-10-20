@@ -134,6 +134,16 @@ impl ibc::ics02_client::client_state::AnyClientState {
 
 #[cfg(feature="prusti")]
 #[extern_spec]
+impl <T, A: std::alloc::Allocator> std::vec::Vec<T, A> {
+    #[pure]
+    pub fn len(&self) -> usize;
+
+    #[ensures(self.len() == old(self.len()) + 1)]
+    pub fn push(&mut self, value: T);
+}
+
+#[cfg(feature="prusti")]
+#[extern_spec]
 impl ibc::ics07_tendermint::header::Header {
     #[pure]
     pub fn time(&self) -> Time;
@@ -230,12 +240,16 @@ fn get_verified_target(v: &Result<Verified<LightBlock>, Error>) -> LightBlock {
 
 #[pure]
 #[trusted]
-fn get_verified_supporting_header_time(m: &Vec<LightBlock>, i: usize) -> Time {
+fn get_lightblock_header_time(m: &Vec<LightBlock>, i: usize) -> Time {
     m[i].signed_header.header.time
 }
 
 #[trusted]
-#[ensures(target.signed_header.header.time > get_verified_supporting_header_time(&result, 0))]
+#[ensures(
+    forall(|i : usize| (i < result.len() ==>
+    target.signed_header.header.time > get_lightblock_header_time(&result, i)
+    ))
+)]
 fn get_supporting(target: &LightBlock, state: &LightClientState) -> Vec<LightBlock> {
     // Collect the verification trace for the target block
     let target_trace = state.get_trace(target.height());
@@ -344,7 +358,7 @@ impl LightClient {
         let Verified { target, supporting } =
             handle_result!(self.verify0(trusted_height, target_height, client_state));
 
-        assert(target.signed_header.header.time > get_verified_supporting_header_time(&supporting, 0));
+        // assert(target.signed_header.header.time > get_lightblock_header_time(&supporting, 0));
 
         if !headers_compatible(&target.signed_header, &update_header.signed_header) {
             let (witness, supporting) = handle_result!(self.adjust_headers(trusted_height, target, supporting));
@@ -462,13 +476,24 @@ impl LightClient {
         //       in the light block at trusted height, the proposer is not known/set in this set.
         let trusted_validator_set = handle_result!(self.fetch(trusted_height.increment())).validators;
 
-        let mut supporting_headers = Vec::with_capacity(supporting.len());
+        let mut supporting_headers: Vec<TmHeader> = Vec::with_capacity(supporting.len());
+        assume(supporting_headers.len() == 0);
 
         let mut current_trusted_height = trusted_height;
         let mut current_trusted_validators = trusted_validator_set.clone();
 
         let mut i = 0;
         while i < supporting.len() {
+            body_invariant!(
+                i == supporting_headers.len()
+            );
+            body_invariant!(
+               forall(
+                   |j: usize| (
+                       0 <= j && j < i ==>
+                               target.signed_header.header.time > get_header_time(&supporting_headers, j))
+               )
+            );
             let support = supporting[i];
             let header = TmHeader {
                 signed_header: support.signed_header.clone(),
@@ -484,8 +509,10 @@ impl LightClient {
             current_trusted_validators = handle_result!(self.fetch(header.height().increment())).validators;
 
             supporting_headers.push(header);
+            adjust_header_lemma(&target, &supporting_headers, i);
             i += 1;
         }
+        assert!(i == supporting_headers.len());
 
         // a) Set the trusted height of the target header to the height of the previous
         // supporting header if any, or to the initial trusting height otherwise.
@@ -510,10 +537,20 @@ impl LightClient {
             trusted_validator_set: latest_trusted_validator_set,
         };
 
-        assume(target.signed_header.header.time > get_header_time(&supporting_headers, 0));
 
         Ok((target_header, supporting_headers))
     }
+}
+
+// #[requires(forall(|j : usize| (j < i ==>
+//     target.signed_header.header.time > get_header_time(&supporting_headers, j)
+// )))]
+#[ensures(forall(|j : usize| (j <= i ==>
+    target.signed_header.header.time > get_header_time(&supporting_headers, j)
+)))]
+#[trusted]
+fn adjust_header_lemma(target: &LightBlock, supporting_headers: &Vec<TmHeader>, i: usize) {
+
 }
 
 // #[pure]
@@ -524,12 +561,19 @@ impl LightClient {
 //    }
 // }
 
-#[pure]
-fn check_misbehaviour_spec(client_state: &AnyClientState, r: &Result<Option<MisbehaviourEvidence>, Error>) -> bool {
-    match r {
-        Ok(Some(m)) => misbehaviour_invariant(m), // header_within_trust_period(&get_witness(&m.misbehaviour), client_state.trusting_period(), 0),
-        _ => true
+predicate! {
+    fn check_misbehaviour_spec(client_state: &AnyClientState, r: &Result<Option<MisbehaviourEvidence>, Error>) -> bool {
+        match r {
+            Ok(Some(m)) => misbehaviour_invariant(m), // header_within_trust_period(&get_witness(&m.misbehaviour), client_state.trusting_period(), 0),
+            _ => true
+        }
     }
+}
+
+#[trusted]
+#[ensures(vec.len() == old(vec.len()) + 1)]
+fn push_vec<T>(vec: &mut Vec<T>, value: T) {
+    vec.push(value)
 }
 
 #[pure]
@@ -548,14 +592,20 @@ fn get_supporting_header_time(headers: &Vec<AnyHeader>, index: usize) -> Time {
 }
 
 #[pure]
-#[requires(matches!(&m.misbehaviour, AnyMisbehaviour::Tendermint(_)))]
-fn misbehaviour_invariant(m: &MisbehaviourEvidence) -> bool {
-   let supporting_header_time = get_supporting_header_time(&m.supporting_headers, 0);
-   let witness_time = match &m.misbehaviour {
-       AnyMisbehaviour::Tendermint(t) => t.header2.signed_header.header.time,
-       _ => unreachable!()
-   };
-   witness_time > supporting_header_time
+fn get_witness_time(m: &AnyMisbehaviour) -> Time {
+    match m {
+        AnyMisbehaviour::Tendermint(t) => t.header2.signed_header.header.time,
+        _ => unreachable!()
+    }
+}
+
+predicate! {
+    fn misbehaviour_invariant(m: &MisbehaviourEvidence) -> bool {
+    forall(
+        |i : usize|
+        (i < m.supporting_headers.len() ==>
+          get_supporting_header_time(&m.supporting_headers, i) < get_witness_time(&m.misbehaviour)))
+    }
 }
 
 #[pure]
@@ -565,26 +615,46 @@ fn header_within_trust_period(header: &TmHeader, trusting_period: Duration, now:
     // header_time > now - trusting_period
 }
 
-#[pure]
-fn adjust_headers_spec(target: &LightBlock, r: &Result<(TmHeader, Vec<TmHeader>), Error>) -> bool {
-    match r {
-        Ok((header, sup)) => header.signed_header == target.signed_header &&
-            header.signed_header.header.time > get_header_time(sup, 0),
-        _ => true
+predicate! {
+    fn adjust_headers_time_spec(header: &TmHeader, sup: &Vec<TmHeader>) -> bool {
+        forall(|i: usize| (0 <= i && i < sup.len()) ==>
+            header.signed_header.header.time > get_header_time(sup, i)
+        )
+    }
+}
+
+predicate! {
+    fn adjust_headers_spec(target: &LightBlock, r: &Result<(TmHeader, Vec<TmHeader>), Error>) -> bool {
+        match r {
+            Ok((header, sup)) => header.signed_header == target.signed_header &&
+                adjust_headers_time_spec(header, sup),
+            _ => true
+        }
     }
 }
 
 #[trusted]
-#[ensures(get_header_time(old(&vec), 0) == get_supporting_header_time(&result, 0))]
+#[ensures(
+    forall(|i: usize| (i < old(vec.len())) ==> (get_header_time(old(&vec), i) == get_supporting_header_time(&result, i))))]
 fn to_any_headers(vec: Vec<TmHeader>) -> Vec<AnyHeader> {
     vec.into_iter().map(TmHeader::wrap_any).collect()
 }
 
 
-#[pure]
-fn verify_spec(r: &Result<Verified<LightBlock>, Error>) -> bool {
-   match r {
-       Ok(v) => v.target.signed_header.header.time > get_verified_supporting_header_time(&v.supporting, 0),
-       _ => true
+predicate! {
+   fn verify_spec_internal(v: &Verified<LightBlock>) -> bool {
+    forall(|i: usize| (i < v.supporting.len()) ==>
+           v.target.signed_header.header.time >
+            get_lightblock_header_time(&v.supporting, i)
+    )
    }
+}
+
+predicate! {
+    fn verify_spec(r: &Result<Verified<LightBlock>, Error>) -> bool {
+        match r {
+            Ok(v) => verify_spec_internal(v),
+            _ => true
+        }
+    }
 }
