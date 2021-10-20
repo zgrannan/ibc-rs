@@ -255,10 +255,17 @@ fn get_supporting(target: &LightBlock, state: &LightClientState) -> Vec<LightBlo
     // Collect the verification trace for the target block
     let target_trace = state.get_trace(target.height());
 
+    let mut result = Vec::new();
+    let mut i = 0;
+    while i < target_trace.len(){
+       if(target_trace[i].height() != target.height()) {
+           result.push(target_trace[i]);
+       }
+    }
+
     // Compute the minimal supporting set, sorted by ascending height
-    target_trace
+    result
         .into_iter()
-        // .filter(|lb| lb.height() != target.height())
         .unique_by(LightBlock::height)
         .sorted_by_key(LightBlock::height)
         .collect_vec()
@@ -331,12 +338,10 @@ impl LightClient {
             _ => return Err(Error::misbehaviour("header type incompatible for chain".to_string()))
         };
 
-        /*
+
         let latest_chain_block = handle_result!(self.fetch_light_block(AtHeight::Highest));
         let latest_chain_height =
             ibc::Height::new(0, latest_chain_block.height().into());
-        */
-        let latest_chain_height = update_header.trusted_height;
 
         // set the target height to the minimum between the update height and latest chain height
         let target_height = std::cmp::min(update.consensus_height(), latest_chain_height);
@@ -358,8 +363,6 @@ impl LightClient {
 
         let Verified { target, supporting } =
             handle_result!(self.verify0(trusted_height, target_height, client_state));
-
-        // assert(target.signed_header.header.time > get_lightblock_header_time(&supporting, 0));
 
         if !headers_compatible(&target.signed_header, &update_header.signed_header) {
             let (witness, supporting) = handle_result!(self.adjust_headers(trusted_height, target, supporting));
@@ -445,19 +448,18 @@ impl LightClient {
         Ok(LightClientState::new(store))
     }
 
-    // #[cfg_attr(feature="prusti", trusted_skip)]
-    // fn fetch_light_block(&self, height: AtHeight) -> Result<LightBlock, Error> {
-    //     use tendermint_light_client::components::io::Io;
+    #[cfg_attr(feature="prusti", trusted_skip)]
+    fn fetch_light_block(&self, height: AtHeight) -> Result<LightBlock, Error> {
+        use tendermint_light_client::components::io::Io;
 
-    //     self.io
-    //         .fetch_light_block(height)
-    //         .map_err(|e| Error::light_client_io(self.chain_id.to_string(), e))
-    // }
+        self.io
+            .fetch_light_block(height)
+            .map_err(|e| Error::light_client_io(self.chain_id.to_string(), e))
+    }
 
 
 
     #[ensures(adjust_headers_spec(old(&target), &result))]
-    // #[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn adjust_headers(
         &mut self,
         trusted_height: ibc::Height,
@@ -543,7 +545,16 @@ impl LightClient {
     }
 }
 
-// #[requires(forall(|j : usize| (j < i ==>
+#[trusted]
+#[ensures(forall(|i: usize| i < old(supporting_headers.len()) ==>
+                 get_header_time(&supporting_headers, i) == get_header_time(old(&supporting_headers), i)))]
+#[ensures(supporting_headers.len() == old(supporting_headers.len()) + 1)]
+#[ensures(get_header_time(&supporting_headers, supporting_headers.len()) == header.signed_header.header.time)]
+fn push_supporting_header(supporting_headers: &mut Vec<TmHeader>, header: TmHeader) {
+    supporting_headers.push(header)
+}
+
+// #[requires(forall(|j : usize| (0 <= j &&  j < i ==>
 //     target.signed_header.header.time > get_header_time(&supporting_headers, j)
 // )))]
 #[ensures(forall(|j : usize| (j <= i ==>
