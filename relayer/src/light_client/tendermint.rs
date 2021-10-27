@@ -3,6 +3,8 @@ use prusti_contracts::*;
 
 use ibc::ics02_client::misbehaviour::AnyMisbehaviour;
 use tendermint::block::signed_header::SignedHeader;
+#[cfg(not(feature="prusti"))]
+use tendermint::block::Height;
 use tendermint_light_client::contracts::is_within_trust_period;
 
 #[cfg(not(feature="prusti"))]
@@ -121,14 +123,46 @@ type Duration = i32;
 #[cfg(feature="prusti")]
 type Time = i32;
 
+#[cfg(feature="prusti")]
+type Height = u32;
+
 #[cfg(not(feature="prusti"))]
 type Duration = std::time::Duration;
 
 #[cfg(feature="prusti")]
 #[extern_spec]
+impl tendermint_light_client::types::LightBlock {
+    #[pure]
+    fn height(&self) -> Height;
+}
+
+#[cfg(feature="prusti")]
+#[extern_spec]
+impl tendermint_light_client::state::State {
+    #[ensures(
+        forall(|i : usize| (i < result.len() ==>
+        target.signed_header.header.time > get_lightblock_header_time(&result, i)
+        ))
+    )]
+    #[ensures(
+        forall(|i: usize, j: usize| i < j ==> get_lightblock_height(&result, i) >= get_lightblock_height(&result, j))
+    )]
+    #[ensures(
+        forall(|i: usize, j: usize| i < j ==> get_lightblock_header_time(&result, i) >= get_lightblock_header_time(&result, j))
+    )]
+    pub fn get_trace_for_target(&self, target: &LightBlock) -> Vec<LightBlock>;
+}
+
+#[pure]
+#[trusted]
+fn get_lightblock_height(m: &Vec<LightBlock>, i: usize) -> Height {
+    m[i].height()
+}
+
+#[cfg(feature="prusti")]
+#[extern_spec]
 impl ibc::ics02_client::client_state::AnyClientState {
     #[pure]
-    #[ensures(result == cs_trusting_period(&self))]
     pub fn trusting_period(&self) -> Duration;
 }
 
@@ -245,30 +279,33 @@ fn get_lightblock_header_time(m: &Vec<LightBlock>, i: usize) -> Time {
     m[i].signed_header.header.time
 }
 
-#[trusted]
 #[ensures(
     forall(|i : usize| (i < result.len() ==>
     target.signed_header.header.time > get_lightblock_header_time(&result, i)
     ))
 )]
+#[trusted] // fold-unfold error
 fn get_supporting(target: &LightBlock, state: &LightClientState) -> Vec<LightBlock> {
     // Collect the verification trace for the target block
-    let target_trace = state.get_trace(target.height());
+    let target_trace = state.get_trace_for_target(target);
+    if target_trace.is_empty() {
+        return vec!();
+    }
 
     let mut result = Vec::new();
     let mut i = 0;
-    while i < target_trace.len(){
-       if(target_trace[i].height() != target.height()) {
-           result.push(target_trace[i]);
-       }
+    while i < target_trace.len() {
+        let index = target_trace.len() - i - 1;
+        let candidate_height = get_lightblock_height(&target_trace, index);
+        let is_duplicate =
+            !result.is_empty() && candidate_height == get_lightblock_height(&result, result.len() - 1);
+        if(!is_duplicate && candidate_height != target.height()) {
+            push_block(&mut result, target_trace[i]);
+        }
+        i -= 1;
     }
 
-    // Compute the minimal supporting set, sorted by ascending height
     result
-        .into_iter()
-        .unique_by(LightBlock::height)
-        .sorted_by_key(LightBlock::height)
-        .collect_vec()
 }
 
 impl LightClient {
@@ -580,6 +617,13 @@ predicate! {
             _ => true
         }
     }
+}
+
+#[trusted]
+#[ensures(vec.len() == old(vec.len()) + 1)]
+#[ensures(get_lightblock_height(vec, vec.len() - 1) == block.height())]
+fn push_block(vec: &mut Vec<LightBlock>, block: LightBlock) {
+   vec.push(block)
 }
 
 #[trusted]
