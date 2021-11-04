@@ -544,7 +544,8 @@ impl LightClient {
 
         let mut i = 0;
         while i < supporting.len() {
-            body_invariant!(0 <= i && i < supporting.len());
+            body_invariant!(0 <= i);
+            body_invariant!(i < supporting.len());
             body_invariant!(i == supporting_headers.len());
             body_invariant!(
                forall(
@@ -561,6 +562,8 @@ impl LightClient {
                 trusted_validator_set: current_trusted_validators,
             };
             assume(support.signed_header.header.time == get_lightblock_header_time(&supporting, i));
+            target_gt_supporting_lemma(target, &supporting, i);
+            assert(target.signed_header.header.time > get_lightblock_header_time(&supporting, i));
             assert(target.signed_header.header.time > support.signed_header.header.time);
             assert(target.signed_header.header.time > header.signed_header.header.time);
 
@@ -600,6 +603,8 @@ impl LightClient {
             trusted_validator_set: latest_trusted_validator_set,
         };
 
+        assert(target.signed_header == target_header.signed_header);
+
 
         Ok((target_header, supporting_headers))
     }
@@ -612,6 +617,16 @@ impl LightClient {
 #[ensures(get_header_time(&supporting_headers, supporting_headers.len() - 1) == header.signed_header.header.time)]
 fn push_supporting_header(supporting_headers: &mut Vec<TmHeader>, header: TmHeader) {
     supporting_headers.push(header)
+}
+
+#[requires(
+    forall(|i : usize| (0 <= i && i < supporting.len()) ==>
+            target.signed_header.header.time > get_lightblock_header_time(&supporting, i)
+    ))]
+#[requires(0 <= index && index < supporting.len())]
+#[ensures(target.signed_header.header.time > get_lightblock_header_time(&supporting, index))]
+fn target_gt_supporting_lemma(target: LightBlock, supporting: &Vec<LightBlock>, index: usize) {
+
 }
 
 #[requires(target.signed_header.header.time > get_header_time(&supporting_headers, i))]
@@ -696,6 +711,7 @@ fn header_within_trust_period(header: &TmHeader, trusting_period: Duration, now:
 
 predicate! {
     fn adjust_headers_time_spec(header: &TmHeader, sup: &Vec<TmHeader>) -> bool {
+        // true
         forall(|i: usize| (0 <= i && i < sup.len()) ==>
             header.signed_header.header.time > get_header_time(sup, i)
         )
@@ -731,9 +747,19 @@ predicate! {
 }
 
 predicate! {
+   fn verify_spec_internal2(v: &Verified<LightBlock>) -> bool {
+    forall(|i: usize| (0 <= i && i < v.supporting.len()) ==>
+           v.target.signed_header.header.time >
+            get_lightblock_header_time(&v.supporting, i)
+    )
+   }
+}
+
+predicate! {
     fn verify_spec(r: &Result<Verified<LightBlock>, Error>) -> bool {
         match r {
-            Ok(v) => verify_spec_internal(&v.target, &v.supporting),
+            Ok(v) => verify_spec_internal(&v.target, &v.supporting) &&
+                verify_spec_internal2(&v),
             _ => true
         }
     }
