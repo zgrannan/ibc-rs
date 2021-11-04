@@ -93,8 +93,6 @@ impl super::LightClient<CosmosSdkChain> for LightClient {
     ///
     /// ## TODO
     /// - [ ] Return intermediate headers as well
-    // #[cfg_attr(feature="prusti", trusted_skip)]
-    // #[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn check_misbehaviour(
         &mut self,
         update: UpdateClient,
@@ -136,14 +134,7 @@ impl tendermint_light_client::types::LightBlock {
     fn height(&self) -> Height;
 }
 
-// #[cfg(feature="prusti")]
-// #[extern_spec]
-// trait Clone {
-//     #[ensures(result == self)]
-//     fn clone(&self) -> Self;
-// }
-
-
+// Trusted due to extern spec issues
 #[trusted]
 #[ensures(result == old(header))]
 fn clone_signed_header(header: SignedHeader) -> SignedHeader {
@@ -173,10 +164,20 @@ fn get_lightblock_height(m: &Vec<LightBlock>, i: usize) -> Height {
     m[i].height()
 }
 
+#[pure]
+#[requires(matches!(state, AnyClientState::Tendermint(_)))]
+fn get_trusting_period(state: &AnyClientState) -> Duration {
+   match state {
+       AnyClientState::Tendermint(cs) => cs.trusting_period,
+       _ => unimplemented!()
+   }
+}
+
 #[cfg(feature="prusti")]
 #[extern_spec]
 impl ibc::ics02_client::client_state::AnyClientState {
     #[pure]
+    #[ensures(matches!(self, AnyClientState::Tendermint(_)) ==> result == get_trusting_period(self))]
     pub fn trusting_period(&self) -> Duration;
 }
 
@@ -247,8 +248,10 @@ mod tendermint_light_client {
         use prusti_contracts::*;
         use tendermint_light_client::types::Time;
         use tendermint_light_client::types::LightBlock;
+        use crate::light_client::tendermint::header_within_trust_period;
 
         #[pure]
+        // #[ensures(header_within_trust_period(light_block.signed_header, trusting_period, now))]
         pub fn is_within_trust_period(
             light_block: &LightBlock,
             trusting_period: i32,
@@ -418,6 +421,8 @@ impl LightClient {
         if !headers_compatible(&target.signed_header, &update_header.signed_header) {
             let (witness, supporting) = handle_result!(self.adjust_headers(trusted_height, target, supporting));
 
+            assume(header_within_trust_period(&witness, client_state.trusting_period(), 0));
+
             let misbehaviour = AnyMisbehaviour::Tendermint(TmMisbehaviour {
                 client_id: 0,
                 header1: update_header,
@@ -452,7 +457,6 @@ impl LightClient {
     }
 
     #[ensures(result.is_ok() ==> get_options(&result).trusting_period == client_state.trusting_period())]
-    #[cfg_attr(feature="prusti", trusted_skip)]
     fn prepare_client(&self, client_state: &AnyClientState) -> Result<TmLightClient, Error> {
         // let clock = components::clock::SystemClock;
         // let hasher = operations::hasher::ProdHasher;
@@ -612,6 +616,7 @@ impl LightClient {
     }
 }
 
+// Trusted due to lack of vector support
 #[trusted]
 #[ensures(forall(|i: usize| i < old(supporting_headers.len()) ==>
                  get_header_time(&supporting_headers, i) == get_header_time(old(&supporting_headers), i)))]
@@ -642,18 +647,18 @@ fn adjust_header_lemma(target: &LightBlock, supporting_headers: &Vec<TmHeader>, 
 
 }
 
-// #[pure]
-// fn get_witness(m: &AnyMisbehaviour) -> &TmHeader {
-//    match m {
-//        AnyMisbehaviour::Tendermint(t) => &t.header1,
-//        _ => unreachable!()
-//    }
-// }
+#[pure]
+fn get_witness(m: &AnyMisbehaviour) -> &TmHeader {
+   match m {
+       AnyMisbehaviour::Tendermint(t) => &t.header2,
+       _ => unreachable!()
+   }
+}
 
 predicate! {
     fn check_misbehaviour_spec(client_state: &AnyClientState, r: &Result<Option<MisbehaviourEvidence>, Error>) -> bool {
         match r {
-            Ok(Some(m)) => misbehaviour_invariant(m), // header_within_trust_period(&get_witness(&m.misbehaviour), client_state.trusting_period(), 0),
+            Ok(Some(m)) => misbehaviour_invariant(m) && header_within_trust_period(&get_witness(&m.misbehaviour), client_state.trusting_period(), 0),
             _ => true
         }
     }
