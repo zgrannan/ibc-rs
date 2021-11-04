@@ -2,7 +2,7 @@
 use prusti_contracts::*;
 
 use ibc::ics02_client::misbehaviour::AnyMisbehaviour;
-use tendermint::block::signed_header::SignedHeader;
+use tendermint::{block::signed_header::SignedHeader, validator::Set};
 #[cfg(not(feature="prusti"))]
 use tendermint::block::Height;
 use tendermint_light_client::contracts::is_within_trust_period;
@@ -324,13 +324,13 @@ fn get_supporting(target: &LightBlock, state: &LightClientState) -> Vec<LightBlo
 
 impl LightClient {
 
-    // #[ensures(result.is_ok() ==>
-    //     is_within_trust_period(
-    //       &get_verified_target(&result),
-    //       client_state.trusting_period(),
-    //       0
-    //     )
-    //  )]
+    #[ensures(result.is_ok() ==>
+        is_within_trust_period(
+          &get_verified_target(&result),
+          client_state.trusting_period(),
+          0
+        )
+     )]
     #[ensures(verify_spec(&result))]
     fn verify0(
         &mut self,
@@ -451,7 +451,7 @@ impl LightClient {
         })
     }
 
-    // #[ensures(result.is_ok() ==> get_options(&result).trusting_period == client_state.trusting_period())]
+    #[ensures(result.is_ok() ==> get_options(&result).trusting_period == client_state.trusting_period())]
     #[cfg_attr(feature="prusti", trusted_skip)]
     fn prepare_client(&self, client_state: &AnyClientState) -> Result<TmLightClient, Error> {
         // let clock = components::clock::SystemClock;
@@ -469,9 +469,6 @@ impl LightClient {
             trusting_period: tcs.trusting_period,
             clock_drift: tcs.max_clock_drift,
         };
-
-        assert(params.trusting_period == client_state.trusting_period());
-
 
         // Ok(TmLightClient::new(
         //     self.peer_id,
@@ -509,6 +506,27 @@ impl LightClient {
     }
 
 
+    // a) Set the trusted height of the target header to the height of the previous
+    // supporting header if any, or to the initial trusting height otherwise.
+    //
+    // b) Set the trusted validators of the target header to the validators of the successor to
+    // the last supporting header if any, or to the initial trusted validators otherwise.
+    #[cfg_attr(feature="prusti", trusted_skip)]
+    fn get_latest_trusted(&mut self, trusted_height: ibc::Height, trusted_validator_set: Set, supporting_headers: &Vec<TmHeader>) -> Result<(ibc::Height, Set), Error> {
+         use crate::light_client::LightClient;
+         let result = match supporting_headers.last() {
+            Some(prev_header) => {
+                // let prev_succ = handle_result!(self.fetch(prev_header.height().increment()));
+                let prev_succ = handle_result!(self.fetch(trusted_height));
+                (trusted_height, prev_succ.validators)
+                // (prev_header.height(), prev_succ.validators)
+            }
+            None => {
+                (trusted_height, trusted_validator_set)
+            }
+        };
+        Ok(result)
+    }
 
     #[requires(
         forall(|i : usize| (0 <= i && i < supporting.len()) ==>
@@ -561,11 +579,9 @@ impl LightClient {
                 trusted_height: current_trusted_height,
                 trusted_validator_set: current_trusted_validators,
             };
+            // This assumptions is necessary to workaround vector limitations
             assume(support.signed_header.header.time == get_lightblock_header_time(&supporting, i));
             target_gt_supporting_lemma(target, &supporting, i);
-            assert(target.signed_header.header.time > get_lightblock_header_time(&supporting, i));
-            assert(target.signed_header.header.time > support.signed_header.header.time);
-            assert(target.signed_header.header.time > header.signed_header.header.time);
 
             // This header is now considered to be the currently trusted header
             current_trusted_height = header.height();
@@ -574,37 +590,23 @@ impl LightClient {
             current_trusted_validators = handle_result!(self.fetch(header.height().increment())).validators;
 
             push_supporting_header(&mut supporting_headers, header);
-            assert(target.signed_header.header.time > get_header_time(&supporting_headers, i));
             adjust_header_lemma(&target, &supporting_headers, i);
             i += 1;
         }
-        assert!(i == supporting_headers.len());
 
-        // a) Set the trusted height of the target header to the height of the previous
-        // supporting header if any, or to the initial trusting height otherwise.
-        //
-        // b) Set the trusted validators of the target header to the validators of the successor to
-        // the last supporting header if any, or to the initial trusted validators otherwise.
-        /*
-        let (latest_trusted_height, latest_trusted_validator_set) = if supporting_headers.len() > 0 {
-            let prev_header = &supporting_headers[i - 1];
-            let prev_succ = handle_result!(self.fetch(prev_header.height().increment()));
-            (prev_header.height(), prev_succ.validators)
-        } else {
-            (trusted_height, trusted_validator_set)
-        };
-        */
-        let (latest_trusted_height, latest_trusted_validator_set) =
-            (trusted_height, trusted_validator_set);
+
+        let (latest_trusted_height, latest_trusted_validator_set) = handle_result!(self.get_latest_trusted(
+            trusted_height,
+            trusted_validator_set,
+            &supporting_headers
+        ));
+
         let target_header = TmHeader {
             signed_header: target.signed_header,
             validator_set: target.validators,
             trusted_height: latest_trusted_height,
             trusted_validator_set: latest_trusted_validator_set,
         };
-
-        assert(target.signed_header == target_header.signed_header);
-
 
         Ok((target_header, supporting_headers))
     }
@@ -704,14 +706,12 @@ predicate! {
 
 #[pure]
 fn header_within_trust_period(header: &TmHeader, trusting_period: Duration, now: Time) -> bool {
-    true
-    // let header_time = header.signed_header.header.time;
-    // header_time > now - trusting_period
+    let header_time = header.signed_header.header.time;
+    header_time > now - trusting_period
 }
 
 predicate! {
     fn adjust_headers_time_spec(header: &TmHeader, sup: &Vec<TmHeader>) -> bool {
-        // true
         forall(|i: usize| (0 <= i && i < sup.len()) ==>
             header.signed_header.header.time > get_header_time(sup, i)
         )
