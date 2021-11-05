@@ -251,11 +251,11 @@ mod tendermint_light_client {
         use crate::light_client::tendermint::header_within_trust_period;
 
         #[pure]
-        // #[ensures(header_within_trust_period(light_block.signed_header, trusting_period, now))]
+        #[ensures(header_within_trust_period(&light_block.signed_header, trusting_period, now))]
         pub fn is_within_trust_period(
             light_block: &LightBlock,
             trusting_period: i32,
-            now: u32) -> bool;
+            now: i32) -> bool;
     }
 }
 
@@ -420,8 +420,6 @@ impl LightClient {
 
         if !headers_compatible(&target.signed_header, &update_header.signed_header) {
             let (witness, supporting) = handle_result!(self.adjust_headers(trusted_height, target, supporting));
-
-            assume(header_within_trust_period(&witness, client_state.trusting_period(), 0));
 
             let misbehaviour = AnyMisbehaviour::Tendermint(TmMisbehaviour {
                 client_id: 0,
@@ -648,9 +646,9 @@ fn adjust_header_lemma(target: &LightBlock, supporting_headers: &Vec<TmHeader>, 
 }
 
 #[pure]
-fn get_witness(m: &AnyMisbehaviour) -> &TmHeader {
+fn get_witness(m: &AnyMisbehaviour) -> &SignedHeader {
    match m {
-       AnyMisbehaviour::Tendermint(t) => &t.header2,
+       AnyMisbehaviour::Tendermint(t) => &t.header2.signed_header,
        _ => unreachable!()
    }
 }
@@ -710,8 +708,8 @@ predicate! {
 }
 
 #[pure]
-fn header_within_trust_period(header: &TmHeader, trusting_period: Duration, now: Time) -> bool {
-    let header_time = header.signed_header.header.time;
+fn header_within_trust_period(header: &SignedHeader, trusting_period: Duration, now: Time) -> bool {
+    let header_time = header.header.time;
     header_time > now - trusting_period
 }
 
