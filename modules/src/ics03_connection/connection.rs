@@ -36,10 +36,12 @@ impl IdentifiedConnectionEnd {
         }
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn id(&self) -> &ConnectionId {
         &self.connection_id
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn end(&self) -> &ConnectionEnd {
         &self.connection_end
     }
@@ -176,16 +178,19 @@ impl ConnectionEnd {
     }
 
     /// Getter for the state of this connection end.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn state(&self) -> &State {
         &self.state
     }
 
     /// Setter for the `state` field.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn set_state(&mut self, new_state: State) {
         self.state = new_state;
     }
 
     /// Setter for the `counterparty` field.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn set_counterparty(&mut self, new_cparty: Counterparty) {
         self.counterparty = new_cparty;
     }
@@ -204,6 +209,7 @@ impl ConnectionEnd {
     }
 
     /// Helper function to compare the client id of this end with another client identifier.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn client_id_matches(&self, other: &ClientId) -> bool {
         self.client_id.eq(other)
     }
@@ -222,6 +228,7 @@ impl ConnectionEnd {
     }
 
     /// Helper function to compare the state of this end with another state.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn state_matches(&self, other: &State) -> bool {
         self.state.eq(other)
     }
@@ -232,6 +239,7 @@ impl ConnectionEnd {
     }
 
     /// Getter for the list of versions in this connection end.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn versions(&self) -> Vec<Version> {
         self.versions.clone()
     }
@@ -244,6 +252,7 @@ impl ConnectionEnd {
 
     /// Getter for the delay_period field. This represents the duration, at minimum,
     /// to delay the sending of a packet after the client update for that packet has been submitted.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn delay_period(&self) -> Duration {
         self.delay_period
     }
@@ -316,6 +325,7 @@ panic!("No") //         RawCounterparty {
 }
 
 impl Counterparty {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn new(
         client_id: ClientId,
         connection_id: Option<ConnectionId>,
@@ -329,6 +339,7 @@ impl Counterparty {
     }
 
     /// Getter for the client id.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn client_id(&self) -> &ClientId {
         &self.client_id
     }
@@ -339,10 +350,12 @@ impl Counterparty {
         self.connection_id.as_ref()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn prefix(&self) -> &CommitmentPrefix {
         &self.prefix
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn validate_basic(&self) -> Result<(), ValidationError> {
         Ok(())
     }
@@ -367,6 +380,7 @@ impl std::fmt::Debug for State {
 
 impl State {
     /// Yields the State as a string.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn as_string(&self) -> &'static str {
         match self {
             Self::Uninitialized => "UNINITIALIZED",
@@ -376,6 +390,7 @@ impl State {
         }
     }
     // Parses the State out from a i32.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn from_i32(s: i32) -> Result<Self, Error> {
         match s {
             0 => Ok(Self::Uninitialized),

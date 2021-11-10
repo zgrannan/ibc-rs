@@ -41,6 +41,7 @@ pub fn try_from_tx(event: &tendermint::abci::Event) -> Option<IbcEvent> {
 #[cfg(feature="prusti")]
 #[extern_spec]
 impl<T, E: std::fmt::Debug> Result<T, E> {
+
     #[pure]
     pub fn is_ok(&self) -> bool {
         match self {
@@ -48,6 +49,7 @@ impl<T, E: std::fmt::Debug> Result<T, E> {
             Err(_) => false
         }
     }
+
     #[requires(self.is_ok())]
     pub fn unwrap(self) -> T {
         match self {
@@ -57,6 +59,7 @@ impl<T, E: std::fmt::Debug> Result<T, E> {
     }
 }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 fn extract_attributes_from_tx(event: &tendermint::abci::Event) -> Attributes {
     let mut attr = Attributes::default();
 
@@ -125,6 +128,7 @@ fn extract_attributes(object: &RawObject, namespace: &str) -> Result<Attributes,
 }
 
 impl Default for Attributes {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn default() -> Self {
         Attributes {
             height: Default::default(),
@@ -251,15 +255,19 @@ impl From<OpenAck> for IbcEvent {
 pub struct OpenConfirm(Attributes);
 
 impl OpenConfirm {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn attributes(&self) -> &Attributes {
         &self.0
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn connection_id(&self) -> &Option<ConnectionId> {
         &self.0.connection_id
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn height(&self) -> Height {
         self.0.height
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn set_height(&mut self, height: Height) {
         self.0.height = height;
     }
@@ -273,6 +281,7 @@ impl From<Attributes> for OpenConfirm {
 
 impl TryFrom<RawObject> for OpenConfirm {
     type Error = Error;
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
         Ok(OpenConfirm(extract_attributes(
             &obj,
@@ -282,6 +291,7 @@ impl TryFrom<RawObject> for OpenConfirm {
 }
 
 impl From<OpenConfirm> for IbcEvent {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(v: OpenConfirm) -> Self {
         IbcEvent::OpenConfirmConnection(v)
     }

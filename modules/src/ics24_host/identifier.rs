@@ -67,6 +67,7 @@ impl PartialEq for ChainId {
 
 #[cfg(feature="prusti")]
 impl Eq for ChainId {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn assert_receiver_is_total_eq(&self) {}
 }
 
@@ -115,6 +116,7 @@ impl ChainId {
 
     // TODO: this should probably be named epoch_number.
     /// Extract the version from this chain identifier.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn version(&self) -> u64 {
         self.version
     }
@@ -128,6 +130,7 @@ impl ChainId {
     /// assert_eq!(ChainId::chain_version("cosmos-hub-97"), 97);
     /// assert_eq!(ChainId::chain_version("testnet-helloworld-2"), 2);
     /// ```
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn chain_version(chain_id: &str) -> u64 {
         if !ChainId::is_epoch_format(chain_id) {
             return 0;

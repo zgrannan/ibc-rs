@@ -55,11 +55,13 @@ impl Header {
         self.signed_header.header.time
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn compatible_with(&self, other_header: &Header) -> bool {
         headers_compatible(&self.signed_header, &other_header.signed_header)
     }
 }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 pub fn headers_compatible(header: &SignedHeader, other: &SignedHeader) -> bool {
     let ibc_client_height = other.header.height;
     let self_header_height = header.header.height;
@@ -81,6 +83,7 @@ pub fn headers_compatible(header: &SignedHeader, other: &SignedHeader) -> bool {
 }
 
 impl crate::ics02_client::header::Header for Header {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn client_type(&self) -> ClientType {
         ClientType::Tendermint
     }
@@ -89,6 +92,7 @@ impl crate::ics02_client::header::Header for Header {
         self.height()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn wrap_any(self) -> AnyHeader {
         AnyHeader::Tendermint(self)
     }
@@ -131,6 +135,7 @@ pub fn decode_header<B: Buf>(buf: B) -> Result<Header, Error> {
 }
 
 impl From<Header> for RawHeader {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(value: Header) -> Self {
         RawHeader {
             signed_header: Some(value.signed_header.into()),

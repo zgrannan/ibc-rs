@@ -1,6 +1,8 @@
 //! ICS2 (client) context. The two traits `ClientReader` and `ClientKeeper` define the interface
 //! that any host chain must implement to be able to process any `ClientMsg`. See
 //! "ADR 003: IBC protocol implementation" for more details.
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
 
 use crate::ics02_client::client_consensus::AnyConsensusState;
 use crate::ics02_client::client_state::AnyClientState;
@@ -23,6 +25,7 @@ pub trait ClientReader {
 
 /// Defines the write-only part of ICS2 (client functions) context.
 pub trait ClientKeeper {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn store_client_result(&mut self, handler_res: ClientResult) -> Result<(), Error> {
         match handler_res {
             Create(res) => {

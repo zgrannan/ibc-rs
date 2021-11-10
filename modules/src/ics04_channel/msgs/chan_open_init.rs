@@ -24,6 +24,7 @@ pub struct MsgChannelOpenInit {
 }
 
 impl MsgChannelOpenInit {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn new(port_id: PortId, channel: ChannelEnd, signer: Signer) -> Self {
         Self {
             port_id,
@@ -33,11 +34,13 @@ impl MsgChannelOpenInit {
     }
 
     /// Getter: borrow the `port_id` from this message.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn port_id(&self) -> &PortId {
         &self.port_id
     }
 
     /// Getter: borrow the `channelEnd` from this message.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn channel(&self) -> &ChannelEnd {
         &self.channel
     }
@@ -47,10 +50,12 @@ impl Msg for MsgChannelOpenInit {
     type ValidationError = Error;
     type Raw = RawMsgChannelOpenInit;
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn route(&self) -> String {
         crate::keys::ROUTER_KEY.to_string()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn type_url(&self) -> String {
         TYPE_URL.to_string()
     }
@@ -75,6 +80,7 @@ impl TryFrom<RawMsgChannelOpenInit> for MsgChannelOpenInit {
 }
 
 impl From<MsgChannelOpenInit> for RawMsgChannelOpenInit {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(domain_msg: MsgChannelOpenInit) -> Self {
         RawMsgChannelOpenInit {
             port_id: domain_msg.port_id.to_string(),

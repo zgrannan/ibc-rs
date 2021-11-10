@@ -25,6 +25,7 @@ pub struct MsgRecvPacket {
 }
 
 impl MsgRecvPacket {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn new(packet: Packet, proofs: Proofs, signer: Signer) -> MsgRecvPacket {
         Self {
             packet,

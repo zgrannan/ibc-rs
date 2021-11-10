@@ -29,11 +29,13 @@ pub struct MsgConnectionOpenInit {
 
 impl MsgConnectionOpenInit {
     /// Getter: borrow the `client_id` from this message.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn client_id(&self) -> &ClientId {
         &self.client_id
     }
 
     /// Getter: borrow the `counterparty` from this message.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn counterparty(&self) -> &Counterparty {
         &self.counterparty
     }
@@ -43,10 +45,12 @@ impl Msg for MsgConnectionOpenInit {
     type ValidationError = Error;
     type Raw = RawMsgConnectionOpenInit;
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn route(&self) -> String {
         crate::keys::ROUTER_KEY.to_string()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn type_url(&self) -> String {
         TYPE_URL.to_string()
     }

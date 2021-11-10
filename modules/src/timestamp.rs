@@ -93,6 +93,7 @@ impl Timestamp {
     }
 
     /// Returns a `Timestamp` representation of the current time.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn now() -> Timestamp {
         Timestamp {
             time: Some(Utc::now()),
@@ -100,6 +101,7 @@ impl Timestamp {
     }
 
     /// Returns a `Timestamp` representation of a timestamp not being set.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn none() -> Self {
         Timestamp { time: None }
     }
@@ -108,6 +110,7 @@ impl Timestamp {
     /// Returns the difference in time as an [`std::time::Duration`].
     /// Returns `None` if the other `Timestamp` is more advanced
     /// than the current or if either of the `Timestamp`s is not set.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn duration_since(&self, other: &Timestamp) -> Option<Duration> {
         match (self.time, other.time) {
             (Some(time1), Some(time2)) => time1.signed_duration_since(time2).to_std().ok(),
@@ -116,6 +119,7 @@ impl Timestamp {
     }
 
     /// Convert a `Timestamp` from [`chrono::DateTime<Utc>`].
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn from_datetime(time: DateTime<Utc>) -> Timestamp {
         Timestamp { time: Some(time) }
     }
@@ -131,12 +135,14 @@ impl Timestamp {
     }
 
     /// Convert a `Timestamp` to an optional [`chrono::DateTime<Utc>`]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn as_datetime(&self) -> Option<DateTime<Utc>> {
         self.time
     }
 
     /// Checks whether the timestamp has expired when compared to the
     /// `other` timestamp. Returns an [`Expiry`] result.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn check_expiry(&self, other: &Timestamp) -> Expiry {
         match (self.time, other.time) {
             (Some(time1), Some(time2)) => {
@@ -152,6 +158,7 @@ impl Timestamp {
 }
 
 #[pure]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 fn as_nanos_spec(time: &Option<DateTime<Utc>>) -> bool {
     match time {
         Some(t) => t.timestamp_nanos() >= 0,
@@ -181,6 +188,7 @@ define_error! {
 impl Add<Duration> for Timestamp {
     type Output = Result<Timestamp, TimestampOverflowError>;
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn add(self, duration: Duration) -> Result<Timestamp, TimestampOverflowError> {
         match self.as_datetime() {
             Some(datetime) => {
@@ -224,6 +232,7 @@ define_error! {
 impl FromStr for Timestamp {
     type Err = ParseTimestampError;
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let seconds = u64::from_str(s).map_err(ParseTimestampError::parse_int)?;
 
@@ -232,6 +241,7 @@ impl FromStr for Timestamp {
 }
 
 impl Default for Timestamp {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn default() -> Self {
         Timestamp { time: None }
     }

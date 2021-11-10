@@ -85,6 +85,7 @@ panic!("No") //         Ok(Self::from(s.parse::<u64>().map_err(|e| {
 }
 
 impl Sequence {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn is_zero(&self) -> bool {
         self.0 == 0
     }
@@ -127,6 +128,7 @@ pub struct Packet {
 }
 
 impl Packet {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn timed_out(&self, dst_chain_height: Height) -> bool {
         (self.timeout_height != Height::zero() && self.timeout_height < dst_chain_height)
             || (self.timeout_timestamp != Timestamp::none()
@@ -168,6 +170,7 @@ impl std::fmt::Display for Packet {
 }
 
 impl Default for Packet {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn default() -> Self {
         Packet {
             sequence: Sequence(0),

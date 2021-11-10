@@ -1,4 +1,6 @@
 //! Definition of domain type message `MsgCreateAnyClient`.
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
 
 use std::convert::TryFrom;
 
@@ -23,6 +25,7 @@ pub struct MsgCreateAnyClient {
 }
 
 impl MsgCreateAnyClient {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn new(
         client_state: AnyClientState,
         consensus_state: AnyConsensusState,
@@ -41,10 +44,12 @@ impl MsgCreateAnyClient {
         })
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn client_state(&self) -> AnyClientState {
         self.client_state.clone()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn consensus_state(&self) -> AnyConsensusState {
         self.consensus_state.clone()
     }
@@ -54,10 +59,12 @@ impl Msg for MsgCreateAnyClient {
     type ValidationError = crate::ics24_host::error::ValidationError;
     type Raw = RawMsgCreateClient;
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn route(&self) -> String {
         crate::keys::ROUTER_KEY.to_string()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn type_url(&self) -> String {
         TYPE_URL.to_string()
     }
@@ -68,6 +75,7 @@ impl Protobuf<RawMsgCreateClient> for MsgCreateAnyClient {}
 impl TryFrom<RawMsgCreateClient> for MsgCreateAnyClient {
     type Error = Error;
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn try_from(raw: RawMsgCreateClient) -> Result<Self, Error> {
         let raw_client_state = raw
             .client_state
@@ -86,6 +94,7 @@ impl TryFrom<RawMsgCreateClient> for MsgCreateAnyClient {
 }
 
 impl From<MsgCreateAnyClient> for RawMsgCreateClient {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(ics_msg: MsgCreateAnyClient) -> Self {
         RawMsgCreateClient {
             client_state: Some(ics_msg.client_state.into()),

@@ -156,6 +156,7 @@ pub enum AnyClient {
 }
 
 impl AnyClient {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn from_client_type(client_type: ClientType) -> AnyClient {
         match client_type {
             ClientType::Tendermint => Self::Tendermint(TendermintClient),
@@ -173,6 +174,7 @@ impl ClientDef for AnyClient {
     type ConsensusState = AnyConsensusState;
 
     /// Validates an incoming `header` against the latest consensus state of this client.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn check_header_and_update_state(
         &self,
         client_state: AnyClientState,

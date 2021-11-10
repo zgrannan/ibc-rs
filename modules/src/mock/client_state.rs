@@ -36,13 +36,14 @@ pub struct MockClientRecord {
 }
 
 #[pure]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 fn client_invariant(client: &MockClientRecord) {
     match client.client_state {
         Some(cs) =>
             match client.consensus_states.keys().max() {
-                Some(max_height) => cs.latest_height() == max_height
+                Some(max_height) => cs.latest_height() == max_height,
                 None => false
-            }
+            },
         None => client.consensus_states.is_empty()
     }
 
@@ -62,9 +63,11 @@ impl MockClientState {
         (self.0).height
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn refresh_time(&self) -> Option<Duration> {
         None
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn expired(&self, _elapsed: Duration) -> bool {
         false
     }
@@ -107,10 +110,12 @@ impl ClientState for MockClientState {
         ClientType::Mock
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn latest_height(&self) -> Height {
         self.0.height()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn is_frozen(&self) -> bool {
         // TODO
         false
@@ -135,6 +140,7 @@ pub struct MockConsensusState {
 }
 
 impl MockConsensusState {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn new(header: MockHeader) -> Self {
         MockConsensusState {
             header,
@@ -142,6 +148,7 @@ impl MockConsensusState {
         }
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn timestamp(&self) -> Timestamp {
         self.header.timestamp
     }
@@ -183,6 +190,7 @@ impl From<MockConsensusState> for AnyConsensusState {
 impl ConsensusState for MockConsensusState {
     type Error = Infallible;
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn client_type(&self) -> ClientType {
         ClientType::Mock
     }
@@ -191,10 +199,12 @@ impl ConsensusState for MockConsensusState {
     //     &self.root
     // }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn validate_basic(&self) -> Result<(), Infallible> {
         Ok(())
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn wrap_any(self) -> AnyConsensusState {
         AnyConsensusState::Mock(self)
     }

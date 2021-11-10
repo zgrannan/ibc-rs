@@ -119,6 +119,7 @@ pub struct MockContext {
 /// present, and the chain has Height(5). This should be used sparingly, mostly for testing the
 /// creation of new domain objects.
 impl Default for MockContext {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn default() -> Self {
         Self::new(
             ChainId::new("mockgaia".to_string(), 0),
@@ -204,6 +205,7 @@ impl MockContext {
     /// Given a client id and a height, registers a new client in the context and also associates
     /// to this client a mock client state and a mock consensus state for height `height`. The type
     /// of this client is implicitly assumed to be Mock.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn with_client(self, client_id: &ClientId, height: Height) -> Self {
         self.with_client_parametrized(client_id, height, Some(ClientType::Mock), Some(height))
     }
@@ -213,6 +215,7 @@ impl MockContext {
     /// then the client will have type Mock, otherwise the specified type. If
     /// `consensus_state_height` is None, then the client will be initialized with a consensus
     /// state matching the same height as the client state (`client_state_height`).
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn with_client_parametrized(
         mut self,
         client_id: &ClientId,
@@ -250,12 +253,13 @@ impl MockContext {
             client_state,
             consensus_states,
         };
-        assert!(client_invariant(client_record))
+        assert!(client_invariant(client_record));
         self.clients.insert(client_id.clone(), client_record);
         self
     }
 
     /// Associates a connection to this context.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn with_connection(
         mut self,
         connection_id: ConnectionId,
@@ -265,12 +269,14 @@ impl MockContext {
         self
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn with_port_capability(mut self, port_id: PortId) -> Self {
         self.port_capabilities.insert(port_id, Capability::new());
         self
     }
 
     /// Associates a channel (in an arbitrary state) to this context.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn with_channel(
         self,
         port_id: PortId,
@@ -282,6 +288,7 @@ impl MockContext {
         Self { channels, ..self }
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn with_send_sequence(
         self,
         port_id: PortId,
@@ -296,6 +303,7 @@ impl MockContext {
         }
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn with_recv_sequence(
         self,
         port_id: PortId,
@@ -310,6 +318,7 @@ impl MockContext {
         }
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn with_ack_sequence(
         self,
         port_id: PortId,
@@ -324,6 +333,7 @@ impl MockContext {
         }
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn with_timestamp(self, timestamp: Timestamp) -> Self {
         Self { timestamp, ..self }
     }
@@ -354,6 +364,7 @@ impl MockContext {
         }
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn with_packet_commitment(
         self,
         port_id: PortId,
@@ -371,6 +382,7 @@ impl MockContext {
 
     /// Accessor for a block of the local (host) chain from this context.
     /// Returns `None` if the block at the requested height does not exist.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn host_block(&self, target_height: Height) -> Option<&HostBlock> {
         let target = target_height.revision_height as usize;
         let latest = self.latest_height.revision_height as usize;
@@ -419,6 +431,7 @@ impl MockContext {
     }
 
     /// Validates this context. Should be called after the context is mutated by a test.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn validate(&self) -> Result<(), String> {
         // Check that the number of entries is not higher than window size.
         if self.history.len() > self.max_history_size {
@@ -446,6 +459,7 @@ impl MockContext {
         Ok(())
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn add_port(&mut self, port_id: PortId) {
         self.port_capabilities.insert(port_id, Capability::new());
     }
@@ -472,16 +486,19 @@ impl Ics26Context for MockContext {}
 impl Ics20Context for MockContext {}
 
 impl PortReader for MockContext {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn lookup_module_by_port(&self, port_id: &PortId) -> Option<Capability> {
         self.port_capabilities.get(port_id).cloned()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn authenticate(&self, _cap: &Capability, _port_id: &PortId) -> bool {
         true
     }
 }
 
 impl ChannelReader for MockContext {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn channel_end(&self, pcid: &(PortId, ChannelId)) -> Option<ChannelEnd> {
         self.channels.get(pcid).cloned()
     }
@@ -490,6 +507,7 @@ impl ChannelReader for MockContext {
         self.connections.get(cid).cloned()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn connection_channels(&self, cid: &ConnectionId) -> Option<Vec<(PortId, ChannelId)>> {
         self.connection_channels.get(cid).cloned()
     }
@@ -506,6 +524,7 @@ impl ChannelReader for MockContext {
         ClientReader::consensus_state(self, client_id, height)
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn authenticated_capability(&self, port_id: &PortId) -> Result<Capability, ChannelError> {
         let cap = PortReader::lookup_module_by_port(self, port_id);
         match cap {
@@ -520,49 +539,60 @@ impl ChannelReader for MockContext {
         }
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn get_next_sequence_send(&self, port_channel_id: &(PortId, ChannelId)) -> Option<Sequence> {
         self.next_sequence_send.get(port_channel_id).cloned()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn get_next_sequence_recv(&self, port_channel_id: &(PortId, ChannelId)) -> Option<Sequence> {
         self.next_sequence_recv.get(port_channel_id).cloned()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn get_next_sequence_ack(&self, port_channel_id: &(PortId, ChannelId)) -> Option<Sequence> {
         self.next_sequence_ack.get(port_channel_id).cloned()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn get_packet_commitment(&self, key: &(PortId, ChannelId, Sequence)) -> Option<String> {
         self.packet_commitment.get(key).cloned()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn get_packet_receipt(&self, key: &(PortId, ChannelId, Sequence)) -> Option<Receipt> {
         self.packet_receipt.get(key).cloned()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn get_packet_acknowledgement(&self, key: &(PortId, ChannelId, Sequence)) -> Option<String> {
         self.packet_acknowledgement.get(key).cloned()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn hash(&self, input: String) -> String {
         let r = sha2::Sha256::digest(input.as_bytes());
         format!("{:x}", r)
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn host_height(&self) -> Height {
         self.latest_height
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn host_timestamp(&self) -> Timestamp {
         self.timestamp
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn channel_counter(&self) -> u64 {
         self.channel_ids_counter
     }
 }
 
 impl ChannelKeeper for MockContext {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn store_packet_commitment(
         &mut self,
         key: (PortId, ChannelId, Sequence),
@@ -576,6 +606,7 @@ impl ChannelKeeper for MockContext {
         Ok(())
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn store_packet_acknowledgement(
         &mut self,
         key: (PortId, ChannelId, Sequence),
@@ -587,6 +618,7 @@ impl ChannelKeeper for MockContext {
         Ok(())
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn delete_packet_acknowledgement(
         &mut self,
         key: (PortId, ChannelId, Sequence),
@@ -595,6 +627,7 @@ impl ChannelKeeper for MockContext {
         Ok(())
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn store_connection_channels(
         &mut self,
         cid: ConnectionId,
@@ -607,6 +640,7 @@ impl ChannelKeeper for MockContext {
         Ok(())
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn store_channel(
         &mut self,
         port_channel_id: (PortId, ChannelId),
@@ -616,6 +650,7 @@ impl ChannelKeeper for MockContext {
         Ok(())
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn store_next_sequence_send(
         &mut self,
         port_channel_id: (PortId, ChannelId),
@@ -625,6 +660,7 @@ impl ChannelKeeper for MockContext {
         Ok(())
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn store_next_sequence_recv(
         &mut self,
         port_channel_id: (PortId, ChannelId),
@@ -634,6 +670,7 @@ impl ChannelKeeper for MockContext {
         Ok(())
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn store_next_sequence_ack(
         &mut self,
         port_channel_id: (PortId, ChannelId),
@@ -648,6 +685,7 @@ impl ChannelKeeper for MockContext {
         self.channel_ids_counter += 1;
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn delete_packet_commitment(
         &mut self,
         key: (PortId, ChannelId, Sequence),
@@ -656,6 +694,7 @@ impl ChannelKeeper for MockContext {
         Ok(())
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn store_packet_receipt(
         &mut self,
         key: (PortId, ChannelId, Sequence),
@@ -667,6 +706,7 @@ impl ChannelKeeper for MockContext {
 }
 
 impl ConnectionReader for MockContext {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn connection_end(&self, cid: &ConnectionId) -> Option<ConnectionEnd> {
         self.connections.get(cid).cloned()
     }
@@ -687,10 +727,12 @@ impl ConnectionReader for MockContext {
         self.history[0].height()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn commitment_prefix(&self) -> CommitmentPrefix {
         CommitmentPrefix::from(vec![])
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn client_consensus_state(
         &self,
         client_id: &ClientId,
@@ -700,17 +742,20 @@ impl ConnectionReader for MockContext {
         self.consensus_state(client_id, height)
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn host_consensus_state(&self, height: Height) -> Option<AnyConsensusState> {
         let block_ref = self.host_block(height);
         block_ref.cloned().map(Into::into)
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn connection_counter(&self) -> u64 {
         self.connection_ids_counter
     }
 }
 
 impl ConnectionKeeper for MockContext {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn store_connection(
         &mut self,
         connection_id: ConnectionId,
@@ -721,6 +766,7 @@ impl ConnectionKeeper for MockContext {
         Ok(())
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn store_connection_to_client(
         &mut self,
         connection_id: ConnectionId,
@@ -738,6 +784,7 @@ impl ConnectionKeeper for MockContext {
 }
 
 impl ClientReader for MockContext {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn client_type(&self, client_id: &ClientId) -> Option<ClientType> {
         match self.clients.get(client_id) {
             Some(client_record) => client_record.client_type.into(),
@@ -745,6 +792,7 @@ impl ClientReader for MockContext {
         }
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn client_state(&self, client_id: &ClientId) -> Option<AnyClientState> {
         match self.clients.get(client_id) {
             Some(client_record) => client_record.client_state.clone(),
@@ -752,6 +800,7 @@ impl ClientReader for MockContext {
         }
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn consensus_state(&self, client_id: &ClientId, height: Height) -> Option<AnyConsensusState> {
         match self.clients.get(client_id) {
             Some(client_record) => match client_record.consensus_states.get(&height) {
@@ -762,12 +811,14 @@ impl ClientReader for MockContext {
         }
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn client_counter(&self) -> u64 {
         self.client_ids_counter
     }
 }
 
 impl ClientKeeper for MockContext {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn store_client_type(
         &mut self,
         client_id: ClientId,
@@ -783,6 +834,7 @@ impl ClientKeeper for MockContext {
         Ok(())
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn store_client_state(
         &mut self,
         client_id: ClientId,
@@ -798,6 +850,7 @@ impl ClientKeeper for MockContext {
         Ok(())
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn store_consensus_state(
         &mut self,
         client_id: ClientId,
@@ -824,15 +877,18 @@ impl ClientKeeper for MockContext {
 }
 
 impl Ics18Context for MockContext {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_latest_height(&self) -> Height {
         self.host_current_height()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_client_full_state(&self, client_id: &ClientId) -> Option<AnyClientState> {
         // Forward call to Ics2.
         ClientReader::client_state(self, client_id)
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn query_latest_header(&self) -> Option<AnyHeader> {
         let block_ref = self.host_block(self.host_current_height());
         block_ref.cloned().map(Into::into)

@@ -129,6 +129,7 @@ impl ClientState {
         self.latest_height
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn with_header(self, h: Header) -> Self {
         // TODO: Clarify which fields should update.
         ClientState {
@@ -190,23 +191,28 @@ impl ClientState {
 }
 
 impl crate::ics02_client::client_state::ClientState for ClientState {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn chain_id(&self) -> ChainId {
         self.chain_id.clone()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn client_type(&self) -> ClientType {
         ClientType::Tendermint
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn latest_height(&self) -> Height {
         self.latest_height
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn is_frozen(&self) -> bool {
         // If 'frozen_height' is set to a non-zero value, then the client state is frozen.
         !self.frozen_height.is_zero()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn wrap_any(self) -> AnyClientState {
         AnyClientState::Tendermint(self)
     }
@@ -271,6 +277,7 @@ impl From<ClientState> for RawClientState {
         unimplemented!()
     }
     #[cfg(feature="original")]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(value: ClientState) -> Self {
         RawClientState {
             chain_id: value.chain_id.to_string(),
@@ -438,6 +445,7 @@ pub mod test_util {
     use crate::ics07_tendermint::client_state::{AllowUpdate, ClientState};
     use crate::ics24_host::identifier::ChainId;
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn get_dummy_tendermint_client_state(tm_header: Header) -> AnyClientState {
         AnyClientState::Tendermint(
             ClientState::new(

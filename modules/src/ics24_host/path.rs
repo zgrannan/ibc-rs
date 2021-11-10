@@ -68,11 +68,13 @@ pub enum ClientUpgradePath {
 
 impl Path {
     /// Indication if the path is provable.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn is_provable(&self) -> bool {
         !matches!(&self, Path::ClientConnections(_) | Path::Ports(_))
     }
 
     /// into_bytes implementation
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn into_bytes(self) -> Vec<u8> {
         self.to_string().into_bytes()
     }

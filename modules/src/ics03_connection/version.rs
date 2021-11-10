@@ -32,6 +32,7 @@ impl Protobuf<RawVersion> for Version {}
 
 impl TryFrom<RawVersion> for Version {
     type Error = Error;
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn try_from(value: RawVersion) -> Result<Self, Self::Error> {
         if value.identifier.trim().is_empty() {
             return Err(Error::empty_versions());
@@ -49,6 +50,7 @@ impl TryFrom<RawVersion> for Version {
 }
 
 impl From<Version> for RawVersion {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(value: Version) -> Self {
         Self {
             identifier: value.identifier,
@@ -58,6 +60,7 @@ impl From<Version> for RawVersion {
 }
 
 impl Default for Version {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn default() -> Self {
         Version {
             identifier: "1".to_string(),
@@ -67,11 +70,13 @@ impl Default for Version {
 }
 
 /// Returns the lists of supported versions
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 pub fn get_compatible_versions() -> Vec<Version> {
     vec![Version::default()]
 }
 
 /// Selects a version from the intersection of locally supported and counterparty versions.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 pub fn pick_version(
     supported_versions: Vec<Version>,
     counterparty_versions: Vec<Version>,

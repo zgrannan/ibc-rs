@@ -7,6 +7,7 @@ use tendermint::{block, consensus, evidence, public_key::Algorithm};
 use crate::signer::Signer;
 
 // Needed in mocks.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 pub fn default_consensus_params() -> consensus::Params {
     consensus::Params {
         block: block::Size {
@@ -38,6 +39,7 @@ pub fn get_dummy_account_id() -> Signer {
     "0CDA3F47EF3C4906693B170EF650EB968C5F4B2C".parse().unwrap()
 }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 pub fn get_dummy_bech32_account() -> String {
     "cosmos1wxeyh7zgn4tctjzs0vtqpc6p5cxq5t2muzl7ng".to_string()
 }

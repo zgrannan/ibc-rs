@@ -29,10 +29,12 @@ impl Msg for MsgSubmitAnyMisbehaviour {
     type ValidationError = crate::ics24_host::error::ValidationError;
     type Raw = RawMsgSubmitMisbehaviour;
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn route(&self) -> String {
         crate::keys::ROUTER_KEY.to_string()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn type_url(&self) -> String {
         TYPE_URL.to_string()
     }
@@ -61,6 +63,7 @@ impl TryFrom<RawMsgSubmitMisbehaviour> for MsgSubmitAnyMisbehaviour {
 }
 
 impl From<MsgSubmitAnyMisbehaviour> for RawMsgSubmitMisbehaviour {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(ics_msg: MsgSubmitAnyMisbehaviour) -> Self {
         RawMsgSubmitMisbehaviour {
             client_id: ics_msg.client_id.to_string(),

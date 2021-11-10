@@ -48,6 +48,7 @@ pub fn validate_identifier(id: &str, min: usize, max: usize) -> Result<(), Error
 ///
 /// A valid identifier must be between 9-64 characters and only contain lowercase
 /// alphabetic characters,
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 pub fn validate_client_identifier(id: &str) -> Result<(), Error> {
     validate_identifier(id, 9, 64)
 }
@@ -56,6 +57,7 @@ pub fn validate_client_identifier(id: &str) -> Result<(), Error> {
 ///
 /// A valid Identifier must be between 10-64 characters and only contain lowercase
 /// alphabetic characters,
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 pub fn validate_connection_identifier(id: &str) -> Result<(), Error> {
     validate_identifier(id, 10, 64)
 }
@@ -64,6 +66,7 @@ pub fn validate_connection_identifier(id: &str) -> Result<(), Error> {
 ///
 /// A valid Identifier must be between 2-64 characters and only contain lowercase
 /// alphabetic characters,
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 pub fn validate_port_identifier(id: &str) -> Result<(), Error> {
     validate_identifier(id, 2, 64)
 }
@@ -72,6 +75,7 @@ pub fn validate_port_identifier(id: &str) -> Result<(), Error> {
 ///
 /// A valid Identifier must be between 10-64 characters and only contain lowercase
 /// alphabetic characters,
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 pub fn validate_channel_identifier(id: &str) -> Result<(), Error> {
     validate_identifier(id, 8, 64)
 }

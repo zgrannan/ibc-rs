@@ -26,11 +26,13 @@ pub struct MsgConnectionOpenConfirm {
 
 impl MsgConnectionOpenConfirm {
     /// Getter for accessing the connection identifier of this message.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn connection_id(&self) -> &ConnectionId {
         &self.connection_id
     }
 
     /// Getter for accessing (borrow) the proofs in this message.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn proofs(&self) -> &Proofs {
         &self.proofs
     }
@@ -40,10 +42,12 @@ impl Msg for MsgConnectionOpenConfirm {
     type ValidationError = Error;
     type Raw = RawMsgConnectionOpenConfirm;
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn route(&self) -> String {
         crate::keys::ROUTER_KEY.to_string()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn type_url(&self) -> String {
         TYPE_URL.to_string()
     }

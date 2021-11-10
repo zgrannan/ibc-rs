@@ -31,32 +31,38 @@ pub struct MsgConnectionOpenAck {
 
 impl MsgConnectionOpenAck {
     /// Getter for accessing the connection identifier of this message.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn connection_id(&self) -> &ConnectionId {
         &self.connection_id
     }
 
     /// Getter for accessing the counterparty's connection identifier from this message.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn counterparty_connection_id(&self) -> &ConnectionId {
         &self.counterparty_connection_id
     }
 
     /// Getter for accessing the client state.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn client_state(&self) -> Option<AnyClientState> {
         self.client_state.clone()
     }
 
     /// Getter for accessing (borrow) the proofs in this message.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn proofs(&self) -> &Proofs {
         &self.proofs
     }
 
     /// Getter for the version field.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn version(&self) -> &Version {
         &self.version
     }
 
     /// Getter for accessing the `consensus_height` field from this message. Returns the special
     /// value `Height(0)` if this field is not set.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn consensus_height(&self) -> Height {
         match self.proofs.consensus_proof() {
             None => Height::zero(),
@@ -69,10 +75,12 @@ impl Msg for MsgConnectionOpenAck {
     type ValidationError = Error;
     type Raw = RawMsgConnectionOpenAck;
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn route(&self) -> String {
         crate::keys::ROUTER_KEY.to_string()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn type_url(&self) -> String {
         TYPE_URL.to_string()
     }

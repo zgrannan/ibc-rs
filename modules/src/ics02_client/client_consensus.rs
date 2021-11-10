@@ -55,6 +55,7 @@ pub enum AnyConsensusState {
 }
 
 impl AnyConsensusState {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn timestamp(&self) -> Timestamp {
         match self {
             Self::Tendermint(cs_state) => {
@@ -160,6 +161,7 @@ impl TryFrom<ConsensusStateWithHeight> for AnyConsensusStateWithHeight {
 }
 
 impl From<AnyConsensusStateWithHeight> for ConsensusStateWithHeight {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(value: AnyConsensusStateWithHeight) -> Self {
         ConsensusStateWithHeight {
             height: Some(value.height.into()),
@@ -171,6 +173,7 @@ impl From<AnyConsensusStateWithHeight> for ConsensusStateWithHeight {
 impl ConsensusState for AnyConsensusState {
     type Error = Infallible;
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn client_type(&self) -> ClientType {
         self.client_type()
     }
@@ -184,6 +187,7 @@ impl ConsensusState for AnyConsensusState {
         todo!()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn wrap_any(self) -> AnyConsensusState {
         self
     }

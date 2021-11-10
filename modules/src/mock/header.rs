@@ -28,6 +28,7 @@ impl Protobuf<RawMockHeader> for MockHeader {}
 impl TryFrom<RawMockHeader> for MockHeader {
     type Error = Error;
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn try_from(raw: RawMockHeader) -> Result<Self, Self::Error> {
         Ok(MockHeader {
             height: raw.height.ok_or_else(Error::missing_raw_header)?.into(),
@@ -53,6 +54,7 @@ impl MockHeader {
         self.height
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn new(height: Height) -> Self {
         Self {
             height,
@@ -68,14 +70,17 @@ impl From<MockHeader> for AnyHeader {
 }
 
 impl Header for MockHeader {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn client_type(&self) -> ClientType {
         ClientType::Mock
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn height(&self) -> Height {
         self.height
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn wrap_any(self) -> AnyHeader {
         AnyHeader::Mock(self)
     }

@@ -26,6 +26,7 @@ pub struct MsgTimeoutOnClose {
 }
 
 impl MsgTimeoutOnClose {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn new(
         packet: Packet,
         next_sequence_recv: Sequence,
@@ -61,6 +62,7 @@ impl Protobuf<RawMsgTimeoutOnClose> for MsgTimeoutOnClose {}
 impl TryFrom<RawMsgTimeoutOnClose> for MsgTimeoutOnClose {
     type Error = Error;
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn try_from(raw_msg: RawMsgTimeoutOnClose) -> Result<Self, Self::Error> {
         let proofs = Proofs::new(
             raw_msg.proof_unreceived.into(),

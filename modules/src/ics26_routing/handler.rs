@@ -19,6 +19,7 @@ use crate::{events::IbcEvent, handler::HandlerOutput};
 /// Mimics the DeliverTx ABCI interface, but a slightly lower level. No need for authentication
 /// info or signature checks here.
 /// Returns a vector of all events that got generated as a byproduct of processing `messages`.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 pub fn deliver<Ctx>(ctx: &mut Ctx, messages: Vec<Any>) -> Result<Vec<IbcEvent>, Error>
 where
     Ctx: Ics26Context,
@@ -45,6 +46,7 @@ where
 }
 
 /// Attempts to convert a message into a [Ics26Envelope] message
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 pub fn decode(message: Any) -> Result<Ics26Envelope, Error> {
     message.try_into()
 }

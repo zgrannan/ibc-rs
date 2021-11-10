@@ -26,6 +26,7 @@ pub struct MsgAcknowledgement {
 }
 
 impl MsgAcknowledgement {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn new(
         packet: Packet,
         acknowledgement: Vec<u8>,
@@ -40,10 +41,12 @@ impl MsgAcknowledgement {
         }
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn acknowledgement(&self) -> &Vec<u8> {
         &self.acknowledgement
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn proofs(&self) -> &Proofs {
         &self.proofs
     }

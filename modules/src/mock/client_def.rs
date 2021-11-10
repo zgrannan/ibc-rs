@@ -23,6 +23,7 @@ impl ClientDef for MockClient {
     type ClientState = MockClientState;
     type ConsensusState = MockConsensusState;
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn check_header_and_update_state(
         &self,
         client_state: Self::ClientState,
@@ -37,6 +38,7 @@ impl ClientDef for MockClient {
         Ok((MockClientState(header), MockConsensusState::new(header)))
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn verify_client_consensus_state(
         &self,
         _client_state: &Self::ClientState,
@@ -65,6 +67,7 @@ impl ClientDef for MockClient {
         Ok(())
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn verify_connection_state(
         &self,
         _client_state: &Self::ClientState,
@@ -77,6 +80,7 @@ impl ClientDef for MockClient {
         Ok(())
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn verify_channel_state(
         &self,
         _client_state: &Self::ClientState,
@@ -90,6 +94,7 @@ impl ClientDef for MockClient {
         Ok(())
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn verify_client_full_state(
         &self,
         _client_state: &Self::ClientState,
@@ -103,6 +108,7 @@ impl ClientDef for MockClient {
         Ok(())
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn verify_packet_data(
         &self,
         _client_state: &Self::ClientState,
@@ -116,6 +122,7 @@ impl ClientDef for MockClient {
         Ok(())
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn verify_packet_acknowledgement(
         &self,
         _client_state: &Self::ClientState,
@@ -129,6 +136,7 @@ impl ClientDef for MockClient {
         Ok(())
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn verify_next_sequence_recv(
         &self,
         _client_state: &Self::ClientState,
@@ -141,6 +149,7 @@ impl ClientDef for MockClient {
         Ok(())
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn verify_packet_receipt_absence(
         &self,
         _client_state: &Self::ClientState,
@@ -152,6 +161,7 @@ impl ClientDef for MockClient {
     ) -> Result<(), Error> {
         Ok(())
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn verify_upgrade_and_update_state(
         &self,
         client_state: &Self::ClientState,

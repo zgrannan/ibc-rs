@@ -53,6 +53,7 @@ impl Misbehaviour for AnyMisbehaviour {
         }
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn height(&self) -> Height {
         match self {
             Self::Tendermint(misbehaviour) => misbehaviour.height(),
@@ -62,6 +63,7 @@ impl Misbehaviour for AnyMisbehaviour {
         }
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn wrap_any(self) -> AnyMisbehaviour {
         self
     }
@@ -89,6 +91,7 @@ impl TryFrom<Any> for AnyMisbehaviour {
 }
 
 impl From<AnyMisbehaviour> for Any {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(value: AnyMisbehaviour) -> Self {
         match value {
             AnyMisbehaviour::Tendermint(misbehaviour) => Any {

@@ -28,6 +28,7 @@ pub struct MsgChannelOpenAck {
 }
 
 impl MsgChannelOpenAck {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn new(
         port_id: PortId,
         channel_id: ChannelId,
@@ -47,21 +48,26 @@ impl MsgChannelOpenAck {
     }
 
     /// Getter: borrow the `port_id` from this message.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn port_id(&self) -> &PortId {
         &self.port_id
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn channel_id(&self) -> &ChannelId {
         &self.channel_id
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn counterparty_channel_id(&self) -> &ChannelId {
         &self.counterparty_channel_id
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn counterparty_version(&self) -> &String {
         &self.counterparty_version
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn proofs(&self) -> &Proofs {
         &self.proofs
     }
@@ -71,10 +77,12 @@ impl Msg for MsgChannelOpenAck {
     type ValidationError = Error;
     type Raw = RawMsgChannelOpenAck;
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn route(&self) -> String {
         crate::keys::ROUTER_KEY.to_string()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn type_url(&self) -> String {
         TYPE_URL.to_string()
     }

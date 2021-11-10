@@ -295,6 +295,7 @@ pub struct RawObject {
 }
 
 impl RawObject {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn new(
         height: Height,
         action: String,

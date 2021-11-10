@@ -59,6 +59,7 @@ impl Proofs {
 
     /// Getter for the consensus_proof field of this proof. Intuitively, this is a proof that a
     /// client on the source chain stores a consensus state for the destination chain.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn consensus_proof(&self) -> Option<ConsensusProof> {
         self.consensus_proof.clone()
     }
@@ -70,11 +71,13 @@ impl Proofs {
     }
 
     /// Getter for the object-specific proof (e.g., proof for connection state or channel state).
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn object_proof(&self) -> &CommitmentProofBytes {
         &self.object_proof
     }
 
     /// Getter for the client_proof.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn client_proof(&self) -> &Option<CommitmentProofBytes> {
         &self.client_proof
     }
@@ -88,6 +91,7 @@ pub struct ConsensusProof {
 }
 
 impl ConsensusProof {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn new(
         consensus_proof: CommitmentProofBytes,
         consensus_height: Height,
@@ -106,11 +110,13 @@ impl ConsensusProof {
     }
 
     /// Getter for the height field of this consensus proof.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn height(&self) -> Height {
         self.height
     }
 
     /// Getter for the proof (CommitmentProof) field of this consensus proof.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn proof(&self) -> &CommitmentProofBytes {
         &self.proof
     }

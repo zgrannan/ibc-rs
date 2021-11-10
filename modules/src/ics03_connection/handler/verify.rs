@@ -13,6 +13,7 @@ use crate::proofs::{ConsensusProof, Proofs};
 use crate::Height;
 
 /// Entry point for verifying all proofs bundled in any ICS3 message.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 pub fn verify_proofs(
     ctx: &dyn ConnectionReader,
     client_state: Option<AnyClientState>,
@@ -189,6 +190,7 @@ panic!("No") // panic!("No") // panic!("No") //     // Fetch the client state (I
 
 /// Checks that `claimed_height` is within normal bounds, i.e., fresh enough so that the chain has
 /// not pruned it yet, but not newer than the current (actual) height of the local chain.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 pub fn check_client_consensus_height(
     ctx: &dyn ConnectionReader,
     claimed_height: Height,

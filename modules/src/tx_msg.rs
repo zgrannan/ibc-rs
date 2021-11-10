@@ -15,6 +15,7 @@ pub trait Msg: Clone {
     fn type_url(&self) -> String;
 
     #[allow(clippy::wrong_self_convention)]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn to_any(self) -> Any {
         Any {
             type_url: self.type_url(),
@@ -37,6 +38,7 @@ pub trait Msg: Clone {
         // }
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn validate_basic(&self) -> Result<(), ValidationError> {
         Ok(())
     }

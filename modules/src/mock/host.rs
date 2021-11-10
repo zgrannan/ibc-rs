@@ -50,6 +50,7 @@ impl HostBlock {
     }
 
     /// Generates a new block at `height` for the given chain identifier and chain type.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn generate_block(chain_id: ChainId, chain_type: HostType, height: u64) -> HostBlock {
         match chain_type {
             HostType::Mock => HostBlock::Mock(MockHeader {
@@ -101,6 +102,7 @@ impl From<HostBlock> for AnyHeader {
 }
 
 impl From<TmLightBlock> for TMHeader {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(light_block: TmLightBlock) -> Self {
         // TODO: This conversion is incorrect for `trusted_height` and `trusted_validator_set`.
         TMHeader {

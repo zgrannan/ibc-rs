@@ -440,11 +440,13 @@ impl CloseInit {
             .expect("CloseInit should always have a channel_id")
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn counterparty_port_id(&self) -> &PortId {
         &self.0.counterparty_port_id
     }
 
     #[cfg(not(feature="prusti"))]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn counterparty_channel_id(&self) -> Option<&ChannelId> {
         self.0.counterparty_channel_id.as_ref()
     }

@@ -88,6 +88,7 @@ impl AnyClientState {
         }
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn trust_threshold(&self) -> Option<TrustThresholdFraction> {
         match self {
             AnyClientState::Tendermint(state) => Some(state.trust_level),
@@ -186,6 +187,7 @@ unreachable!() //         match value {
 }
 
 impl ClientState for AnyClientState {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn chain_id(&self) -> ChainId {
         match self {
             AnyClientState::Tendermint(tm_state) => tm_state.chain_id(),
@@ -195,14 +197,17 @@ impl ClientState for AnyClientState {
         }
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn client_type(&self) -> ClientType {
         self.client_type()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn latest_height(&self) -> Height {
         self.latest_height()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn is_frozen(&self) -> bool {
         match self {
             AnyClientState::Tendermint(tm_state) => tm_state.is_frozen(),

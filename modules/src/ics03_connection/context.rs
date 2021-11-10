@@ -44,12 +44,14 @@ pub trait ConnectionReader {
 
     /// Function required by ICS 03. Returns the list of all possible versions that the connection
     /// handshake protocol supports.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn get_compatible_versions(&self) -> Vec<Version> {
         get_compatible_versions()
     }
 
     /// Function required by ICS 03. Returns one version out of the supplied list of versions, which the
     /// connection handshake protocol prefers.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn pick_version(
         &self,
         supported_versions: Vec<Version>,

@@ -29,6 +29,7 @@ unreachable!() //         write!(f, "{}", self.0)
 }
 
 impl From<String> for Signer {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(s: String) -> Self {
         Self(s)
     }
@@ -37,6 +38,7 @@ impl From<String> for Signer {
 impl FromStr for Signer {
     type Err = Infallible;
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(Self(s.to_string()))
     }

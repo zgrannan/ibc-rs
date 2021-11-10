@@ -27,6 +27,8 @@ pub struct IdentifiedChannelEnd {
 }
 
 impl IdentifiedChannelEnd {
+
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn new(port_id: PortId, channel_id: ChannelId, channel_end: ChannelEnd) -> Self {
         IdentifiedChannelEnd {
             port_id,
@@ -179,14 +181,17 @@ impl ChannelEnd {
     }
 
     /// Updates the ChannelEnd to assume a new State 's'.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn set_state(&mut self, s: State) {
         self.state = s;
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn set_version(&mut self, v: String) {
         self.version = v;
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn set_counterparty_channel_id(&mut self, c: ChannelId) {
         self.remote.channel_id = Some(c);
     }
@@ -196,14 +201,17 @@ impl ChannelEnd {
         self.state_matches(&State::Open)
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn state(&self) -> &State {
         &self.state
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn ordering(&self) -> &Order {
         &self.ordering
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn counterparty(&self) -> &Counterparty {
         &self.remote
     }
@@ -233,11 +241,13 @@ impl ChannelEnd {
     }
 
     /// Helper function to compare the state of this end with another state.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn state_matches(&self, other: &State) -> bool {
         self.state.eq(other)
     }
 
     /// Helper function to compare the order of this end with another order.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn order_matches(&self, other: &Order) -> bool {
         self.ordering.eq(other)
     }
@@ -253,6 +263,7 @@ impl ChannelEnd {
         self.counterparty().eq(other)
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn version_matches(&self, other: &str) -> bool {
         self.version().eq(other)
     }
@@ -275,6 +286,7 @@ impl Default for Counterparty {
 }
 
 impl Counterparty {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn new(port_id: PortId, channel_id: Option<ChannelId>) -> Self {
         Self {
             port_id,
@@ -282,11 +294,13 @@ impl Counterparty {
         }
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn port_id(&self) -> &PortId {
         &self.port_id
     }
 
     #[cfg(not(feature="prusti"))]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn channel_id(&self) -> Option<&ChannelId> {
         self.channel_id.as_ref()
     }
@@ -338,12 +352,15 @@ pub enum Order {
 }
 
 impl Default for Order {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn default() -> Self {
         Order::Unordered
     }
 }
 
 impl fmt::Display for Order {
+
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.as_str())
     }
@@ -351,6 +368,7 @@ impl fmt::Display for Order {
 
 impl Order {
     /// Yields the Order as a string
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::None => "UNINITIALIZED",
@@ -405,6 +423,7 @@ impl std::fmt::Debug for State {
 
 impl State {
     /// Yields the state as a string
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn as_string(&self) -> &'static str {
         match self {
             Self::Uninitialized => "UNINITIALIZED",
@@ -416,6 +435,7 @@ impl State {
     }
 
     // Parses the State out from a i32.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn from_i32(s: i32) -> Result<Self, Error> {
         match s {
             0 => Ok(Self::Uninitialized),
@@ -428,6 +448,7 @@ impl State {
     }
 
     /// Returns whether or not this channel state is `Open`.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn is_open(self) -> bool {
         self == State::Open
     }
@@ -441,6 +462,7 @@ impl State {
     /// assert!(State::TryOpen.less_or_equal_progress(State::TryOpen));
     /// assert!(!State::Closed.less_or_equal_progress(State::Open));
     /// ```
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn less_or_equal_progress(self, other: Self) -> bool {
         self as u32 <= other as u32
     }
@@ -448,6 +470,8 @@ impl State {
 
 /// Provides a `to_string` method.
 impl std::fmt::Display for State {
+
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "{}", self.as_string())
     }
@@ -470,6 +494,7 @@ pub struct QueryPacketEventDataRequest {
 /// Version validation, specific for channel (ICS4) opening handshake protocol.
 /// This field is supposed to be opaque to the core IBC protocol. No explicit validation necessary,
 /// and empty version is currently allowed by the specification (cf. ICS 004, v1).
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 pub fn validate_version(version: String) -> Result<String, Error> {
     Ok(version)
 }

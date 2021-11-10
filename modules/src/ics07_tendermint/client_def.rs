@@ -25,6 +25,7 @@ impl ClientDef for TendermintClient {
     type ClientState = ClientState;
     type ConsensusState = ConsensusState;
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn check_header_and_update_state(
         &self,
         client_state: Self::ClientState,

@@ -24,6 +24,7 @@ pub struct MsgChannelCloseInit {
 }
 
 impl MsgChannelCloseInit {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn new(port_id: PortId, channel_id: ChannelId, signer: Signer) -> Self {
         Self {
             port_id,
@@ -33,9 +34,11 @@ impl MsgChannelCloseInit {
     }
 
     /// Getter: borrow the `port_id` from this message.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn port_id(&self) -> &PortId {
         &self.port_id
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn channel_id(&self) -> &ChannelId {
         &self.channel_id
     }
@@ -45,10 +48,12 @@ impl Msg for MsgChannelCloseInit {
     type ValidationError = Error;
     type Raw = RawMsgChannelCloseInit;
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn route(&self) -> String {
         crate::keys::ROUTER_KEY.to_string()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn type_url(&self) -> String {
         TYPE_URL.to_string()
     }
@@ -70,6 +75,7 @@ impl TryFrom<RawMsgChannelCloseInit> for MsgChannelCloseInit {
 }
 
 impl From<MsgChannelCloseInit> for RawMsgChannelCloseInit {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(domain_msg: MsgChannelCloseInit) -> Self {
         RawMsgChannelCloseInit {
             port_id: domain_msg.port_id.to_string(),

@@ -102,6 +102,7 @@ impl std::fmt::Debug for NewBlock {
 }
 
 impl NewBlock {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn new(h: Height) -> NewBlock {
         NewBlock { height: h }
     }
@@ -130,6 +131,7 @@ pub struct Attributes {
 }
 
 impl Default for Attributes {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn default() -> Self {
         Attributes {
             height: Default::default(),
@@ -226,6 +228,7 @@ impl UpdateClient {
     pub fn client_id(&self) -> &ClientId {
         &self.common.client_id
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn client_type(&self) -> ClientType {
         self.common.client_type
     }
@@ -238,6 +241,7 @@ impl UpdateClient {
         self.common.height = height;
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn consensus_height(&self) -> Height {
         self.common.consensus_height
     }
@@ -307,6 +311,7 @@ impl ClientMisbehaviour {
     pub fn client_id(&self) -> &ClientId {
         &self.0.client_id
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn height(&self) -> Height {
         self.0.height
     }
@@ -341,6 +346,7 @@ impl UpgradeClient {
     pub fn set_height(&mut self, height: Height) {
         self.0.height = height;
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn client_id(&self) -> &ClientId {
         &self.0.client_id
     }

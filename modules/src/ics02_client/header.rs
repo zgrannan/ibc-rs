@@ -41,6 +41,7 @@ pub enum AnyHeader {
 }
 
 impl Header for AnyHeader {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn client_type(&self) -> ClientType {
         match self {
             Self::Tendermint(header) => header.client_type(),
@@ -50,6 +51,7 @@ impl Header for AnyHeader {
         }
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn height(&self) -> Height {
         match self {
             Self::Tendermint(header) => header.height(),
@@ -59,6 +61,7 @@ impl Header for AnyHeader {
         }
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn wrap_any(self) -> AnyHeader {
         self
     }
@@ -89,6 +92,7 @@ impl TryFrom<Any> for AnyHeader {
 }
 
 impl From<AnyHeader> for Any {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(value: AnyHeader) -> Self {
         match value {
             AnyHeader::Tendermint(header) => Any {

@@ -22,14 +22,17 @@ pub struct Misbehaviour {
 }
 
 impl crate::ics02_client::misbehaviour::Misbehaviour for Misbehaviour {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn client_id(&self) -> &ClientId {
         &self.client_id
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn height(&self) -> Height {
         self.header1.height()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn wrap_any(self) -> AnyMisbehaviour {
         AnyMisbehaviour::Mock(self)
     }
@@ -40,6 +43,7 @@ impl Protobuf<RawMisbehaviour> for Misbehaviour {}
 impl TryFrom<RawMisbehaviour> for Misbehaviour {
     type Error = Error;
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn try_from(raw: RawMisbehaviour) -> Result<Self, Self::Error> {
         Ok(Self {
             client_id: Default::default(),
@@ -56,6 +60,7 @@ impl TryFrom<RawMisbehaviour> for Misbehaviour {
 }
 
 impl From<Misbehaviour> for RawMisbehaviour {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(value: Misbehaviour) -> Self {
         RawMisbehaviour {
             client_id: value.client_id.to_string(),

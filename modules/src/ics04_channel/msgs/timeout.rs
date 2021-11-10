@@ -26,6 +26,7 @@ pub struct MsgTimeout {
 }
 
 impl MsgTimeout {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn new(
         packet: Packet,
         next_sequence_recv: Sequence,

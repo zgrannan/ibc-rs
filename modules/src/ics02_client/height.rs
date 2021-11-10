@@ -24,6 +24,7 @@ pub struct Height {
 }
 
 impl Height {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn new(revision_number: u64, revision_height: u64) -> Self {
         Self {
             revision_number,
@@ -31,6 +32,7 @@ impl Height {
         }
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn zero() -> Height {
         Self {
             revision_number: 0,
@@ -38,6 +40,7 @@ impl Height {
         }
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn is_zero(&self) -> bool {
         self.revision_height == 0
     }
@@ -55,6 +58,7 @@ impl Height {
         self.add(1)
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn sub(&self, delta: u64) -> Result<Height, Error> {
         if self.revision_height <= delta {
             return Err(Error::invalid_height_result());
@@ -66,10 +70,12 @@ impl Height {
         })
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn decrement(&self) -> Result<Height, Error> {
         self.sub(1)
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn with_revision_height(self, revision_height: u64) -> Height {
         Height {
             revision_height,
@@ -79,18 +85,21 @@ impl Height {
 }
 
 impl Default for Height {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn default() -> Self {
         Self::zero()
     }
 }
 
 impl PartialOrd for Height {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
 impl Ord for Height {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn cmp(&self, other: &Self) -> Ordering {
         if self.revision_number < other.revision_number {
             Ordering::Less
@@ -185,6 +194,7 @@ impl From<Height> for String {
 impl FromStr for Height {
     type Err = HeightError;
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Height::try_from(s)
     }

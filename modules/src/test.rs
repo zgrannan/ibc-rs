@@ -7,6 +7,7 @@ use std::fmt::Debug;
 /// - serialized back to JSON
 /// - parsed back from the serialized JSON of the previous step
 /// - that the two parsed structs are equal according to their `PartialEq` impl
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
 pub fn test_serialization_roundtrip<T>(json_data: &str)
 where
     T: Debug + Serialize + DeserializeOwned,

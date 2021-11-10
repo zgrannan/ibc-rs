@@ -40,37 +40,44 @@ pub struct MsgConnectionOpenTry {
 
 impl MsgConnectionOpenTry {
     /// Getter for accessing the previous connection identifier of this message.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn previous_connection_id(&self) -> &Option<ConnectionId> {
         &self.previous_connection_id
     }
 
     /// Getter for accessing the client identifier from this message.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn client_id(&self) -> &ClientId {
         &self.client_id
     }
 
     /// Getter for accessing the client state.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn client_state(&self) -> Option<AnyClientState> {
         self.client_state.clone()
     }
 
     /// Getter for accesing the whole counterparty of this message. Returns a `clone()`.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn counterparty(&self) -> Counterparty {
         self.counterparty.clone()
     }
 
     /// Getter for accessing the versions from this message. Returns a `clone()`.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn counterparty_versions(&self) -> Vec<Version> {
         self.counterparty_versions.clone()
     }
 
     /// Getter for accessing the proofs in this message.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn proofs(&self) -> &Proofs {
         &self.proofs
     }
 
     /// Getter for accessing the `consensus_height` field from this message. Returns the special
     /// value `0` if this field is not set.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn consensus_height(&self) -> Height {
         match self.proofs.consensus_proof() {
             None => Height::zero(),
@@ -83,10 +90,12 @@ impl Msg for MsgConnectionOpenTry {
     type ValidationError = Error;
     type Raw = RawMsgConnectionOpenTry;
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn route(&self) -> String {
         crate::keys::ROUTER_KEY.to_string()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn type_url(&self) -> String {
         TYPE_URL.to_string()
     }

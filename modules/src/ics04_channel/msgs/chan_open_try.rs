@@ -30,6 +30,7 @@ pub struct MsgChannelOpenTry {
 }
 
 impl MsgChannelOpenTry {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn new(
         port_id: PortId,
         previous_channel_id: Option<ChannelId>,
@@ -49,18 +50,23 @@ impl MsgChannelOpenTry {
     }
 
     /// Getter: borrow the `port_id` from this message.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn port_id(&self) -> &PortId {
         &self.port_id
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn previous_channel_id(&self) -> &Option<ChannelId> {
         &self.previous_channel_id
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn counterparty_version(&self) -> &String {
         &self.counterparty_version
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn channel(&self) -> &ChannelEnd {
         &self.channel
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn proofs(&self) -> &Proofs {
         &self.proofs
     }
@@ -69,10 +75,12 @@ impl Msg for MsgChannelOpenTry {
     type ValidationError = ChannelError;
     type Raw = RawMsgChannelOpenTry;
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn route(&self) -> String {
         crate::keys::ROUTER_KEY.to_string()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn type_url(&self) -> String {
         TYPE_URL.to_string()
     }

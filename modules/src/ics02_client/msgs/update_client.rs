@@ -26,6 +26,7 @@ pub struct MsgUpdateAnyClient {
 }
 
 impl MsgUpdateAnyClient {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn new(client_id: ClientId, header: AnyHeader, signer: Signer) -> Self {
         MsgUpdateAnyClient {
             client_id,
@@ -39,10 +40,12 @@ impl Msg for MsgUpdateAnyClient {
     type ValidationError = ValidationError;
     type Raw = RawMsgUpdateClient;
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn route(&self) -> String {
         crate::keys::ROUTER_KEY.to_string()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn type_url(&self) -> String {
         TYPE_URL.to_string()
     }
@@ -69,6 +72,7 @@ impl TryFrom<RawMsgUpdateClient> for MsgUpdateAnyClient {
 }
 
 impl From<MsgUpdateAnyClient> for RawMsgUpdateClient {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(ics_msg: MsgUpdateAnyClient) -> Self {
         RawMsgUpdateClient {
             client_id: ics_msg.client_id.to_string(),
