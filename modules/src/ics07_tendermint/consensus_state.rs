@@ -33,6 +33,7 @@ impl std::fmt::Debug for ConsensusState {
 }
 
 impl ConsensusState {
+    #[cfg_attr(feature="prusti", trusted_skip)]
     pub fn new(root: CommitmentRoot, timestamp: Time, next_validators_hash: Hash) -> Self {
         Self {
             timestamp,
@@ -45,6 +46,7 @@ impl ConsensusState {
 impl crate::ics02_client::client_consensus::ConsensusState for ConsensusState {
     type Error = Infallible;
 
+    #[cfg_attr(feature="prusti", trusted_skip)]
     fn client_type(&self) -> ClientType {
         ClientType::Tendermint
     }
@@ -58,6 +60,7 @@ impl crate::ics02_client::client_consensus::ConsensusState for ConsensusState {
         unimplemented!()
     }
 
+    #[cfg_attr(feature="prusti", trusted_skip)]
     fn wrap_any(self) -> AnyConsensusState {
         AnyConsensusState::Tendermint(self)
     }
@@ -68,6 +71,7 @@ impl Protobuf<RawConsensusState> for ConsensusState {}
 impl TryFrom<RawConsensusState> for ConsensusState {
     type Error = Error;
 
+    #[cfg_attr(feature="prusti", trusted_skip)]
     fn try_from(raw: RawConsensusState) -> Result<Self, Self::Error> {
         let proto_timestamp = raw
             .timestamp
@@ -106,12 +110,12 @@ impl From<ConsensusState> for RawConsensusState {
 impl From<tendermint::block::Header> for ConsensusState {
 
     #[cfg(not(feature="original"))]
+    #[cfg_attr(feature="prusti", trusted)]
     fn from(header: tendermint::block::Header) -> Self {
         unimplemented!()
     }
 
     #[cfg(feature="original")]
-    #[cfg_attr(feature="prusti", trusted)]
     fn from(header: tendermint::block::Header) -> Self {
         Self {
             root: CommitmentRoot::from_bytes(header.app_hash.as_ref()),
@@ -122,6 +126,7 @@ impl From<tendermint::block::Header> for ConsensusState {
 }
 
 impl From<Header> for ConsensusState {
+    #[cfg_attr(feature="prusti", trusted_skip)]
     fn from(header: Header) -> Self {
         Self::from(header.signed_header.header)
     }

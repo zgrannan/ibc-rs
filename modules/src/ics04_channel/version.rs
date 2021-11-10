@@ -1,3 +1,5 @@
+#[cfg(feature="prusti")]
+use prusti_contracts::*;
 use std::convert::TryFrom;
 
 use ibc_proto::ibc::core::connection::v1::Version as RawVersion;
@@ -18,6 +20,8 @@ impl Protobuf<RawVersion> for Version {}
 
 impl TryFrom<RawVersion> for Version {
     type Error = Error;
+
+    #[cfg_attr(feature="prusti", trusted_skip)]
     fn try_from(value: RawVersion) -> Result<Self, Self::Error> {
         Ok(Version {
             identifier: value.identifier,
@@ -27,6 +31,8 @@ impl TryFrom<RawVersion> for Version {
 }
 
 impl From<Version> for RawVersion {
+
+    #[cfg_attr(feature="prusti", trusted_skip)]
     fn from(value: Version) -> Self {
         Self {
             identifier: value.identifier,
@@ -36,6 +42,8 @@ impl From<Version> for RawVersion {
 }
 
 impl Default for Version {
+
+    #[cfg_attr(feature="prusti", trusted_skip)]
     fn default() -> Self {
         Version {
             identifier: "1".to_string(),
@@ -47,12 +55,15 @@ impl Default for Version {
 impl FromStr for Version {
     type Err = Error;
 
+    #[cfg_attr(feature="prusti", trusted_skip)]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Version::decode(s.as_bytes()).map_err(Error::invalid_version)
     }
 }
 
 impl std::fmt::Display for Version {
+
+    #[cfg_attr(feature="prusti", trusted_skip)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(
             f,
@@ -62,14 +73,17 @@ impl std::fmt::Display for Version {
     }
 }
 
+#[cfg_attr(feature="prusti", trusted_skip)]
 pub fn default_version_string() -> String {
     Version::default().to_string()
 }
 
+#[cfg_attr(feature="prusti", trusted_skip)]
 pub fn get_compatible_versions() -> Vec<String> {
     vec![default_version_string()]
 }
 
+#[cfg_attr(feature="prusti", trusted_skip)]
 pub fn pick_version(
     supported_versions: Vec<String>,
     counterparty_versions: Vec<String>,
@@ -93,6 +107,7 @@ pub fn pick_version(
     Ok(intersection[0].to_string())
 }
 
+#[cfg_attr(feature="prusti", trusted_skip)]
 pub fn validate_versions(versions: Vec<String>) -> Result<Vec<String>, Error> {
     if versions.is_empty() {
         return Err(Error::empty_version());
@@ -103,6 +118,7 @@ pub fn validate_versions(versions: Vec<String>) -> Result<Vec<String>, Error> {
     Ok(versions)
 }
 
+#[cfg_attr(feature="prusti", trusted_skip)]
 pub fn validate_version(raw_version: String) -> Result<String, Error> {
     let version = Version::from_str(raw_version.as_ref())?;
 

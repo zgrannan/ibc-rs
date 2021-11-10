@@ -77,6 +77,7 @@ impl Msg for MsgChannelOpenTry {
         TYPE_URL.to_string()
     }
 
+    #[cfg_attr(feature="prusti", trusted_skip)]
     fn validate_basic(&self) -> Result<(), ValidationError> {
         match self.channel().counterparty().channel_id() {
             None => Err(ValidationError::invalid_counterparty_channel_id()),

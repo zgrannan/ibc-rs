@@ -127,6 +127,8 @@ impl From<Height> for RawHeight {
 }
 
 impl std::fmt::Debug for Height {
+    #[cfg_attr(feature="prusti", trusted_skip)]
+    // warning: [Prusti: unsupported feature] cast statements that create loans are not supported
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         f.debug_struct("Height")
             .field("revision", &self.revision_number)
@@ -173,6 +175,8 @@ panic!("No") // panic!("No") //         let split: Vec<&str> = value.split('-').
 }
 
 impl From<Height> for String {
+    #[cfg_attr(feature="prusti", trusted_skip)]
+    // [Prusti: unsupported feature] unsupported constant type Ref('_#12r, [&str; 2], Not)
     fn from(height: Height) -> Self {
         format!("{}-{}", height.revision_number, height.revision_number)
     }

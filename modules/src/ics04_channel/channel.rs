@@ -286,11 +286,12 @@ impl Counterparty {
         &self.port_id
     }
 
+    #[cfg(not(feature="prusti"))]
     pub fn channel_id(&self) -> Option<&ChannelId> {
         self.channel_id.as_ref()
     }
 
-#[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn validate_basic(&self) -> Result<(), Error> {
         Ok(())
     }

@@ -191,6 +191,8 @@ impl ConnectionEnd {
     }
 
     /// Setter for the `version` field.
+    #[cfg_attr(feature="prusti", trusted_skip)]
+    // [Prusti: unsupported feature] unsizing a pointer or reference value is not supported
     pub fn set_version(&mut self, new_version: Version) {
         self.versions = vec![new_version];
     }
@@ -206,10 +208,15 @@ impl ConnectionEnd {
         self.client_id.eq(other)
     }
 
+
+    #[cfg_attr(feature="prusti", trusted_skip)]
+    // [Prusti: unsupported feature] unsupported constant type Ref('_#8r, ics03_connection::connection::State, Not)
     pub fn is_open(&self) -> bool {
         self.state_matches(&State::Open)
     }
 
+    #[cfg_attr(feature="prusti", trusted_skip)]
+    // [Prusti: unsupported feature] unsupported constant type Ref('_#8r, ics03_connection::connection::State, Not)
     pub fn is_uninitialized(&self) -> bool {
         self.state_matches(&State::Uninitialized)
     }
@@ -326,6 +333,7 @@ impl Counterparty {
         &self.client_id
     }
 
+    #[cfg_attr(feature="prusti", trusted_skip)]
     /// Getter for connection id.
     pub fn connection_id(&self) -> Option<&ConnectionId> {
         self.connection_id.as_ref()
@@ -378,11 +386,15 @@ impl State {
         }
     }
 
+    #[cfg_attr(feature="prusti", trusted_skip)]
+    // [Prusti: unsupported feature] unsupported constant type Ref('_#8r, ics03_connection::connection::State, Not)
     /// Returns whether or not this connection state is `Open`.
     pub fn is_open(self) -> bool {
         self == State::Open
     }
 
+    #[cfg_attr(feature="prusti", trusted_skip)]
+    // [Prusti: unsupported feature] unsupported cast from type 'ics03_connection::connection::State' to type 'u32'
     /// Returns whether or not this connection with this state
     /// has progressed less or the same than the argument.
     ///

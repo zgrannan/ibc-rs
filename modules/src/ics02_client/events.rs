@@ -151,6 +151,8 @@ unreachable!() //         write!(
     }
 }
 
+#[cfg_attr(feature="prusti", trusted_skip)]
+// warning: [Prusti: unsupported feature] unsupported constant type Ref('_#33r, [&str; 2], Not)
 fn extract_attributes(object: &RawObject, namespace: &str) -> Result<Attributes, Error> {
     Ok(Attributes {
         height: object.height,

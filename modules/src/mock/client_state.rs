@@ -35,6 +35,19 @@ pub struct MockClientRecord {
     pub consensus_states: HashMap<Height, AnyConsensusState>,
 }
 
+#[pure]
+fn client_invariant(client: &MockClientRecord) {
+    match client.client_state {
+        Some(cs) =>
+            match client.consensus_states.keys().max() {
+                Some(max_height) => cs.latest_height() == max_height
+                None => false
+            }
+        None => client.consensus_states.is_empty()
+    }
+
+}
+
 /// A mock of a client state. For an example of a real structure that this mocks, you can see
 /// `ClientState` of ics07_tendermint/client_state.rs.
 // TODO: `MockClientState` should evolve, at the very least needs a `is_frozen` boolean field.

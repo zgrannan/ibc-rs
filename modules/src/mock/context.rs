@@ -250,6 +250,7 @@ impl MockContext {
             client_state,
             consensus_states,
         };
+        assert!(client_invariant(client_record))
         self.clients.insert(client_id.clone(), client_record);
         self
     }

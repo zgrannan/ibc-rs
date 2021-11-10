@@ -14,12 +14,13 @@ pub struct EmptyPrefixError;
 
 #[cfg(feature="prusti")]
 impl std::fmt::Debug for EmptyPrefixError {
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted_skip)]
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         panic!("No")
     }
 }
 
+#[cfg_attr(feature="prusti", trusted_skip)]
 pub fn apply_prefix(
     prefix: &CommitmentPrefix,
     mut path: Vec<String>,
@@ -91,6 +92,7 @@ pub struct MerkleProof {
 //     }
 // }
 
+#[cfg_attr(feature="prusti", trusted_skip)]
 pub fn convert_tm_to_ics_merkle_proof(tm_proof: &Proof) -> Result<RawMerkleProof, Error> {
     let mut proofs = vec![];
 

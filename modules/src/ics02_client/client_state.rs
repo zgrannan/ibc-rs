@@ -42,7 +42,7 @@ pub trait ClientState: Clone + Send + Sync {
     fn is_frozen(&self) -> bool;
 
     /// Wrap into an `AnyClientState`
-#[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted)]
     fn wrap_any(self) -> AnyClientState;
 }
 
@@ -107,6 +107,7 @@ impl AnyClientState {
     }
 
     #[cfg(not(feature="original"))]
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn refresh_period(&self) -> Option<Duration> {
         unimplemented!()
     }
@@ -122,6 +123,7 @@ impl AnyClientState {
     }
 
     #[cfg(not(feature="original"))]
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn expired(&self, elapsed_since_latest: Duration) -> bool {
         unimplemented!()
     }
@@ -142,7 +144,7 @@ impl Protobuf<Any> for AnyClientState {}
 impl TryFrom<Any> for AnyClientState {
     type Error = Error;
 
-#[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted)]
     fn try_from(raw: Any) -> Result<Self, Self::Error> {
         match raw.type_url.as_str() {
             "" => Err(Error::empty_client_state_response()),

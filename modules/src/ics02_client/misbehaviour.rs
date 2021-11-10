@@ -110,6 +110,9 @@ impl From<AnyMisbehaviour> for Any {
 }
 
 impl std::fmt::Display for AnyMisbehaviour {
+
+    // [Prusti: unsupported feature] unsupported constant type Ref('_#16r, [&str; 1], Not)
+    #[cfg_attr(feature="prusti", trusted_skip)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         match self {
             AnyMisbehaviour::Tendermint(tm) => write!(f, "{}", tm),

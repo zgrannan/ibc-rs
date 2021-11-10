@@ -14,6 +14,7 @@ pub struct CommitmentRoot {
 }
 
 impl fmt::Debug for CommitmentRoot {
+    #[cfg_attr(feature="prusti", trusted_skip)]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let hex = Hex::upper_case().encode_to_string(&self.bytes).unwrap();
         f.debug_tuple("CommitmentRoot").field(&hex).finish()
@@ -21,23 +22,26 @@ impl fmt::Debug for CommitmentRoot {
 }
 
 impl CommitmentRoot {
+    #[cfg_attr(feature="prusti", trusted_skip)]
     pub fn from_bytes(bytes: &[u8]) -> Self {
         Self {
             bytes: Vec::from(bytes),
         }
     }
 
-#[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted_skip)]
     pub fn as_bytes(&self) -> &[u8] {
         &self.bytes
     }
 
+    #[cfg_attr(feature="prusti", trusted_skip)]
     pub fn into_vec(self) -> Vec<u8> {
         self.bytes
     }
 }
 
 impl From<Vec<u8>> for CommitmentRoot {
+    #[cfg_attr(feature="prusti", trusted_skip)]
     fn from(bytes: Vec<u8>) -> Self {
         Self { bytes }
     }
@@ -55,18 +59,21 @@ pub struct CommitmentProofBytes {
 }
 
 impl CommitmentProofBytes {
+    #[cfg_attr(feature="prusti", trusted_skip)]
     pub fn is_empty(&self) -> bool {
         self.bytes.len() == 0
     }
 }
 
 impl From<Vec<u8>> for CommitmentProofBytes {
+    #[cfg_attr(feature="prusti", trusted_skip)]
     fn from(bytes: Vec<u8>) -> Self {
         Self { bytes }
     }
 }
 
 impl From<CommitmentProofBytes> for Vec<u8> {
+    #[cfg_attr(feature="prusti", trusted_skip)]
     fn from(p: CommitmentProofBytes) -> Vec<u8> {
         p.bytes
     }
@@ -80,7 +87,7 @@ impl From<CommitmentProofBytes> for Vec<u8> {
 // }
 
 impl From<RawMerkleProof> for CommitmentProofBytes {
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted_skip)]
     fn from(proof: RawMerkleProof) -> Self {
         let mut buf = Vec::new();
         prost::Message::encode(&proof, &mut buf).unwrap();
@@ -91,7 +98,7 @@ impl From<RawMerkleProof> for CommitmentProofBytes {
 impl TryFrom<CommitmentProofBytes> for RawMerkleProof {
     type Error = Error;
 
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted_skip)]
     fn try_from(value: CommitmentProofBytes) -> Result<Self, Self::Error> {
         let value: Vec<u8> = value.into();
         let res: RawMerkleProof =
@@ -107,34 +114,38 @@ pub struct CommitmentPrefix {
 }
 
 impl CommitmentPrefix {
+    #[cfg_attr(feature="prusti", trusted_skip)]
     pub fn from_bytes(bytes: &[u8]) -> Self {
         Self {
             bytes: Vec::from(bytes),
         }
     }
 
-#[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted_skip)]
     pub fn is_empty(&self) -> bool {
         self.bytes.len() == 0
     }
 
-#[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted_skip)]
     pub fn as_bytes(&self) -> &[u8] {
         &self.bytes
     }
 
+    #[cfg_attr(feature="prusti", trusted_skip)]
     pub fn into_vec(self) -> Vec<u8> {
         self.bytes
     }
 }
 
 impl From<Vec<u8>> for CommitmentPrefix {
+    #[cfg_attr(feature="prusti", trusted_skip)]
     fn from(bytes: Vec<u8>) -> Self {
         Self { bytes }
     }
 }
 
 impl fmt::Debug for CommitmentPrefix {
+    #[cfg_attr(feature="prusti", trusted_skip)]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let converted = std::str::from_utf8(self.as_bytes());
         match converted {
@@ -145,6 +156,7 @@ impl fmt::Debug for CommitmentPrefix {
 }
 
 impl Serialize for CommitmentPrefix {
+    #[cfg_attr(feature="prusti", trusted_skip)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,

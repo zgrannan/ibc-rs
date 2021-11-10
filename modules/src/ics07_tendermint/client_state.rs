@@ -54,6 +54,7 @@ impl Protobuf<RawClientState> for ClientState {}
 
 impl ClientState {
     #[cfg(not(feature="original"))]
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn new(
         chain_id: ChainId,
         trust_level: TrustThreshold,
@@ -139,6 +140,7 @@ impl ClientState {
     }
 
     #[cfg(not(feature="original"))]
+    #[cfg_attr(feature="prusti", trusted)]
     /// Helper function to verify the upgrade client procedure.
     /// Resets all fields except the blockchain-specific ones.
     pub fn zero_custom_fields(mut client_state: Self) -> Self {
@@ -159,6 +161,7 @@ impl ClientState {
     }
 
     #[cfg(not(feature="original"))]
+    #[cfg_attr(feature="prusti", trusted)]
     /// Get the refresh time to ensure the state does not expire
     pub fn refresh_time(&self) -> Option<Duration> {
         unimplemented!()
@@ -171,6 +174,7 @@ impl ClientState {
     }
 
     #[cfg(not(feature="original"))]
+    #[cfg_attr(feature="prusti", trusted)]
     /// Check if the state is expired when `elapsed` time has passed since the latest consensus
     /// state timestamp
     pub fn expired(&self, elapsed: Duration) -> bool {

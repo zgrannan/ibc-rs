@@ -103,6 +103,7 @@ pub fn try_from_tx(event: &tendermint::abci::Event) -> Option<IbcEvent> {
     }
 }
 
+#[cfg_attr(feature="prusti", trusted_skip)]
 fn extract_attributes_from_tx(event: &tendermint::abci::Event) -> Attributes {
     let mut attr = Attributes::default();
 
@@ -126,6 +127,7 @@ fn extract_attributes_from_tx(event: &tendermint::abci::Event) -> Attributes {
     attr
 }
 
+#[cfg_attr(feature="prusti", trusted_skip)]
 fn extract_packet_and_write_ack_from_tx(
     event: &tendermint::abci::Event,
 ) -> (Packet, Option<Vec<u8>>) {
@@ -198,15 +200,19 @@ fn extract_attributes(object: &RawObject, namespace: &str) -> Result<Attributes,
 }
 
 impl Attributes {
+#[cfg_attr(feature="prusti", trusted_skip)]
     pub fn port_id(&self) -> &PortId {
         &self.port_id
     }
+
+    #[cfg(not(feature="prusti"))]
     pub fn channel_id(&self) -> Option<&ChannelId> {
         self.channel_id.as_ref()
     }
 }
 
 impl Default for Attributes {
+    #[cfg_attr(feature="prusti", trusted_skip)]
     fn default() -> Self {
         Attributes {
             height: Default::default(),
@@ -223,24 +229,31 @@ impl Default for Attributes {
 pub struct OpenInit(Attributes);
 
 impl OpenInit {
+    #[cfg_attr(feature="prusti", trusted_skip)]
     pub fn attributes(&self) -> &Attributes {
         &self.0
     }
+
+    #[cfg(not(feature="prusti"))]
     pub fn channel_id(&self) -> Option<&ChannelId> {
         self.0.channel_id.as_ref()
     }
+#[cfg_attr(feature="prusti", trusted_skip)]
     pub fn port_id(&self) -> &PortId {
         &self.0.port_id
     }
+#[cfg_attr(feature="prusti", trusted_skip)]
     pub fn height(&self) -> Height {
         self.0.height
     }
+#[cfg_attr(feature="prusti", trusted_skip)]
     pub fn set_height(&mut self, height: Height) {
         self.0.height = height;
     }
 }
 
 impl From<Attributes> for OpenInit {
+    #[cfg_attr(feature="prusti", trusted_skip)]
     fn from(attrs: Attributes) -> Self {
         OpenInit(attrs)
     }
@@ -248,12 +261,15 @@ impl From<Attributes> for OpenInit {
 
 impl TryFrom<RawObject> for OpenInit {
     type Error = Error;
+
+    #[cfg_attr(feature="prusti", trusted_skip)]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
         Ok(OpenInit(extract_attributes(&obj, "channel_open_init")?))
     }
 }
 
 impl From<OpenInit> for IbcEvent {
+#[cfg_attr(feature="prusti", trusted_skip)]
     fn from(v: OpenInit) -> Self {
         IbcEvent::OpenInitChannel(v)
     }
@@ -263,9 +279,12 @@ impl From<OpenInit> for IbcEvent {
 pub struct OpenTry(Attributes);
 
 impl OpenTry {
+    #[cfg_attr(feature="prusti", trusted_skip)]
     pub fn attributes(&self) -> &Attributes {
         &self.0
     }
+
+    #[cfg(not(feature="prusti"))]
     pub fn channel_id(&self) -> Option<&ChannelId> {
         self.0.channel_id.as_ref()
     }
@@ -281,6 +300,7 @@ impl OpenTry {
 }
 
 impl From<Attributes> for OpenTry {
+#[cfg_attr(feature="prusti", trusted_skip)]
     fn from(attrs: Attributes) -> Self {
         OpenTry(attrs)
     }
@@ -288,12 +308,14 @@ impl From<Attributes> for OpenTry {
 
 impl TryFrom<RawObject> for OpenTry {
     type Error = Error;
+#[cfg_attr(feature="prusti", trusted_skip)]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
         Ok(OpenTry(extract_attributes(&obj, "channel_open_try")?))
     }
 }
 
 impl From<OpenTry> for IbcEvent {
+#[cfg_attr(feature="prusti", trusted_skip)]
     fn from(v: OpenTry) -> Self {
         IbcEvent::OpenTryChannel(v)
     }
@@ -303,28 +325,36 @@ impl From<OpenTry> for IbcEvent {
 pub struct OpenAck(Attributes);
 
 impl OpenAck {
+#[cfg_attr(feature="prusti", trusted_skip)]
     pub fn attributes(&self) -> &Attributes {
         &self.0
     }
+
+    #[cfg(not(feature="prusti"))]
     pub fn channel_id(&self) -> Option<&ChannelId> {
         self.0.channel_id.as_ref()
     }
+#[cfg_attr(feature="prusti", trusted_skip)]
     pub fn port_id(&self) -> &PortId {
         &self.0.port_id
     }
+#[cfg_attr(feature="prusti", trusted_skip)]
     pub fn height(&self) -> Height {
         self.0.height
     }
+#[cfg_attr(feature="prusti", trusted_skip)]
     pub fn set_height(&mut self, height: Height) {
         self.0.height = height;
     }
 
+    #[cfg(not(feature="prusti"))]
     pub fn counterparty_channel_id(&self) -> Option<&ChannelId> {
         self.0.counterparty_channel_id.as_ref()
     }
 }
 
 impl From<Attributes> for OpenAck {
+#[cfg_attr(feature="prusti", trusted_skip)]
     fn from(attrs: Attributes) -> Self {
         OpenAck(attrs)
     }
@@ -332,12 +362,14 @@ impl From<Attributes> for OpenAck {
 
 impl TryFrom<RawObject> for OpenAck {
     type Error = Error;
+#[cfg_attr(feature="prusti", trusted_skip)]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
         Ok(OpenAck(extract_attributes(&obj, "channel_open_ack")?))
     }
 }
 
 impl From<OpenAck> for IbcEvent {
+#[cfg_attr(feature="prusti", trusted_skip)]
     fn from(v: OpenAck) -> Self {
         IbcEvent::OpenAckChannel(v)
     }
@@ -350,6 +382,8 @@ impl OpenConfirm {
     pub fn attributes(&self) -> &Attributes {
         &self.0
     }
+
+    #[cfg(not(feature="prusti"))]
     pub fn channel_id(&self) -> Option<&ChannelId> {
         self.0.channel_id.as_ref()
     }
@@ -365,6 +399,7 @@ impl OpenConfirm {
 }
 
 impl From<Attributes> for OpenConfirm {
+#[cfg_attr(feature="prusti", trusted_skip)]
     fn from(attrs: Attributes) -> Self {
         OpenConfirm(attrs)
     }
@@ -372,6 +407,7 @@ impl From<Attributes> for OpenConfirm {
 
 impl TryFrom<RawObject> for OpenConfirm {
     type Error = Error;
+#[cfg_attr(feature="prusti", trusted_skip)]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
         Ok(OpenConfirm(extract_attributes(
             &obj,
@@ -381,6 +417,7 @@ impl TryFrom<RawObject> for OpenConfirm {
 }
 
 impl From<OpenConfirm> for IbcEvent {
+#[cfg_attr(feature="prusti", trusted_skip)]
     fn from(v: OpenConfirm) -> Self {
         IbcEvent::OpenConfirmChannel(v)
     }
@@ -394,6 +431,7 @@ impl CloseInit {
         &self.0.port_id
     }
 
+#[cfg_attr(feature="prusti", trusted_skip)]
     pub fn channel_id(&self) -> &ChannelId {
         // FIXME(romac): Rework encoding of IbcEvents which use `Attributes`
         self.0
@@ -406,6 +444,7 @@ impl CloseInit {
         &self.0.counterparty_port_id
     }
 
+    #[cfg(not(feature="prusti"))]
     pub fn counterparty_channel_id(&self) -> Option<&ChannelId> {
         self.0.counterparty_channel_id.as_ref()
     }
@@ -456,6 +495,8 @@ impl std::fmt::Display for CloseInit {
 pub struct CloseConfirm(Attributes);
 
 impl CloseConfirm {
+
+    #[cfg(not(feature="prusti"))]
     pub fn channel_id(&self) -> Option<&ChannelId> {
         self.0.channel_id.as_ref()
     }
@@ -587,21 +628,27 @@ pub struct ReceivePacket {
 }
 
 impl ReceivePacket {
+#[cfg_attr(feature="prusti", trusted_skip)]
     pub fn height(&self) -> Height {
         self.height
     }
+#[cfg_attr(feature="prusti", trusted_skip)]
     pub fn set_height(&mut self, height: Height) {
         self.height = height;
     }
+#[cfg_attr(feature="prusti", trusted_skip)]
     pub fn src_port_id(&self) -> &PortId {
         &self.packet.source_port
     }
+#[cfg_attr(feature="prusti", trusted_skip)]
     pub fn src_channel_id(&self) -> &ChannelId {
         &self.packet.source_channel
     }
+#[cfg_attr(feature="prusti", trusted_skip)]
     pub fn dst_port_id(&self) -> &PortId {
         &self.packet.destination_port
     }
+#[cfg_attr(feature="prusti", trusted_skip)]
     pub fn dst_channel_id(&self) -> &ChannelId {
         &self.packet.destination_channel
     }
@@ -609,6 +656,7 @@ impl ReceivePacket {
 
 impl TryFrom<RawObject> for ReceivePacket {
     type Error = Error;
+#[cfg_attr(feature="prusti", trusted_skip)]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
         let height = obj.height;
         let data_str: String = extract_attribute(&obj, &format!("{}.packet_data", obj.action))?;
@@ -621,12 +669,14 @@ impl TryFrom<RawObject> for ReceivePacket {
 }
 
 impl From<ReceivePacket> for IbcEvent {
+#[cfg_attr(feature="prusti", trusted_skip)]
     fn from(v: ReceivePacket) -> Self {
         IbcEvent::ReceivePacket(v)
     }
 }
 
 impl std::fmt::Display for ReceivePacket {
+#[cfg_attr(feature="prusti", trusted_skip)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "ReceivePacket - h:{}, {}", self.height, self.packet)
     }
@@ -641,21 +691,27 @@ pub struct WriteAcknowledgement {
 }
 
 impl WriteAcknowledgement {
+#[cfg_attr(feature="prusti", trusted_skip)]
     pub fn height(&self) -> Height {
         self.height
     }
+#[cfg_attr(feature="prusti", trusted_skip)]
     pub fn set_height(&mut self, height: Height) {
         self.height = height;
     }
+#[cfg_attr(feature="prusti", trusted_skip)]
     pub fn src_port_id(&self) -> &PortId {
         &self.packet.source_port
     }
+#[cfg_attr(feature="prusti", trusted_skip)]
     pub fn src_channel_id(&self) -> &ChannelId {
         &self.packet.source_channel
     }
+#[cfg_attr(feature="prusti", trusted_skip)]
     pub fn dst_port_id(&self) -> &PortId {
         &self.packet.destination_port
     }
+#[cfg_attr(feature="prusti", trusted_skip)]
     pub fn dst_channel_id(&self) -> &ChannelId {
         &self.packet.destination_channel
     }
@@ -663,6 +719,7 @@ impl WriteAcknowledgement {
 
 impl TryFrom<RawObject> for WriteAcknowledgement {
     type Error = Error;
+#[cfg_attr(feature="prusti", trusted_skip)]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
         let height = obj.height;
 
@@ -704,15 +761,19 @@ pub struct AcknowledgePacket {
 }
 
 impl AcknowledgePacket {
+#[cfg_attr(feature="prusti", trusted_skip)]
     pub fn height(&self) -> Height {
         self.height
     }
+#[cfg_attr(feature="prusti", trusted_skip)]
     pub fn set_height(&mut self, height: Height) {
         self.height = height;
     }
+#[cfg_attr(feature="prusti", trusted_skip)]
     pub fn src_port_id(&self) -> &PortId {
         &self.packet.source_port
     }
+#[cfg_attr(feature="prusti", trusted_skip)]
     pub fn src_channel_id(&self) -> &ChannelId {
         &self.packet.source_channel
     }
@@ -720,6 +781,7 @@ impl AcknowledgePacket {
 
 impl TryFrom<RawObject> for AcknowledgePacket {
     type Error = Error;
+#[cfg_attr(feature="prusti", trusted_skip)]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
         let height = obj.height;
         let packet = Packet::try_from(obj)?;
@@ -746,21 +808,27 @@ pub struct TimeoutPacket {
 }
 
 impl TimeoutPacket {
+#[cfg_attr(feature="prusti", trusted_skip)]
     pub fn height(&self) -> Height {
         self.height
     }
+#[cfg_attr(feature="prusti", trusted_skip)]
     pub fn set_height(&mut self, height: Height) {
         self.height = height;
     }
+#[cfg_attr(feature="prusti", trusted_skip)]
     pub fn src_port_id(&self) -> &PortId {
         &self.packet.source_port
     }
+#[cfg_attr(feature="prusti", trusted_skip)]
     pub fn src_channel_id(&self) -> &ChannelId {
         &self.packet.source_channel
     }
+#[cfg_attr(feature="prusti", trusted_skip)]
     pub fn dst_port_id(&self) -> &PortId {
         &self.packet.destination_port
     }
+#[cfg_attr(feature="prusti", trusted_skip)]
     pub fn dst_channel_id(&self) -> &ChannelId {
         &self.packet.destination_channel
     }
@@ -768,6 +836,7 @@ impl TimeoutPacket {
 
 impl TryFrom<RawObject> for TimeoutPacket {
     type Error = Error;
+#[cfg_attr(feature="prusti", trusted_skip)]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
         Ok(TimeoutPacket {
             height: obj.height,
@@ -777,12 +846,14 @@ impl TryFrom<RawObject> for TimeoutPacket {
 }
 
 impl From<TimeoutPacket> for IbcEvent {
+#[cfg_attr(feature="prusti", trusted_skip)]
     fn from(v: TimeoutPacket) -> Self {
         IbcEvent::TimeoutPacket(v)
     }
 }
 
 impl std::fmt::Display for TimeoutPacket {
+#[cfg_attr(feature="prusti", trusted_skip)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "TimeoutPacket - h:{}, {}", self.height, self.packet)
     }
@@ -795,21 +866,27 @@ pub struct TimeoutOnClosePacket {
 }
 
 impl TimeoutOnClosePacket {
+#[cfg_attr(feature="prusti", trusted_skip)]
     pub fn height(&self) -> Height {
         self.height
     }
+#[cfg_attr(feature="prusti", trusted_skip)]
     pub fn set_height(&mut self, height: Height) {
         self.height = height;
     }
+#[cfg_attr(feature="prusti", trusted_skip)]
     pub fn src_port_id(&self) -> &PortId {
         &self.packet.source_port
     }
+#[cfg_attr(feature="prusti", trusted_skip)]
     pub fn src_channel_id(&self) -> &ChannelId {
         &self.packet.source_channel
     }
+#[cfg_attr(feature="prusti", trusted_skip)]
     pub fn dst_port_id(&self) -> &PortId {
         &self.packet.destination_port
     }
+#[cfg_attr(feature="prusti", trusted_skip)]
     pub fn dst_channel_id(&self) -> &ChannelId {
         &self.packet.destination_channel
     }
@@ -817,6 +894,7 @@ impl TimeoutOnClosePacket {
 
 impl TryFrom<RawObject> for TimeoutOnClosePacket {
     type Error = Error;
+#[cfg_attr(feature="prusti", trusted_skip)]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
         Ok(TimeoutOnClosePacket {
             height: obj.height,
@@ -826,12 +904,14 @@ impl TryFrom<RawObject> for TimeoutOnClosePacket {
 }
 
 impl From<TimeoutOnClosePacket> for IbcEvent {
+#[cfg_attr(feature="prusti", trusted_skip)]
     fn from(v: TimeoutOnClosePacket) -> Self {
         IbcEvent::TimeoutOnClosePacket(v)
     }
 }
 
 impl std::fmt::Display for TimeoutOnClosePacket {
+#[cfg_attr(feature="prusti", trusted_skip)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(
             f,

@@ -122,8 +122,7 @@ impl Timestamp {
 
     /// Convert a `Timestamp` to `u64` value in nanoseconds. If no timestamp
     /// is set, the result is 0.
-    #[cfg_attr(feature="prusti", requires(self.time.is_some() ==> self.time.unwrap().timestamp_nanos() >= 0))]
-    #[cfg_attr(feature="prusti", trusted)] // For some reason refactoring to `unwrap` causes a bug
+    #[cfg_attr(feature="prusti", requires(as_nanos_spec(&self.time)))]
     pub fn as_nanoseconds(&self) -> u64 {
       match self.time {
         Some(time) => time.timestamp_nanos() as u64,
@@ -149,6 +148,14 @@ impl Timestamp {
             }
             _ => Expiry::InvalidTimestamp,
         }
+    }
+}
+
+#[pure]
+fn as_nanos_spec(time: &Option<DateTime<Utc>>) -> bool {
+    match time {
+        Some(t) => t.timestamp_nanos() >= 0,
+        None => true
     }
 }
 

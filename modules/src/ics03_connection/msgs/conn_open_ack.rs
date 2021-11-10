@@ -83,6 +83,7 @@ impl Protobuf<RawMsgConnectionOpenAck> for MsgConnectionOpenAck {}
 impl TryFrom<RawMsgConnectionOpenAck> for MsgConnectionOpenAck {
     type Error = Error;
 
+    #[cfg_attr(feature="prusti", trusted_skip)] // Unsupported feature: higher ranked lifetimes
     fn try_from(msg: RawMsgConnectionOpenAck) -> Result<Self, Self::Error> {
         let consensus_height = msg
             .consensus_height

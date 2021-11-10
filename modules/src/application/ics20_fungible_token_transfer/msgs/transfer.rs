@@ -93,7 +93,8 @@ panic!("No") // panic!("No") // panic!("No") //         let timeout_timestamp = 
 }
 
 impl From<MsgTransfer> for RawMsgTransfer {
-    // #[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted)]
+    // requires property on domain_msg.timeout_timestamp
     fn from(domain_msg: MsgTransfer) -> Self {
         RawMsgTransfer {
             source_port: domain_msg.source_port.to_string(),

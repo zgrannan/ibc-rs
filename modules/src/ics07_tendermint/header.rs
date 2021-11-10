@@ -45,6 +45,7 @@ impl Header {
     }
 
     #[cfg(not(feature="original"))]
+    #[cfg_attr(feature="prusti", trusted)]
     pub fn time(&self) -> i32 {
         unimplemented!()
     }

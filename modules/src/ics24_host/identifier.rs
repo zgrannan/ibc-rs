@@ -99,6 +99,7 @@ impl ChainId {
     /// let id = ChainId::new("chainA".to_string(), epoch_number);
     /// assert_eq!(id.version(), epoch_number);
     /// ```
+    #[cfg_attr(feature="prusti", trusted_skip)]
     pub fn new(name: String, version: u64) -> Self {
         Self {
             id: format!("{}-{}", name, version),
@@ -107,7 +108,7 @@ impl ChainId {
     }
 
     /// Get a reference to the underlying string.
-#[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted_skip)]
     pub fn as_str(&self) -> &str {
         &self.id
     }
@@ -158,6 +159,7 @@ impl ChainId {
 impl FromStr for ChainId {
     type Err = ValidationError;
 
+    #[cfg_attr(feature="prusti", trusted_skip)]
     fn from_str(id: &str) -> Result<Self, Self::Err> {
         let version = if Self::is_epoch_format(id) {
             Self::chain_version(id)
