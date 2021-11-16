@@ -206,6 +206,7 @@ impl Attributes {
     }
 
     #[cfg(not(feature="prusti"))]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn channel_id(&self) -> Option<&ChannelId> {
         self.channel_id.as_ref()
     }
@@ -235,6 +236,7 @@ impl OpenInit {
     }
 
     #[cfg(not(feature="prusti"))]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn channel_id(&self) -> Option<&ChannelId> {
         self.0.channel_id.as_ref()
     }
@@ -285,15 +287,19 @@ impl OpenTry {
     }
 
     #[cfg(not(feature="prusti"))]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn channel_id(&self) -> Option<&ChannelId> {
         self.0.channel_id.as_ref()
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn port_id(&self) -> &PortId {
         &self.0.port_id
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn height(&self) -> Height {
         self.0.height
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn set_height(&mut self, height: Height) {
         self.0.height = height;
     }
@@ -331,6 +337,7 @@ impl OpenAck {
     }
 
     #[cfg(not(feature="prusti"))]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn channel_id(&self) -> Option<&ChannelId> {
         self.0.channel_id.as_ref()
     }
@@ -348,6 +355,7 @@ impl OpenAck {
     }
 
     #[cfg(not(feature="prusti"))]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn counterparty_channel_id(&self) -> Option<&ChannelId> {
         self.0.counterparty_channel_id.as_ref()
     }
@@ -379,20 +387,25 @@ impl From<OpenAck> for IbcEvent {
 pub struct OpenConfirm(Attributes);
 
 impl OpenConfirm {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn attributes(&self) -> &Attributes {
         &self.0
     }
 
     #[cfg(not(feature="prusti"))]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn channel_id(&self) -> Option<&ChannelId> {
         self.0.channel_id.as_ref()
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn port_id(&self) -> &PortId {
         &self.0.port_id
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn height(&self) -> Height {
         self.0.height
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn set_height(&mut self, height: Height) {
         self.0.height = height;
     }
@@ -427,6 +440,7 @@ impl From<OpenConfirm> for IbcEvent {
 pub struct CloseInit(Attributes);
 
 impl CloseInit {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn port_id(&self) -> &PortId {
         &self.0.port_id
     }
@@ -451,16 +465,19 @@ impl CloseInit {
         self.0.counterparty_channel_id.as_ref()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn height(&self) -> Height {
         self.0.height
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn set_height(&mut self, height: Height) {
         self.0.height = height;
     }
 }
 
 impl From<Attributes> for CloseInit {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(attrs: Attributes) -> Self {
         CloseInit(attrs)
     }
@@ -468,6 +485,7 @@ impl From<Attributes> for CloseInit {
 
 impl TryFrom<RawObject> for CloseInit {
     type Error = Error;
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
         Ok(CloseInit(extract_attributes(&obj, "channel_close_init")?))
     }
@@ -499,18 +517,22 @@ pub struct CloseConfirm(Attributes);
 impl CloseConfirm {
 
     #[cfg(not(feature="prusti"))]
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn channel_id(&self) -> Option<&ChannelId> {
         self.0.channel_id.as_ref()
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn height(&self) -> Height {
         self.0.height
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn set_height(&mut self, height: Height) {
         self.0.height = height;
     }
 }
 
 impl From<Attributes> for CloseConfirm {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(attrs: Attributes) -> Self {
         CloseConfirm(attrs)
     }
@@ -518,6 +540,7 @@ impl From<Attributes> for CloseConfirm {
 
 impl TryFrom<RawObject> for CloseConfirm {
     type Error = Error;
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
         Ok(CloseConfirm(extract_attributes(
             &obj,
@@ -534,6 +557,7 @@ impl From<CloseConfirm> for IbcEvent {
 
 impl TryFrom<RawObject> for Packet {
     type Error = Error;
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
         Ok(Packet {
             sequence: extract_attribute(&obj, &format!("{}.packet_sequence", obj.action))?
@@ -578,21 +602,27 @@ pub struct SendPacket {
 }
 
 impl SendPacket {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn height(&self) -> Height {
         self.height
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn set_height(&mut self, height: Height) {
         self.height = height;
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn src_port_id(&self) -> &PortId {
         &self.packet.source_port
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn src_channel_id(&self) -> &ChannelId {
         &self.packet.source_channel
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn dst_port_id(&self) -> &PortId {
         &self.packet.destination_port
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn dst_channel_id(&self) -> &ChannelId {
         &self.packet.destination_channel
     }
@@ -600,6 +630,7 @@ impl SendPacket {
 
 impl TryFrom<RawObject> for SendPacket {
     type Error = Error;
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
         let height = obj.height;
         let data_str: String = extract_attribute(&obj, &format!("{}.packet_data", obj.action))?;
@@ -618,6 +649,7 @@ impl From<SendPacket> for IbcEvent {
 }
 
 impl std::fmt::Display for SendPacket {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "SendPacket - h:{}, {}", self.height, self.packet)
     }
@@ -747,6 +779,7 @@ impl From<WriteAcknowledgement> for IbcEvent {
 }
 
 impl std::fmt::Display for WriteAcknowledgement {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(
             f,
@@ -798,6 +831,7 @@ impl From<AcknowledgePacket> for IbcEvent {
 }
 
 impl std::fmt::Display for AcknowledgePacket {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "h:{}, {}", self.height, self.packet)
     }

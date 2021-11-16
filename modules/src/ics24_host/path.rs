@@ -25,7 +25,8 @@ const UPGRADED_CLIENT_STATE: &str = "upgradedClient";
 const UPGRADED_CLIENT_CONSENSUS_STATE: &str = "upgradedConsState";
 
 /// The Path enum abstracts out the different sub-paths
-#[derive(Clone, Hash)]
+#[cfg_attr(feature="prusti_fast", derive(PrustiClone, PrustiHash))]
+#[cfg_attr(not(feature="prusti_fast"), derive(Clone, Hash))]
 pub enum Path {
     ClientType(ClientId),
     ClientState(ClientId),

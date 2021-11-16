@@ -44,6 +44,7 @@ pub enum Receipt {
 }
 
 impl std::fmt::Display for PacketMsgType {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             PacketMsgType::Recv => write!(f, "(PacketMsgType::Recv)"),
@@ -68,6 +69,7 @@ impl std::fmt::Debug for Sequence {
 
 
 impl Default for Sequence {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn default() -> Self {
         Sequence(0)
     }
@@ -97,18 +99,21 @@ impl Sequence {
 }
 
 impl From<u64> for Sequence {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(seq: u64) -> Self {
         Sequence(seq)
     }
 }
 
 impl From<Sequence> for u64 {
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(s: Sequence) -> u64 {
         s.0
     }
 }
 
 impl std::fmt::Display for Sequence {
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "{}", self.0)
     }

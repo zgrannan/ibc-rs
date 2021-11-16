@@ -29,10 +29,11 @@ pub trait Header: Clone + Send + Sync {
     fn wrap_any(self) -> AnyHeader;
 }
 
-#[derive(Clone)] // TODO: Add Eq bound once possible
 #[allow(clippy::large_enum_variant)]
 #[cfg_attr(not(feature="prusti"), derive(Debug))]
 #[cfg_attr(feature="prusti", derive(PrustiDebug))]
+#[cfg_attr(feature="prusti_fast", derive(PrustiClone))]
+#[cfg_attr(not(feature="prusti_fast"), derive(Clone))]
 pub enum AnyHeader {
     Tendermint(TendermintHeader),
 

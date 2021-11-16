@@ -64,6 +64,7 @@ impl MockHeader {
 }
 
 impl From<MockHeader> for AnyHeader {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(mh: MockHeader) -> Self {
         Self::Mock(mh)
     }
@@ -87,6 +88,7 @@ impl Header for MockHeader {
 }
 
 impl From<MockHeader> for AnyConsensusState {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(h: MockHeader) -> Self {
         AnyConsensusState::Mock(MockConsensusState::new(h))
     }

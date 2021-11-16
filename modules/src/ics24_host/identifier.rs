@@ -652,6 +652,7 @@ pub struct PortChannelId {
 }
 
 impl std::fmt::Display for PortChannelId {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "{}/{}", self.port_id, self.channel_id)
     }

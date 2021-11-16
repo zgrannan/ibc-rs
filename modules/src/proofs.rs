@@ -33,6 +33,7 @@ pub struct Proofs {
 }
 
 impl Proofs {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn new(
         object_proof: CommitmentProofBytes,
         client_proof: Option<CommitmentProofBytes>,
@@ -66,6 +67,7 @@ impl Proofs {
 
     /// Getter for the height field of this proof (i.e., the consensus height where this proof was
     /// created).
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn height(&self) -> Height {
         self.height
     }

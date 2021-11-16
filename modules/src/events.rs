@@ -89,7 +89,8 @@ unreachable!() //         match *self {
 }
 
 /// Events created by the IBC component of a chain, destined for a relayer.
-#[derive(Clone)]
+#[cfg_attr(feature="prusti_fast", derive(PrustiClone))]
+#[cfg_attr(not(feature="prusti_fast"), derive(Clone))]
 pub enum IbcEvent {
     NewBlock(NewBlock),
 
@@ -206,6 +207,7 @@ unreachable!() //         format!("{:?}", self) // Fallback to debug printing
 //         // }
     }
 
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     #[cfg_attr(feature="prusti", requires(!matches!(*self, IbcEvent::ChainError(_))))]
     #[cfg_attr(feature="prusti", requires(!matches!(*self, IbcEvent::UpgradeClient(_))))]
     #[cfg_attr(feature="prusti", requires(!matches!(*self, IbcEvent::Empty(_))))]
@@ -235,6 +237,7 @@ unreachable!() //         format!("{:?}", self) // Fallback to debug printing
         }
     }
 
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     #[cfg_attr(feature="prusti", requires(!matches!(*self, IbcEvent::ChainError(_))))]
     #[cfg_attr(feature="prusti", requires(!matches!(*self, IbcEvent::Empty(_))))]
     #[cfg_attr(feature="prusti", requires(!matches!(*self, IbcEvent::TimeoutOnClosePacket(_))))]
@@ -337,10 +340,9 @@ pub fn extract_attribute(object: &RawObject, key: &str) -> Result<String, Error>
     // Ok(value)
 }
 
-#[cfg_attr(feature="prusti", trusted)]
+#[cfg_attr(feature="prusti", trusted_skip)]
 pub fn maybe_extract_attribute(object: &RawObject, key: &str) -> Option<String> {
-   todo!()
-   //  object.events.get(key).map(|tags| tags[object.idx].clone())
+   object.events.get(key).map(|tags| tags[object.idx].clone())
 }
 
 #[macro_export]
@@ -353,7 +355,7 @@ macro_rules! make_event {
         impl ::std::convert::TryFrom<$crate::events::RawObject> for $a {
             type Error = $crate::event::Error;
 
-#[cfg_attr(feature="prusti", trusted)]
+            #[cfg_attr(feature="prusti", trusted_skip)]
             fn try_from(result: $crate::events::RawObject) -> Result<Self, Self::Error> {
                 $crate::events::extract_events(&result.events, $b)?;
                 Ok($a {

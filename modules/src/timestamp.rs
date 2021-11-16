@@ -81,6 +81,7 @@ impl Timestamp {
     /// However we have to handle the case of `u64` overflowing in `i64`, to prevent
     /// malicious packets from crashing the relayer.
     #[cfg_attr(feature="prusti", ensures(nanoseconds <= i64::MAX as u64 ==> result.is_ok()))]
+    #[trusted] // unsupported constant type
     pub fn from_nanoseconds(nanoseconds: u64) -> Result<Timestamp, TryFromIntError> {
         if nanoseconds == 0 {
             Ok(Timestamp { time: None })
@@ -158,7 +159,6 @@ impl Timestamp {
 }
 
 #[pure]
-#[cfg_attr(feature="prusti_fast", trusted_skip)]
 fn as_nanos_spec(time: &Option<DateTime<Utc>>) -> bool {
     match time {
         Some(t) => t.timestamp_nanos() >= 0,

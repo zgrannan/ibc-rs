@@ -26,12 +26,12 @@ pub struct Misbehaviour {
 impl crate::ics02_client::misbehaviour::Misbehaviour for Misbehaviour {
 
     #[cfg(not(feature="original"))]
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn client_id(&self) -> &ClientId {
         unimplemented!()
     }
 
     #[cfg(feature="original")]
-#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn client_id(&self) -> &ClientId {
         &self.client_id
     }

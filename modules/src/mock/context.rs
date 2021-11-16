@@ -33,7 +33,7 @@ use crate::ics24_host::identifier::{ChainId, ChannelId, ClientId, ConnectionId, 
 use crate::ics26_routing::context::Ics26Context;
 use crate::ics26_routing::handler::{deliver, dispatch};
 use crate::ics26_routing::msgs::Ics26Envelope;
-use crate::mock::client_state::{MockClientRecord, MockClientState, MockConsensusState};
+use crate::mock::client_state::{client_invariant, MockClientRecord, MockClientState, MockConsensusState};
 use crate::mock::header::MockHeader;
 use crate::mock::host::{HostBlock, HostType};
 use crate::signer::Signer;
@@ -48,7 +48,8 @@ macro_rules! body_invariant {
 }
 
 /// A context implementing the dependencies necessary for testing any IBC module.
-#[derive(Clone)]
+#[cfg_attr(feature="prusti_fast", derive(PrustiClone))]
+#[cfg_attr(not(feature="prusti_fast"), derive(Clone))]
 pub struct MockContext {
     /// The type of host chain underlying this mock context.
     host_chain_type: HostType,
@@ -205,7 +206,7 @@ impl MockContext {
     /// Given a client id and a height, registers a new client in the context and also associates
     /// to this client a mock client state and a mock consensus state for height `height`. The type
     /// of this client is implicitly assumed to be Mock.
-#[cfg_attr(feature="prusti_fast", trusted_skip)]
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn with_client(self, client_id: &ClientId, height: Height) -> Self {
         self.with_client_parametrized(client_id, height, Some(ClientType::Mock), Some(height))
     }
@@ -215,7 +216,7 @@ impl MockContext {
     /// then the client will have type Mock, otherwise the specified type. If
     /// `consensus_state_height` is None, then the client will be initialized with a consensus
     /// state matching the same height as the client state (`client_state_height`).
-#[cfg_attr(feature="prusti_fast", trusted_skip)]
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn with_client_parametrized(
         mut self,
         client_id: &ClientId,
@@ -253,7 +254,7 @@ impl MockContext {
             client_state,
             consensus_states,
         };
-        assert!(client_invariant(client_record));
+        assert!(client_invariant(&client_record));
         self.clients.insert(client_id.clone(), client_record);
         self
     }
@@ -333,11 +334,12 @@ impl MockContext {
         }
     }
 
-#[cfg_attr(feature="prusti_fast", trusted_skip)]
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn with_timestamp(self, timestamp: Timestamp) -> Self {
         Self { timestamp, ..self }
     }
 
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     #[cfg_attr(feature="prusti", requires(self.max_history_size > 0))]
     #[cfg_attr(feature="prusti", requires(target_height.revision_height <= u64::MAX))]
     #[cfg_attr(feature="prusti", requires(target_height.revision_number == self.latest_height.revision_number))]
@@ -498,16 +500,17 @@ impl PortReader for MockContext {
 }
 
 impl ChannelReader for MockContext {
-#[cfg_attr(feature="prusti_fast", trusted_skip)]
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn channel_end(&self, pcid: &(PortId, ChannelId)) -> Option<ChannelEnd> {
         self.channels.get(pcid).cloned()
     }
 
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn connection_end(&self, cid: &ConnectionId) -> Option<ConnectionEnd> {
         self.connections.get(cid).cloned()
     }
 
-#[cfg_attr(feature="prusti_fast", trusted_skip)]
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn connection_channels(&self, cid: &ConnectionId) -> Option<Vec<(PortId, ChannelId)>> {
         self.connection_channels.get(cid).cloned()
     }

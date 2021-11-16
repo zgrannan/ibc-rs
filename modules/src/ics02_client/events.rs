@@ -106,9 +106,11 @@ impl NewBlock {
     pub fn new(h: Height) -> NewBlock {
         NewBlock { height: h }
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn set_height(&mut self, height: Height) {
         self.height = height;
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn height(&self) -> Height {
         self.height
     }
@@ -179,18 +181,22 @@ fn extract_attributes(object: &RawObject, namespace: &str) -> Result<Attributes,
 pub struct CreateClient(pub Attributes);
 
 impl CreateClient {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn client_id(&self) -> &ClientId {
         &self.0.client_id
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn height(&self) -> Height {
         self.0.height
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn set_height(&mut self, height: Height) {
         self.0.height = height;
     }
 }
 
 impl From<Attributes> for CreateClient {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(attrs: Attributes) -> Self {
         CreateClient(attrs)
     }
@@ -198,6 +204,7 @@ impl From<Attributes> for CreateClient {
 
 impl TryFrom<RawObject> for CreateClient {
     type Error = Error;
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
         Ok(CreateClient(extract_attributes(&obj, "create_client")?))
     }
@@ -225,6 +232,7 @@ pub struct UpdateClient {
 }
 
 impl UpdateClient {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn client_id(&self) -> &ClientId {
         &self.common.client_id
     }
@@ -233,10 +241,12 @@ impl UpdateClient {
         self.common.client_type
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn height(&self) -> Height {
         self.common.height
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn set_height(&mut self, height: Height) {
         self.common.height = height;
     }
@@ -308,6 +318,7 @@ unreachable!() //         write!(f, "{}", self.common)
 pub struct ClientMisbehaviour(Attributes);
 
 impl ClientMisbehaviour {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn client_id(&self) -> &ClientId {
         &self.0.client_id
     }
@@ -323,6 +334,7 @@ impl ClientMisbehaviour {
 
 impl TryFrom<RawObject> for ClientMisbehaviour {
     type Error = Error;
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn try_from(obj: RawObject) -> Result<Self, Error> {
         Ok(ClientMisbehaviour(extract_attributes(
             &obj,
@@ -343,6 +355,7 @@ impl From<ClientMisbehaviour> for IbcEvent {
 pub struct UpgradeClient(Attributes);
 
 impl UpgradeClient {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn set_height(&mut self, height: Height) {
         self.0.height = height;
     }
@@ -353,6 +366,7 @@ impl UpgradeClient {
 }
 
 impl From<Attributes> for UpgradeClient {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(attrs: Attributes) -> Self {
         UpgradeClient(attrs)
     }

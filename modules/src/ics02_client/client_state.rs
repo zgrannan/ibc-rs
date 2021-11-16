@@ -36,6 +36,7 @@ pub trait ClientState: Clone + Send + Sync {
     fn client_type(&self) -> ClientType;
 
     /// Latest height of consensus state
+    #[cfg_attr(feature="prusti", pure)]
     fn latest_height(&self) -> Height;
 
     /// Freeze status of the client
@@ -79,6 +80,7 @@ impl AnyClientState {
        }
     }
 
+    #[cfg_attr(feature="prusti", pure)]
     pub fn latest_height(&self) -> Height {
         match self {
             Self::Tendermint(tm_state) => tm_state.latest_height(),
@@ -262,6 +264,7 @@ panic!("No") //         Ok(IdentifiedAnyClientState {
 }
 
 impl From<IdentifiedAnyClientState> for IdentifiedClientState {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(value: IdentifiedAnyClientState) -> Self {
         IdentifiedClientState {
             client_id: value.client_id.to_string(),

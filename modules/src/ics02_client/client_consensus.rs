@@ -114,6 +114,7 @@ impl TryFrom<Any> for AnyConsensusState {
 }
 
 impl From<AnyConsensusState> for Any {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(value: AnyConsensusState) -> Self {
         match value {
             AnyConsensusState::Tendermint(value) => Any {
@@ -146,6 +147,7 @@ impl Protobuf<ConsensusStateWithHeight> for AnyConsensusStateWithHeight {}
 impl TryFrom<ConsensusStateWithHeight> for AnyConsensusStateWithHeight {
     type Error = Error;
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn try_from(value: ConsensusStateWithHeight) -> Result<Self, Self::Error> {
         let state = value
             .consensus_state

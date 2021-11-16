@@ -144,21 +144,26 @@ impl Default for Attributes {
 pub struct OpenInit(Attributes);
 
 impl OpenInit {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn attributes(&self) -> &Attributes {
         &self.0
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn connection_id(&self) -> &Option<ConnectionId> {
         &self.0.connection_id
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn height(&self) -> Height {
         self.0.height
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn set_height(&mut self, height: Height) {
         self.0.height = height;
     }
 }
 
 impl From<Attributes> for OpenInit {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(attrs: Attributes) -> Self {
         OpenInit(attrs)
     }
@@ -166,6 +171,7 @@ impl From<Attributes> for OpenInit {
 
 impl TryFrom<RawObject> for OpenInit {
     type Error = Error;
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
         Ok(OpenInit(extract_attributes(&obj, "connection_open_init")?))
     }
@@ -181,21 +187,26 @@ impl From<OpenInit> for IbcEvent {
 pub struct OpenTry(Attributes);
 
 impl OpenTry {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn attributes(&self) -> &Attributes {
         &self.0
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn connection_id(&self) -> &Option<ConnectionId> {
         &self.0.connection_id
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn height(&self) -> Height {
         self.0.height
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn set_height(&mut self, height: Height) {
         self.0.height = height;
     }
 }
 
 impl From<Attributes> for OpenTry {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(attrs: Attributes) -> Self {
         OpenTry(attrs)
     }
@@ -203,6 +214,7 @@ impl From<Attributes> for OpenTry {
 
 impl TryFrom<RawObject> for OpenTry {
     type Error = Error;
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
         Ok(OpenTry(extract_attributes(&obj, "connection_open_try")?))
     }
@@ -218,21 +230,26 @@ impl From<OpenTry> for IbcEvent {
 pub struct OpenAck(Attributes);
 
 impl OpenAck {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn attributes(&self) -> &Attributes {
         &self.0
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn connection_id(&self) -> &Option<ConnectionId> {
         &self.0.connection_id
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn height(&self) -> Height {
         self.0.height
     }
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn set_height(&mut self, height: Height) {
         self.0.height = height;
     }
 }
 
 impl From<Attributes> for OpenAck {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(attrs: Attributes) -> Self {
         OpenAck(attrs)
     }
@@ -240,6 +257,7 @@ impl From<Attributes> for OpenAck {
 
 impl TryFrom<RawObject> for OpenAck {
     type Error = Error;
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn try_from(obj: RawObject) -> Result<Self, Self::Error> {
         Ok(OpenAck(extract_attributes(&obj, "connection_open_ack")?))
     }
@@ -274,6 +292,7 @@ impl OpenConfirm {
 }
 
 impl From<Attributes> for OpenConfirm {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(attrs: Attributes) -> Self {
         OpenConfirm(attrs)
     }

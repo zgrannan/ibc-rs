@@ -118,6 +118,7 @@ impl Ord for Height {
 impl Protobuf<RawHeight> for Height {}
 
 impl From<RawHeight> for Height {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(raw: RawHeight) -> Self {
         Height {
             revision_number: raw.revision_number,
@@ -127,6 +128,7 @@ impl From<RawHeight> for Height {
 }
 
 impl From<Height> for RawHeight {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(ics_height: Height) -> Self {
         RawHeight {
             revision_number: ics_height.revision_number,

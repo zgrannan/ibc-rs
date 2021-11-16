@@ -38,7 +38,7 @@ pub enum HostBlock {
 
 impl HostBlock {
     /// Returns the height of a block.
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted_skip)]
     pub fn height(&self) -> Height {
         match self {
             HostBlock::Mock(header) => header.height(),
@@ -81,6 +81,7 @@ impl From<TmLightBlock> for AnyConsensusState {
 }
 
 impl From<HostBlock> for AnyConsensusState {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(any_block: HostBlock) -> Self {
         match any_block {
             HostBlock::Mock(mock_header) => mock_header.into(),
@@ -90,6 +91,7 @@ impl From<HostBlock> for AnyConsensusState {
 }
 
 impl From<HostBlock> for AnyHeader {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(any_block: HostBlock) -> Self {
         match any_block {
             HostBlock::Mock(mock_header) => mock_header.into(),

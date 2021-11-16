@@ -17,9 +17,8 @@ use crate::ics02_client::height::Height;
 use crate::ics04_channel::{error::Error, packet::Sequence};
 use crate::ics24_host::identifier::{ChannelId, ConnectionId, PortId};
 
-#[derive(Clone)]
-#[cfg_attr(not(feature="prusti"), derive(Debug), derive(Deserialize), derive(Serialize), derive(PartialEq), derive(Eq))]
-#[cfg_attr(feature="prusti", derive(PrustiDebug), derive(PrustiDeserialize), derive(PrustiSerialize), derive(PrustiPartialEq), derive(PrustiEq))]
+#[cfg_attr(not(feature="prusti"), derive(Clone, Debug), derive(Deserialize), derive(Serialize), derive(PartialEq), derive(Eq))]
+#[cfg_attr(feature="prusti", derive(PrustiClone, PrustiDebug), derive(PrustiDeserialize), derive(PrustiSerialize), derive(PrustiPartialEq), derive(PrustiEq))]
 pub struct IdentifiedChannelEnd {
     pub port_id: PortId,
     pub channel_id: ChannelId,
@@ -81,9 +80,8 @@ panic!("No") //         RawIdentifiedChannel {
     }
 }
 
-#[derive(Clone)]
-#[cfg_attr(not(feature="prusti"), derive(Debug), derive(Deserialize), derive(Serialize), derive(PartialEq), derive(Eq))]
-#[cfg_attr(feature="prusti", derive(PrustiDebug))]
+#[cfg_attr(not(feature="prusti"), derive(Clone), derive(Debug), derive(Deserialize), derive(Serialize), derive(PartialEq), derive(Eq))]
+#[cfg_attr(feature="prusti", derive(PrustiClone, PrustiDebug))]
 pub struct ChannelEnd {
     pub state: State,
     pub ordering: Order,
@@ -93,6 +91,7 @@ pub struct ChannelEnd {
 }
 
 impl Default for ChannelEnd {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn default() -> Self {
         ChannelEnd {
             state: State::Uninitialized,
@@ -164,6 +163,7 @@ panic!("No") //         RawChannel {
 
 impl ChannelEnd {
     /// Creates a new ChannelEnd in state Uninitialized and other fields parametrized.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn new(
         state: State,
         ordering: Order,
@@ -197,6 +197,7 @@ impl ChannelEnd {
     }
 
     /// Returns `true` if this `ChannelEnd` is in state [`State::Open`].
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn is_open(&self) -> bool {
         self.state_matches(&State::Open)
     }
@@ -277,6 +278,7 @@ pub struct Counterparty {
 }
 
 impl Default for Counterparty {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn default() -> Self {
         Counterparty {
             port_id: Default::default(),
@@ -378,6 +380,7 @@ impl Order {
     }
 
     // Parses the Order out from a i32.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn from_i32(nr: i32) -> Result<Self, Error> {
         match nr {
             0 => Ok(Self::None),

@@ -35,18 +35,29 @@ pub struct MockClientRecord {
     pub consensus_states: HashMap<Height, AnyConsensusState>,
 }
 
+#[extern_spec]
+impl <K, V, S> std::collections::HashMap<K, V, S> {
+    #[pure]
+    fn is_empty(&self) -> bool;
+}
+
 #[pure]
-#[cfg_attr(feature="prusti_fast", trusted_skip)]
-fn client_invariant(client: &MockClientRecord) {
-    match client.client_state {
+#[trusted]
+fn get_highest_consensus_state(client: &MockClientRecord) -> Option<Height> {
+    client.consensus_states.keys().max().cloned()
+}
+
+
+#[pure]
+pub fn client_invariant(client: &MockClientRecord) -> bool {
+    match &client.client_state {
         Some(cs) =>
-            match client.consensus_states.keys().max() {
+            match get_highest_consensus_state(client) {
                 Some(max_height) => cs.latest_height() == max_height,
                 None => false
             },
         None => client.consensus_states.is_empty()
     }
-
 }
 
 /// A mock of a client state. For an example of a real structure that this mocks, you can see
@@ -59,6 +70,7 @@ pub struct MockClientState(pub MockHeader);
 impl Protobuf<RawMockClientState> for MockClientState {}
 
 impl MockClientState {
+    #[cfg_attr(feature="prusti", pure)]
     pub fn latest_height(&self) -> Height {
         (self.0).height
     }
@@ -74,6 +86,7 @@ impl MockClientState {
 }
 
 impl From<MockClientState> for AnyClientState {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(mcs: MockClientState) -> Self {
         Self::Mock(mcs)
     }
@@ -106,6 +119,7 @@ impl ClientState for MockClientState {
         todo!()
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn client_type(&self) -> ClientType {
         ClientType::Mock
     }
@@ -121,19 +135,22 @@ impl ClientState for MockClientState {
         false
     }
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn wrap_any(self) -> AnyClientState {
         AnyClientState::Mock(self)
     }
 }
 
 impl From<MockConsensusState> for MockClientState {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(cs: MockConsensusState) -> Self {
         Self(cs.header)
     }
 }
 
 #[cfg_attr(not(feature="prusti"), derive(Debug))]
-#[derive(Clone)]
+#[cfg_attr(feature="prusti_fast", derive(PrustiClone))]
+#[cfg_attr(not(feature="prusti_fast"), derive(Clone))]
 pub struct MockConsensusState {
     pub header: MockHeader,
     pub root: CommitmentRoot,
@@ -159,6 +176,7 @@ impl Protobuf<RawMockConsensusState> for MockConsensusState {}
 impl TryFrom<RawMockConsensusState> for MockConsensusState {
     type Error = Error;
 
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn try_from(raw: RawMockConsensusState) -> Result<Self, Self::Error> {
         let raw_header = raw.header.ok_or_else(Error::missing_raw_consensus_state)?;
 
@@ -182,6 +200,7 @@ impl From<MockConsensusState> for RawMockConsensusState {
 }
 
 impl From<MockConsensusState> for AnyConsensusState {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(mcs: MockConsensusState) -> Self {
         Self::Mock(mcs)
     }

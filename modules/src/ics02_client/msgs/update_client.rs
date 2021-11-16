@@ -18,7 +18,8 @@ use crate::tx_msg::Msg;
 pub(crate) const TYPE_URL: &str = "/ibc.core.client.v1.MsgUpdateClient";
 
 /// A type of message that triggers the update of an on-chain (IBC) client with new headers.
-#[derive(Clone)] // TODO: Add Eq bound when possible
+#[cfg_attr(feature="prusti_fast", derive(PrustiClone))]
+#[cfg_attr(not(feature="prusti_fast"), derive(Clone))]
 pub struct MsgUpdateAnyClient {
     pub client_id: ClientId,
     pub header: AnyHeader,

@@ -29,6 +29,7 @@ pub struct IdentifiedConnectionEnd {
 }
 
 impl IdentifiedConnectionEnd {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn new(connection_id: ConnectionId, connection_end: ConnectionEnd) -> Self {
         IdentifiedConnectionEnd {
             connection_id,
@@ -47,12 +48,13 @@ impl IdentifiedConnectionEnd {
     }
 }
 
+#[cfg(not(feature="prusti"))]
 impl Protobuf<RawIdentifiedConnection> for IdentifiedConnectionEnd {}
 
+#[cfg(not(feature="prusti"))]
 impl TryFrom<RawIdentifiedConnection> for IdentifiedConnectionEnd {
     type Error = Error;
 
-#[cfg_attr(feature="prusti", trusted)]
     fn try_from(value: RawIdentifiedConnection) -> Result<Self, Self::Error> {
         let raw_connection_end = RawConnectionEnd {
             client_id: value.client_id.to_string(),
@@ -69,8 +71,8 @@ impl TryFrom<RawIdentifiedConnection> for IdentifiedConnectionEnd {
     }
 }
 
+#[cfg(not(feature="prusti"))]
 impl From<IdentifiedConnectionEnd> for RawIdentifiedConnection {
-#[cfg_attr(feature="prusti", trusted)]
     fn from(value: IdentifiedConnectionEnd) -> Self {
         RawIdentifiedConnection {
             id: value.connection_id.to_string(),
@@ -112,11 +114,12 @@ impl Default for ConnectionEnd {
     }
 }
 
+#[cfg(not(feature="prusti"))]
 impl Protobuf<RawConnectionEnd> for ConnectionEnd {}
 
+#[cfg(not(feature="prusti"))]
 impl TryFrom<RawConnectionEnd> for ConnectionEnd {
     type Error = Error;
-    #[cfg_attr(feature="prusti", trusted)]
     fn try_from(value: RawConnectionEnd) -> Result<Self, Self::Error> {
         let state = value.state.try_into()?;
         if state == State::Uninitialized {
@@ -143,8 +146,8 @@ impl TryFrom<RawConnectionEnd> for ConnectionEnd {
     }
 }
 
+#[cfg(not(feature="prusti"))]
 impl From<ConnectionEnd> for RawConnectionEnd {
-    #[cfg_attr(feature="prusti", trusted)]
     fn from(value: ConnectionEnd) -> Self {
         RawConnectionEnd {
             client_id: value.client_id.to_string(),
@@ -161,6 +164,7 @@ impl From<ConnectionEnd> for RawConnectionEnd {
 }
 
 impl ConnectionEnd {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn new(
         state: State,
         client_id: ClientId,
@@ -234,6 +238,7 @@ impl ConnectionEnd {
     }
 
     /// Getter for the client id on the local party of this connection end.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn client_id(&self) -> &ClientId {
         &self.client_id
     }
@@ -258,6 +263,7 @@ impl ConnectionEnd {
     }
 
     /// TODO: Clean this up, probably not necessary.
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn validate_basic(&self) -> Result<(), ValidationError> {
         self.counterparty.validate_basic()
     }
@@ -426,6 +432,7 @@ impl State {
 
 impl TryFrom<i32> for State {
     type Error = Error;
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn try_from(value: i32) -> Result<Self, Self::Error> {
         match value {
             0 => Ok(Self::Uninitialized),
@@ -438,6 +445,7 @@ impl TryFrom<i32> for State {
 }
 
 impl From<State> for i32 {
+#[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn from(value: State) -> Self {
         value.into()
     }
