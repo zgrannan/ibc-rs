@@ -8,6 +8,7 @@ use std::collections::HashMap;
 use prost_types::Any;
 use sha2::Digest;
 
+use crate::handle_result;
 use crate::application::ics20_fungible_token_transfer::context::Ics20Context;
 use crate::events::IbcEvent;
 use crate::ics02_client::client_consensus::{AnyConsensusState, AnyConsensusStateWithHeight};
@@ -15,6 +16,7 @@ use crate::ics02_client::client_state::AnyClientState;
 use crate::ics02_client::client_type::ClientType;
 use crate::ics02_client::context::{ClientKeeper, ClientReader};
 use crate::ics02_client::error::Error as Ics02Error;
+use crate::ics02_client::handler::ClientResult::{self, Create, Update, Upgrade};
 use crate::ics02_client::header::AnyHeader;
 use crate::ics03_connection::connection::ConnectionEnd;
 use crate::ics03_connection::context::{ConnectionKeeper, ConnectionReader};
@@ -45,6 +47,20 @@ macro_rules! body_invariant {
     ($expression:expr) => {
         assert!($expression);
     }
+}
+
+predicate! {
+    fn mock_context_invariant(context: &MockContext) -> bool {
+        forall(|client_id: &ClientId|
+            context.clients.contains_key(client_id) ==>
+                client_invariant(get_client(client_id, context)))
+    }
+}
+
+#[pure]
+#[trusted]
+fn get_client<'a>(client_id: &ClientId, context: &'a MockContext) -> &'a MockClientRecord {
+    context.clients.get(client_id).unwrap()
 }
 
 /// A context implementing the dependencies necessary for testing any IBC module.
@@ -146,6 +162,119 @@ impl MockContext {
         max_history_size: usize,
         latest_height: Height,
     ) -> Self { unimplemented!() }
+
+    #[requires(mock_context_invariant(self))]
+    #[ensures(mock_context_invariant(self))]
+    fn store_client_result_impl(&mut self, handler_res: ClientResult) -> Result<(), Ics02Error> {
+        match handler_res {
+            Create(res) => {
+                let client_id = res.client_id.clone();
+
+                handle_result!(self.store_client_type0(client_id.clone(), res.client_type));
+                handle_result!(self.store_client_state0(client_id.clone(), res.client_state.clone()));
+                handle_result!(self.store_consensus_state0(
+                    client_id,
+                    res.client_state.latest_height(),
+                    res.consensus_state,
+                ));
+                self.increase_client_counter0();
+            }
+            _ => {}
+            // Update(res) => {
+            //     handle_result!(self.store_client_state0(res.client_id.clone(), res.client_state.clone()));
+            //     handle_result!(self.store_consensus_state0(
+            //         res.client_id.clone(),
+            //         res.client_state.latest_height(),
+            //         res.consensus_state,
+            //     ));
+            // }
+            // Upgrade(res) => {
+            //     handle_result!(self.store_client_state0(res.client_id.clone(), res.client_state.clone()));
+            //     handle_result!(self.store_consensus_state0(
+            //         res.client_id.clone(),
+            //         res.client_state.latest_height(),
+            //         res.consensus_state,
+            //     ));
+            // }
+        }
+        Ok(())
+    }
+
+    #[ensures(
+        forall(|client_id: &ClientId|
+            self.clients.contains_key(client_id) ==>
+                client_invariant(get_client(client_id, self))))
+    ]
+    #[cfg_attr(feature="prusti", trusted)]
+    fn increase_client_counter0(&mut self) {
+        self.client_ids_counter += 1
+    }
+
+    #[ensures(
+        forall(|client_id: &ClientId|
+            self.clients.contains_key(client_id) ==>
+                client_invariant(get_client(client_id, self))))
+    ]
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
+    fn store_client_state0(
+        &mut self,
+        client_id: ClientId,
+        client_state: AnyClientState,
+    ) -> Result<(), Ics02Error> {
+        let mut client_record = self.clients.entry(client_id).or_insert(MockClientRecord {
+            client_type: client_state.client_type(),
+            consensus_states: Default::default(),
+            client_state: Default::default(),
+        });
+
+        client_record.client_state = Some(client_state);
+        Ok(())
+    }
+
+    #[ensures(
+        forall(|client_id: &ClientId|
+            self.clients.contains_key(client_id) ==>
+                client_invariant(get_client(client_id, self))))
+    ]
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
+    fn store_consensus_state0(
+        &mut self,
+        client_id: ClientId,
+        height: Height,
+        consensus_state: AnyConsensusState,
+    ) -> Result<(), Ics02Error> {
+        let client_record = self.clients.entry(client_id).or_insert(MockClientRecord {
+            client_type: ClientType::Mock,
+            consensus_states: Default::default(),
+            client_state: Default::default(),
+        });
+
+        client_record
+            .consensus_states
+            .insert(height, consensus_state);
+        Ok(())
+    }
+
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
+    #[ensures(
+        forall(|client_id: &ClientId|
+            self.clients.contains_key(client_id) ==>
+                client_invariant(get_client(client_id, self))))
+    ]
+    fn store_client_type0(
+        &mut self,
+        client_id: ClientId,
+        client_type: ClientType,
+    ) -> Result<(), Ics02Error> {
+        let mut client_record = self.clients.entry(client_id).or_insert(MockClientRecord {
+            client_type,
+            consensus_states: Default::default(),
+            client_state: Default::default(),
+        });
+
+        client_record.client_type = client_type;
+        Ok(())
+    }
 
     #[cfg(not(feature="prusti"))]
     pub fn new(
@@ -319,7 +448,7 @@ impl MockContext {
         }
     }
 
-#[cfg_attr(feature="prusti_fast", trusted_skip)]
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn with_ack_sequence(
         self,
         port_id: PortId,
@@ -366,7 +495,7 @@ impl MockContext {
         }
     }
 
-#[cfg_attr(feature="prusti_fast", trusted_skip)]
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn with_packet_commitment(
         self,
         port_id: PortId,
@@ -384,7 +513,7 @@ impl MockContext {
 
     /// Accessor for a block of the local (host) chain from this context.
     /// Returns `None` if the block at the requested height does not exist.
-#[cfg_attr(feature="prusti_fast", trusted_skip)]
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn host_block(&self, target_height: Height) -> Option<&HostBlock> {
         let target = target_height.revision_height as usize;
         let latest = self.latest_height.revision_height as usize;
@@ -398,6 +527,7 @@ impl MockContext {
     }
 
     /// Triggers the advancing of the host chain, by extending the history of blocks (or headers).
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     #[cfg_attr(feature="prusti", requires(self.latest_height.revision_height < u64::MAX))]
     #[cfg_attr(feature="prusti", requires(self.max_history_size > 0))]
     #[cfg_attr(feature="prusti", ensures(self.max_history_size == old(self.max_history_size)))]
@@ -433,7 +563,7 @@ impl MockContext {
     }
 
     /// Validates this context. Should be called after the context is mutated by a test.
-#[cfg_attr(feature="prusti_fast", trusted_skip)]
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn validate(&self) -> Result<(), String> {
         // Check that the number of entries is not higher than window size.
         if self.history.len() > self.max_history_size {
@@ -821,23 +951,16 @@ impl ClientReader for MockContext {
 }
 
 impl ClientKeeper for MockContext {
-#[cfg_attr(feature="prusti_fast", trusted_skip)]
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn store_client_type(
         &mut self,
         client_id: ClientId,
         client_type: ClientType,
     ) -> Result<(), Ics02Error> {
-        let mut client_record = self.clients.entry(client_id).or_insert(MockClientRecord {
-            client_type,
-            consensus_states: Default::default(),
-            client_state: Default::default(),
-        });
-
-        client_record.client_type = client_type;
-        Ok(())
+        self.store_client_type0(client_id, client_type)
     }
 
-#[cfg_attr(feature="prusti_fast", trusted_skip)]
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn store_client_state(
         &mut self,
         client_id: ClientId,
@@ -853,7 +976,7 @@ impl ClientKeeper for MockContext {
         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted_skip)]
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn store_consensus_state(
         &mut self,
         client_id: ClientId,

@@ -37,8 +37,20 @@ pub struct MockClientRecord {
 
 #[extern_spec]
 impl <K, V, S> std::collections::HashMap<K, V, S> {
+    // #[pure]
+    // fn get<'a>(&self, key: &K) -> Option<&'a V>
+    //   where K: Eq,
+    //         K: std::hash::Hash,
+    //         S: std::hash::BuildHasher;
+
     #[pure]
     fn is_empty(&self) -> bool;
+
+    #[pure]
+    fn contains_key(&self, key: &K) -> bool
+      where K: Eq,
+            K: std::hash::Hash,
+            S: std::hash::BuildHasher;
 }
 
 #[pure]

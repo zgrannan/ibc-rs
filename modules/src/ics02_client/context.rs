@@ -25,7 +25,7 @@ pub trait ClientReader {
 
 /// Defines the write-only part of ICS2 (client functions) context.
 pub trait ClientKeeper {
-#[cfg_attr(feature="prusti_fast", trusted_skip)]
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn store_client_result(&mut self, handler_res: ClientResult) -> Result<(), Error> {
         match handler_res {
             Create(res) => {
