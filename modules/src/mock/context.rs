@@ -63,6 +63,15 @@ fn get_client<'a>(client_id: &ClientId, context: &'a MockContext) -> &'a MockCli
     context.clients.get(client_id).unwrap()
 }
 
+#[pure]
+#[trusted]
+fn get_latest_height(client_state: &Option<AnyClientState>) -> Option<Height> {
+   match client_state {
+       Some(cs) => Some(cs.latest_height()),
+       None => None
+   }
+}
+
 /// A context implementing the dependencies necessary for testing any IBC module.
 #[cfg_attr(feature="prusti_fast", derive(PrustiClone))]
 #[cfg_attr(not(feature="prusti_fast"), derive(Clone))]
@@ -179,42 +188,45 @@ impl MockContext {
                 ));
                 self.increase_client_counter0();
             }
-            _ => {}
-            // Update(res) => {
-            //     handle_result!(self.store_client_state0(res.client_id.clone(), res.client_state.clone()));
-            //     handle_result!(self.store_consensus_state0(
-            //         res.client_id.clone(),
-            //         res.client_state.latest_height(),
-            //         res.consensus_state,
-            //     ));
-            // }
-            // Upgrade(res) => {
-            //     handle_result!(self.store_client_state0(res.client_id.clone(), res.client_state.clone()));
-            //     handle_result!(self.store_consensus_state0(
-            //         res.client_id.clone(),
-            //         res.client_state.latest_height(),
-            //         res.consensus_state,
-            //     ));
-            // }
+            Update(res) => {
+                handle_result!(self.store_client_state0(res.client_id.clone(), res.client_state.clone()));
+                handle_result!(self.store_consensus_state0(
+                    res.client_id.clone(),
+                    res.client_state.latest_height(),
+                    res.consensus_state,
+                ));
+            }
+            Upgrade(res) => {
+                handle_result!(self.store_client_state0(res.client_id.clone(), res.client_state.clone()));
+                handle_result!(self.store_consensus_state0(
+                    res.client_id.clone(),
+                    res.client_state.latest_height(),
+                    res.consensus_state,
+                ));
+            }
         }
         Ok(())
     }
 
-    #[ensures(
-        forall(|client_id: &ClientId|
-            self.clients.contains_key(client_id) ==>
-                client_invariant(get_client(client_id, self))))
-    ]
-    #[cfg_attr(feature="prusti", trusted)]
+    #[ensures(self.clients == old(self.clients))]
     fn increase_client_counter0(&mut self) {
         self.client_ids_counter += 1
     }
 
     #[ensures(
-        forall(|client_id: &ClientId|
-            self.clients.contains_key(client_id) ==>
-                client_invariant(get_client(client_id, self))))
+        forall(|cid: &ClientId|
+            old(self.clients.contains_key(cid)) ==>
+                self.clients.contains_key(cid)
     ]
+    #[ensures(
+        forall(|cid: &ClientId|
+            self.clients.contains_key(cid) && client_id != *cid ==>
+                get_client(cid, self) == get_client(cid, old(self))
+    ]
+    #[ensures(
+        self.clients.contains_key(client_id) &&
+            get_client(&client_id, self).client_state == Some(client_state)
+    )]
     #[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn store_client_state0(
         &mut self,
@@ -232,10 +244,19 @@ impl MockContext {
     }
 
     #[ensures(
-        forall(|client_id: &ClientId|
-            self.clients.contains_key(client_id) ==>
-                client_invariant(get_client(client_id, self))))
+        forall(|cid: &ClientId|
+            old(self.clients.contains_key(cid)) ==>
+                self.clients.contains_key(cid)
     ]
+    #[ensures(
+        forall(|cid: &ClientId|
+            self.clients.contains_key(cid) && client_id != *cid ==>
+                get_client(cid, self) == get_client(cid, old(self))
+    ]
+    #[ensures(
+        self.clients.contains_key(client_id) &&
+            get_client(&client_id, self).client_state == Some(client_state)
+    )]
     #[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn store_consensus_state0(
         &mut self,
@@ -256,6 +277,16 @@ impl MockContext {
     }
 
     #[cfg_attr(feature="prusti_fast", trusted_skip)]
+    #[requires(
+        forall(|client_id: &ClientId|
+            self.clients.contains_key(client_id) ==>
+                client_invariant(get_client(client_id, self))))
+    ]
+    #[ensures(
+        forall(|cid: &ClientId|
+            old(self.clients.contains_key(cid)) ==>
+                self.clients.contains_key(cid)
+    ]
     #[ensures(
         forall(|client_id: &ClientId|
             self.clients.contains_key(client_id) ==>
