@@ -1,14 +1,49 @@
+#![allow(dead_code)]
+#![allow(unused_must_use)]
+#![allow(unused_variables)]
 extern crate prusti_contracts;
 use prusti_contracts::*;
 
-type AnyConsensusState = u32;
+// Prusti doesn't support ?, so use this macro instead
+#[macro_export]
+macro_rules! handle_result {
+    ($e: expr) => {
+        match $e {
+            Ok(data) => data,
+            Err(err) => return Err(err)
+        }
+    };
+}
+
+// The following types are essentially uninterpreted
+
+#[derive(Clone, Copy)]
+pub struct AnyConsensusState(u32);
+
+// Cannot be wrapped in Struct due to Prusti Internal Error (fold/unfold)
 type AnyClientState = u32;
+
+// Cannot be wrapped in Struct due to Prusti Internal Error (fold/unfold)
 type ClientId = u32;
-type MockClientRecord = u32;
-type Clients = u32;
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub struct ClientRecord(u32);
+
+#[derive(Clone, Copy)]
+pub struct ClientType(u32);
+
+// Collection of clients
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub struct Clients(u32);
+
+// Cannot be wrapped in Struct due to Prusti Internal Error (fold/unfold)
 type Height = u32;
-type Ics02Error = u32;
-type ClientType = u32;
+
+#[derive(Clone, Copy)]
+pub struct Ics02Error(u32);
+
+
+// IBC Relayer Messages
 
 #[derive(Clone, Copy)]
 pub struct CreateResult {
@@ -39,27 +74,15 @@ pub enum ClientResult {
     Upgrade(UpgradeResult)
 }
 
-
-#[macro_export]
-macro_rules! handle_result {
-    ($e: expr) => {
-        match $e {
-            Ok(data) => data,
-            Err(err) => return Err(err)
-        }
-    };
-}
-
-
 #[pure]
 #[trusted]
-fn get_client_state(client: MockClientRecord) -> Option<AnyClientState> {
+fn get_client_state(client: ClientRecord) -> Option<AnyClientState> {
    unreachable!()
 }
 
 #[pure]
 #[trusted]
-fn get_client_type(client: MockClientRecord) -> ClientType {
+fn get_client_type(client: ClientRecord) -> ClientType {
    unreachable!()
 }
 
@@ -80,7 +103,7 @@ impl std::option::Option<u32> {
 
 #[pure]
 fn client_state_equals(
-    client: MockClientRecord,
+    client: ClientRecord,
     state: AnyClientState
 ) -> bool {
     match get_client_state(client) {
@@ -94,7 +117,7 @@ fn client_state_equals(
 fn get_client_consensus_state(
     client_id: ClientId,
     height: Height,
-    context: &MockContext) -> AnyConsensusState {
+    context: &Context) -> AnyConsensusState {
     unreachable!()
 }
 
@@ -106,22 +129,22 @@ fn get_latest_height(cs: AnyClientState) -> Height {
 
 #[pure]
 #[trusted]
-fn consensus_states_is_empty(client: MockClientRecord) -> bool {
+fn consensus_states_is_empty(client: ClientRecord) -> bool {
    unreachable!()
 }
 
 #[pure]
 #[trusted]
-fn get_max_consensus_state_height(client: MockClientRecord) -> Option<Height> {
+fn get_max_consensus_state_height(client: ClientRecord) -> Option<Height> {
    unreachable!()
 }
 
 
 #[pure]
-pub fn client_invariant(client: MockClientRecord) -> bool {
+pub fn client_invariant(client: ClientRecord) -> bool {
+    let hcs = get_max_consensus_state_height(client);
     match get_client_state(client) {
         Some(cs) => {
-            let hcs = get_max_consensus_state_height(client);
             hcs.is_some() && hcs.unwrap() == get_latest_height(cs)
         },
         None => consensus_states_is_empty(client)
@@ -137,24 +160,25 @@ fn contains_key(clients: Clients, client_id: ClientId) -> bool {
 #[pure]
 #[trusted]
 #[requires(contains_key(clients, client_id))]
-fn get_client(clients: Clients, client_id: ClientId) -> MockClientRecord {
+fn get_client(clients: Clients, client_id: ClientId) -> ClientRecord {
    unreachable!()
 }
 
 predicate! {
-    fn mock_context_invariant(context: &MockContext) -> bool {
+    fn mock_context_invariant(context: &Context) -> bool {
         clients_invariant(context.clients)
     }
 }
 predicate! {
     fn clients_invariant(clients: Clients) -> bool {
-        forall(|client_id: ClientId| contains_key(clients, client_id) ==> client_invariant(get_client(clients, client_id)))
+        forall(|client_id: ClientId|
+               contains_key(clients, client_id) ==>
+               client_invariant(get_client(clients, client_id)))
     }
 }
 
-struct MockContext {
+struct Context {
     clients: Clients,
-    client_ids_counter: u64
 }
 
 #[pure]
@@ -166,7 +190,7 @@ fn get_cid(res: ClientResult) -> ClientId {
    }
 }
 
-impl MockContext {
+impl Context {
 
     #[requires(clients_invariant(self.clients))]
     #[ensures(
@@ -213,7 +237,6 @@ impl MockContext {
 
     #[ensures(self.clients == old(self.clients))]
     fn increase_client_counter(&mut self) {
-        self.client_ids_counter += 1
     }
 
     #[ensures(
