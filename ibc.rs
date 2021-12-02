@@ -4,17 +4,6 @@
 extern crate prusti_contracts;
 use prusti_contracts::*;
 
-// Prusti doesn't support ?, so use this macro instead
-#[macro_export]
-macro_rules! handle_result {
-    ($e: expr) => {
-        match $e {
-            Ok(data) => data,
-            Err(err) => return Err(err)
-        }
-    };
-}
-
 // The following types are essentially uninterpreted
 
 #[derive(Clone, Copy)]
@@ -27,14 +16,43 @@ type AnyClientState = u32;
 type ClientId = u32;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
-pub struct ClientRecord(u32);
+pub struct ClientRecord {
+    client_state: Option<AnyClientState>
+}
 
-#[derive(Clone, Copy)]
+impl ClientRecord {
+    #[pure]
+    fn client_state_equals(
+        self,
+        state: AnyClientState
+    ) -> bool {
+        match self.client_state {
+            Some(cs) => cs == state,
+            None     => false
+        }
+    }
+
+    #[pure]
+    #[trusted]
+    fn get_max_consensus_state_height(self) -> Option<Height> {
+        unreachable!()
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct ClientType(u32);
 
 // Collection of clients
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Clients(u32);
+
+impl Clients {
+    #[pure]
+    #[trusted]
+    fn contains_key(self, client_id: ClientId) -> bool {
+        unreachable!()
+    }
+}
 
 // Cannot be wrapped in Struct due to Prusti Internal Error (fold/unfold)
 type Height = u32;
@@ -76,90 +94,14 @@ pub enum ClientResult {
 
 #[pure]
 #[trusted]
-fn get_client_state(client: ClientRecord) -> Option<AnyClientState> {
-   unreachable!()
-}
-
-#[pure]
-#[trusted]
-fn get_client_type(client: ClientRecord) -> ClientType {
-   unreachable!()
-}
-
-#[extern_spec]
-impl std::option::Option<u32> {
-    #[pure]
-    #[ensures(matches!(*self, Some(_)) == result)]
-    pub fn is_some(&self) -> bool;
-
-    #[pure]
-    #[ensures(self.is_some() == !result)]
-    pub fn is_none(&self) -> bool;
-
-    #[pure]
-    #[requires(self.is_some())]
-    pub fn unwrap(self) -> u32;
-}
-
-#[pure]
-fn client_state_equals(
-    client: ClientRecord,
-    state: AnyClientState
-) -> bool {
-    match get_client_state(client) {
-        Some(cs) => cs == state,
-        None     => false
-    }
-}
-
-#[pure]
-#[trusted]
-fn get_client_consensus_state(
-    client_id: ClientId,
-    height: Height,
-    context: &Context) -> AnyConsensusState {
-    unreachable!()
-}
-
-#[pure]
-#[trusted]
 fn get_latest_height(cs: AnyClientState) -> Height {
    unreachable!()
 }
 
-#[pure]
-#[trusted]
-fn consensus_states_is_empty(client: ClientRecord) -> bool {
-   unreachable!()
-}
 
 #[pure]
 #[trusted]
-fn get_max_consensus_state_height(client: ClientRecord) -> Option<Height> {
-   unreachable!()
-}
-
-
-#[pure]
-pub fn client_invariant(client: ClientRecord) -> bool {
-    let hcs = get_max_consensus_state_height(client);
-    match get_client_state(client) {
-        Some(cs) => {
-            hcs.is_some() && hcs.unwrap() == get_latest_height(cs)
-        },
-        None => consensus_states_is_empty(client)
-    }
-}
-
-#[pure]
-#[trusted]
-fn contains_key(clients: Clients, client_id: ClientId) -> bool {
-   unreachable!()
-}
-
-#[pure]
-#[trusted]
-#[requires(contains_key(clients, client_id))]
+#[requires(clients.contains_key(client_id))]
 fn get_client(clients: Clients, client_id: ClientId) -> ClientRecord {
    unreachable!()
 }
@@ -172,8 +114,17 @@ predicate! {
 predicate! {
     fn clients_invariant(clients: Clients) -> bool {
         forall(|client_id: ClientId|
-               contains_key(clients, client_id) ==>
+               clients.contains_key(client_id) ==>
                client_invariant(get_client(clients, client_id)))
+    }
+}
+
+#[pure]
+pub fn client_invariant(client: ClientRecord) -> bool {
+    let hcs = client.get_max_consensus_state_height();
+    match client.client_state {
+        Some(cs) => hcs.is_some() && hcs.unwrap() == get_latest_height(cs),
+        None => hcs.is_none()
     }
 }
 
@@ -195,7 +146,7 @@ impl Context {
     #[requires(clients_invariant(self.clients))]
     #[ensures(
         forall(|cid: ClientId|
-            contains_key(self.clients, cid) && get_cid(handler_res) != cid ==>
+            self.clients.contains_key(cid) && get_cid(handler_res) != cid ==>
                 get_client(self.clients, cid) == get_client(old(self.clients), cid)))
     ]
     #[ensures(matches!(result, Ok(_)) ==> client_invariant(get_client(self.clients, get_cid(handler_res))))]
@@ -235,32 +186,33 @@ impl Context {
         }
     }
 
+    #[trusted]
     #[ensures(self.clients == old(self.clients))]
     fn increase_client_counter(&mut self) {
     }
 
     #[ensures(
         forall(|cid: ClientId|
-            (contains_key(old(self.clients), cid) || cid == client_id) ==
-                contains_key(self.clients, cid)))
+            (old(self.clients).contains_key(cid) || cid == client_id) ==
+                self.clients.contains_key(cid)))
     ]
     #[ensures(
         forall(|cid: ClientId|
-            contains_key(self.clients, cid) && client_id != cid ==>
+            self.clients.contains_key(cid) && client_id != cid ==>
                 get_client(self.clients, cid) == get_client(old(self.clients), cid)))
     ]
     #[ensures(
-        contains_key(self.clients, client_id) &&
-            client_state_equals(get_client(self.clients, client_id), client_state)
+        self.clients.contains_key(client_id) &&
+            get_client(self.clients, client_id).client_state_equals(client_state)
     )]
     #[ensures(
-        contains_key(old(self.clients), client_id) ==>
-            get_max_consensus_state_height(get_client(self.clients, client_id)) ==
-                get_max_consensus_state_height(get_client(old(self.clients), client_id))
+        old(self.clients).contains_key(client_id) ==>
+            get_client(self.clients, client_id).get_max_consensus_state_height() ==
+                get_client(old(self.clients), client_id).get_max_consensus_state_height()
     )]
     #[ensures(
-        !contains_key(old(self.clients), client_id) ==>
-            consensus_states_is_empty(get_client(self.clients, client_id))
+        !old(self.clients).contains_key(client_id) ==>
+            get_client(self.clients, client_id).get_max_consensus_state_height().is_none()
     )]
     #[trusted]
     fn store_client_state(
@@ -273,12 +225,12 @@ impl Context {
 
     #[ensures(
         forall(|cid: ClientId|
-            (contains_key(old(self.clients), cid) || cid == client_id) ==
-                contains_key(self.clients, cid)))
+            (old(self.clients).contains_key(cid) || cid == client_id) ==
+                self.clients.contains_key(cid)))
     ]
     #[ensures(
         forall(|cid: ClientId|
-            contains_key(self.clients, cid) && client_id != cid ==>
+            self.clients.contains_key(cid) && client_id != cid ==>
                 get_client(self.clients, cid) == get_client(old(self.clients), cid)))
     ]
     #[trusted]
@@ -292,25 +244,24 @@ impl Context {
 
     #[ensures(
         forall(|cid: ClientId|
-            (contains_key(old(self.clients), cid) || cid == client_id) ==
-                contains_key(self.clients, cid)))
+            (old(self.clients).contains_key(cid) || cid == client_id) ==
+                self.clients.contains_key(cid)))
     ]
     #[ensures(
         forall(|cid: ClientId|
-            contains_key(self.clients, cid) && client_id != cid ==>
+            self.clients.contains_key(cid) && client_id != cid ==>
                 get_client(self.clients, cid) == get_client(old(self.clients), cid)))
     ]
     #[ensures(
-        contains_key(self.clients, client_id) &&
-            get_max_consensus_state_height(get_client(self.clients, client_id)).is_some() &&
-            get_max_consensus_state_height(get_client(self.clients, client_id)).unwrap() == height
+        self.clients.contains_key(client_id) &&
+            get_client(self.clients, client_id).get_max_consensus_state_height().is_some() &&
+            get_client(self.clients, client_id).get_max_consensus_state_height().unwrap() == height
     )]
     #[ensures(
-        contains_key(old(self.clients), client_id) ==>
-            get_client_state(get_client(self.clients, client_id)) ==
-                get_client_state(get_client(old(self.clients), client_id))
+        old(self.clients).contains_key(client_id) ==>
+            get_client(self.clients, client_id).client_state ==
+                get_client(old(self.clients), client_id).client_state
     )]
-    #[ensures(!consensus_states_is_empty(get_client(self.clients, client_id)))]
     #[trusted]
     fn store_consensus_state(
         &mut self,
@@ -323,3 +274,29 @@ impl Context {
 }
 
 fn main(){}
+
+// Prusti doesn't support ?, so use this macro instead
+#[macro_export]
+macro_rules! handle_result {
+    ($e: expr) => {
+        match $e {
+            Ok(data) => data,
+            Err(err) => return Err(err)
+        }
+    };
+}
+
+#[extern_spec]
+impl std::option::Option<u32> {
+    #[pure]
+    #[ensures(matches!(*self, Some(_)) == result)]
+    pub fn is_some(&self) -> bool;
+
+    #[pure]
+    #[ensures(self.is_some() == !result)]
+    pub fn is_none(&self) -> bool;
+
+    #[pure]
+    #[requires(self.is_some())]
+    pub fn unwrap(self) -> u32;
+}
