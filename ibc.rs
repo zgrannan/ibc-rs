@@ -12,6 +12,12 @@ pub struct AnyConsensusState(u32);
 // Cannot be wrapped in Struct due to Prusti Internal Error (fold/unfold)
 type AnyClientState = u32;
 
+#[pure]
+#[trusted]
+fn get_latest_height(cs: AnyClientState) -> Height {
+   unreachable!()
+}
+
 // Cannot be wrapped in Struct due to Prusti Internal Error (fold/unfold)
 type ClientId = u32;
 
@@ -54,11 +60,17 @@ impl Clients {
     }
 }
 
+// TODO: Make this an associated function of Clients
+#[pure]
+#[trusted]
+#[requires(clients.contains_key(client_id))]
+fn get_client(clients: Clients, client_id: ClientId) -> ClientRecord {
+   unreachable!()
+}
+
 // Cannot be wrapped in Struct due to Prusti Internal Error (fold/unfold)
 type Height = u32;
 
-#[derive(Clone, Copy)]
-pub struct Ics02Error(u32);
 
 
 // IBC Relayer Messages
@@ -93,18 +105,16 @@ pub enum ClientResult {
 }
 
 #[pure]
-#[trusted]
-fn get_latest_height(cs: AnyClientState) -> Height {
-   unreachable!()
+fn get_cid(res: ClientResult) -> ClientId {
+   match res {
+        ClientResult::Create(res) => res.client_id,
+        ClientResult::Update(res) => res.client_id,
+        ClientResult::Upgrade(res) => res.client_id
+   }
 }
 
 
-#[pure]
-#[trusted]
-#[requires(clients.contains_key(client_id))]
-fn get_client(clients: Clients, client_id: ClientId) -> ClientRecord {
-   unreachable!()
-}
+// INVARIANTS
 
 predicate! {
     fn mock_context_invariant(context: &Context) -> bool {
@@ -119,6 +129,21 @@ predicate! {
     }
 }
 
+/* Corresponds to this invariant on mock context
+
+fn client_invariant(client: &MockClientRecord) {
+    match client.client_state {
+        Some(cs) =>
+            match client.consensus_states.keys().max() {
+                Some(max_height) => cs.latest_height() == max_height,
+                None => false
+            },
+        None => client.consensus_states.is_empty()
+    }
+}
+
+*/
+
 #[pure]
 pub fn client_invariant(client: ClientRecord) -> bool {
     let hcs = client.get_max_consensus_state_height();
@@ -128,18 +153,15 @@ pub fn client_invariant(client: ClientRecord) -> bool {
     }
 }
 
+// Context Definition
+
 struct Context {
     clients: Clients,
 }
 
-#[pure]
-fn get_cid(res: ClientResult) -> ClientId {
-   match res {
-        ClientResult::Create(res) => res.client_id,
-        ClientResult::Update(res) => res.client_id,
-        ClientResult::Upgrade(res) => res.client_id
-   }
-}
+#[derive(Clone, Copy)]
+pub struct Ics02Error(u32);
+
 
 impl Context {
 
