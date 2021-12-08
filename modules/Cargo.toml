@@ -44,7 +44,7 @@ flex-error = { version = "0.4.1", default-features = false , path = "../../flex-
 # prusti-contracts = { path = "../../prusti-dev/prusti-contracts"}
 
 [patch.crates-io]
-prost-derive = "0.8.0"
+prost-derive = { git = "https://github.com/zgrannan/prost", branch = "prusti" }
 
 [dependencies.tendermint]
 path = "../../tendermint-rs/tendermint"

@@ -174,6 +174,7 @@ impl MockContext {
 
     #[requires(mock_context_invariant(self))]
     #[ensures(mock_context_invariant(self))]
+    #[ensures(false)]
     fn store_client_result_impl(&mut self, handler_res: ClientResult) -> Result<(), Ics02Error> {
         match handler_res {
             Create(res) => {
