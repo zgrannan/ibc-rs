@@ -14,7 +14,7 @@ description = """
 """
 
 [features]
-default = ["std", "eyre_tracer"]
+default = ["mocks", "std", "eyre_tracer"]
 std = [
     "flex-error/std"
 ]

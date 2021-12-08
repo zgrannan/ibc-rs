@@ -8,6 +8,7 @@ use super::error::Error;
 
 /// Type of the client, depending on the specific consensus algorithm.
 #[derive(Copy, Clone, Hash)]
+#[cfg_attr(feature="prusti", derive(Eq))]
 pub enum ClientType {
     Tendermint = 1,
 

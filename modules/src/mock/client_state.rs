@@ -24,6 +24,7 @@ use crate::Height;
 /// A mock of an IBC client record as it is stored in a mock context.
 /// For testing ICS02 handlers mostly, cf. `MockClientContext`.
 #[derive(Clone)]
+#[cfg_attr(feature="prusti", derive(PartialEq, Eq))]
 pub struct MockClientRecord {
     /// The type of this client.
     pub client_type: ClientType,

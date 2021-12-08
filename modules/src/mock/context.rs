@@ -49,18 +49,32 @@ macro_rules! body_invariant {
     }
 }
 
+type Clients = HashMap<ClientId, MockClientRecord>;
+
+predicate! {
+    fn clients_invariant(clients: &Clients) -> bool {
+        forall(|client_id: ClientId|
+               clients.contains_key(&client_id) ==>
+               client_invariant(get_client(clients, client_id)))
+    }
+}
+
 predicate! {
     fn mock_context_invariant(context: &MockContext) -> bool {
-        forall(|client_id: &ClientId|
-            context.clients.contains_key(client_id) ==>
-                client_invariant(get_client(client_id, context)))
+        clients_invariant(&context.clients)
     }
 }
 
 #[pure]
 #[trusted]
-fn get_client<'a>(client_id: &ClientId, context: &'a MockContext) -> &'a MockClientRecord {
-    context.clients.get(client_id).unwrap()
+fn get_client(clients: &Clients, client_id: ClientId) -> &MockClientRecord {
+    clients.get(&client_id).unwrap()
+}
+
+#[pure]
+#[trusted]
+fn contains_key(clients: &Clients, client_id: ClientId) -> bool {
+    clients.contains_key(&client_id)
 }
 
 #[pure]
@@ -155,6 +169,43 @@ impl Default for MockContext {
         )
     }
 }
+#[requires(mock_context_invariant(context))]
+#[ensures(matches!(result, Ok(_)) ==> mock_context_invariant(context))]
+fn store_client_result_impl(context: &mut MockContext, handler_res: ClientResult) -> Result<(), Ics02Error> {
+    match handler_res {
+        Create(res) => {
+            let client_id = res.client_id.clone();
+
+            handle_result!(context.store_client_type0(res.client_id, res.client_type));
+            handle_result!(context.store_client_state0(client_id.clone(), res.client_state.clone()));
+            handle_result!(context.store_consensus_state0(
+                client_id,
+                res.client_state.latest_height(),
+                res.consensus_state,
+            ));
+            context.increase_client_counter0();
+            Ok(())
+        }
+        Update(res) => {
+            handle_result!(context.store_client_state0(res.client_id.clone(), res.client_state.clone()));
+            handle_result!(context.store_consensus_state0(
+                res.client_id.clone(),
+                res.client_state.latest_height(),
+                res.consensus_state,
+            ));
+            Ok(())
+        }
+        Upgrade(res) => {
+            handle_result!(context.store_client_state0(res.client_id.clone(), res.client_state.clone()));
+            handle_result!(context.store_consensus_state0(
+                res.client_id.clone(),
+                res.client_state.latest_height(),
+                res.consensus_state,
+            ));
+            Ok(())
+        }
+    }
+}
 
 /// Implementation of internal interface for use in testing. The methods in this interface should
 /// _not_ be accessible to any Ics handler.
@@ -172,62 +223,13 @@ impl MockContext {
         latest_height: Height,
     ) -> Self { unimplemented!() }
 
+
     #[requires(mock_context_invariant(self))]
     #[ensures(mock_context_invariant(self))]
-    #[ensures(false)]
-    fn store_client_result_impl(&mut self, handler_res: ClientResult) -> Result<(), Ics02Error> {
-        match handler_res {
-            Create(res) => {
-                let client_id = res.client_id.clone();
-
-                handle_result!(self.store_client_type0(client_id.clone(), res.client_type));
-                handle_result!(self.store_client_state0(client_id.clone(), res.client_state.clone()));
-                handle_result!(self.store_consensus_state0(
-                    client_id,
-                    res.client_state.latest_height(),
-                    res.consensus_state,
-                ));
-                self.increase_client_counter0();
-            }
-            Update(res) => {
-                handle_result!(self.store_client_state0(res.client_id.clone(), res.client_state.clone()));
-                handle_result!(self.store_consensus_state0(
-                    res.client_id.clone(),
-                    res.client_state.latest_height(),
-                    res.consensus_state,
-                ));
-            }
-            Upgrade(res) => {
-                handle_result!(self.store_client_state0(res.client_id.clone(), res.client_state.clone()));
-                handle_result!(self.store_consensus_state0(
-                    res.client_id.clone(),
-                    res.client_state.latest_height(),
-                    res.consensus_state,
-                ));
-            }
-        }
-        Ok(())
-    }
-
-    #[ensures(self.clients == old(self.clients))]
     fn increase_client_counter0(&mut self) {
         self.client_ids_counter += 1
     }
 
-    #[ensures(
-        forall(|cid: &ClientId|
-            old(self.clients.contains_key(cid)) ==>
-                self.clients.contains_key(cid)
-    ]
-    #[ensures(
-        forall(|cid: &ClientId|
-            self.clients.contains_key(cid) && client_id != *cid ==>
-                get_client(cid, self) == get_client(cid, old(self))
-    ]
-    #[ensures(
-        self.clients.contains_key(client_id) &&
-            get_client(&client_id, self).client_state == Some(client_state)
-    )]
     #[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn store_client_state0(
         &mut self,
@@ -244,20 +246,6 @@ impl MockContext {
         Ok(())
     }
 
-    #[ensures(
-        forall(|cid: &ClientId|
-            old(self.clients.contains_key(cid)) ==>
-                self.clients.contains_key(cid)
-    ]
-    #[ensures(
-        forall(|cid: &ClientId|
-            self.clients.contains_key(cid) && client_id != *cid ==>
-                get_client(cid, self) == get_client(cid, old(self))
-    ]
-    #[ensures(
-        self.clients.contains_key(client_id) &&
-            get_client(&client_id, self).client_state == Some(client_state)
-    )]
     #[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn store_consensus_state0(
         &mut self,
@@ -277,22 +265,17 @@ impl MockContext {
         Ok(())
     }
 
-    #[cfg_attr(feature="prusti_fast", trusted_skip)]
-    #[requires(
-        forall(|client_id: &ClientId|
-            self.clients.contains_key(client_id) ==>
-                client_invariant(get_client(client_id, self))))
-    ]
+    // #[ensures(
+    //     forall(|cid: ClientId|
+    //         (contains_key(old(&self.clients), cid) || cid == client_id) ==
+    //             contains_key(&self.clients, cid)))
+    // ]
     #[ensures(
-        forall(|cid: &ClientId|
-            old(self.clients.contains_key(cid)) ==>
-                self.clients.contains_key(cid)
+        forall(|cid: ClientId|
+            contains_key(&self.clients, old(cid)) && old(client_id) != old(cid) ==>
+               get_client(&self.clients, old(cid)) == get_client(old(&self.clients), old(cid))))
     ]
-    #[ensures(
-        forall(|client_id: &ClientId|
-            self.clients.contains_key(client_id) ==>
-                client_invariant(get_client(client_id, self))))
-    ]
+    #[trusted]
     fn store_client_type0(
         &mut self,
         client_id: ClientId,

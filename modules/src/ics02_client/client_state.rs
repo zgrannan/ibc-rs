@@ -48,6 +48,7 @@ pub trait ClientState: Clone + Send + Sync {
 }
 
 #[cfg_attr(not(feature="prusti"), derive(Debug), derive(Deserialize), derive(Serialize), derive(PartialEq), derive(Eq))]
+#[cfg_attr(feature="prusti", derive(PrustiPartialEq, PrustiEq))]
 #[derive(Clone)]
 // #[serde(tag = "type")]
 pub enum AnyClientState {

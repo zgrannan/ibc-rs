@@ -214,35 +214,13 @@ impl TryFrom<String> for ChainId {
     }
 }
 
-#[cfg_attr(not(feature="prusti"), derive(Debug), derive(Deserialize), derive(Serialize), derive(PartialOrd), derive(Ord))]
-#[cfg_attr(feature="prusti", derive(PrustiDeserialize), derive(PrustiSerialize))]
-#[derive(Eq, PartialEq, Clone, Hash)]
+#[cfg(not(feature="prusti"))]
+#[derive(Eq, PartialEq, Clone, Hash, Debug, Deserialize, Serialize, PartialOrd, Ord)]
 pub struct ClientId(String);
 
 #[cfg(feature="prusti")]
-impl Ord for ClientId {
-    #[cfg_attr(feature="prusti", trusted)]
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        todo!()
-    }
-}
-
-#[cfg(feature="prusti")]
-impl PartialOrd for ClientId {
-    #[cfg_attr(feature="prusti", trusted)]
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        todo!()
-    }
-}
-
-#[cfg(feature="prusti")]
-impl std::fmt::Debug for ClientId {
-    #[cfg_attr(feature="prusti", trusted)]
-    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        panic!("No")
-    }
-}
-
+#[derive(Eq, PartialEq, Clone, Hash, PrustiDebug, PrustiDeserialize, Serialize, PartialOrd, Ord, Copy)]
+pub struct ClientId(u32);
 
 impl ClientId {
     /// Builds a new client identifier. Client identifiers are deterministically formed from two
@@ -264,7 +242,7 @@ impl ClientId {
     }
 
     /// Get this identifier as a borrowed `&str`
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted_skip)]
     pub fn as_str(&self) -> &str {
         &self.0
     }
@@ -283,7 +261,7 @@ impl ClientId {
     }
 
     /// Get this identifier as a borrowed byte slice
-    #[cfg_attr(feature="prusti", trusted)]
+    #[cfg_attr(feature="prusti", trusted_skip)]
     pub fn as_bytes(&self) -> &[u8] {
         self.0.as_bytes()
     }

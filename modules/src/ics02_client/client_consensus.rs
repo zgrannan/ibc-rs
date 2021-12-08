@@ -45,6 +45,7 @@ pub trait ConsensusState: Clone + Send + Sync {
 }
 
 #[cfg_attr(not(feature="prusti"), derive(Debug))]
+#[cfg_attr(feature="prusti", derive(PrustiPartialEq, PrustiEq))]
 #[derive(Clone)]
 // #[serde(tag = "type")]
 pub enum AnyConsensusState {
