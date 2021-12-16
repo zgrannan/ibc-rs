@@ -104,7 +104,7 @@ unreachable!() //         // The handler processed this channel & some modificat
 //         Ok(())
     }
 
-#[cfg_attr(feature="prusti_fast", trusted_skip)]
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     fn store_packet_result(&mut self, general_result: PacketResult) -> Result<(), Error> {
         match general_result {
             PacketResult::Send(res) => {

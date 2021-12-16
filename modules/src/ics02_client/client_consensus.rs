@@ -69,6 +69,7 @@ impl AnyConsensusState {
         }
     }
 
+    #[cfg_attr(feature="prusti", pure)]
     pub fn client_type(&self) -> ClientType {
         match self {
             AnyConsensusState::Tendermint(_cs) => ClientType::Tendermint,

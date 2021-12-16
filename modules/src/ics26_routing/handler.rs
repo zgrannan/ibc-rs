@@ -4,6 +4,10 @@ use prusti_contracts::*;
 use core::convert::TryInto;
 use prost_types::Any;
 
+use crate::mock::context::MockContext;
+use crate::ics02_client::context::ClientKeeper;
+use crate::ics03_connection::context::ConnectionKeeper;
+use crate::ics04_channel::context::ChannelKeeper;
 use crate::application::ics20_fungible_token_transfer::relay_application_logic::send_transfer::send_transfer as ics20_msg_dispatcher;
 use crate::ics02_client::handler::dispatch as ics2_msg_dispatcher;
 use crate::ics03_connection::handler::dispatch as ics3_msg_dispatcher;
@@ -54,18 +58,14 @@ pub fn decode(message: Any) -> Result<Ics26Envelope, Error> {
 /// Top-level ICS dispatch function. Routes incoming IBC messages to their corresponding module.
 /// Returns a handler output with empty result of type `HandlerOutput<()>` which contains the log
 /// and events produced after processing the input `msg`.
-#[cfg_attr(feature="prusti", trusted)]
-pub fn dispatch<Ctx>(ctx: &mut Ctx, msg: Ics26Envelope) -> Result<HandlerOutput<()>, Error>
-where
-    Ctx: Ics26Context,
+pub fn dispatch(ctx: &mut MockContext, msg: Ics26Envelope) -> Result<HandlerOutput<()>, Error>
 {
-    let output = match msg {
+    let result = match msg {
         Ics2Msg(msg) => {
             let handler_output = ics2_msg_dispatcher(ctx, msg).map_err(Error::ics02_client)?;
 
             // Apply the result to the context (host chain store).
-            ctx.store_client_result(handler_output.result)
-                .map_err(Error::ics02_client)?;
+            ctx.store_client_result(handler_output.result).unwrap();
 
             HandlerOutput::builder()
                 .with_log(handler_output.log)
@@ -126,9 +126,11 @@ where
                 .with_events(handler_output.events)
                 .with_result(())
         }
+
     };
 
-    Ok(output)
+    Ok(result)
+
 }
 
 #[cfg(test)]

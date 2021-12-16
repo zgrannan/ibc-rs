@@ -132,7 +132,7 @@ impl ClientState for MockClientState {
         todo!()
     }
 
-#[cfg_attr(feature="prusti_fast", trusted_skip)]
+    #[cfg_attr(feature="prusti", pure)]
     fn client_type(&self) -> ClientType {
         ClientType::Mock
     }

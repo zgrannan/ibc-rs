@@ -23,9 +23,20 @@ pub trait ClientReader {
     fn client_counter(&self) -> u64;
 }
 
+#[pure]
+fn is_valid_client_result(res: &ClientResult) -> bool {
+   match res {
+       Create(c) => {
+           c.client_type == c.client_state.client_type()
+       },
+       _ => true
+   }
+}
+
 /// Defines the write-only part of ICS2 (client functions) context.
 pub trait ClientKeeper {
-    #[cfg_attr(feature="prusti_fast", trusted_skip)]
+    #[ensures(is_valid_client_result(&handler_res) ==> result.is_ok())]
+    #[trusted]
     fn store_client_result(&mut self, handler_res: ClientResult) -> Result<(), Error> {
         match handler_res {
             Create(res) => {

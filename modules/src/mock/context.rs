@@ -169,8 +169,8 @@ impl Default for MockContext {
         )
     }
 }
-#[requires(mock_context_invariant(context))]
-#[ensures(matches!(result, Ok(_)) ==> mock_context_invariant(context))]
+
+#[cfg_attr(feature="prusti", trusted_skip)]
 fn store_client_result_impl(context: &mut MockContext, handler_res: ClientResult) -> Result<(), Ics02Error> {
     match handler_res {
         Create(res) => {

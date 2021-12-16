@@ -33,6 +33,7 @@ pub trait ClientState: Clone + Send + Sync {
     fn chain_id(&self) -> ChainId;
 
     /// Type of client associated with this state (eg. Tendermint)
+    #[cfg_attr(feature="prusti", pure)]
     fn client_type(&self) -> ClientType;
 
     /// Latest height of consensus state
@@ -101,6 +102,7 @@ impl AnyClientState {
         }
     }
 
+    #[cfg_attr(feature="prusti", pure)]
     pub fn client_type(&self) -> ClientType {
         match self {
             Self::Tendermint(state) => state.client_type(),
@@ -200,7 +202,7 @@ impl ClientState for AnyClientState {
         }
     }
 
-#[cfg_attr(feature="prusti_fast", trusted_skip)]
+    #[cfg_attr(feature="prusti", pure)]
     fn client_type(&self) -> ClientType {
         self.client_type()
     }
