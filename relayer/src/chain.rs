@@ -71,6 +71,34 @@ pub struct QueryPacketOptions {
     pub height: u64,
 }
 
+#[pure]
+#[trusted]
+fn msg_invariant(target_height: ICSHeight, msg: Any) -> bool {
+    unimplemented!()
+}
+
+predicate! {
+    pub fn msgs_invariant(target_height: ICSHeight, msgs: Vec<Any>) -> bool {
+        forall(
+            |i: usize| i < msgs.len() ==>
+                msg_invariant(target_height, get_msg(msgs, i)))
+    }
+}
+
+#[pure]
+#[trusted]
+fn get_msg(msgs: Vec<Any>, i : usize) -> Any {
+    msgs[i].clone()
+}
+
+#[extern_spec]
+impl <T, A: std::alloc::Allocator> Vec<T, A> {
+
+    #[pure]
+    fn len(&self) -> usize;
+}
+
+
 /// Defines a blockchain as understood by the relayer
 pub trait Chain: Sized {
     /// Type of light blocks for this chain
@@ -110,6 +138,14 @@ pub trait Chain: Sized {
     fn keybase_mut(&mut self) -> &mut KeyRing;
 
     /// Sends one or more transactions with `msgs` to chain.
+    #[ensures(
+        forall(
+            |h : ICSHeight|
+                // self.query_latest_height().unwrap() < h &&
+                msgs_invariant(h, proto_msgs) ==>
+                result.is_ok()
+        )
+    )]
     fn send_msgs(&mut self, proto_msgs: Vec<Any>) -> Result<Vec<IbcEvent>, Error>;
 
     fn get_signer(&mut self) -> Result<Signer, Error>;

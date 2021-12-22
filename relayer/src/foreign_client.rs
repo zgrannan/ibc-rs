@@ -31,10 +31,42 @@ use ibc::Height;
 use ibc_proto::ibc::core::client::v1::QueryConsensusStatesRequest;
 
 use crate::chain::handle::ChainHandle;
+use crate::chain::msgs_invariant;
 
 const MAX_MISBEHAVIOUR_CHECK_DURATION: Duration = Duration::from_secs(120);
 
 const MAX_RETRIES: usize = 5;
+
+#[extern_spec]
+impl Height {
+    #[pure]
+    pub fn zero() -> Height {
+        Self {
+            revision_number: 0,
+            revision_height: 0,
+        }
+    }
+}
+#[pure]
+#[trusted]
+fn get_result(r: Result<Vec<Any>, ForeignClientError>) -> Vec<Any> {
+    return r.unwrap()
+}
+
+#[pure]
+pub fn height_gt(lhs: Height, other: Height) -> bool {
+    if lhs.revision_number < other.revision_number {
+        false
+    } else if lhs.revision_number > other.revision_number {
+        true
+    } else if lhs.revision_height < other.revision_height {
+        false
+    } else if lhs.revision_height > other.revision_height {
+        true
+    } else {
+        false
+    }
+}
 
 define_error! {
     ForeignClientError {
@@ -580,27 +612,20 @@ impl ForeignClient {
     }
 
     /// Wrapper for build_update_client_with_trusted.
-#[cfg_attr(feature="prusti_fast", trusted_skip)]
+    #[requires(height_gt(target_height, Height::zero()))]
+    #[ensures(result.is_ok() ==> msgs_invariant(target_height, get_result(result)))]
     pub fn build_update_client(
         &self,
         target_height: Height,
     ) -> Result<Vec<Any>, ForeignClientError> {
-        self.build_update_client_with_trusted(target_height, Height::zero())
+       self.build_update_client_with_trusted(target_height, Height::zero())
     }
 
     /// Returns a vector with a message for updating the client to height `target_height`.
     /// If the client already stores consensus states for this height, returns an empty vector.
-    #[cfg(feature="prusti")]
-    #[trusted]
-    pub fn build_update_client_with_trusted(
-        &self,
-        target_height: Height,
-        trusted_height: Height,
-    ) -> Result<Vec<Any>, ForeignClientError> {
-        todo!()
-    }
-
-    #[cfg(not(feature="prusti"))]
+    #[requires(height_gt(target_height, trusted_height))]
+    #[ensures(result.is_ok() ==> msgs_invariant(target_height, get_result(result)))]
+    #[cfg_attr(feature="prusti", trusted_skip)]
     pub fn build_update_client_with_trusted(
         &self,
         target_height: Height,
@@ -719,22 +744,12 @@ impl ForeignClient {
         Ok(msgs)
     }
 
-#[cfg_attr(feature="prusti_fast", trusted_skip)]
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn build_latest_update_client_and_send(&self) -> Result<Vec<IbcEvent>, ForeignClientError> {
         self.build_update_client_and_send(Height::zero(), Height::zero())
     }
 
-    #[cfg(feature="prusti")]
-    #[trusted]
-    pub fn build_update_client_and_send(
-        &self,
-        height: Height,
-        trusted_height: Height,
-    ) -> Result<Vec<IbcEvent>, ForeignClientError> {
-        todo!()
-    }
-
-    #[cfg(not(feature="prusti"))]
+    #[cfg_attr(feature="prusti_fast", trusted_skip)]
     pub fn build_update_client_and_send(
         &self,
         height: Height,
