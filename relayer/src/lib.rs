@@ -1,9 +1,7 @@
 #![forbid(unsafe_code)]
 #![deny(
-    warnings,
     trivial_casts,
     trivial_numeric_casts,
-    unused_import_braces,
     unused_qualifications,
     rust_2018_idioms
 )]
@@ -21,9 +19,7 @@
 extern crate alloc;
 
 pub mod account;
-pub mod cache;
 pub mod chain;
-pub mod channel;
 pub mod config;
 pub mod connection;
 pub mod error;
@@ -31,17 +27,13 @@ pub mod event;
 pub mod foreign_client;
 pub mod keyring;
 pub mod light_client;
-pub mod link;
 pub mod macros;
 pub mod object;
 pub mod path;
 pub mod registry;
-pub mod rest;
 pub mod sdk_error;
 pub mod spawn;
-pub mod supervisor;
 pub mod telemetry;
 pub mod transfer;
 pub mod upgrade_chain;
 pub mod util;
-pub mod worker;

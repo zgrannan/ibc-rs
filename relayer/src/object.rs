@@ -14,15 +14,10 @@ use ibc::{
 };
 
 use crate::chain::{
-    counterparty::{
-        channel_connection_client, counterparty_chain_from_channel,
-        counterparty_chain_from_connection,
-    },
     handle::ChainHandle,
     requests::{IncludeProof, QueryClientStateRequest},
 };
 use crate::error::Error as RelayerError;
-use crate::supervisor::Error as SupervisorError;
 
 /// Client
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
@@ -159,10 +154,6 @@ define_error! {
         Relayer
             [ RelayerError ]
             | _ | { "relayer error" },
-
-        Supervisor
-            [ SupervisorError ]
-            | _ | { "supervisor error" },
 
         RefreshNotRequired
             {
@@ -329,157 +320,4 @@ impl Object {
         .into())
     }
 
-    /// Build the client object associated with the given channel event attributes.
-    pub fn client_from_chan_open_events(
-        e: &Attributes,           // The attributes of the emitted event
-        chain: &impl ChainHandle, // The chain which emitted the event
-    ) -> Result<Self, ObjectError> {
-        let channel_id = e
-            .channel_id()
-            .ok_or_else(|| ObjectError::missing_channel_id(e.clone()))?;
-
-        let client = channel_connection_client(chain, e.port_id(), channel_id)
-            .map_err(ObjectError::supervisor)?
-            .client;
-
-        if client.client_state.refresh_period().is_none() {
-            return Err(ObjectError::refresh_not_required(
-                client.client_id,
-                chain.id(),
-            ));
-        }
-
-        Ok(Client {
-            dst_client_id: client.client_id.clone(),
-            dst_chain_id: chain.id(), // The object's destination is the chain hosting the client
-            src_chain_id: client.client_state.chain_id(),
-        }
-        .into())
-    }
-
-    /// Build the Connection object associated with the given
-    /// [`Open`](ibc::core::ics03_connection::connection::State::Open)
-    /// connection event.
-    pub fn connection_from_conn_open_events(
-        e: &ConnectionAttributes,
-        src_chain: &impl ChainHandle,
-    ) -> Result<Self, ObjectError> {
-        let connection_id = e
-            .connection_id
-            .as_ref()
-            .ok_or_else(|| ObjectError::missing_connection_id(e.clone()))?;
-
-        let dst_chain_id = counterparty_chain_from_connection(src_chain, connection_id)
-            .map_err(ObjectError::supervisor)?;
-
-        Ok(Connection {
-            dst_chain_id,
-            src_chain_id: src_chain.id(),
-            src_connection_id: connection_id.clone(),
-        }
-        .into())
-    }
-
-    /// Build the Channel object associated with the given
-    /// [`Open`](ibc::core::ics04_channel::channel::State::Open) channel event.
-    pub fn channel_from_chan_open_events(
-        attributes: &Attributes,
-        src_chain: &impl ChainHandle,
-    ) -> Result<Self, ObjectError> {
-        let channel_id = attributes
-            .channel_id()
-            .ok_or_else(|| ObjectError::missing_channel_id(attributes.clone()))?;
-
-        let dst_chain_id =
-            counterparty_chain_from_channel(src_chain, channel_id, attributes.port_id())
-                .map_err(ObjectError::supervisor)?;
-
-        Ok(Channel {
-            dst_chain_id,
-            src_chain_id: src_chain.id(),
-            src_channel_id: *channel_id,
-            src_port_id: attributes.port_id().clone(),
-        }
-        .into())
-    }
-
-    /// Build the object associated with the given [`SendPacket`] event.
-    pub fn for_send_packet(
-        e: &SendPacket,
-        src_chain: &impl ChainHandle,
-    ) -> Result<Self, ObjectError> {
-        let dst_chain_id = counterparty_chain_from_channel(
-            src_chain,
-            &e.packet.source_channel,
-            &e.packet.source_port,
-        )
-        .map_err(ObjectError::supervisor)?;
-
-        Ok(Packet {
-            dst_chain_id,
-            src_chain_id: src_chain.id(),
-            src_channel_id: e.packet.source_channel,
-            src_port_id: e.packet.source_port.clone(),
-        }
-        .into())
-    }
-
-    /// Build the object associated with the given [`WriteAcknowledgement`] event.
-    pub fn for_write_ack(
-        e: &WriteAcknowledgement,
-        src_chain: &impl ChainHandle,
-    ) -> Result<Self, ObjectError> {
-        let dst_chain_id = counterparty_chain_from_channel(
-            src_chain,
-            &e.packet.destination_channel,
-            &e.packet.destination_port,
-        )
-        .map_err(ObjectError::supervisor)?;
-
-        Ok(Packet {
-            dst_chain_id,
-            src_chain_id: src_chain.id(),
-            src_channel_id: e.packet.destination_channel,
-            src_port_id: e.packet.destination_port.clone(),
-        }
-        .into())
-    }
-
-    /// Build the object associated with the given [`TimeoutPacket`] event.
-    pub fn for_timeout_packet(
-        e: &TimeoutPacket,
-        src_chain: &impl ChainHandle,
-    ) -> Result<Self, ObjectError> {
-        let dst_chain_id = counterparty_chain_from_channel(
-            src_chain,
-            &e.packet.source_channel,
-            &e.packet.source_port,
-        )
-        .map_err(ObjectError::supervisor)?;
-
-        Ok(Packet {
-            dst_chain_id,
-            src_chain_id: src_chain.id(),
-            src_channel_id: *e.src_channel_id(),
-            src_port_id: e.src_port_id().clone(),
-        }
-        .into())
-    }
-
-    /// Build the object associated with the given [`CloseInit`] event.
-    pub fn for_close_init_channel(
-        e: &CloseInit,
-        src_chain: &impl ChainHandle,
-    ) -> Result<Self, ObjectError> {
-        let dst_chain_id = counterparty_chain_from_channel(src_chain, e.channel_id(), e.port_id())
-            .map_err(ObjectError::supervisor)?;
-
-        Ok(Packet {
-            dst_chain_id,
-            src_chain_id: src_chain.id(),
-            src_channel_id: *e.channel_id(),
-            src_port_id: e.port_id().clone(),
-        }
-        .into())
-    }
 }

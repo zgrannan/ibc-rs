@@ -6,7 +6,6 @@ use ibc::events::IbcEvent;
 
 use crate::error::Error as RelayerError;
 use crate::foreign_client::{ForeignClientError, HasExpiredOrFrozenError};
-use crate::supervisor::Error as SupervisorError;
 
 define_error! {
     ConnectionError {
@@ -122,10 +121,6 @@ define_error! {
                 format!("the connection end is expected to be in state 'Open'; found state: {:?}",
                     e.state)
             },
-
-        Supervisor
-            [ SupervisorError ]
-            |_| { "supervisor error" },
 
         MissingConnectionId
             {
