@@ -5,7 +5,6 @@ use ibc::core::ics24_host::identifier::{ChainId, ClientId, ConnectionId};
 use ibc::events::IbcEvent;
 
 use crate::error::Error as RelayerError;
-use crate::foreign_client::{ForeignClientError, HasExpiredOrFrozenError};
 
 define_error! {
     ConnectionError {
@@ -38,17 +37,6 @@ define_error! {
             [ RelayerError ]
             |e| {
                 format!("failed to query the connection for {}", e.connection_id)
-            },
-
-        ClientOperation
-            {
-                client_id: ClientId,
-                chain_id: ChainId,
-            }
-            [ ForeignClientError ]
-            |e| {
-                format!("failed during an operation on client '{0}' hosted by chain '{1}'",
-                    e.client_id, e.chain_id)
             },
 
         Submit
@@ -175,20 +163,5 @@ define_error! {
                     e.tries, e.total_delay.as_secs(), e.description)
             },
 
-    }
-}
-
-impl HasExpiredOrFrozenError for ConnectionErrorDetail {
-    fn is_expired_or_frozen_error(&self) -> bool {
-        match self {
-            Self::ClientOperation(e) => e.source.is_expired_or_frozen_error(),
-            _ => false,
-        }
-    }
-}
-
-impl HasExpiredOrFrozenError for ConnectionError {
-    fn is_expired_or_frozen_error(&self) -> bool {
-        self.detail().is_expired_or_frozen_error()
     }
 }
