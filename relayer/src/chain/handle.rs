@@ -36,7 +36,6 @@ use crate::{
     config::ChainConfig,
     connection::ConnectionMsgType,
     error::Error,
-    event::monitor::{EventBatch, Result as MonitorResult},
     keyring::KeyEntry,
 };
 
@@ -89,8 +88,6 @@ impl<ChainA: ChainHandle, ChainB: ChainHandle> Debug for ChainHandlePair<ChainA,
     }
 }
 
-pub type Subscription = channel::Receiver<Arc<MonitorResult<EventBatch>>>;
-
 pub type ReplyTo<T> = channel::Sender<Result<T, Error>>;
 pub type Reply<T> = channel::Receiver<Result<T, Error>>;
 
@@ -108,10 +105,6 @@ pub enum ChainRequest {
 
     HealthCheck {
         reply_to: ReplyTo<HealthCheck>,
-    },
-
-    Subscribe {
-        reply_to: ReplyTo<Subscription>,
     },
 
     SendMessagesAndWaitCommit {
@@ -353,9 +346,6 @@ pub trait ChainHandle: Clone + Send + Sync + Serialize + Debug + 'static {
 
     /// Perform a health check
     fn health_check(&self) -> Result<HealthCheck, Error>;
-
-    /// Subscribe to the events emitted by the chain.
-    fn subscribe(&self) -> Result<Subscription, Error>;
 
     /// Send the given `msgs` to the chain, packaged as one or more transactions,
     /// and return the list of events emitted by the chain after the transaction was committed.

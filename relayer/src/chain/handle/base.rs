@@ -50,7 +50,7 @@ use crate::{
     keyring::KeyEntry,
 };
 
-use super::{reply_channel, ChainHandle, ChainRequest, HealthCheck, ReplyTo, Subscription};
+use super::{reply_channel, ChainHandle, ChainRequest, HealthCheck, ReplyTo};
 
 /// A basic chain handle implementation.
 /// For use in interactive CLIs, e.g., `query`, `tx raw`, etc.
@@ -100,10 +100,6 @@ impl ChainHandle for BaseChainHandle {
 
     fn shutdown(&self) -> Result<(), Error> {
         self.send(|reply_to| ChainRequest::Shutdown { reply_to })
-    }
-
-    fn subscribe(&self) -> Result<Subscription, Error> {
-        self.send(|reply_to| ChainRequest::Subscribe { reply_to })
     }
 
     fn send_messages_and_wait_commit(

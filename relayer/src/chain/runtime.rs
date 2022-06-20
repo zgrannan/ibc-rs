@@ -39,7 +39,6 @@ use crate::{
     error::Error,
     event::{
         bus::EventBus,
-        monitor::{EventBatch, EventReceiver, MonitorCmd, Result as MonitorResult, TxMonitorCmd},
     },
     keyring::KeyEntry
 };
@@ -47,7 +46,7 @@ use crate::{
 use super::{
     client::ClientSettings,
     endpoint::{ChainEndpoint, ChainStatus, HealthCheck},
-    handle::{ChainHandle, ChainRequest, ReplyTo, Subscription},
+    handle::{ChainHandle, ChainRequest, ReplyTo},
     requests::{
         IncludeProof, QueryChannelClientStateRequest, QueryChannelRequest, QueryChannelsRequest,
         QueryClientConnectionsRequest, QueryClientStateRequest, QueryClientStatesRequest,
@@ -67,64 +66,6 @@ pub struct Threads {
     pub event_monitor: Option<thread::JoinHandle<()>>,
 }
 
-#[derive(Debug)]
-pub enum EventMonitorCtrl {
-    None {
-        /// Empty channel for when the None case
-        never: EventReceiver,
-    },
-    Live {
-        /// Receiver channel from the event bus
-        event_receiver: EventReceiver,
-
-        /// Sender channel to terminate the event monitor
-        tx_monitor_cmd: TxMonitorCmd,
-    },
-}
-
-impl EventMonitorCtrl {
-    pub fn none() -> Self {
-        Self::None {
-            never: channel::never(),
-        }
-    }
-
-    pub fn live(event_receiver: EventReceiver, tx_monitor_cmd: TxMonitorCmd) -> Self {
-        Self::Live {
-            event_receiver,
-            tx_monitor_cmd,
-        }
-    }
-
-    pub fn enable(&mut self, event_receiver: EventReceiver, tx_monitor_cmd: TxMonitorCmd) {
-        *self = Self::live(event_receiver, tx_monitor_cmd);
-    }
-
-    pub fn recv(&self) -> &EventReceiver {
-        match self {
-            Self::None { ref never } => never,
-            Self::Live {
-                ref event_receiver, ..
-            } => event_receiver,
-        }
-    }
-
-    pub fn shutdown(&self) -> Result<(), Error> {
-        match self {
-            Self::None { .. } => Ok(()),
-            Self::Live {
-                ref tx_monitor_cmd, ..
-            } => tx_monitor_cmd
-                .send(MonitorCmd::Shutdown)
-                .map_err(Error::send),
-        }
-    }
-
-    pub fn is_live(&self) -> bool {
-        matches!(self, Self::Live { .. })
-    }
-}
-
 pub struct ChainRuntime<Endpoint: ChainEndpoint> {
     /// The specific chain this runtime runs against
     chain: Endpoint,
@@ -136,12 +77,6 @@ pub struct ChainRuntime<Endpoint: ChainEndpoint> {
     /// The receiving side of a channel to this runtime. The runtime consumes chain requests coming
     /// in through this channel.
     request_receiver: channel::Receiver<ChainRequest>,
-
-    /// An event bus, for broadcasting events that this runtime receives (via `event_receiver`) to subscribers
-    event_bus: EventBus<Arc<MonitorResult<EventBatch>>>,
-
-    /// Interface to the event monitor
-    event_monitor_ctrl: EventMonitorCtrl,
 
     #[allow(dead_code)]
     rt: Arc<TokioRuntime>, // Making this future-proof, so we keep the runtime around.
@@ -160,235 +95,12 @@ where
     }
 
     fn run(mut self) -> Result<(), Error> {
-        loop {
-            channel::select! {
-                recv(self.event_monitor_ctrl.recv()) -> event_batch => {
-                    match event_batch {
-                        Ok(event_batch) => {
-                            self.event_bus
-                                .broadcast(Arc::new(event_batch));
-                        },
-                        Err(e) => {
-                            error!("received error via event bus: {}", e);
-                            return Err(Error::channel_receive(e));
-                        },
-                    }
-                },
-                recv(self.request_receiver) -> event => {
-                    match event {
-                        Ok(ChainRequest::Shutdown { reply_to }) => {
-                            self.event_monitor_ctrl.shutdown()?;
-
-                            let res = self.chain.shutdown();
-                            reply_to.send(res)
-                                .map_err(Error::send)?;
-
-                            break;
-                        }
-
-                        Ok(ChainRequest::HealthCheck { reply_to }) => {
-                            self.health_check(reply_to)?
-                        },
-
-                        Ok(ChainRequest::Subscribe { reply_to }) => {
-                            self.subscribe(reply_to)?
-                        },
-
-                        Ok(ChainRequest::SendMessagesAndWaitCommit { tracked_msgs, reply_to }) => {
-                            self.send_messages_and_wait_commit(tracked_msgs, reply_to)?
-                        },
-
-                        Ok(ChainRequest::SendMessagesAndWaitCheckTx { tracked_msgs, reply_to }) => {
-                            self.send_messages_and_wait_check_tx(tracked_msgs, reply_to)?
-                        },
-
-                        Ok(ChainRequest::Signer { reply_to }) => {
-                            self.get_signer(reply_to)?
-                        }
-
-                        Ok(ChainRequest::Config { reply_to }) => {
-                            self.get_config(reply_to)?
-                        }
-
-                        Ok(ChainRequest::GetKey { reply_to }) => {
-                            self.get_key(reply_to)?
-                        }
-
-                        Ok(ChainRequest::AddKey { key_name, key, reply_to }) => {
-                            self.add_key(key_name, key, reply_to)?
-                        }
-
-                        Ok(ChainRequest::IbcVersion { reply_to }) => {
-                            self.ibc_version(reply_to)?
-                        }
-
-                        Ok(ChainRequest::BuildHeader { trusted_height, target_height, client_state, reply_to }) => {
-                        }
-
-                        Ok(ChainRequest::BuildClientState { height, settings, reply_to }) => {
-                            self.build_client_state(height, settings, reply_to)?
-                        }
-
-                        Ok(ChainRequest::BuildConsensusState { trusted, target, client_state, reply_to }) => {
-                        }
-
-                       Ok(ChainRequest::BuildMisbehaviour { client_state, update_event, reply_to }) => {
-                        }
-
-                        Ok(ChainRequest::BuildConnectionProofsAndClientState { message_type, connection_id, client_id, height, reply_to }) => {
-                            self.build_connection_proofs_and_client_state(message_type, connection_id, client_id, height, reply_to)?
-                        },
-
-                        Ok(ChainRequest::BuildChannelProofs { port_id, channel_id, height, reply_to }) => {
-                            self.build_channel_proofs(port_id, channel_id, height, reply_to)?
-                        },
-
-                        Ok(ChainRequest::QueryBalance { key_name, reply_to }) => {
-                            self.query_balance(key_name, reply_to)?
-                        }
-
-                        Ok(ChainRequest::QueryApplicationStatus { reply_to }) => {
-                            self.query_application_status(reply_to)?
-                        }
-
-                        Ok(ChainRequest::QueryClients { request, reply_to }) => {
-                            self.query_clients(request, reply_to)?
-                        },
-
-                        Ok(ChainRequest::QueryClientConnections { request, reply_to }) => {
-                            self.query_client_connections(request, reply_to)?
-                        },
-
-                        Ok(ChainRequest::QueryClientState { request, include_proof, reply_to }) => {
-                            self.query_client_state(request, include_proof, reply_to)?
-                        },
-
-                        Ok(ChainRequest::QueryConsensusStates { request, reply_to }) => {
-                            self.query_consensus_states(request, reply_to)?
-                        },
-
-                        Ok(ChainRequest::QueryConsensusState { request, include_proof, reply_to }) => {
-                            self.query_consensus_state(request, include_proof, reply_to)?
-                        },
-
-                        Ok(ChainRequest::QueryUpgradedClientState { request, reply_to }) => {
-                            self.query_upgraded_client_state(request, reply_to)?
-                        }
-
-                       Ok(ChainRequest::QueryUpgradedConsensusState { request, reply_to }) => {
-                            self.query_upgraded_consensus_state(request, reply_to)?
-                        }
-
-                        Ok(ChainRequest::QueryCommitmentPrefix { reply_to }) => {
-                            self.query_commitment_prefix(reply_to)?
-                        },
-
-                        Ok(ChainRequest::QueryCompatibleVersions { reply_to }) => {
-                            self.query_compatible_versions(reply_to)?
-                        },
-
-                        Ok(ChainRequest::QueryConnection { request, include_proof, reply_to }) => {
-                            self.query_connection(request, include_proof, reply_to)?
-                        },
-
-                        Ok(ChainRequest::QueryConnections { request, reply_to }) => {
-                            self.query_connections(request, reply_to)?
-                        },
-
-                        Ok(ChainRequest::QueryConnectionChannels { request, reply_to }) => {
-                            self.query_connection_channels(request, reply_to)?
-                        },
-
-                        Ok(ChainRequest::QueryChannels { request, reply_to }) => {
-                            self.query_channels(request, reply_to)?
-                        },
-
-                        Ok(ChainRequest::QueryChannel { request, include_proof, reply_to }) => {
-                            self.query_channel(request, include_proof, reply_to)?
-                        },
-
-                        Ok(ChainRequest::QueryChannelClientState { request, reply_to }) => {
-                            self.query_channel_client_state(request, reply_to)?
-                        },
-
-                        Ok(ChainRequest::BuildPacketProofs { packet_type, port_id, channel_id, sequence, height, reply_to }) => {
-                            self.build_packet_proofs(packet_type, port_id, channel_id, sequence, height, reply_to)?
-                        },
-
-                        Ok(ChainRequest::QueryPacketCommitment { request, include_proof, reply_to }) => {
-                            self.query_packet_commitment(request, include_proof, reply_to)?
-                        },
-
-                        Ok(ChainRequest::QueryPacketCommitments { request, reply_to }) => {
-                            self.query_packet_commitments(request, reply_to)?
-                        },
-
-                        Ok(ChainRequest::QueryPacketReceipt { request, include_proof, reply_to }) => {
-                            self.query_packet_receipt(request, include_proof, reply_to)?
-                        },
-
-                        Ok(ChainRequest::QueryUnreceivedPackets { request, reply_to }) => {
-                            self.query_unreceived_packets(request, reply_to)?
-                        },
-
-                        Ok(ChainRequest::QueryPacketAcknowledgement { request, include_proof, reply_to }) => {
-                            self.query_packet_acknowledgement(request, include_proof, reply_to)?
-                        },
-
-                        Ok(ChainRequest::QueryPacketAcknowledgements { request, reply_to }) => {
-                            self.query_packet_acknowledgements(request, reply_to)?
-                        },
-
-                        Ok(ChainRequest::QueryUnreceivedAcknowledgement { request, reply_to }) => {
-                            self.query_unreceived_acknowledgement(request, reply_to)?
-                        },
-
-                        Ok(ChainRequest::QueryNextSequenceReceive { request, include_proof, reply_to }) => {
-                            self.query_next_sequence_receive(request, include_proof, reply_to)?
-                        },
-
-                        Ok(ChainRequest::QueryPacketEventDataFromTxs { request, reply_to }) => {
-                            self.query_txs(request, reply_to)?
-                        },
-
-                        Ok(ChainRequest::QueryPacketEventDataFromBlocks { request, reply_to }) => {
-                            self.query_blocks(request, reply_to)?
-                        },
-
-                        Ok(ChainRequest::QueryHostConsensusState { request, reply_to }) => {
-                            self.query_host_consensus_state(request, reply_to)?
-                        },
-
-                        Err(e) => error!("received error via chain request channel: {}", e),
-                    }
-                },
-            }
-        }
-
         Ok(())
     }
 
     fn health_check(&mut self, reply_to: ReplyTo<HealthCheck>) -> Result<(), Error> {
         let result = self.chain.health_check();
         reply_to.send(result).map_err(Error::send)
-    }
-
-    fn subscribe(&mut self, reply_to: ReplyTo<Subscription>) -> Result<(), Error> {
-        if !self.event_monitor_ctrl.is_live() {
-            self.enable_event_monitor()?;
-        }
-
-        let subscription = self.event_bus.subscribe();
-        reply_to.send(Ok(subscription)).map_err(Error::send)
-    }
-
-    fn enable_event_monitor(&mut self) -> Result<(), Error> {
-        let (event_receiver, tx_monitor_cmd) = self.chain.init_event_monitor(self.rt.clone())?;
-
-        self.event_monitor_ctrl
-            .enable(event_receiver, tx_monitor_cmd);
-
-        Ok(())
     }
 
     fn send_messages_and_wait_commit(
