@@ -56,9 +56,6 @@ use ibc_proto::cosmos::staking::v1beta1::Params as StakingParams;
 
 use crate::account::Balance;
 use crate::chain::client::ClientSettings;
-use crate::chain::cosmos::batch::{
-    send_batched_messages_and_wait_check_tx, send_batched_messages_and_wait_commit,
-};
 use crate::chain::cosmos::encode::encode_to_bech32;
 use crate::chain::cosmos::gas::{calculate_fee, mul_ceil};
 use crate::chain::cosmos::query::account::get_or_fetch_account;
@@ -393,61 +390,6 @@ impl CosmosSdkChain {
         Ok(status.height)
     }
 
-    async fn do_send_messages_and_wait_commit(
-        &mut self,
-        tracked_msgs: TrackedMsgs,
-    ) -> Result<Vec<IbcEvent>, Error> {
-        crate::time!("send_messages_and_wait_commit");
-
-        let _span =
-            span!(Level::DEBUG, "send_tx_commit", id = %tracked_msgs.tracking_id()).entered();
-
-        let proto_msgs = tracked_msgs.msgs;
-
-        let key_entry = self.key()?;
-
-        let account =
-            get_or_fetch_account(&self.grpc_addr, &key_entry.account, &mut self.account).await?;
-
-        send_batched_messages_and_wait_commit(
-            &self.tx_config,
-            self.config.max_msg_num,
-            self.config.max_tx_size,
-            &key_entry,
-            account,
-            &self.config.memo_prefix,
-            proto_msgs,
-        )
-        .await
-    }
-
-    async fn do_send_messages_and_wait_check_tx(
-        &mut self,
-        tracked_msgs: TrackedMsgs,
-    ) -> Result<Vec<Response>, Error> {
-        crate::time!("send_messages_and_wait_check_tx");
-
-        let span = span!(Level::DEBUG, "send_tx_check", id = %tracked_msgs.tracking_id());
-        let _enter = span.enter();
-
-        let proto_msgs = tracked_msgs.msgs;
-
-        let key_entry = self.key()?;
-
-        let account =
-            get_or_fetch_account(&self.grpc_addr, &key_entry.account, &mut self.account).await?;
-
-        send_batched_messages_and_wait_check_tx(
-            &self.tx_config,
-            self.config.max_msg_num,
-            self.config.max_tx_size,
-            &key_entry,
-            account,
-            &self.config.memo_prefix,
-            proto_msgs,
-        )
-        .await
-    }
 }
 
 impl ChainEndpoint for CosmosSdkChain {
@@ -582,7 +524,7 @@ impl ChainEndpoint for CosmosSdkChain {
     ) -> Result<Vec<IbcEvent>, Error> {
         let runtime = self.rt.clone();
 
-        runtime.block_on(self.do_send_messages_and_wait_commit(tracked_msgs))
+        unimplemented!()
     }
 
     fn send_messages_and_wait_check_tx(
@@ -591,7 +533,7 @@ impl ChainEndpoint for CosmosSdkChain {
     ) -> Result<Vec<Response>, Error> {
         let runtime = self.rt.clone();
 
-        runtime.block_on(self.do_send_messages_and_wait_check_tx(tracked_msgs))
+        unimplemented!()
     }
 
     /// Get the account for the signer

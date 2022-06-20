@@ -29,6 +29,5 @@ pub mod light_client;
 pub mod macros;
 pub mod object;
 pub mod path;
-pub mod sdk_error;
 pub mod telemetry;
 pub mod util;
