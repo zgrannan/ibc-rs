@@ -33,6 +33,4 @@ pub mod registry;
 pub mod sdk_error;
 pub mod spawn;
 pub mod telemetry;
-pub mod transfer;
-pub mod upgrade_chain;
 pub mod util;
