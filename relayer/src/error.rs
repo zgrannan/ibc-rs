@@ -36,7 +36,6 @@ use crate::chain::cosmos::version;
 use crate::chain::cosmos::GENESIS_MAX_BYTES_MAX_FRACTION;
 use crate::event::monitor;
 use crate::keyring::errors::Error as KeyringError;
-use crate::sdk_error::SdkError;
 
 define_error! {
     Error {
@@ -52,20 +51,6 @@ define_error! {
         AbciQuery
             { query: AbciQuery }
             |e| { format!("ABCI query returned an error: {:?}", e.query) },
-
-        CheckTx
-            {
-                detail: SdkError,
-                tx: TxResult
-            }
-            |e| { format!("CheckTx commit returned an error: {0}, raw result: {1:?}", e.detail, e.tx) },
-
-        DeliverTx
-            {
-                detail: SdkError,
-                tx: TxResult
-            }
-            |e| { format!("DeliverTx Commit returns error: {0}. RawResult: {1:?}", e.detail, e.tx) },
 
         WebSocket
             { url: tendermint_rpc::Url }
