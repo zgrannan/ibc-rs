@@ -12,7 +12,6 @@ use ibc::core::ics24_host::identifier::ChainId;
 use crate::{
     chain::handle::ChainHandle,
     config::Config,
-    spawn::{spawn_chain_runtime, SpawnError},
     util::lock::RwArc,
 };
 
@@ -51,36 +50,6 @@ impl<Chain: ChainHandle> Registry<Chain> {
         self.handles.values()
     }
 
-    /// Get the [`ChainHandle`] associated with the given [`ChainId`].
-    ///
-    /// If there is no handle yet, this will first spawn the runtime and then
-    /// return its handle.
-    pub fn get_or_spawn(&mut self, chain_id: &ChainId) -> Result<Chain, SpawnError> {
-        self.spawn(chain_id)?;
-
-        let handle = self
-            .handles
-            .get(chain_id)
-            .expect("runtime was just spawned");
-
-        Ok(handle.clone())
-    }
-
-    /// Spawn a chain runtime for the chain with the given [`ChainId`],
-    /// only if the registry does not contain a handle for that runtime already.
-    ///
-    /// Returns whether or not the runtime was actually spawned.
-    pub fn spawn(&mut self, chain_id: &ChainId) -> Result<bool, SpawnError> {
-        if !self.handles.contains_key(chain_id) {
-            let handle = spawn_chain_runtime(&self.config, chain_id, self.rt.clone())?;
-            self.handles.insert(chain_id.clone(), handle);
-            trace!(chain = %chain_id, "spawned chain runtime");
-            Ok(true)
-        } else {
-            Ok(false)
-        }
-    }
-
     /// Shutdown the runtime associated with the given chain identifier.
     pub fn shutdown(&mut self, chain_id: &ChainId) {
         if let Some(handle) = self.handles.remove(chain_id) {
@@ -98,14 +67,6 @@ impl<Chain: ChainHandle> SharedRegistry<Chain> {
         Self {
             registry: Arc::new(RwLock::new(registry)),
         }
-    }
-
-    pub fn get_or_spawn(&self, chain_id: &ChainId) -> Result<Chain, SpawnError> {
-        self.registry.write().unwrap().get_or_spawn(chain_id)
-    }
-
-    pub fn spawn(&self, chain_id: &ChainId) -> Result<bool, SpawnError> {
-        self.write().spawn(chain_id)
     }
 
     pub fn shutdown(&self, chain_id: &ChainId) {
