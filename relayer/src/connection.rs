@@ -17,7 +17,6 @@ use ibc::events::IbcEvent;
 use ibc::timestamp::ZERO_DURATION;
 use ibc::tx_msg::Msg;
 
-use crate::chain::counterparty::connection_state_on_destination;
 use crate::chain::handle::ChainHandle;
 use crate::chain::requests::{
     IncludeProof, PageRequest, QueryConnectionRequest, QueryConnectionsRequest,
@@ -673,91 +672,6 @@ impl<ChainA: ChainHandle, ChainB: ChainHandle> Connection<ChainA, ChainB> {
         })?;
 
         Ok(())
-    }
-
-    pub fn counterparty_state(&self) -> Result<State, ConnectionError> {
-        // Source connection ID must be specified
-        let connection_id = self
-            .src_connection_id()
-            .ok_or_else(ConnectionError::missing_local_connection_id)?;
-
-        let (connection_end, _) = self
-            .src_chain()
-            .query_connection(
-                QueryConnectionRequest {
-                    connection_id: connection_id.clone(),
-                    height: Height::zero(),
-                },
-                IncludeProof::No,
-            )
-            .map_err(|e| ConnectionError::connection_query(connection_id.clone(), e))?;
-
-        let connection = IdentifiedConnectionEnd {
-            connection_end,
-            connection_id: connection_id.clone(),
-        };
-
-        connection_state_on_destination(&connection, &self.dst_chain())
-            .map_err(ConnectionError::supervisor)
-    }
-
-    pub fn handshake_step(
-        &mut self,
-        state: State,
-    ) -> Result<(Option<IbcEvent>, Next), ConnectionError> {
-        let event = match (state, self.counterparty_state()?) {
-            (State::Init, State::Uninitialized) => Some(self.build_conn_try_and_send()?),
-            (State::Init, State::Init) => Some(self.build_conn_try_and_send()?),
-            (State::TryOpen, State::Init) => Some(self.build_conn_ack_and_send()?),
-            (State::TryOpen, State::TryOpen) => Some(self.build_conn_ack_and_send()?),
-            (State::Open, State::TryOpen) => Some(self.build_conn_confirm_and_send()?),
-            (State::Open, State::Open) => return Ok((None, Next::Abort)),
-
-            // If the counterparty state is already Open but current state is TryOpen,
-            // return anyway as the final step is to be done by the counterparty worker.
-            (State::TryOpen, State::Open) => return Ok((None, Next::Abort)),
-
-            _ => None,
-        };
-
-        Ok((event, Next::Continue))
-    }
-
-    pub fn step_state(&mut self, state: State, index: u64) -> RetryResult<Next, u64> {
-        match self.handshake_step(state) {
-            Err(e) => {
-                if e.is_expired_or_frozen_error() {
-                    error!(
-                        "failed to establish connection handshake on frozen client: {}",
-                        e
-                    );
-                    RetryResult::Err(index)
-                } else {
-                    error!("failed {:?} with error {}", state, e);
-                    RetryResult::Retry(index)
-                }
-            }
-            Ok((Some(ev), handshake_completed)) => {
-                info!(
-                    "connection handshake step completed with events: {:#?}\n",
-                    ev
-                );
-                RetryResult::Ok(handshake_completed)
-            }
-            Ok((None, handshake_completed)) => RetryResult::Ok(handshake_completed),
-        }
-    }
-
-    pub fn step_event(&mut self, event: IbcEvent, index: u64) -> RetryResult<Next, u64> {
-        let state = match event {
-            IbcEvent::OpenInitConnection(_) => State::Init,
-            IbcEvent::OpenTryConnection(_) => State::TryOpen,
-            IbcEvent::OpenAckConnection(_) => State::Open,
-            IbcEvent::OpenConfirmConnection(_) => State::Open,
-            _ => State::Uninitialized,
-        };
-
-        self.step_state(state, index)
     }
 
     /// Retrieves the connection from destination and compares against the expected connection

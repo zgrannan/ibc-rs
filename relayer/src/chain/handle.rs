@@ -58,15 +58,10 @@ use super::{
 };
 
 mod base;
-mod cache;
 mod counting;
 
 pub use base::BaseChainHandle;
 pub use counting::CountingChainHandle;
-
-pub type CachingChainHandle = cache::CachingChainHandle<BaseChainHandle>;
-pub type CountingAndCachingChainHandle =
-    cache::CachingChainHandle<CountingChainHandle<BaseChainHandle>>;
 
 /// A pair of [`ChainHandle`]s.
 #[derive(Clone)]
