@@ -32,8 +32,6 @@ use ibc::{
     relayer::ics18_relayer::error as relayer_error,
 };
 
-use crate::chain::cosmos::version;
-use crate::chain::cosmos::GENESIS_MAX_BYTES_MAX_FRACTION;
 use crate::event::monitor;
 use crate::keyring::errors::Error as KeyringError;
 
@@ -328,17 +326,6 @@ define_error! {
                     e.endpoint, e.chain_id, e.address)
             },
 
-        FetchVersionParsing
-            {
-                chain_id: ChainId,
-                address: String,
-            }
-            [ version::Error ]
-            |e| {
-                format!("failed while parsing version info for chain {0}:{1}; caused by: {2}",
-                    e.chain_id, e.address, e.source)
-            },
-
         FetchVersionGrpcTransport
             {
                 chain_id: ChainId,
@@ -384,17 +371,6 @@ define_error! {
             |e| {
                 format!("semantic config validation: failed to reach endpoint {0} on the JSON-RPC interface of chain {1}:{2}",
                     e.endpoint, e.chain_id, e.address)
-            },
-
-        ConfigValidationTxSizeOutOfBounds
-            {
-                chain_id: ChainId,
-                configured_bound: usize,
-                genesis_bound: u64,
-            }
-            |e| {
-                format!("semantic config validation failed for option `max_tx_size` for chain '{}', reason: `max_tx_size` = {} is greater than {}% of the consensus parameter `max_size` = {}",
-                    e.chain_id, e.configured_bound, GENESIS_MAX_BYTES_MAX_FRACTION * 100.0, e.genesis_bound)
             },
 
         ConfigValidationMaxGasTooHigh
