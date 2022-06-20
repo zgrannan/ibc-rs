@@ -39,7 +39,6 @@ use crate::chain::tracking::TrackedMsgs;
 use crate::config::ChainConfig;
 use crate::connection::ConnectionMsgType;
 use crate::error::{Error, QUERY_PROOF_EXPECT_MSG};
-use crate::event::monitor::{EventReceiver, TxMonitorCmd};
 use crate::keyring::{KeyEntry, KeyRing};
 
 use super::requests::{
@@ -77,12 +76,6 @@ pub trait ChainEndpoint: Sized {
 
     /// Constructs the chain
     fn bootstrap(config: ChainConfig, rt: Arc<TokioRuntime>) -> Result<Self, Error>;
-
-    /// Initializes and returns the event monitor (if any) associated with this chain.
-    fn init_event_monitor(
-        &self,
-        rt: Arc<TokioRuntime>,
-    ) -> Result<(EventReceiver, TxMonitorCmd), Error>;
 
     /// Returns the chain's identifier
     fn id(&self) -> &ChainId;

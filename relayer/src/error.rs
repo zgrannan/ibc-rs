@@ -32,7 +32,6 @@ use ibc::{
     relayer::ics18_relayer::error as relayer_error,
 };
 
-use crate::event::monitor;
 use crate::keyring::errors::Error as KeyringError;
 
 define_error! {
@@ -53,10 +52,6 @@ define_error! {
         WebSocket
             { url: tendermint_rpc::Url }
             |e| { format!("Websocket error to endpoint {}", e.url) },
-
-        EventMonitor
-            [ monitor::Error ]
-            |_| { "event monitor error" },
 
         Grpc
             |_| { "gRPC error" },

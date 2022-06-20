@@ -39,14 +39,13 @@ use crate::{
     error::Error,
     event::{
         bus::EventBus,
-        monitor::{EventBatch, EventReceiver, MonitorCmd, Result as MonitorResult, TxMonitorCmd},
     },
     keyring::KeyEntry
 };
 
 use super::{
     endpoint::{ChainEndpoint, ChainStatus, HealthCheck},
-    handle::{ChainHandle, ChainRequest, ReplyTo, Subscription},
+    handle::{ChainHandle, ChainRequest, ReplyTo},
     requests::{
         IncludeProof, QueryChannelClientStateRequest, QueryChannelRequest, QueryChannelsRequest,
         QueryClientConnectionsRequest, QueryClientStateRequest, QueryClientStatesRequest,
@@ -66,64 +65,6 @@ pub struct Threads {
     pub event_monitor: Option<thread::JoinHandle<()>>,
 }
 
-#[derive(Debug)]
-pub enum EventMonitorCtrl {
-    None {
-        /// Empty channel for when the None case
-        never: EventReceiver,
-    },
-    Live {
-        /// Receiver channel from the event bus
-        event_receiver: EventReceiver,
-
-        /// Sender channel to terminate the event monitor
-        tx_monitor_cmd: TxMonitorCmd,
-    },
-}
-
-impl EventMonitorCtrl {
-    pub fn none() -> Self {
-        Self::None {
-            never: channel::never(),
-        }
-    }
-
-    pub fn live(event_receiver: EventReceiver, tx_monitor_cmd: TxMonitorCmd) -> Self {
-        Self::Live {
-            event_receiver,
-            tx_monitor_cmd,
-        }
-    }
-
-    pub fn enable(&mut self, event_receiver: EventReceiver, tx_monitor_cmd: TxMonitorCmd) {
-        *self = Self::live(event_receiver, tx_monitor_cmd);
-    }
-
-    pub fn recv(&self) -> &EventReceiver {
-        match self {
-            Self::None { ref never } => never,
-            Self::Live {
-                ref event_receiver, ..
-            } => event_receiver,
-        }
-    }
-
-    pub fn shutdown(&self) -> Result<(), Error> {
-        match self {
-            Self::None { .. } => Ok(()),
-            Self::Live {
-                ref tx_monitor_cmd, ..
-            } => tx_monitor_cmd
-                .send(MonitorCmd::Shutdown)
-                .map_err(Error::send),
-        }
-    }
-
-    pub fn is_live(&self) -> bool {
-        matches!(self, Self::Live { .. })
-    }
-}
-
 pub struct ChainRuntime<Endpoint: ChainEndpoint> {
     /// The specific chain this runtime runs against
     chain: Endpoint,
@@ -135,12 +76,6 @@ pub struct ChainRuntime<Endpoint: ChainEndpoint> {
     /// The receiving side of a channel to this runtime. The runtime consumes chain requests coming
     /// in through this channel.
     request_receiver: channel::Receiver<ChainRequest>,
-
-    /// An event bus, for broadcasting events that this runtime receives (via `event_receiver`) to subscribers
-    event_bus: EventBus<Arc<MonitorResult<EventBatch>>>,
-
-    /// Interface to the event monitor
-    event_monitor_ctrl: EventMonitorCtrl,
 
     #[allow(dead_code)]
     rt: Arc<TokioRuntime>, // Making this future-proof, so we keep the runtime around.
@@ -165,24 +100,6 @@ where
     fn health_check(&mut self, reply_to: ReplyTo<HealthCheck>) -> Result<(), Error> {
         let result = self.chain.health_check();
         reply_to.send(result).map_err(Error::send)
-    }
-
-    fn subscribe(&mut self, reply_to: ReplyTo<Subscription>) -> Result<(), Error> {
-        if !self.event_monitor_ctrl.is_live() {
-            self.enable_event_monitor()?;
-        }
-
-        let subscription = self.event_bus.subscribe();
-        reply_to.send(Ok(subscription)).map_err(Error::send)
-    }
-
-    fn enable_event_monitor(&mut self) -> Result<(), Error> {
-        let (event_receiver, tx_monitor_cmd) = self.chain.init_event_monitor(self.rt.clone())?;
-
-        self.event_monitor_ctrl
-            .enable(event_receiver, tx_monitor_cmd);
-
-        Ok(())
     }
 
     fn send_messages_and_wait_commit(

@@ -28,7 +28,7 @@ use tracing::debug;
 
 use crate::account::Balance;
 use crate::chain::endpoint::{ChainStatus, HealthCheck};
-use crate::chain::handle::{ChainHandle, ChainRequest, Subscription};
+use crate::chain::handle::{ChainHandle, ChainRequest};
 use crate::chain::requests::{
     IncludeProof, QueryChannelClientStateRequest, QueryChannelRequest, QueryChannelsRequest,
     QueryClientConnectionsRequest, QueryClientStateRequest, QueryClientStatesRequest,
@@ -109,11 +109,6 @@ impl<Handle: ChainHandle> ChainHandle for CountingChainHandle<Handle> {
     fn health_check(&self) -> Result<HealthCheck, Error> {
         self.inc_metric("health_check");
         self.inner().health_check()
-    }
-
-    fn subscribe(&self) -> Result<Subscription, Error> {
-        self.inc_metric("subscribe");
-        self.inner().subscribe()
     }
 
     fn send_messages_and_wait_commit(
