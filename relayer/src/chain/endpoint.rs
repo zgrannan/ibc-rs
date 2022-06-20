@@ -41,7 +41,6 @@ use crate::connection::ConnectionMsgType;
 use crate::error::{Error, QUERY_PROOF_EXPECT_MSG};
 use crate::event::monitor::{EventReceiver, TxMonitorCmd};
 use crate::keyring::{KeyEntry, KeyRing};
-use crate::light_client::LightClient;
 
 use super::requests::{
     IncludeProof, QueryPacketAcknowledgementRequest, QueryPacketCommitmentRequest,
@@ -76,14 +75,8 @@ pub trait ChainEndpoint: Sized {
     /// Type of the client state for this chain
     type ClientState: ClientState;
 
-    type LightClient: LightClient<Self>;
-
     /// Constructs the chain
     fn bootstrap(config: ChainConfig, rt: Arc<TokioRuntime>) -> Result<Self, Error>;
-
-    #[allow(clippy::type_complexity)]
-    /// Initializes and returns the light client (if any) associated with this chain.
-    fn init_light_client(&self) -> Result<Self::LightClient, Error>;
 
     /// Initializes and returns the event monitor (if any) associated with this chain.
     fn init_event_monitor(
@@ -326,18 +319,6 @@ pub trait ChainEndpoint: Sized {
         light_block: Self::LightBlock,
     ) -> Result<Self::ConsensusState, Error>;
 
-    /// Fetch, and verify the header at `target_height`, assuming we trust the
-    /// header at `trusted_height` with the given `client_state`.
-    ///
-    /// Returns all the supporting headers that were need to verify the target
-    /// header, for use when building a `ClientUpdate` message.
-    fn build_header(
-        &self,
-        trusted_height: ICSHeight,
-        target_height: ICSHeight,
-        client_state: &AnyClientState,
-        light_client: &mut Self::LightClient,
-    ) -> Result<(Self::Header, Vec<Self::Header>), Error>;
 
     /// Builds the required proofs and the client state for connection handshake messages.
     /// The proofs and client state must be obtained from queries at same height.

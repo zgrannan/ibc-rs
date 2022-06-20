@@ -26,7 +26,6 @@ pub mod error;
 pub mod event;
 pub mod foreign_client;
 pub mod keyring;
-pub mod light_client;
 pub mod macros;
 pub mod object;
 pub mod path;
