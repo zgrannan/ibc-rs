@@ -1,6 +1,5 @@
 //! Data structures and logic to set up IBC client's parameters.
 
-use crate::chain::cosmos;
 use crate::config::ChainConfig;
 use crate::foreign_client::CreateOptions;
 
@@ -9,7 +8,6 @@ use crate::foreign_client::CreateOptions;
 /// The parameters are specialized for each supported chain type.
 #[derive(Clone, Debug)]
 pub enum ClientSettings {
-    Tendermint(cosmos::client::Settings),
 }
 
 impl ClientSettings {

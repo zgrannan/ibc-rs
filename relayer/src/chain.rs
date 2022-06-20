@@ -1,5 +1,4 @@
 pub mod client;
-pub mod cosmos;
 pub mod endpoint;
 pub mod handle;
 pub mod requests;
