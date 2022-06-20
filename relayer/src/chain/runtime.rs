@@ -41,8 +41,7 @@ use crate::{
         bus::EventBus,
         monitor::{EventBatch, EventReceiver, MonitorCmd, Result as MonitorResult, TxMonitorCmd},
     },
-    keyring::KeyEntry,
-    light_client::LightClient,
+    keyring::KeyEntry
 };
 
 use super::{
@@ -144,9 +143,6 @@ pub struct ChainRuntime<Endpoint: ChainEndpoint> {
     /// Interface to the event monitor
     event_monitor_ctrl: EventMonitorCtrl,
 
-    /// A handle to the light client
-    light_client: Endpoint::LightClient,
-
     #[allow(dead_code)]
     rt: Arc<TokioRuntime>, // Making this future-proof, so we keep the runtime around.
 }
@@ -155,59 +151,6 @@ impl<Endpoint> ChainRuntime<Endpoint>
 where
     Endpoint: ChainEndpoint + Send + 'static,
 {
-    /// Spawns a new runtime for a specific Chain implementation.
-    pub fn spawn<Handle: ChainHandle>(
-        config: ChainConfig,
-        rt: Arc<TokioRuntime>,
-    ) -> Result<Handle, Error> {
-        // Similar to `from_config`.
-        let chain = Endpoint::bootstrap(config, rt.clone())?;
-
-        // Start the light client
-        let light_client = chain.init_light_client()?;
-
-        // Instantiate & spawn the runtime
-        let (handle, _) = Self::init(chain, light_client, rt);
-
-        Ok(handle)
-    }
-
-    /// Initializes a runtime for a given chain, and spawns the associated thread
-    fn init<Handle: ChainHandle>(
-        chain: Endpoint,
-        light_client: Endpoint::LightClient,
-        rt: Arc<TokioRuntime>,
-    ) -> (Handle, thread::JoinHandle<()>) {
-        let chain_runtime = Self::new(chain, light_client, rt);
-
-        // Get a handle to the runtime
-        let handle: Handle = chain_runtime.handle();
-
-        // Spawn the runtime & return
-        let id = handle.id();
-        let thread = thread::spawn(move || {
-            if let Err(e) = chain_runtime.run() {
-                error!("failed to start runtime for chain '{}': {}", id, e);
-            }
-        });
-
-        (handle, thread)
-    }
-
-    /// Basic constructor
-    fn new(chain: Endpoint, light_client: Endpoint::LightClient, rt: Arc<TokioRuntime>) -> Self {
-        let (request_sender, request_receiver) = channel::unbounded::<ChainRequest>();
-
-        Self {
-            rt,
-            chain,
-            request_sender,
-            request_receiver,
-            event_bus: EventBus::new(),
-            event_monitor_ctrl: EventMonitorCtrl::none(),
-            light_client,
-        }
-    }
 
     pub fn handle<Handle: ChainHandle>(&self) -> Handle {
         let chain_id = ChainEndpoint::id(&self.chain).clone();
@@ -280,7 +223,6 @@ where
                         }
 
                         Ok(ChainRequest::BuildHeader { trusted_height, target_height, client_state, reply_to }) => {
-                            self.build_header(trusted_height, target_height, client_state, reply_to)?
                         }
 
                         Ok(ChainRequest::BuildClientState { height, settings, reply_to }) => {
@@ -288,11 +230,9 @@ where
                         }
 
                         Ok(ChainRequest::BuildConsensusState { trusted, target, client_state, reply_to }) => {
-                            self.build_consensus_state(trusted, target, client_state, reply_to)?
                         }
 
                        Ok(ChainRequest::BuildMisbehaviour { client_state, update_event, reply_to }) => {
-                            self.check_misbehaviour(update_event, client_state, reply_to)?
                         }
 
                         Ok(ChainRequest::BuildConnectionProofsAndClientState { message_type, connection_id, client_id, height, reply_to }) => {
@@ -513,30 +453,6 @@ where
         reply_to.send(result).map_err(Error::send)
     }
 
-    fn build_header(
-        &mut self,
-        trusted_height: Height,
-        target_height: Height,
-        client_state: AnyClientState,
-        reply_to: ReplyTo<(AnyHeader, Vec<AnyHeader>)>,
-    ) -> Result<(), Error> {
-        let result = self
-            .chain
-            .build_header(
-                trusted_height,
-                target_height,
-                &client_state,
-                &mut self.light_client,
-            )
-            .map(|(header, support)| {
-                let header = header.wrap_any();
-                let support = support.into_iter().map(|h| h.wrap_any()).collect();
-                (header, support)
-            });
-
-        reply_to.send(result).map_err(Error::send)
-    }
-
     /// Constructs a client state for the given height
     fn build_client_state(
         &self,
@@ -550,38 +466,6 @@ where
             .map(|cs| cs.wrap_any());
 
         reply_to.send(client_state).map_err(Error::send)
-    }
-
-    /// Constructs a consensus state for the given height
-    fn build_consensus_state(
-        &mut self,
-        trusted: Height,
-        target: Height,
-        client_state: AnyClientState,
-        reply_to: ReplyTo<AnyConsensusState>,
-    ) -> Result<(), Error> {
-        let verified = self.light_client.verify(trusted, target, &client_state)?;
-
-        let consensus_state = self
-            .chain
-            .build_consensus_state(verified.target)
-            .map(|cs| cs.wrap_any());
-
-        reply_to.send(consensus_state).map_err(Error::send)
-    }
-
-    /// Constructs AnyMisbehaviour for the update event
-    fn check_misbehaviour(
-        &mut self,
-        update_event: UpdateClient,
-        client_state: AnyClientState,
-        reply_to: ReplyTo<Option<MisbehaviourEvidence>>,
-    ) -> Result<(), Error> {
-        let misbehaviour = self
-            .light_client
-            .check_misbehaviour(update_event, &client_state);
-
-        reply_to.send(misbehaviour).map_err(Error::send)
     }
 
     fn build_connection_proofs_and_client_state(
