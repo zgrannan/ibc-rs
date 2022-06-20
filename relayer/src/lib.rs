@@ -32,6 +32,5 @@ pub mod object;
 pub mod path;
 pub mod registry;
 pub mod sdk_error;
-pub mod spawn;
 pub mod telemetry;
 pub mod util;
