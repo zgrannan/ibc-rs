@@ -47,15 +47,11 @@ use super::requests::{
     QueryPacketReceiptRequest,
 };
 
-/// The result of a health check.
-#[derive(Debug)]
 pub enum HealthCheck {
     Healthy,
     Unhealthy(Box<Error>),
 }
 
-/// The result of the application status query.
-#[derive(Clone, Debug)]
 pub struct ChainStatus {
     pub height: ICSHeight,
     pub timestamp: Timestamp,
@@ -312,28 +308,4 @@ pub trait ChainEndpoint: Sized {
         light_block: Self::LightBlock,
     ) -> Result<Self::ConsensusState, Error>;
 
-
-    /// Builds the proof for channel handshake messages.
-    fn build_channel_proofs(
-        &self,
-        port_id: &PortId,
-        channel_id: &ChannelId,
-        height: ICSHeight,
-    ) -> Result<Proofs, Error> {
-        // Collect all proofs as required
-        let (_, maybe_channel_proof) = self.query_channel(
-            QueryChannelRequest {
-                port_id: port_id.clone(),
-                channel_id: *channel_id,
-                height,
-            },
-            IncludeProof::Yes,
-        )?;
-        let channel_proof = maybe_channel_proof.expect(QUERY_PROOF_EXPECT_MSG);
-        let channel_proof_bytes =
-            CommitmentProofBytes::try_from(channel_proof).map_err(Error::malformed_proof)?;
-
-        Proofs::new(channel_proof_bytes, None, None, None, height.increment())
-            .map_err(Error::malformed_proof)
-    }
 }

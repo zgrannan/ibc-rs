@@ -52,9 +52,6 @@ use crate::{
 
 use super::{reply_channel, ChainHandle, ChainRequest, HealthCheck, ReplyTo};
 
-/// A basic chain handle implementation.
-/// For use in interactive CLIs, e.g., `query`, `tx raw`, etc.
-#[derive(Debug, Clone)]
 pub struct BaseChainHandle {
     /// Chain identifier
     chain_id: ChainId,
@@ -64,129 +61,20 @@ pub struct BaseChainHandle {
 }
 
 impl BaseChainHandle {
-    pub fn new(chain_id: ChainId, sender: channel::Sender<ChainRequest>) -> Self {
-        Self {
-            chain_id,
-            runtime_sender: sender,
-        }
-    }
-
     fn send<F, O>(&self, f: F) -> Result<O, Error>
     where
         F: FnOnce(ReplyTo<O>) -> ChainRequest,
         O: Debug,
     {
-        let (sender, receiver) = reply_channel();
-        let input = f(sender);
-
-        self.runtime_sender.send(input).map_err(Error::send)?;
-
-        receiver.recv().map_err(Error::channel_receive)?
+        unimplemented!()
     }
 }
 
 impl ChainHandle for BaseChainHandle {
-    fn new(chain_id: ChainId, sender: channel::Sender<ChainRequest>) -> Self {
-        Self::new(chain_id, sender)
-    }
-
-    fn id(&self) -> ChainId {
-        self.chain_id.clone()
-    }
-
-    fn health_check(&self) -> Result<HealthCheck, Error> {
-        self.send(|reply_to| ChainRequest::HealthCheck { reply_to })
-    }
-
-    fn shutdown(&self) -> Result<(), Error> {
-        self.send(|reply_to| ChainRequest::Shutdown { reply_to })
-    }
-
-    fn send_messages_and_wait_commit(
-        &self,
-        tracked_msgs: TrackedMsgs,
-    ) -> Result<Vec<IbcEvent>, Error> {
-        self.send(|reply_to| ChainRequest::SendMessagesAndWaitCommit {
-            tracked_msgs,
-            reply_to,
-        })
-    }
-
-    fn send_messages_and_wait_check_tx(
-        &self,
-        tracked_msgs: TrackedMsgs,
-    ) -> Result<Vec<tendermint_rpc::endpoint::broadcast::tx_sync::Response>, Error> {
-        self.send(|reply_to| ChainRequest::SendMessagesAndWaitCheckTx {
-            tracked_msgs,
-            reply_to,
-        })
-    }
-
-    fn get_signer(&self) -> Result<Signer, Error> {
-        self.send(|reply_to| ChainRequest::Signer { reply_to })
-    }
-
     fn add_key(&self, key_name: String, key: KeyEntry) -> Result<(), Error> {
         self.send(|reply_to| ChainRequest::AddKey {
             key_name,
             key,
-            reply_to,
-        })
-    }
-
-    fn ibc_version(&self) -> Result<Option<semver::Version>, Error> {
-        self.send(|reply_to| ChainRequest::IbcVersion { reply_to })
-    }
-
-    fn query_balance(&self, key_name: Option<String>) -> Result<Balance, Error> {
-        self.send(|reply_to| ChainRequest::QueryBalance { key_name, reply_to })
-    }
-
-    fn query_application_status(&self) -> Result<ChainStatus, Error> {
-        self.send(|reply_to| ChainRequest::QueryApplicationStatus { reply_to })
-    }
-
-    fn query_clients(
-        &self,
-        request: QueryClientStatesRequest,
-    ) -> Result<Vec<IdentifiedAnyClientState>, Error> {
-        self.send(|reply_to| ChainRequest::QueryClients { request, reply_to })
-    }
-
-    fn query_client_state(
-        &self,
-        request: QueryClientStateRequest,
-        include_proof: IncludeProof,
-    ) -> Result<(AnyClientState, Option<MerkleProof>), Error> {
-        self.send(|reply_to| ChainRequest::QueryClientState {
-            request,
-            include_proof,
-            reply_to,
-        })
-    }
-
-    fn query_client_connections(
-        &self,
-        request: QueryClientConnectionsRequest,
-    ) -> Result<Vec<ConnectionId>, Error> {
-        self.send(|reply_to| ChainRequest::QueryClientConnections { request, reply_to })
-    }
-
-    fn query_consensus_states(
-        &self,
-        request: QueryConsensusStatesRequest,
-    ) -> Result<Vec<AnyConsensusStateWithHeight>, Error> {
-        self.send(|reply_to| ChainRequest::QueryConsensusStates { request, reply_to })
-    }
-
-    fn query_consensus_state(
-        &self,
-        request: QueryConsensusStateRequest,
-        include_proof: IncludeProof,
-    ) -> Result<(AnyConsensusState, Option<MerkleProof>), Error> {
-        self.send(|reply_to| ChainRequest::QueryConsensusState {
-            request,
-            include_proof,
             reply_to,
         })
     }
@@ -455,14 +343,5 @@ impl ChainHandle for BaseChainHandle {
         request: QueryHostConsensusStateRequest,
     ) -> Result<AnyConsensusState, Error> {
         self.send(|reply_to| ChainRequest::QueryHostConsensusState { request, reply_to })
-    }
-}
-
-impl Serialize for BaseChainHandle {
-    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
-    where
-        S: Serializer,
-    {
-        self.id().serialize(serializer)
     }
 }

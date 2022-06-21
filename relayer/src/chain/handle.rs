@@ -57,10 +57,8 @@ use super::{
 };
 
 mod base;
-mod counting;
 
 pub use base::BaseChainHandle;
-pub use counting::CountingChainHandle;
 
 /// A pair of [`ChainHandle`]s.
 #[derive(Clone)]
@@ -79,15 +77,6 @@ impl<ChainA: ChainHandle, ChainB: ChainHandle> ChainHandlePair<ChainA, ChainB> {
     }
 }
 
-impl<ChainA: ChainHandle, ChainB: ChainHandle> Debug for ChainHandlePair<ChainA, ChainB> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("ChainHandlePair")
-            .field("a", &self.a.id())
-            .field("b", &self.b.id())
-            .finish()
-    }
-}
-
 pub type ReplyTo<T> = channel::Sender<Result<T, Error>>;
 pub type Reply<T> = channel::Receiver<Result<T, Error>>;
 
@@ -96,7 +85,7 @@ pub fn reply_channel<T>() -> (ReplyTo<T>, Reply<T>) {
 }
 
 /// Requests that a `ChainHandle` may send to a `ChainRuntime`.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 #[allow(clippy::large_enum_variant)]
 pub enum ChainRequest {
     Shutdown {
@@ -335,86 +324,8 @@ pub enum ChainRequest {
     },
 }
 
-pub trait ChainHandle: Clone + Send + Sync + Serialize + Debug + 'static {
-    fn new(chain_id: ChainId, sender: channel::Sender<ChainRequest>) -> Self;
-
-    /// Get the [`ChainId`] of this chain.
-    fn id(&self) -> ChainId;
-
-    /// Shutdown the chain runtime.
-    fn shutdown(&self) -> Result<(), Error>;
-
-    /// Perform a health check
-    fn health_check(&self) -> Result<HealthCheck, Error>;
-
-    /// Send the given `msgs` to the chain, packaged as one or more transactions,
-    /// and return the list of events emitted by the chain after the transaction was committed.
-    fn send_messages_and_wait_commit(
-        &self,
-        tracked_msgs: TrackedMsgs,
-    ) -> Result<Vec<IbcEvent>, Error>;
-
-    /// Submit messages asynchronously.
-    /// Does not block waiting on the chain to produce the
-    /// resulting events. Instead of events, this method
-    /// returns a set of transaction hashes.
-    fn send_messages_and_wait_check_tx(
-        &self,
-        tracked_msgs: TrackedMsgs,
-    ) -> Result<Vec<tendermint_rpc::endpoint::broadcast::tx_sync::Response>, Error>;
-
-    fn get_signer(&self) -> Result<Signer, Error>;
-
+pub trait ChainHandle: Send + Sync + 'static {
     fn add_key(&self, key_name: String, key: KeyEntry) -> Result<(), Error>;
-
-    /// Return the version of the IBC protocol that this chain is running, if known.
-    fn ibc_version(&self) -> Result<Option<semver::Version>, Error>;
-
-    /// Query the balance of the given account for the denom used to pay tx fees.
-    /// If no account is given, behavior must be specified, e.g. retrieve it from configuration file.
-    fn query_balance(&self, key_name: Option<String>) -> Result<Balance, Error>;
-
-    /// Query the latest height and timestamp the application is at
-    fn query_application_status(&self) -> Result<ChainStatus, Error>;
-
-    fn query_latest_height(&self) -> Result<Height, Error> {
-        Ok(self.query_application_status()?.height)
-    }
-
-    /// Performs a query to retrieve the state of all clients that a chain hosts.
-    fn query_clients(
-        &self,
-        request: QueryClientStatesRequest,
-    ) -> Result<Vec<IdentifiedAnyClientState>, Error>;
-
-    /// Performs a query to retrieve the state of the specified light client. A
-    /// proof can optionally be returned along with the result.
-    fn query_client_state(
-        &self,
-        request: QueryClientStateRequest,
-        include_proof: IncludeProof,
-    ) -> Result<(AnyClientState, Option<MerkleProof>), Error>;
-
-    /// Performs a query to retrieve the identifiers of all connections.
-    fn query_client_connections(
-        &self,
-        request: QueryClientConnectionsRequest,
-    ) -> Result<Vec<ConnectionId>, Error>;
-
-    /// Performs a query to retrieve the consensus state for a specified height
-    /// `consensus_height` that the specified light client stores.
-    fn query_consensus_state(
-        &self,
-        request: QueryConsensusStateRequest,
-        include_proof: IncludeProof,
-    ) -> Result<(AnyConsensusState, Option<MerkleProof>), Error>;
-
-    /// Performs a query to retrieve all the consensus states that the specified
-    /// light client stores.
-    fn query_consensus_states(
-        &self,
-        request: QueryConsensusStatesRequest,
-    ) -> Result<Vec<AnyConsensusStateWithHeight>, Error>;
 
     fn query_upgraded_client_state(
         &self,

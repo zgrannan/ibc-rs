@@ -87,13 +87,6 @@ where
     Endpoint: ChainEndpoint + Send + 'static,
 {
 
-    pub fn handle<Handle: ChainHandle>(&self) -> Handle {
-        let chain_id = ChainEndpoint::id(&self.chain).clone();
-        let sender = self.request_sender.clone();
-
-        Handle::new(chain_id, sender)
-    }
-
     fn run(mut self) -> Result<(), Error> {
         Ok(())
     }
@@ -311,20 +304,6 @@ where
         reply_to: ReplyTo<Option<IdentifiedAnyClientState>>,
     ) -> Result<(), Error> {
         let result = self.chain.query_channel_client_state(request);
-        reply_to.send(result).map_err(Error::send)
-    }
-
-    fn build_channel_proofs(
-        &self,
-        port_id: PortId,
-        channel_id: ChannelId,
-        height: Height,
-        reply_to: ReplyTo<Proofs>,
-    ) -> Result<(), Error> {
-        let result = self
-            .chain
-            .build_channel_proofs(&port_id, &channel_id, height);
-
         reply_to.send(result).map_err(Error::send)
     }
 

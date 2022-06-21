@@ -289,35 +289,4 @@ impl Object {
         }
     }
 
-    /// Build the object associated with the given [`UpdateClient`] event.
-    pub fn for_update_client(
-        e: &UpdateClient,
-        dst_chain: &impl ChainHandle,
-    ) -> Result<Self, ObjectError> {
-        let (client_state, _) = dst_chain
-            .query_client_state(
-                QueryClientStateRequest {
-                    client_id: e.client_id().clone(),
-                    height: Height::zero(),
-                },
-                IncludeProof::No,
-            )
-            .map_err(ObjectError::relayer)?;
-
-        if client_state.refresh_period().is_none() {
-            return Err(ObjectError::refresh_not_required(
-                e.client_id().clone(),
-                dst_chain.id(),
-            ));
-        }
-        let src_chain_id = client_state.chain_id();
-
-        Ok(Client {
-            dst_client_id: e.client_id().clone(),
-            dst_chain_id: dst_chain.id(),
-            src_chain_id,
-        }
-        .into())
-    }
-
 }
