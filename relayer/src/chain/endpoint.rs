@@ -111,8 +111,6 @@ pub trait ChainEndpoint: Sized {
 
     fn config(&self) -> ChainConfig;
 
-    fn get_key(&mut self) -> Result<KeyEntry, Error>;
-
     fn add_key(&mut self, key_name: &str, key: KeyEntry) -> Result<(), Error>;
 
     /// Return the version of the IBC protocol that this chain is running, if known.
@@ -125,11 +123,6 @@ pub trait ChainEndpoint: Sized {
     fn query_balance(&self, key_name: Option<String>) -> Result<Balance, Error>;
 
     fn query_commitment_prefix(&self) -> Result<CommitmentPrefix, Error>;
-
-    fn query_compatible_versions(&self) -> Result<Vec<Version>, Error> {
-        // TODO - do a real chain query
-        Ok(get_compatible_versions())
-    }
 
     /// Query the latest height and timestamp the application is at
     fn query_application_status(&self) -> Result<ChainStatus, Error>;
@@ -320,107 +313,6 @@ pub trait ChainEndpoint: Sized {
     ) -> Result<Self::ConsensusState, Error>;
 
 
-    /// Builds the required proofs and the client state for connection handshake messages.
-    /// The proofs and client state must be obtained from queries at same height.
-    fn build_connection_proofs_and_client_state(
-        &self,
-        message_type: ConnectionMsgType,
-        connection_id: &ConnectionId,
-        client_id: &ClientId,
-        height: ICSHeight,
-    ) -> Result<(Option<AnyClientState>, Proofs), Error> {
-        let (connection_end, maybe_connection_proof) = self.query_connection(
-            QueryConnectionRequest {
-                connection_id: connection_id.clone(),
-                height,
-            },
-            IncludeProof::Yes,
-        )?;
-        let connection_proof = maybe_connection_proof.expect(QUERY_PROOF_EXPECT_MSG);
-
-        // Check that the connection state is compatible with the message
-        match message_type {
-            ConnectionMsgType::OpenTry => {
-                if !connection_end.state_matches(&State::Init)
-                    && !connection_end.state_matches(&State::TryOpen)
-                {
-                    return Err(Error::bad_connection_state());
-                }
-            }
-            ConnectionMsgType::OpenAck => {
-                if !connection_end.state_matches(&State::TryOpen)
-                    && !connection_end.state_matches(&State::Open)
-                {
-                    return Err(Error::bad_connection_state());
-                }
-            }
-            ConnectionMsgType::OpenConfirm => {
-                if !connection_end.state_matches(&State::Open) {
-                    return Err(Error::bad_connection_state());
-                }
-            }
-        }
-
-        let mut client_state = None;
-        let mut client_proof = None;
-        let mut consensus_proof = None;
-
-        match message_type {
-            ConnectionMsgType::OpenTry | ConnectionMsgType::OpenAck => {
-                let (client_state_value, maybe_client_state_proof) = self.query_client_state(
-                    QueryClientStateRequest {
-                        client_id: client_id.clone(),
-                        height,
-                    },
-                    IncludeProof::Yes,
-                )?;
-                let client_state_proof = maybe_client_state_proof.expect(QUERY_PROOF_EXPECT_MSG);
-
-                client_proof = Some(
-                    CommitmentProofBytes::try_from(client_state_proof)
-                        .map_err(Error::malformed_proof)?,
-                );
-
-                let consensus_state_proof = {
-                    let (_, maybe_consensus_state_proof) = self.query_consensus_state(
-                        QueryConsensusStateRequest {
-                            client_id: client_id.clone(),
-                            consensus_height: client_state_value.latest_height(),
-                            query_height: height,
-                        },
-                        IncludeProof::Yes,
-                    )?;
-
-                    maybe_consensus_state_proof.expect(QUERY_PROOF_EXPECT_MSG)
-                };
-
-                consensus_proof = Option::from(
-                    ConsensusProof::new(
-                        CommitmentProofBytes::try_from(consensus_state_proof)
-                            .map_err(Error::malformed_proof)?,
-                        client_state_value.latest_height(),
-                    )
-                    .map_err(Error::consensus_proof)?,
-                );
-
-                client_state = Some(client_state_value);
-            }
-            _ => {}
-        }
-
-        Ok((
-            client_state,
-            Proofs::new(
-                CommitmentProofBytes::try_from(connection_proof).map_err(Error::malformed_proof)?,
-                client_proof,
-                consensus_proof,
-                None,
-                height.increment(),
-            )
-            .map_err(Error::malformed_proof)?,
-        ))
-    }
-
     /// Builds the proof for channel handshake messages.
     fn build_channel_proofs(
         &self,
@@ -443,110 +335,5 @@ pub trait ChainEndpoint: Sized {
 
         Proofs::new(channel_proof_bytes, None, None, None, height.increment())
             .map_err(Error::malformed_proof)
-    }
-
-    /// Builds the proof for packet messages.
-    fn build_packet_proofs(
-        &self,
-        packet_type: PacketMsgType,
-        port_id: PortId,
-        channel_id: ChannelId,
-        sequence: Sequence,
-        height: ICSHeight,
-    ) -> Result<Proofs, Error> {
-        let (maybe_packet_proof, channel_proof) = match packet_type {
-            PacketMsgType::Recv => {
-                let (_, maybe_packet_proof) = self.query_packet_commitment(
-                    QueryPacketCommitmentRequest {
-                        port_id,
-                        channel_id,
-                        sequence,
-                        height,
-                    },
-                    IncludeProof::Yes,
-                )?;
-
-                (maybe_packet_proof, None)
-            }
-            PacketMsgType::Ack => {
-                let (_, maybe_packet_proof) = self.query_packet_acknowledgement(
-                    QueryPacketAcknowledgementRequest {
-                        port_id,
-                        channel_id,
-                        sequence,
-                        height,
-                    },
-                    IncludeProof::Yes,
-                )?;
-
-                (maybe_packet_proof, None)
-            }
-            PacketMsgType::TimeoutUnordered => {
-                let (_, maybe_packet_proof) = self.query_packet_receipt(
-                    QueryPacketReceiptRequest {
-                        port_id,
-                        channel_id,
-                        sequence,
-                        height,
-                    },
-                    IncludeProof::Yes,
-                )?;
-
-                (maybe_packet_proof, None)
-            }
-            PacketMsgType::TimeoutOrdered => {
-                let (_, maybe_packet_proof) = self.query_next_sequence_receive(
-                    QueryNextSequenceReceiveRequest {
-                        port_id,
-                        channel_id,
-                        height,
-                    },
-                    IncludeProof::Yes,
-                )?;
-
-                (maybe_packet_proof, None)
-            }
-            PacketMsgType::TimeoutOnClose => {
-                let channel_proof = {
-                    let (_, maybe_channel_proof) = self.query_channel(
-                        QueryChannelRequest {
-                            port_id: port_id.clone(),
-                            channel_id,
-                            height,
-                        },
-                        IncludeProof::Yes,
-                    )?;
-                    let channel_merkle_proof = maybe_channel_proof.expect(QUERY_PROOF_EXPECT_MSG);
-                    Some(
-                        CommitmentProofBytes::try_from(channel_merkle_proof)
-                            .map_err(Error::malformed_proof)?,
-                    )
-                };
-                let (_, maybe_packet_proof) = self.query_packet_receipt(
-                    QueryPacketReceiptRequest {
-                        port_id,
-                        channel_id,
-                        sequence,
-                        height,
-                    },
-                    IncludeProof::Yes,
-                )?;
-
-                (maybe_packet_proof, channel_proof)
-            }
-        };
-
-        let packet_proof = maybe_packet_proof.expect(QUERY_PROOF_EXPECT_MSG);
-
-        let proofs = Proofs::new(
-            CommitmentProofBytes::try_from(packet_proof).map_err(Error::malformed_proof)?,
-            None,
-            None,
-            channel_proof,
-            height.increment(),
-        )
-        .map_err(Error::malformed_proof)?;
-
-        Ok(proofs)
     }
 }

@@ -133,16 +133,6 @@ impl<Handle: ChainHandle> ChainHandle for CountingChainHandle<Handle> {
         self.inner().get_signer()
     }
 
-    fn config(&self) -> Result<ChainConfig, Error> {
-        self.inc_metric("config");
-        self.inner().config()
-    }
-
-    fn get_key(&self) -> Result<KeyEntry, Error> {
-        self.inc_metric("get_key");
-        self.inner().get_key()
-    }
-
     fn add_key(&self, key_name: String, key: KeyEntry) -> Result<(), Error> {
         self.inc_metric("add_key");
         self.inner().add_key(key_name, key)
@@ -232,11 +222,6 @@ impl<Handle: ChainHandle> ChainHandle for CountingChainHandle<Handle> {
     fn query_commitment_prefix(&self) -> Result<CommitmentPrefix, Error> {
         self.inc_metric("query_commitment_prefix");
         self.inner().query_commitment_prefix()
-    }
-
-    fn query_compatible_versions(&self) -> Result<Vec<Version>, Error> {
-        self.inc_metric("query_compatible_versions");
-        self.inner().query_compatible_versions()
     }
 
     fn query_connection(

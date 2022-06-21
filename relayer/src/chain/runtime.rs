@@ -145,11 +145,6 @@ where
         reply_to.send(result).map_err(Error::send)
     }
 
-    fn get_key(&mut self, reply_to: ReplyTo<KeyEntry>) -> Result<(), Error> {
-        let result = self.chain.get_key();
-        reply_to.send(result).map_err(Error::send)
-    }
-
     fn add_key(
         &mut self,
         key_name: String,
@@ -178,27 +173,6 @@ where
             .map(|cs| cs.wrap_any());
 
         reply_to.send(client_state).map_err(Error::send)
-    }
-
-    fn build_connection_proofs_and_client_state(
-        &self,
-        message_type: ConnectionMsgType,
-        connection_id: ConnectionId,
-        client_id: ClientId,
-        height: Height,
-        reply_to: ReplyTo<(Option<AnyClientState>, Proofs)>,
-    ) -> Result<(), Error> {
-        let result = self.chain.build_connection_proofs_and_client_state(
-            message_type,
-            &connection_id,
-            &client_id,
-            height,
-        );
-
-        let result = result
-            .map(|(opt_client_state, proofs)| (opt_client_state.map(|cs| cs.wrap_any()), proofs));
-
-        reply_to.send(result).map_err(Error::send)
     }
 
     fn query_clients(
@@ -284,11 +258,6 @@ where
         reply_to.send(prefix).map_err(Error::send)
     }
 
-    fn query_compatible_versions(&self, reply_to: ReplyTo<Vec<Version>>) -> Result<(), Error> {
-        let versions = self.chain.query_compatible_versions();
-        reply_to.send(versions).map_err(Error::send)
-    }
-
     fn query_connection(
         &self,
         request: QueryConnectionRequest,
@@ -355,22 +324,6 @@ where
         let result = self
             .chain
             .build_channel_proofs(&port_id, &channel_id, height);
-
-        reply_to.send(result).map_err(Error::send)
-    }
-
-    fn build_packet_proofs(
-        &self,
-        packet_type: PacketMsgType,
-        port_id: PortId,
-        channel_id: ChannelId,
-        sequence: Sequence,
-        height: Height,
-        reply_to: ReplyTo<Proofs>,
-    ) -> Result<(), Error> {
-        let result =
-            self.chain
-                .build_packet_proofs(packet_type, port_id, channel_id, sequence, height);
 
         reply_to.send(result).map_err(Error::send)
     }

@@ -62,45 +62,9 @@ pub struct KeyFile {
 }
 
 impl KeyEntry {
-    pub fn from_key_file(key_file: KeyFile, hd_path: &HDPath) -> Result<Self, Error> {
-        // Decode the Bech32-encoded address from the key file
-        let keyfile_address_bytes = decode_bech32(&key_file.address)?;
-
-        let encoded_key: EncodedPubKey = key_file.pubkey.parse()?;
-        let mut keyfile_pubkey_bytes = encoded_key.into_bytes();
-
-        // Decode the private key from the mnemonic
-        let private_key = private_key_from_mnemonic(&key_file.mnemonic, hd_path)?;
-        let derived_pubkey = ExtendedPubKey::from_priv(&Secp256k1::new(), &private_key);
-        let derived_pubkey_bytes = derived_pubkey.to_pub().to_bytes();
-        assert!(derived_pubkey_bytes.len() <= keyfile_pubkey_bytes.len());
-
-        // FIXME: For some reason that is currently unclear, the public key decoded from
-        //        the keyfile contains a few extraneous leading bytes. To compare both
-        //        public keys, we therefore strip those leading bytes off and keep the
-        //        common parts.
-        let keyfile_pubkey_bytes =
-            keyfile_pubkey_bytes.split_off(keyfile_pubkey_bytes.len() - derived_pubkey_bytes.len());
-
-        // Ensure that the public key in the key file and the one extracted from the mnemonic match.
-        if keyfile_pubkey_bytes != derived_pubkey_bytes {
-            Err(Error::public_key_mismatch(
-                keyfile_pubkey_bytes,
-                derived_pubkey_bytes,
-            ))
-        } else {
-            Ok(Self {
-                public_key: derived_pubkey,
-                private_key,
-                account: key_file.address,
-                address: keyfile_address_bytes,
-            })
-        }
-    }
 }
 
 pub trait KeyStore {
-    fn get_key(&self, key_name: &str) -> Result<KeyEntry, Error>;
     fn add_key(&mut self, key_name: &str, key_entry: KeyEntry) -> Result<(), Error>;
     fn remove_key(&mut self, key_name: &str) -> Result<(), Error>;
     fn keys(&self) -> Result<Vec<(String, KeyEntry)>, Error>;
@@ -122,13 +86,6 @@ impl Memory {
 }
 
 impl KeyStore for Memory {
-    fn get_key(&self, key_name: &str) -> Result<KeyEntry, Error> {
-        self.keys
-            .get(key_name)
-            .cloned()
-            .ok_or_else(Error::key_not_found)
-    }
-
     fn add_key(&mut self, key_name: &str, key_entry: KeyEntry) -> Result<(), Error> {
         if self.keys.contains_key(key_name) {
             Err(Error::key_already_exist())
@@ -172,28 +129,6 @@ impl Test {
 }
 
 impl KeyStore for Test {
-    fn get_key(&self, key_name: &str) -> Result<KeyEntry, Error> {
-        let mut key_file = self.store.join(key_name);
-        key_file.set_extension(KEYSTORE_FILE_EXTENSION);
-
-        if !key_file.as_path().exists() {
-            return Err(Error::key_file_not_found(format!("{}", key_file.display())));
-        }
-
-        let file = File::open(&key_file).map_err(|e| {
-            Error::key_file_io(
-                key_file.display().to_string(),
-                "failed to open file".to_string(),
-                e,
-            )
-        })?;
-
-        let key_entry = serde_json::from_reader(file)
-            .map_err(|e| Error::key_file_decode(format!("{}", key_file.display()), e))?;
-
-        Ok(key_entry)
-    }
-
     fn add_key(&mut self, key_name: &str, key_entry: KeyEntry) -> Result<(), Error> {
         let mut filename = self.store.join(key_name);
         filename.set_extension(KEYSTORE_FILE_EXTENSION);
@@ -220,24 +155,7 @@ impl KeyStore for Test {
     }
 
     fn keys(&self) -> Result<Vec<(String, KeyEntry)>, Error> {
-        let dir = fs::read_dir(&self.store).map_err(|e| {
-            Error::key_file_io(
-                self.store.display().to_string(),
-                "failed to list keys".to_string(),
-                e,
-            )
-        })?;
-
-        let ext = OsStr::new(KEYSTORE_FILE_EXTENSION);
-
-        dir.into_iter()
-            .flatten()
-            .map(|entry| entry.path())
-            .filter(|path| path.extension() == Some(ext))
-            .flat_map(|path| path.file_stem().map(OsStr::to_owned))
-            .flat_map(|stem| stem.to_str().map(ToString::to_string))
-            .map(|name| self.get_key(&name).map(|key| (name, key)))
-            .collect()
+        unimplemented!()
     }
 }
 
@@ -260,36 +178,6 @@ pub enum KeyRing {
 }
 
 impl KeyRing {
-    pub fn new(store: Store, account_prefix: &str, chain_id: &ChainId) -> Result<Self, Error> {
-        match store {
-            Store::Memory => Ok(Self::Memory(Memory::new(account_prefix.to_string()))),
-
-            Store::Test => {
-                let keys_folder = disk_store_path(chain_id.as_str())?;
-
-                // Create keys folder if it does not exist
-                fs::create_dir_all(&keys_folder).map_err(|e| {
-                    Error::key_file_io(
-                        keys_folder.display().to_string(),
-                        "failed to create keys folder".to_string(),
-                        e,
-                    )
-                })?;
-
-                Ok(Self::Test(Test::new(
-                    account_prefix.to_string(),
-                    keys_folder,
-                )))
-            }
-        }
-    }
-
-    pub fn get_key(&self, key_name: &str) -> Result<KeyEntry, Error> {
-        match self {
-            KeyRing::Memory(m) => m.get_key(key_name),
-            KeyRing::Test(d) => d.get_key(key_name),
-        }
-    }
 
     pub fn add_key(&mut self, key_name: &str, key_entry: KeyEntry) -> Result<(), Error> {
         match self {
@@ -312,45 +200,6 @@ impl KeyRing {
         }
     }
 
-    /// Get key from seed file
-    pub fn key_from_seed_file(
-        &self,
-        key_file_content: &str,
-        hd_path: &HDPath,
-    ) -> Result<KeyEntry, Error> {
-        let key_file: KeyFile = serde_json::from_str(key_file_content).map_err(Error::encode)?;
-
-        KeyEntry::from_key_file(key_file, hd_path)
-    }
-
-    /// Add a key entry in the store using a mnemonic.
-    pub fn key_from_mnemonic(
-        &self,
-        mnemonic_words: &str,
-        hd_path: &HDPath,
-        at: &AddressType,
-    ) -> Result<KeyEntry, Error> {
-        // Get the private key from the mnemonic
-        let private_key = private_key_from_mnemonic(mnemonic_words, hd_path)?;
-
-        // Get the public Key from the private key
-        let public_key = ExtendedPubKey::from_priv(&Secp256k1::new(), &private_key);
-
-        // Get address from the public Key
-        let address = get_address(public_key, at);
-
-        // Compute Bech32 account
-        let account = bech32::encode(self.account_prefix(), address.to_base32(), Variant::Bech32)
-            .map_err(Error::bech32)?;
-
-        Ok(KeyEntry {
-            public_key,
-            private_key,
-            account,
-            address,
-        })
-    }
-
     /// Sign a message
     pub fn sign_msg(
         &self,
@@ -358,9 +207,7 @@ impl KeyRing {
         msg: Vec<u8>,
         address_type: &AddressType,
     ) -> Result<Vec<u8>, Error> {
-        let key = self.get_key(key_name)?;
-
-        sign_message(&key, msg, address_type)
+        unimplemented!()
     }
 
     pub fn account_prefix(&self) -> &str {
@@ -398,29 +245,6 @@ pub fn sign_message(
             Ok(signature.as_ref().to_vec())
         }
     }
-}
-
-/// Decode an extended private key from a mnemonic
-fn private_key_from_mnemonic(
-    mnemonic_words: &str,
-    hd_path: &StandardHDPath,
-) -> Result<ExtendedPrivKey, Error> {
-    let mnemonic = Mnemonic::from_phrase(mnemonic_words, Language::English)
-        .map_err(Error::invalid_mnemonic)?;
-
-    let seed = Seed::new(&mnemonic, "");
-
-    let base_key = ExtendedPrivKey::new_master(Network::Bitcoin, seed.as_bytes())
-        .map_err(Error::private_key)?;
-
-    let private_key = base_key
-        .derive_priv(
-            &Secp256k1::new(),
-            &standard_path_to_derivation_path(hd_path),
-        )
-        .map_err(Error::private_key)?;
-
-    Ok(private_key)
 }
 
 /// Return an address from a Public Key
@@ -462,17 +286,6 @@ fn decode_bech32(input: &str) -> Result<Vec<u8>, Error> {
         .map_err(Error::bech32_account)?;
 
     Ok(bytes)
-}
-
-fn disk_store_path(folder_name: &str) -> Result<PathBuf, Error> {
-    let home = dirs_next::home_dir().ok_or_else(Error::home_location_unavailable)?;
-
-    let folder = Path::new(home.as_path())
-        .join(KEYSTORE_DEFAULT_FOLDER)
-        .join(folder_name)
-        .join(KEYSTORE_DISK_BACKEND);
-
-    Ok(folder)
 }
 
 fn keccak256_hash(bytes: &[u8]) -> Vec<u8> {

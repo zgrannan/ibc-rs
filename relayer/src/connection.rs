@@ -62,22 +62,6 @@ mod handshake_retry {
             max_block_times * BLOCK_NUMBER_DELAY,
         )
     }
-
-    /// Translates from an error type that the `retry` mechanism threw into
-    /// a crate specific error of [`ConnectionError`] type.
-    pub fn from_retry_error(
-        e: retry::Error<ConnectionError>,
-        description: String,
-    ) -> ConnectionError {
-        match e {
-            retry::Error::Operation {
-                error: _,
-                total_delay,
-                tries,
-            } => ConnectionError::max_retry(description, tries, total_delay),
-            retry::Error::Internal(reason) => ConnectionError::retry_internal(reason),
-        }
-    }
 }
 
 #[derive(Clone, Debug)]
@@ -318,31 +302,6 @@ impl<ChainA: ChainHandle, ChainB: ChainHandle> Connection<ChainA, ChainB> {
         }
     }
 
-    /// Returns a `Duration` representing the maximum value among the
-    /// [`ChainConfig.max_block_time`] for the two networks that
-    /// this connection belongs to.
-    fn max_block_times(&self) -> Result<Duration, ConnectionError> {
-        let a_block_time = self
-            .a_chain()
-            .config()
-            .map_err(ConnectionError::relayer)?
-            .max_block_time;
-        let b_block_time = self
-            .b_chain()
-            .config()
-            .map_err(ConnectionError::relayer)?
-            .max_block_time;
-        Ok(a_block_time.max(b_block_time))
-    }
-
-    pub fn flipped(&self) -> Connection<ChainB, ChainA> {
-        Connection {
-            a_side: self.b_side.clone(),
-            b_side: self.a_side.clone(),
-            delay_period: self.delay_period,
-        }
-    }
-
     /// Queries the chains for latest connection end information. It verifies the relayer connection
     /// IDs and updates them if needed.
     /// Returns the states of the two connection ends.
@@ -442,140 +401,6 @@ impl<ChainA: ChainHandle, ChainB: ChainHandle> Connection<ChainA, ChainB> {
         Ok((*a_connection.state(), *b_connection.state()))
     }
 
-    /// Retrieves the connection from destination and compares against the expected connection
-    /// built from the message type (`msg_type`) and options (`opts`).
-    /// If the expected and the destination connections are compatible, it returns the expected connection.
-    fn validated_expected_connection(
-        &self,
-        msg_type: ConnectionMsgType,
-    ) -> Result<ConnectionEnd, ConnectionError> {
-        let dst_connection_id = self
-            .dst_connection_id()
-            .ok_or_else(ConnectionError::missing_counterparty_connection_id)?;
-
-        let prefix = self
-            .src_chain()
-            .query_commitment_prefix()
-            .map_err(|e| ConnectionError::chain_query(self.src_chain().id(), e))?;
-
-        // If there is a connection present on the destination chain, it should look like this:
-        let counterparty = Counterparty::new(
-            self.src_client_id().clone(),
-            self.src_connection_id().cloned(),
-            prefix,
-        );
-
-        // The highest expected state, depends on the message type:
-        let highest_state = match msg_type {
-            ConnectionMsgType::OpenAck => State::TryOpen,
-            ConnectionMsgType::OpenConfirm => State::TryOpen,
-            _ => State::Uninitialized,
-        };
-
-        let versions = self
-            .src_chain()
-            .query_compatible_versions()
-            .map_err(|e| ConnectionError::chain_query(self.src_chain().id(), e))?;
-
-        let dst_expected_connection = ConnectionEnd::new(
-            highest_state,
-            self.dst_client_id().clone(),
-            counterparty,
-            versions,
-            ZERO_DURATION,
-        );
-
-        // Retrieve existing connection if any
-        let (dst_connection, _) = self
-            .dst_chain()
-            .query_connection(
-                QueryConnectionRequest {
-                    connection_id: dst_connection_id.clone(),
-                    height: Height::zero(),
-                },
-                IncludeProof::No,
-            )
-            .map_err(|e| ConnectionError::chain_query(self.dst_chain().id(), e))?;
-
-        // Check if a connection is expected to exist on destination chain
-        // A connection must exist on destination chain for Ack and Confirm Tx-es to succeed
-        if dst_connection.state_matches(&State::Uninitialized) {
-            return Err(ConnectionError::missing_connection_id(
-                self.dst_chain().id(),
-            ));
-        }
-
-        check_destination_connection_state(
-            dst_connection_id.clone(),
-            dst_connection,
-            dst_expected_connection.clone(),
-        )?;
-
-        Ok(dst_expected_connection)
-    }
-
-    pub fn build_conn_init(&self) -> Result<Vec<Any>, ConnectionError> {
-        // Get signer
-        let signer = self
-            .dst_chain()
-            .get_signer()
-            .map_err(|e| ConnectionError::signer(self.dst_chain().id(), e))?;
-
-        let prefix = self
-            .src_chain()
-            .query_commitment_prefix()
-            .map_err(|e| ConnectionError::chain_query(self.src_chain().id(), e))?;
-
-        let counterparty = Counterparty::new(self.src_client_id().clone(), None, prefix);
-
-        let version = self
-            .dst_chain()
-            .query_compatible_versions()
-            .map_err(|e| ConnectionError::chain_query(self.dst_chain().id(), e))?[0]
-            .clone();
-
-        // Build the domain type message
-        let new_msg = MsgConnectionOpenInit {
-            client_id: self.dst_client_id().clone(),
-            counterparty,
-            version: Some(version),
-            delay_period: self.delay_period,
-            signer,
-        };
-
-        Ok(vec![new_msg.to_any()])
-    }
-
-    pub fn build_conn_init_and_send(&self) -> Result<IbcEvent, ConnectionError> {
-        let dst_msgs = self.build_conn_init()?;
-
-        let tm = TrackedMsgs::new_static(dst_msgs, "ConnectionOpenInit");
-
-        let events = self
-            .dst_chain()
-            .send_messages_and_wait_commit(tm)
-            .map_err(|e| ConnectionError::submit(self.dst_chain().id(), e))?;
-
-        // Find the relevant event for connection init
-        let event = events
-            .into_iter()
-            .find(|event| {
-                matches!(event, IbcEvent::OpenInitConnection(_))
-                    || matches!(event, IbcEvent::ChainError(_))
-            })
-            .ok_or_else(ConnectionError::missing_connection_init_event)?;
-
-        // TODO - make chainError an actual error
-        match event {
-            IbcEvent::OpenInitConnection(_) => {
-                info!("🥂 {} => {:#?}\n", self.dst_chain().id(), event);
-                Ok(event)
-            }
-            IbcEvent::ChainError(e) => Err(ConnectionError::tx_response(e)),
-            _ => panic!("internal error"),
-        }
-    }
-
     pub fn map_chain<ChainC: ChainHandle, ChainD: ChainHandle>(
         self,
         mapper_a: impl Fn(ChainA) -> ChainC,
@@ -606,37 +431,4 @@ pub enum ConnectionMsgType {
     OpenTry,
     OpenAck,
     OpenConfirm,
-}
-
-/// Verify that the destination connection exhibits the expected state.
-fn check_destination_connection_state(
-    connection_id: ConnectionId,
-    existing_connection: ConnectionEnd,
-    expected_connection: ConnectionEnd,
-) -> Result<(), ConnectionError> {
-    let good_client_ids = existing_connection.client_id() == expected_connection.client_id()
-        && existing_connection.counterparty().client_id()
-            == expected_connection.counterparty().client_id();
-
-    let good_state = *existing_connection.state() as u32 <= *expected_connection.state() as u32;
-
-    let good_connection_ids = existing_connection.counterparty().connection_id().is_none()
-        || existing_connection.counterparty().connection_id()
-            == expected_connection.counterparty().connection_id();
-
-    let good_version = existing_connection.versions() == expected_connection.versions();
-
-    let good_counterparty_prefix =
-        existing_connection.counterparty().prefix() == expected_connection.counterparty().prefix();
-
-    if good_state
-        && good_client_ids
-        && good_connection_ids
-        && good_version
-        && good_counterparty_prefix
-    {
-        Ok(())
-    } else {
-        Err(ConnectionError::connection_already_exists(connection_id))
-    }
 }

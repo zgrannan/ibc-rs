@@ -120,10 +120,6 @@ where
         self.value().config()
     }
 
-    fn get_key(&self) -> Result<KeyEntry, Error> {
-        self.value().get_key()
-    }
-
     fn add_key(&self, key_name: String, key: KeyEntry) -> Result<(), Error> {
         self.value().add_key(key_name, key)
     }

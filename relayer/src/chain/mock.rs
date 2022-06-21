@@ -154,10 +154,6 @@ impl ChainEndpoint for MockChain {
         self.config.clone()
     }
 
-    fn get_key(&mut self) -> Result<KeyEntry, Error> {
-        unimplemented!()
-    }
-
     fn add_key(&mut self, _key_name: &str, _key: KeyEntry) -> Result<(), Error> {
         unimplemented!()
     }

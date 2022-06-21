@@ -30,23 +30,7 @@ pub struct ProtoAny {
     #[serde(alias = "@type")]
     tpe: String,
 
-    #[serde(deserialize_with = "deserialize_key")]
     key: Vec<u8>,
-}
-
-/// This method is the workhorse for deserializing
-/// the `key` field from a public key.
-fn deserialize_key<'de, D>(deser: D) -> Result<Vec<u8>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    // The key is a byte array that is base64-encoded
-    // and then marshalled into a JSON String.
-    let based64_encoded: Result<String, _> = Deserialize::deserialize(deser);
-    let value = base64::decode(based64_encoded?)
-        .map_err(|e| serde::de::Error::custom(format!("error in decoding: {}", e)))?;
-
-    Ok(value)
 }
 
 impl FromStr for EncodedPubKey {

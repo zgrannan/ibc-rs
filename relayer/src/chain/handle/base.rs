@@ -126,14 +126,6 @@ impl ChainHandle for BaseChainHandle {
         self.send(|reply_to| ChainRequest::Signer { reply_to })
     }
 
-    fn config(&self) -> Result<ChainConfig, Error> {
-        self.send(|reply_to| ChainRequest::Config { reply_to })
-    }
-
-    fn get_key(&self) -> Result<KeyEntry, Error> {
-        self.send(|reply_to| ChainRequest::GetKey { reply_to })
-    }
-
     fn add_key(&self, key_name: String, key: KeyEntry) -> Result<(), Error> {
         self.send(|reply_to| ChainRequest::AddKey {
             key_name,
@@ -215,10 +207,6 @@ impl ChainHandle for BaseChainHandle {
 
     fn query_commitment_prefix(&self) -> Result<CommitmentPrefix, Error> {
         self.send(|reply_to| ChainRequest::QueryCommitmentPrefix { reply_to })
-    }
-
-    fn query_compatible_versions(&self) -> Result<Vec<Version>, Error> {
-        self.send(|reply_to| ChainRequest::QueryCompatibleVersions { reply_to })
     }
 
     fn query_connection(

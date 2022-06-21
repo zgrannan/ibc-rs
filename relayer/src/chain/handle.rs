@@ -365,10 +365,6 @@ pub trait ChainHandle: Clone + Send + Sync + Serialize + Debug + 'static {
 
     fn get_signer(&self) -> Result<Signer, Error>;
 
-    fn config(&self) -> Result<ChainConfig, Error>;
-
-    fn get_key(&self) -> Result<KeyEntry, Error>;
-
     fn add_key(&self, key_name: String, key: KeyEntry) -> Result<(), Error>;
 
     /// Return the version of the IBC protocol that this chain is running, if known.
@@ -431,8 +427,6 @@ pub trait ChainHandle: Clone + Send + Sync + Serialize + Debug + 'static {
     ) -> Result<(AnyConsensusState, MerkleProof), Error>;
 
     fn query_commitment_prefix(&self) -> Result<CommitmentPrefix, Error>;
-
-    fn query_compatible_versions(&self) -> Result<Vec<Version>, Error>;
 
     /// Performs a query to retrieve the connection associated with a given
     /// connection identifier. A proof can optionally be returned along with the

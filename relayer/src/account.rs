@@ -3,7 +3,7 @@
 use serde::{Deserialize, Serialize};
 
 /// The balance for a specific denom
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize)]
 pub struct Balance {
     /// The amount of coins in the account, as a string to allow for large amounts
     pub amount: String,
