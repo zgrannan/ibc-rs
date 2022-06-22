@@ -27,7 +27,6 @@ use std::sync::{Arc, RwLock, RwLockReadGuard};
 use tracing::debug;
 
 use crate::account::Balance;
-use crate::chain::client::ClientSettings;
 use crate::chain::endpoint::{ChainStatus, HealthCheck};
 use crate::chain::handle::{ChainHandle, ChainRequest, Subscription};
 use crate::chain::requests::{
@@ -313,16 +312,6 @@ impl<Handle: ChainHandle> ChainHandle for CountingChainHandle<Handle> {
         self.inc_metric("build_header");
         self.inner()
             .build_header(trusted_height, target_height, client_state)
-    }
-
-    /// Constructs a client state at the given height
-    fn build_client_state(
-        &self,
-        height: Height,
-        options: ClientSettings,
-    ) -> Result<AnyClientState, Error> {
-        self.inc_metric("build_client_state");
-        self.inner().build_client_state(height, options)
     }
 
     /// Constructs a consensus state at the given height

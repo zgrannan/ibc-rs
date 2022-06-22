@@ -29,7 +29,6 @@ use ibc::{
 use crate::{
     account::Balance,
     chain::{
-        client::ClientSettings,
         endpoint::ChainStatus,
         requests::{
             IncludeProof, QueryChannelClientStateRequest, QueryChannelRequest,
@@ -299,18 +298,6 @@ impl ChainHandle for BaseChainHandle {
             trusted_height,
             target_height,
             client_state,
-            reply_to,
-        })
-    }
-
-    fn build_client_state(
-        &self,
-        height: Height,
-        settings: ClientSettings,
-    ) -> Result<AnyClientState, Error> {
-        self.send(|reply_to| ChainRequest::BuildClientState {
-            height,
-            settings,
             reply_to,
         })
     }

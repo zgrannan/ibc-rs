@@ -41,7 +41,6 @@ use crate::{
 };
 
 use super::{
-    client::ClientSettings,
     endpoint::{ChainStatus, HealthCheck},
     requests::{
         IncludeProof, QueryChannelClientStateRequest, QueryChannelRequest, QueryChannelsRequest,
@@ -165,12 +164,6 @@ pub enum ChainRequest {
         target_height: Height,
         client_state: AnyClientState,
         reply_to: ReplyTo<(AnyHeader, Vec<AnyHeader>)>,
-    },
-
-    BuildClientState {
-        height: Height,
-        settings: ClientSettings,
-        reply_to: ReplyTo<AnyClientState>,
     },
 
     BuildConsensusState {
@@ -501,13 +494,6 @@ pub trait ChainHandle: Clone + Send + Sync + Serialize + Debug + 'static {
         target_height: Height,
         client_state: AnyClientState,
     ) -> Result<(AnyHeader, Vec<AnyHeader>), Error>;
-
-    /// Constructs a client state at the given height
-    fn build_client_state(
-        &self,
-        height: Height,
-        settings: ClientSettings,
-    ) -> Result<AnyClientState, Error>;
 
     /// Constructs a consensus state at the given height
     fn build_consensus_state(

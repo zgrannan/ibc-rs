@@ -26,7 +26,6 @@ use ibc::Height as ICSHeight;
 use tendermint_rpc::endpoint::broadcast::tx_sync::Response as TxResponse;
 
 use crate::account::Balance;
-use crate::chain::client::ClientSettings;
 use crate::chain::requests::{
     QueryChannelClientStateRequest, QueryChannelRequest, QueryChannelsRequest,
     QueryClientConnectionsRequest, QueryClientStateRequest, QueryClientStatesRequest,
@@ -321,12 +320,6 @@ pub trait ChainEndpoint: Sized {
         &self,
         request: QueryHostConsensusStateRequest,
     ) -> Result<Self::ConsensusState, Error>;
-
-    fn build_client_state(
-        &self,
-        height: ICSHeight,
-        settings: ClientSettings,
-    ) -> Result<Self::ClientState, Error>;
 
     fn build_consensus_state(
         &self,

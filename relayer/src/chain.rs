@@ -1,4 +1,3 @@
-pub mod client;
 pub mod endpoint;
 pub mod handle;
 pub mod requests;
