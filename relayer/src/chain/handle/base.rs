@@ -1,76 +1,65 @@
 use core::fmt::Debug;
-
 use crossbeam_channel as channel;
 use serde::{Serialize, Serializer};
-
 use ibc::{
     core::{
         ics02_client::client_consensus::{AnyConsensusState, AnyConsensusStateWithHeight},
         ics02_client::client_state::{AnyClientState, IdentifiedAnyClientState},
-        ics02_client::events::UpdateClient,
-        ics02_client::header::AnyHeader,
+        ics02_client::events::UpdateClient, ics02_client::header::AnyHeader,
         ics02_client::misbehaviour::MisbehaviourEvidence,
         ics03_connection::connection::{ConnectionEnd, IdentifiedConnectionEnd},
         ics03_connection::version::Version,
         ics04_channel::channel::{ChannelEnd, IdentifiedChannelEnd},
         ics04_channel::packet::{PacketMsgType, Sequence},
         ics23_commitment::{commitment::CommitmentPrefix, merkle::MerkleProof},
-        ics24_host::identifier::ChainId,
-        ics24_host::identifier::ChannelId,
+        ics24_host::identifier::ChainId, ics24_host::identifier::ChannelId,
         ics24_host::identifier::{ClientId, ConnectionId, PortId},
     },
-    events::IbcEvent,
-    proofs::Proofs,
-    signer::Signer,
-    Height,
+    events::IbcEvent, proofs::Proofs, signer::Signer, Height,
 };
-
 use crate::{
     account::Balance,
     chain::{
-        client::ClientSettings,
-        endpoint::ChainStatus,
+        client::ClientSettings, endpoint::ChainStatus,
         requests::{
-            IncludeProof, QueryBlockRequest, QueryChannelClientStateRequest, QueryChannelRequest,
-            QueryChannelsRequest, QueryClientConnectionsRequest, QueryClientStateRequest,
-            QueryClientStatesRequest, QueryConnectionChannelsRequest, QueryConnectionRequest,
-            QueryConnectionsRequest, QueryConsensusStateRequest, QueryConsensusStatesRequest,
-            QueryHostConsensusStateRequest, QueryNextSequenceReceiveRequest,
-            QueryPacketAcknowledgementRequest, QueryPacketAcknowledgementsRequest,
-            QueryPacketCommitmentRequest, QueryPacketCommitmentsRequest, QueryPacketReceiptRequest,
-            QueryTxRequest, QueryUnreceivedAcksRequest, QueryUnreceivedPacketsRequest,
+            IncludeProof, QueryBlockRequest, QueryChannelClientStateRequest,
+            QueryChannelRequest, QueryChannelsRequest, QueryClientConnectionsRequest,
+            QueryClientStateRequest, QueryClientStatesRequest,
+            QueryConnectionChannelsRequest, QueryConnectionRequest,
+            QueryConnectionsRequest, QueryConsensusStateRequest,
+            QueryConsensusStatesRequest, QueryHostConsensusStateRequest,
+            QueryNextSequenceReceiveRequest, QueryPacketAcknowledgementRequest,
+            QueryPacketAcknowledgementsRequest, QueryPacketCommitmentRequest,
+            QueryPacketCommitmentsRequest, QueryPacketReceiptRequest, QueryTxRequest,
+            QueryUnreceivedAcksRequest, QueryUnreceivedPacketsRequest,
             QueryUpgradedClientStateRequest, QueryUpgradedConsensusStateRequest,
         },
         tracking::TrackedMsgs,
     },
-    config::ChainConfig,
-    connection::ConnectionMsgType,
-    denom::DenomTrace,
-    error::Error,
+    config::ChainConfig, connection::ConnectionMsgType, denom::DenomTrace, error::Error,
     keyring::KeyEntry,
 };
-
-use super::{reply_channel, ChainHandle, ChainRequest, HealthCheck, ReplyTo, Subscription};
-
+use super::{
+    reply_channel, ChainHandle, ChainRequest, HealthCheck, ReplyTo, Subscription,
+};
 /// A basic chain handle implementation.
 /// For use in interactive CLIs, e.g., `query`, `tx raw`, etc.
 #[derive(Debug, Clone)]
 pub struct BaseChainHandle {
     /// Chain identifier
     chain_id: ChainId,
-
     /// The handle's channel for sending requests to the runtime
     runtime_sender: channel::Sender<ChainRequest>,
 }
-
 impl BaseChainHandle {
+    #[prusti_contracts::trusted]
     pub fn new(chain_id: ChainId, sender: channel::Sender<ChainRequest>) -> Self {
         Self {
             chain_id,
             runtime_sender: sender,
         }
     }
-
+    #[prusti_contracts::trusted]
     fn send<F, O>(&self, f: F) -> Result<O, Error>
     where
         F: FnOnce(ReplyTo<O>) -> ChainRequest,
@@ -78,34 +67,36 @@ impl BaseChainHandle {
     {
         let (sender, receiver) = reply_channel();
         let input = f(sender);
-
         self.runtime_sender.send(input).map_err(Error::send)?;
-
         receiver.recv().map_err(Error::channel_receive)?
     }
 }
-
 impl ChainHandle for BaseChainHandle {
+    #[prusti_contracts::trusted]
     fn new(chain_id: ChainId, sender: channel::Sender<ChainRequest>) -> Self {
         Self::new(chain_id, sender)
     }
-
+    #[prusti_contracts::trusted]
     fn id(&self) -> ChainId {
         self.chain_id.clone()
     }
-
+    #[prusti_contracts::trusted]
     fn health_check(&self) -> Result<HealthCheck, Error> {
-        self.send(|reply_to| ChainRequest::HealthCheck { reply_to })
+        self.send(|reply_to| ChainRequest::HealthCheck {
+            reply_to,
+        })
     }
-
+    #[prusti_contracts::trusted]
     fn shutdown(&self) -> Result<(), Error> {
         self.send(|reply_to| ChainRequest::Shutdown { reply_to })
     }
-
+    #[prusti_contracts::trusted]
     fn subscribe(&self) -> Result<Subscription, Error> {
-        self.send(|reply_to| ChainRequest::Subscribe { reply_to })
+        self.send(|reply_to| ChainRequest::Subscribe {
+            reply_to,
+        })
     }
-
+    #[prusti_contracts::trusted]
     fn send_messages_and_wait_commit(
         &self,
         tracked_msgs: TrackedMsgs,
@@ -115,7 +106,7 @@ impl ChainHandle for BaseChainHandle {
             reply_to,
         })
     }
-
+    #[prusti_contracts::trusted]
     fn send_messages_and_wait_check_tx(
         &self,
         tracked_msgs: TrackedMsgs,
@@ -125,19 +116,19 @@ impl ChainHandle for BaseChainHandle {
             reply_to,
         })
     }
-
+    #[prusti_contracts::trusted]
     fn get_signer(&self) -> Result<Signer, Error> {
         self.send(|reply_to| ChainRequest::Signer { reply_to })
     }
-
+    #[prusti_contracts::trusted]
     fn config(&self) -> Result<ChainConfig, Error> {
         self.send(|reply_to| ChainRequest::Config { reply_to })
     }
-
+    #[prusti_contracts::trusted]
     fn get_key(&self) -> Result<KeyEntry, Error> {
         self.send(|reply_to| ChainRequest::GetKey { reply_to })
     }
-
+    #[prusti_contracts::trusted]
     fn add_key(&self, key_name: String, key: KeyEntry) -> Result<(), Error> {
         self.send(|reply_to| ChainRequest::AddKey {
             key_name,
@@ -145,30 +136,43 @@ impl ChainHandle for BaseChainHandle {
             reply_to,
         })
     }
-
+    #[prusti_contracts::trusted]
     fn ibc_version(&self) -> Result<Option<semver::Version>, Error> {
-        self.send(|reply_to| ChainRequest::IbcVersion { reply_to })
+        self.send(|reply_to| ChainRequest::IbcVersion {
+            reply_to,
+        })
     }
-
+    #[prusti_contracts::trusted]
     fn query_balance(&self, key_name: Option<String>) -> Result<Balance, Error> {
-        self.send(|reply_to| ChainRequest::QueryBalance { key_name, reply_to })
+        self.send(|reply_to| ChainRequest::QueryBalance {
+            key_name,
+            reply_to,
+        })
     }
-
+    #[prusti_contracts::trusted]
     fn query_denom_trace(&self, hash: String) -> Result<DenomTrace, Error> {
-        self.send(|reply_to| ChainRequest::QueryDenomTrace { hash, reply_to })
+        self.send(|reply_to| ChainRequest::QueryDenomTrace {
+            hash,
+            reply_to,
+        })
     }
-
+    #[prusti_contracts::trusted]
     fn query_application_status(&self) -> Result<ChainStatus, Error> {
-        self.send(|reply_to| ChainRequest::QueryApplicationStatus { reply_to })
+        self.send(|reply_to| ChainRequest::QueryApplicationStatus {
+            reply_to,
+        })
     }
-
+    #[prusti_contracts::trusted]
     fn query_clients(
         &self,
         request: QueryClientStatesRequest,
     ) -> Result<Vec<IdentifiedAnyClientState>, Error> {
-        self.send(|reply_to| ChainRequest::QueryClients { request, reply_to })
+        self.send(|reply_to| ChainRequest::QueryClients {
+            request,
+            reply_to,
+        })
     }
-
+    #[prusti_contracts::trusted]
     fn query_client_state(
         &self,
         request: QueryClientStateRequest,
@@ -180,21 +184,27 @@ impl ChainHandle for BaseChainHandle {
             reply_to,
         })
     }
-
+    #[prusti_contracts::trusted]
     fn query_client_connections(
         &self,
         request: QueryClientConnectionsRequest,
     ) -> Result<Vec<ConnectionId>, Error> {
-        self.send(|reply_to| ChainRequest::QueryClientConnections { request, reply_to })
+        self.send(|reply_to| ChainRequest::QueryClientConnections {
+            request,
+            reply_to,
+        })
     }
-
+    #[prusti_contracts::trusted]
     fn query_consensus_states(
         &self,
         request: QueryConsensusStatesRequest,
     ) -> Result<Vec<AnyConsensusStateWithHeight>, Error> {
-        self.send(|reply_to| ChainRequest::QueryConsensusStates { request, reply_to })
+        self.send(|reply_to| ChainRequest::QueryConsensusStates {
+            request,
+            reply_to,
+        })
     }
-
+    #[prusti_contracts::trusted]
     fn query_consensus_state(
         &self,
         request: QueryConsensusStateRequest,
@@ -206,29 +216,39 @@ impl ChainHandle for BaseChainHandle {
             reply_to,
         })
     }
-
+    #[prusti_contracts::trusted]
     fn query_upgraded_client_state(
         &self,
         request: QueryUpgradedClientStateRequest,
     ) -> Result<(AnyClientState, MerkleProof), Error> {
-        self.send(|reply_to| ChainRequest::QueryUpgradedClientState { request, reply_to })
+        self.send(|reply_to| ChainRequest::QueryUpgradedClientState {
+            request,
+            reply_to,
+        })
     }
-
+    #[prusti_contracts::trusted]
     fn query_upgraded_consensus_state(
         &self,
         request: QueryUpgradedConsensusStateRequest,
     ) -> Result<(AnyConsensusState, MerkleProof), Error> {
-        self.send(|reply_to| ChainRequest::QueryUpgradedConsensusState { request, reply_to })
+        self.send(|reply_to| ChainRequest::QueryUpgradedConsensusState {
+            request,
+            reply_to,
+        })
     }
-
+    #[prusti_contracts::trusted]
     fn query_commitment_prefix(&self) -> Result<CommitmentPrefix, Error> {
-        self.send(|reply_to| ChainRequest::QueryCommitmentPrefix { reply_to })
+        self.send(|reply_to| ChainRequest::QueryCommitmentPrefix {
+            reply_to,
+        })
     }
-
+    #[prusti_contracts::trusted]
     fn query_compatible_versions(&self) -> Result<Vec<Version>, Error> {
-        self.send(|reply_to| ChainRequest::QueryCompatibleVersions { reply_to })
+        self.send(|reply_to| ChainRequest::QueryCompatibleVersions {
+            reply_to,
+        })
     }
-
+    #[prusti_contracts::trusted]
     fn query_connection(
         &self,
         request: QueryConnectionRequest,
@@ -240,21 +260,27 @@ impl ChainHandle for BaseChainHandle {
             reply_to,
         })
     }
-
+    #[prusti_contracts::trusted]
     fn query_connections(
         &self,
         request: QueryConnectionsRequest,
     ) -> Result<Vec<IdentifiedConnectionEnd>, Error> {
-        self.send(|reply_to| ChainRequest::QueryConnections { request, reply_to })
+        self.send(|reply_to| ChainRequest::QueryConnections {
+            request,
+            reply_to,
+        })
     }
-
+    #[prusti_contracts::trusted]
     fn query_connection_channels(
         &self,
         request: QueryConnectionChannelsRequest,
     ) -> Result<Vec<IdentifiedChannelEnd>, Error> {
-        self.send(|reply_to| ChainRequest::QueryConnectionChannels { request, reply_to })
+        self.send(|reply_to| ChainRequest::QueryConnectionChannels {
+            request,
+            reply_to,
+        })
     }
-
+    #[prusti_contracts::trusted]
     fn query_next_sequence_receive(
         &self,
         request: QueryNextSequenceReceiveRequest,
@@ -266,14 +292,17 @@ impl ChainHandle for BaseChainHandle {
             reply_to,
         })
     }
-
+    #[prusti_contracts::trusted]
     fn query_channels(
         &self,
         request: QueryChannelsRequest,
     ) -> Result<Vec<IdentifiedChannelEnd>, Error> {
-        self.send(|reply_to| ChainRequest::QueryChannels { request, reply_to })
+        self.send(|reply_to| ChainRequest::QueryChannels {
+            request,
+            reply_to,
+        })
     }
-
+    #[prusti_contracts::trusted]
     fn query_channel(
         &self,
         request: QueryChannelRequest,
@@ -285,14 +314,17 @@ impl ChainHandle for BaseChainHandle {
             reply_to,
         })
     }
-
+    #[prusti_contracts::trusted]
     fn query_channel_client_state(
         &self,
         request: QueryChannelClientStateRequest,
     ) -> Result<Option<IdentifiedAnyClientState>, Error> {
-        self.send(|reply_to| ChainRequest::QueryChannelClientState { request, reply_to })
+        self.send(|reply_to| ChainRequest::QueryChannelClientState {
+            request,
+            reply_to,
+        })
     }
-
+    #[prusti_contracts::trusted]
     fn build_header(
         &self,
         trusted_height: Height,
@@ -306,7 +338,7 @@ impl ChainHandle for BaseChainHandle {
             reply_to,
         })
     }
-
+    #[prusti_contracts::trusted]
     fn build_client_state(
         &self,
         height: Height,
@@ -318,7 +350,7 @@ impl ChainHandle for BaseChainHandle {
             reply_to,
         })
     }
-
+    #[prusti_contracts::trusted]
     fn build_consensus_state(
         &self,
         trusted: Height,
@@ -332,7 +364,7 @@ impl ChainHandle for BaseChainHandle {
             reply_to,
         })
     }
-
+    #[prusti_contracts::trusted]
     fn check_misbehaviour(
         &self,
         update_event: UpdateClient,
@@ -344,7 +376,7 @@ impl ChainHandle for BaseChainHandle {
             reply_to,
         })
     }
-
+    #[prusti_contracts::trusted]
     fn build_connection_proofs_and_client_state(
         &self,
         message_type: ConnectionMsgType,
@@ -352,17 +384,15 @@ impl ChainHandle for BaseChainHandle {
         client_id: &ClientId,
         height: Height,
     ) -> Result<(Option<AnyClientState>, Proofs), Error> {
-        self.send(
-            |reply_to| ChainRequest::BuildConnectionProofsAndClientState {
-                message_type,
-                connection_id: connection_id.clone(),
-                client_id: client_id.clone(),
-                height,
-                reply_to,
-            },
-        )
+        self.send(|reply_to| ChainRequest::BuildConnectionProofsAndClientState {
+            message_type,
+            connection_id: connection_id.clone(),
+            client_id: client_id.clone(),
+            height,
+            reply_to,
+        })
     }
-
+    #[prusti_contracts::trusted]
     fn build_channel_proofs(
         &self,
         port_id: &PortId,
@@ -376,7 +406,7 @@ impl ChainHandle for BaseChainHandle {
             reply_to,
         })
     }
-
+    #[prusti_contracts::trusted]
     fn build_packet_proofs(
         &self,
         packet_type: PacketMsgType,
@@ -394,7 +424,7 @@ impl ChainHandle for BaseChainHandle {
             reply_to,
         })
     }
-
+    #[prusti_contracts::trusted]
     fn query_packet_commitment(
         &self,
         request: QueryPacketCommitmentRequest,
@@ -406,14 +436,17 @@ impl ChainHandle for BaseChainHandle {
             reply_to,
         })
     }
-
+    #[prusti_contracts::trusted]
     fn query_packet_commitments(
         &self,
         request: QueryPacketCommitmentsRequest,
     ) -> Result<(Vec<Sequence>, Height), Error> {
-        self.send(|reply_to| ChainRequest::QueryPacketCommitments { request, reply_to })
+        self.send(|reply_to| ChainRequest::QueryPacketCommitments {
+            request,
+            reply_to,
+        })
     }
-
+    #[prusti_contracts::trusted]
     fn query_packet_receipt(
         &self,
         request: QueryPacketReceiptRequest,
@@ -425,14 +458,17 @@ impl ChainHandle for BaseChainHandle {
             reply_to,
         })
     }
-
+    #[prusti_contracts::trusted]
     fn query_unreceived_packets(
         &self,
         request: QueryUnreceivedPacketsRequest,
     ) -> Result<Vec<Sequence>, Error> {
-        self.send(|reply_to| ChainRequest::QueryUnreceivedPackets { request, reply_to })
+        self.send(|reply_to| ChainRequest::QueryUnreceivedPackets {
+            request,
+            reply_to,
+        })
     }
-
+    #[prusti_contracts::trusted]
     fn query_packet_acknowledgement(
         &self,
         request: QueryPacketAcknowledgementRequest,
@@ -444,45 +480,64 @@ impl ChainHandle for BaseChainHandle {
             reply_to,
         })
     }
-
+    #[prusti_contracts::trusted]
     fn query_packet_acknowledgements(
         &self,
         request: QueryPacketAcknowledgementsRequest,
     ) -> Result<(Vec<Sequence>, Height), Error> {
-        self.send(|reply_to| ChainRequest::QueryPacketAcknowledgements { request, reply_to })
+        self.send(|reply_to| ChainRequest::QueryPacketAcknowledgements {
+            request,
+            reply_to,
+        })
     }
-
+    #[prusti_contracts::trusted]
     fn query_unreceived_acknowledgements(
         &self,
         request: QueryUnreceivedAcksRequest,
     ) -> Result<Vec<Sequence>, Error> {
-        self.send(|reply_to| ChainRequest::QueryUnreceivedAcknowledgement { request, reply_to })
+        self.send(|reply_to| ChainRequest::QueryUnreceivedAcknowledgement {
+            request,
+            reply_to,
+        })
     }
-
+    #[prusti_contracts::trusted]
     fn query_txs(&self, request: QueryTxRequest) -> Result<Vec<IbcEvent>, Error> {
-        self.send(|reply_to| ChainRequest::QueryPacketEventDataFromTxs { request, reply_to })
+        self.send(|reply_to| ChainRequest::QueryPacketEventDataFromTxs {
+            request,
+            reply_to,
+        })
     }
-
+    #[prusti_contracts::trusted]
     fn query_blocks(
         &self,
         request: QueryBlockRequest,
     ) -> Result<(Vec<IbcEvent>, Vec<IbcEvent>), Error> {
-        self.send(|reply_to| ChainRequest::QueryPacketEventDataFromBlocks { request, reply_to })
+        self.send(|reply_to| ChainRequest::QueryPacketEventDataFromBlocks {
+            request,
+            reply_to,
+        })
     }
-
+    #[prusti_contracts::trusted]
     fn query_host_consensus_state(
         &self,
         request: QueryHostConsensusStateRequest,
     ) -> Result<AnyConsensusState, Error> {
-        self.send(|reply_to| ChainRequest::QueryHostConsensusState { request, reply_to })
+        self.send(|reply_to| ChainRequest::QueryHostConsensusState {
+            request,
+            reply_to,
+        })
     }
 }
-
 impl Serialize for BaseChainHandle {
-    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+    #[prusti_contracts::trusted]
+    fn serialize<S>(
+        &self,
+        serializer: S,
+    ) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
     where
         S: Serializer,
     {
         self.id().serialize(serializer)
     }
 }
+

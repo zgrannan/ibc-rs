@@ -5,16 +5,17 @@ pub trait SplitResults: Iterator {
     {
         let mut oks = vec![];
         let mut errs = vec![];
-
         for item in self {
             match item {
                 Ok(ok) => oks.push(ok),
                 Err(err) => errs.push(err),
             }
         }
-
         (oks, errs)
     }
 }
+impl<T> SplitResults for T
+where
+    T: Iterator,
+{}
 
-impl<T> SplitResults for T where T: Iterator {}

@@ -1,7 +1,5 @@
 //! Data structures related to the accounts used by the relayer.
-
 use serde::{Deserialize, Serialize};
-
 /// The balance for a specific denom
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Balance {
@@ -10,3 +8,4 @@ pub struct Balance {
     /// The denomination for that coin
     pub denom: String,
 }
+

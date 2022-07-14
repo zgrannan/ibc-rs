@@ -1,16 +1,12 @@
 use alloc::collections::BTreeMap as HashMap;
 use core::convert::TryFrom;
-
 use tendermint_rpc::{event::Event as RpcEvent, event::EventData as RpcEventData};
-
 use ibc::core::ics02_client::{events as ClientEvents, height::Height};
 use ibc::core::ics03_connection::events as ConnectionEvents;
 use ibc::core::ics04_channel::events as ChannelEvents;
 use ibc::core::ics24_host::identifier::ChainId;
 use ibc::events::{IbcEvent, RawObject};
-
 use crate::event::monitor::queries;
-
 /// Extract IBC events from Tendermint RPC events
 ///
 /// Events originate from the following ABCI methods ->
@@ -111,60 +107,61 @@ use crate::event::monitor::queries;
 /// {Begin,End}Block events however do not have any such `message.action` associated with them, so
 /// this doesn't work. For this reason, we extract block events in the following order ->
 /// OpenInit -> OpenTry -> OpenAck -> OpenConfirm -> SendPacket -> CloseInit -> CloseConfirm.
+#[prusti_contracts::trusted]
 pub fn get_all_events(
     chain_id: &ChainId,
     result: RpcEvent,
 ) -> Result<Vec<(Height, IbcEvent)>, String> {
     let mut vals: Vec<(Height, IbcEvent)> = vec![];
-    let RpcEvent {
-        data,
-        events,
-        query,
-    } = result;
+    let RpcEvent { data, events, query } = result;
     let events = events.ok_or("missing events")?;
-
     match data {
-        RpcEventData::NewBlock { block, .. } if query == queries::new_block().to_string() => {
+        RpcEventData::NewBlock {
+            block,
+            ..
+        } if query == queries::new_block().to_string() => {
             let height = Height::new(
-                ChainId::chain_version(chain_id.to_string().as_str()),
-                u64::from(block.as_ref().ok_or("tx.height")?.header.height),
-            )
-            .map_err(|_| String::from("tx.height: invalid header height of 0"))?;
-
+                    ChainId::chain_version(chain_id.to_string().as_str()),
+                    u64::from(block.as_ref().ok_or("tx.height")?.header.height),
+                )
+                .map_err(|_| String::from("tx.height: invalid header height of 0"))?;
             vals.push((height, ClientEvents::NewBlock::new(height).into()));
             vals.append(&mut extract_block_events(height, &events));
         }
         RpcEventData::Tx { tx_result } => {
             let height = Height::new(
-                ChainId::chain_version(chain_id.to_string().as_str()),
-                tx_result.height as u64,
-            )
-            .map_err(|_| String::from("tx_result.height: invalid header height of 0"))?;
-
+                    ChainId::chain_version(chain_id.to_string().as_str()),
+                    tx_result.height as u64,
+                )
+                .map_err(|_| String::from(
+                    "tx_result.height: invalid header height of 0",
+                ))?;
             for abci_event in &tx_result.result.events {
                 if query == queries::ibc_client().to_string() {
-                    if let Some(mut client_event) = ClientEvents::try_from_tx(abci_event) {
+                    if let Some(mut client_event)
+                        = ClientEvents::try_from_tx(abci_event) {
                         client_event.set_height(height);
                         tracing::trace!("extracted ibc_client event {}", client_event);
                         vals.push((height, client_event));
                     }
                 }
                 if query == queries::ibc_connection().to_string() {
-                    if let Some(mut conn_event) = ConnectionEvents::try_from_tx(abci_event) {
+                    if let Some(mut conn_event)
+                        = ConnectionEvents::try_from_tx(abci_event) {
                         conn_event.set_height(height);
                         tracing::trace!("extracted ibc_connection event {}", conn_event);
                         vals.push((height, conn_event));
                     }
                 }
                 if query == queries::ibc_channel().to_string() {
-                    if let Some(mut chan_event) = ChannelEvents::try_from_tx(abci_event) {
+                    if let Some(mut chan_event)
+                        = ChannelEvents::try_from_tx(abci_event) {
                         chan_event.set_height(height);
                         let _span = tracing::trace_span!("ibc_channel event").entered();
                         tracing::trace!("extracted {}", chan_event);
                         if matches!(chan_event, IbcEvent::SendPacket(_)) {
-                            // Should be the same as the hash of tx_result.tx?
-                            if let Some(hash) =
-                                events.get("tx.hash").and_then(|values| values.get(0))
+                            if let Some(hash)
+                                = events.get("tx.hash").and_then(|values| values.get(0))
                             {
                                 tracing::trace!(event = "SendPacket", "tx hash: {}", hash);
                             }
@@ -176,10 +173,9 @@ pub fn get_all_events(
         }
         _ => {}
     }
-
     Ok(vals)
 }
-
+#[prusti_contracts::trusted]
 fn extract_block_events(
     height: Height,
     block_events: &HashMap<String, Vec<String>>,
@@ -197,61 +193,77 @@ fn extract_block_events(
             .iter()
             .enumerate()
             .filter_map(|(i, _)| {
-                let raw_obj = RawObject::new(height, event_type.to_owned(), i, block_events);
+                let raw_obj = RawObject::new(
+                    height,
+                    event_type.to_owned(),
+                    i,
+                    block_events,
+                );
                 T::try_from(raw_obj).ok()
             })
             .collect()
     }
-
     #[inline]
     fn append_events<T: Into<IbcEvent>>(
         events: &mut Vec<(Height, IbcEvent)>,
         chan_events: Vec<T>,
         height: Height,
     ) {
-        events.append(
-            &mut chan_events
-                .into_iter()
-                .map(|ev| (height, ev.into()))
-                .collect(),
-        );
+        events
+            .append(
+                &mut chan_events.into_iter().map(|ev| (height, ev.into())).collect(),
+            );
     }
-
     let mut events: Vec<(Height, IbcEvent)> = vec![];
-    append_events::<ChannelEvents::OpenInit>(
+    append_events::<
+        ChannelEvents::OpenInit,
+    >(
         &mut events,
         extract_events(height, block_events, "channel_open_init", "channel_id"),
         height,
     );
-    append_events::<ChannelEvents::OpenTry>(
+    append_events::<
+        ChannelEvents::OpenTry,
+    >(
         &mut events,
         extract_events(height, block_events, "channel_open_try", "channel_id"),
         height,
     );
-    append_events::<ChannelEvents::OpenAck>(
+    append_events::<
+        ChannelEvents::OpenAck,
+    >(
         &mut events,
         extract_events(height, block_events, "channel_open_ack", "channel_id"),
         height,
     );
-    append_events::<ChannelEvents::OpenConfirm>(
+    append_events::<
+        ChannelEvents::OpenConfirm,
+    >(
         &mut events,
         extract_events(height, block_events, "channel_open_confirm", "channel_id"),
         height,
     );
-    append_events::<ChannelEvents::SendPacket>(
+    append_events::<
+        ChannelEvents::SendPacket,
+    >(
         &mut events,
         extract_events(height, block_events, "send_packet", "packet_data"),
         height,
     );
-    append_events::<ChannelEvents::CloseInit>(
+    append_events::<
+        ChannelEvents::CloseInit,
+    >(
         &mut events,
         extract_events(height, block_events, "channel_close_init", "channel_id"),
         height,
     );
-    append_events::<ChannelEvents::CloseConfirm>(
+    append_events::<
+        ChannelEvents::CloseConfirm,
+    >(
         &mut events,
         extract_events(height, block_events, "channel_close_confirm", "channel_id"),
         height,
     );
     events
 }
+

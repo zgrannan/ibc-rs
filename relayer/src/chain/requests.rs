@@ -1,7 +1,5 @@
 use core::fmt::Display;
-
 use crate::error::Error;
-
 use ibc::core::ics04_channel::packet::Sequence;
 use ibc::core::ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId};
 use ibc::events::WithBlockDataType;
@@ -25,12 +23,10 @@ use ibc_proto::ibc::core::connection::v1::{
     QueryClientConnectionsRequest as RawQueryClientConnectionsRequest,
     QueryConnectionsRequest as RawQueryConnectionsRequest,
 };
-
 use serde::{Deserialize, Serialize};
 use tendermint::abci::transaction::Hash as TxHash;
 use tendermint::block::Height as TMBlockHeight;
 use tonic::metadata::AsciiMetadataValue;
-
 /// Type to specify a height in a query. Specifically, this caters to the use
 /// case where the user wants to query at whatever the latest height is, as
 /// opposed to specifying a specific height.
@@ -39,34 +35,30 @@ pub enum QueryHeight {
     Latest,
     Specific(Height),
 }
-
 impl TryFrom<QueryHeight> for TMBlockHeight {
     type Error = Error;
-
+    #[prusti_contracts::trusted]
     fn try_from(height_query: QueryHeight) -> Result<Self, Self::Error> {
         let height = match height_query {
             QueryHeight::Latest => 0u64,
             QueryHeight::Specific(height) => height.revision_height(),
         };
-
         Self::try_from(height).map_err(Error::invalid_height)
     }
 }
-
 impl TryFrom<QueryHeight> for AsciiMetadataValue {
     type Error = Error;
-
+    #[prusti_contracts::trusted]
     fn try_from(height_query: QueryHeight) -> Result<Self, Self::Error> {
         let height = match height_query {
             QueryHeight::Latest => 0u64,
             QueryHeight::Specific(height) => height.revision_height(),
         };
-
         str::parse(&height.to_string()).map_err(Error::invalid_metadata)
     }
 }
-
 impl Display for QueryHeight {
+    #[prusti_contracts::trusted]
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             QueryHeight::Latest => write!(f, "latest height"),
@@ -74,7 +66,6 @@ impl Display for QueryHeight {
         }
     }
 }
-
 /// Defines a type to be used in select requests to specify whether or not a proof should be
 /// returned along with the response.
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
@@ -82,7 +73,6 @@ pub enum IncludeProof {
     Yes,
     No,
 }
-
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct PageRequest {
     /// key is a value returned in PageResponse.next_key to begin
@@ -104,8 +94,8 @@ pub struct PageRequest {
     /// reverse is set to true if results are to be returned in the descending order.
     pub reverse: bool,
 }
-
 impl PageRequest {
+    #[prusti_contracts::trusted]
     pub fn all() -> PageRequest {
         PageRequest {
             limit: u64::MAX,
@@ -113,8 +103,8 @@ impl PageRequest {
         }
     }
 }
-
 impl From<PageRequest> for RawPageRequest {
+    #[prusti_contracts::trusted]
     fn from(request: PageRequest) -> Self {
         RawPageRequest {
             key: request.key,
@@ -125,52 +115,46 @@ impl From<PageRequest> for RawPageRequest {
         }
     }
 }
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct QueryClientStateRequest {
     pub client_id: ClientId,
     pub height: QueryHeight,
 }
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct QueryClientStatesRequest {
     pub pagination: Option<PageRequest>,
 }
-
 impl From<QueryClientStatesRequest> for RawQueryClientStatesRequest {
+    #[prusti_contracts::trusted]
     fn from(request: QueryClientStatesRequest) -> Self {
         RawQueryClientStatesRequest {
             pagination: request.pagination.map(|pagination| pagination.into()),
         }
     }
 }
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct QueryConsensusStateRequest {
     pub client_id: ClientId,
     pub consensus_height: Height,
     pub query_height: QueryHeight,
 }
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct QueryUpgradedClientStateRequest {
     /// Height at which the chain is scheduled to halt for upgrade
     pub upgrade_height: Height,
 }
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct QueryUpgradedConsensusStateRequest {
     /// Height at which the chain is scheduled to halt for upgrade
     pub upgrade_height: Height,
 }
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct QueryConsensusStatesRequest {
     pub client_id: ClientId,
     pub pagination: Option<PageRequest>,
 }
-
 impl From<QueryConsensusStatesRequest> for RawQueryConsensusStatesRequest {
+    #[prusti_contracts::trusted]
     fn from(request: QueryConsensusStatesRequest) -> Self {
         RawQueryConsensusStatesRequest {
             client_id: request.client_id.to_string(),
@@ -178,46 +162,42 @@ impl From<QueryConsensusStatesRequest> for RawQueryConsensusStatesRequest {
         }
     }
 }
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct QueryConnectionsRequest {
     pub pagination: Option<PageRequest>,
 }
-
 impl From<QueryConnectionsRequest> for RawQueryConnectionsRequest {
+    #[prusti_contracts::trusted]
     fn from(request: QueryConnectionsRequest) -> Self {
         RawQueryConnectionsRequest {
             pagination: request.pagination.map(|pagination| pagination.into()),
         }
     }
 }
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct QueryClientConnectionsRequest {
     pub client_id: ClientId,
 }
-
 impl From<QueryClientConnectionsRequest> for RawQueryClientConnectionsRequest {
+    #[prusti_contracts::trusted]
     fn from(request: QueryClientConnectionsRequest) -> Self {
         RawQueryClientConnectionsRequest {
             client_id: request.client_id.to_string(),
         }
     }
 }
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct QueryConnectionRequest {
     pub connection_id: ConnectionId,
     pub height: QueryHeight,
 }
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct QueryConnectionChannelsRequest {
     pub connection_id: ConnectionId,
     pub pagination: Option<PageRequest>,
 }
-
 impl From<QueryConnectionChannelsRequest> for RawQueryConnectionChannelsRequest {
+    #[prusti_contracts::trusted]
     fn from(request: QueryConnectionChannelsRequest) -> Self {
         RawQueryConnectionChannelsRequest {
             connection: request.connection_id.to_string(),
@@ -225,34 +205,31 @@ impl From<QueryConnectionChannelsRequest> for RawQueryConnectionChannelsRequest 
         }
     }
 }
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct QueryChannelsRequest {
     pub pagination: Option<PageRequest>,
 }
-
 impl From<QueryChannelsRequest> for RawQueryChannelsRequest {
+    #[prusti_contracts::trusted]
     fn from(request: QueryChannelsRequest) -> Self {
         RawQueryChannelsRequest {
             pagination: request.pagination.map(|pagination| pagination.into()),
         }
     }
 }
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct QueryChannelRequest {
     pub port_id: PortId,
     pub channel_id: ChannelId,
     pub height: QueryHeight,
 }
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct QueryChannelClientStateRequest {
     pub port_id: PortId,
     pub channel_id: ChannelId,
 }
-
 impl From<QueryChannelClientStateRequest> for RawQueryChannelClientStateRequest {
+    #[prusti_contracts::trusted]
     fn from(request: QueryChannelClientStateRequest) -> Self {
         RawQueryChannelClientStateRequest {
             port_id: request.port_id.to_string(),
@@ -260,7 +237,6 @@ impl From<QueryChannelClientStateRequest> for RawQueryChannelClientStateRequest 
         }
     }
 }
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct QueryPacketCommitmentRequest {
     pub port_id: PortId,
@@ -268,15 +244,14 @@ pub struct QueryPacketCommitmentRequest {
     pub sequence: Sequence,
     pub height: QueryHeight,
 }
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct QueryPacketCommitmentsRequest {
     pub port_id: PortId,
     pub channel_id: ChannelId,
     pub pagination: Option<PageRequest>,
 }
-
 impl From<QueryPacketCommitmentsRequest> for RawQueryPacketCommitmentsRequest {
+    #[prusti_contracts::trusted]
     fn from(request: QueryPacketCommitmentsRequest) -> Self {
         RawQueryPacketCommitmentsRequest {
             port_id: request.port_id.to_string(),
@@ -285,7 +260,6 @@ impl From<QueryPacketCommitmentsRequest> for RawQueryPacketCommitmentsRequest {
         }
     }
 }
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct QueryPacketReceiptRequest {
     pub port_id: PortId,
@@ -293,15 +267,14 @@ pub struct QueryPacketReceiptRequest {
     pub sequence: Sequence,
     pub height: QueryHeight,
 }
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct QueryUnreceivedPacketsRequest {
     pub port_id: PortId,
     pub channel_id: ChannelId,
     pub packet_commitment_sequences: Vec<Sequence>,
 }
-
 impl From<QueryUnreceivedPacketsRequest> for RawQueryUnreceivedPacketsRequest {
+    #[prusti_contracts::trusted]
     fn from(request: QueryUnreceivedPacketsRequest) -> Self {
         RawQueryUnreceivedPacketsRequest {
             port_id: request.port_id.to_string(),
@@ -314,7 +287,6 @@ impl From<QueryUnreceivedPacketsRequest> for RawQueryUnreceivedPacketsRequest {
         }
     }
 }
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct QueryPacketAcknowledgementRequest {
     pub port_id: PortId,
@@ -322,7 +294,6 @@ pub struct QueryPacketAcknowledgementRequest {
     pub sequence: Sequence,
     pub height: QueryHeight,
 }
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct QueryPacketAcknowledgementsRequest {
     pub port_id: PortId,
@@ -330,8 +301,8 @@ pub struct QueryPacketAcknowledgementsRequest {
     pub pagination: Option<PageRequest>,
     pub packet_commitment_sequences: Vec<Sequence>,
 }
-
 impl From<QueryPacketAcknowledgementsRequest> for RawQueryPacketAcknowledgementsRequest {
+    #[prusti_contracts::trusted]
     fn from(request: QueryPacketAcknowledgementsRequest) -> Self {
         RawQueryPacketAcknowledgementsRequest {
             port_id: request.port_id.to_string(),
@@ -345,15 +316,14 @@ impl From<QueryPacketAcknowledgementsRequest> for RawQueryPacketAcknowledgements
         }
     }
 }
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct QueryUnreceivedAcksRequest {
     pub port_id: PortId,
     pub channel_id: ChannelId,
     pub packet_ack_sequences: Vec<Sequence>,
 }
-
 impl From<QueryUnreceivedAcksRequest> for RawQueryUnreceivedAcksRequest {
+    #[prusti_contracts::trusted]
     fn from(request: QueryUnreceivedAcksRequest) -> Self {
         RawQueryUnreceivedAcksRequest {
             port_id: request.port_id.to_string(),
@@ -366,15 +336,14 @@ impl From<QueryUnreceivedAcksRequest> for RawQueryUnreceivedAcksRequest {
         }
     }
 }
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct QueryNextSequenceReceiveRequest {
     pub port_id: PortId,
     pub channel_id: ChannelId,
     pub height: QueryHeight,
 }
-
 impl From<QueryNextSequenceReceiveRequest> for RawQueryNextSequenceReceiveRequest {
+    #[prusti_contracts::trusted]
     fn from(request: QueryNextSequenceReceiveRequest) -> Self {
         RawQueryNextSequenceReceiveRequest {
             port_id: request.port_id.to_string(),
@@ -382,12 +351,10 @@ impl From<QueryNextSequenceReceiveRequest> for RawQueryNextSequenceReceiveReques
         }
     }
 }
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct QueryHostConsensusStateRequest {
     pub height: QueryHeight,
 }
-
 /// Used for queries and not yet standardized in channel's query.proto
 #[derive(Clone, Debug)]
 pub enum QueryTxRequest {
@@ -395,10 +362,8 @@ pub enum QueryTxRequest {
     Client(QueryClientEventRequest),
     Transaction(QueryTxHash),
 }
-
 #[derive(Clone, Debug)]
 pub struct QueryTxHash(pub TxHash);
-
 /// Used to query a packet event, identified by `event_id`, for specific channel and sequences.
 /// The query is preformed for the chain context at `height`.
 #[derive(Clone, Debug)]
@@ -411,7 +376,6 @@ pub struct QueryPacketEventDataRequest {
     pub sequences: Vec<Sequence>,
     pub height: QueryHeight,
 }
-
 /// Query request for a single client event, identified by `event_id`, for `client_id`.
 #[derive(Clone, Debug)]
 pub struct QueryClientEventRequest {
@@ -420,8 +384,8 @@ pub struct QueryClientEventRequest {
     pub client_id: ClientId,
     pub consensus_height: Height,
 }
-
 #[derive(Clone, Debug)]
 pub enum QueryBlockRequest {
     Packet(QueryPacketEventDataRequest),
 }
+

@@ -1,134 +1,48 @@
 use flex_error::define_error;
 use tendermint::abci::Code;
 use tendermint_rpc::endpoint::broadcast::tx_commit::TxResult;
-
-// Provides mapping for errors returned from ibc-go and cosmos-sdk
 define_error! {
-    SdkError {
-        Client
-            [ ClientError ]
-            |_| { "ICS02 Client Error" },
-
-        UnexpectedOk
-            |_| { "Expected error code, instead got Ok" },
-
-        UnknownSdk
-            {
-                codespace: String,
-                code: u32,
-            }
-            | e | {
-                format_args!("unknown SDK error with code space: {}, code: {}", e.codespace, e.code)
-            },
-
-        UnknownTxSync
-            { code: u32 }
-            | e | { format_args!("unknown TX sync response error: {}", e.code) },
-
-        OutOfGas
-            { code: u32 }
-            |_| { "the gas requirement is higher than the configured maximum gas! please check the Hermes config.toml".to_string() },
-
-        InsufficientFee
-            { code: u32 }
-            |_| { "the price configuration for this chain may be too low! please check the `gas_price.price` Hermes config.toml".to_string() },
-    }
+    SdkError { Client[ClientError] | _ | { "ICS02 Client Error" }, UnexpectedOk | _ | {
+    "Expected error code, instead got Ok" }, UnknownSdk { codespace : String, code : u32,
+    } | e | { format_args!("unknown SDK error with code space: {}, code: {}", e
+    .codespace, e.code) }, UnknownTxSync { code : u32 } | e | {
+    format_args!("unknown TX sync response error: {}", e.code) }, OutOfGas { code : u32 }
+    | _ | {
+    "the gas requirement is higher than the configured maximum gas! please check the Hermes config.toml"
+    .to_string() }, InsufficientFee { code : u32 } | _ | {
+    "the price configuration for this chain may be too low! please check the `gas_price.price` Hermes config.toml"
+    .to_string() }, }
 }
-
 define_error! {
-    ClientError {
-        LightClientAlreadyExists
-            |_| { "light client already exists" },
-
-        InvalidLightClient
-            |_| { "light client is invalid" },
-
-        LightClientNotFound
-            |_| { "light client not found" },
-
-        FrozenLightClient
-            |_| { "light client is frozen due to misbehaviour" },
-
-        InvalidClientMetadata
-            |_| { "invalid client metadata" },
-
-        ConsensusStateNotFound
-            |_| { "consensus state not found" },
-
-        InvalidConsensusState
-            |_| { "invalid consensus state" },
-
-        ClientTypeNotFound
-            |_| { "client type not found" },
-
-        InvalidClientType
-            |_| { "invalid client type" },
-
-        CommitmentRootNotFound
-            |_| { "commitment root not found" },
-
-        InvalidClientHeader
-            |_| { "invalid client header" },
-
-        InvalidLightClientMisbehavior
-            |_| { "invalid light client misbehaviour" },
-
-        ClientStateVerificationFailed
-            |_| { "client state verification failed" },
-
-        ClientConsensusStateVerificationFailed
-            |_| { "client consensus state verification failed" },
-
-        ConnectionStateVerificationFailed
-            |_| { "connection state verification failed" },
-
-        ChannelStateVerificationFailed
-            |_| { "channel state verification failed" },
-
-        PacketCommitmentVerificationFailed
-            |_| { "packet commitment verification failed" },
-
-        PacketAcknowledgementVerificationFailed
-            |_| { "packet acknowledgement verification failed" },
-
-        PacketReceiptVerificationFailed
-            |_| { "packet receipt verification failed" },
-
-        NextSequenceReceiveVerificationFailed
-            |_| { "next sequence receive verification failed" },
-
-        SelfConsensusStateNotFound
-            |_| { "self consensus state not found" },
-
-        UpdateLightClientFailed
-            |_| { "unable to update light client" },
-
-        InvalidUpdateClientProposal
-            |_| { "invalid update client proposal" },
-
-        InvalidClientUpgrade
-            |_| { "invalid client upgrade" },
-
-        InvalidHeight
-            |_| { "invalid height" },
-
-        InvalidClientStateSubstitute
-            |_| { "invalid client state substitute" },
-
-        InvalidUpgradeProposal
-            |_| { "invalid upgrade proposal" },
-
-        InactiveClient
-            |_| { "client is not active" },
-
-        UnknownClient
-            { code: u32 }
-            |e| { format!("unknown client error: {}", e.code) },
-    }
+    ClientError { LightClientAlreadyExists | _ | { "light client already exists" },
+    InvalidLightClient | _ | { "light client is invalid" }, LightClientNotFound | _ | {
+    "light client not found" }, FrozenLightClient | _ | {
+    "light client is frozen due to misbehaviour" }, InvalidClientMetadata | _ | {
+    "invalid client metadata" }, ConsensusStateNotFound | _ | {
+    "consensus state not found" }, InvalidConsensusState | _ | {
+    "invalid consensus state" }, ClientTypeNotFound | _ | { "client type not found" },
+    InvalidClientType | _ | { "invalid client type" }, CommitmentRootNotFound | _ | {
+    "commitment root not found" }, InvalidClientHeader | _ | { "invalid client header" },
+    InvalidLightClientMisbehavior | _ | { "invalid light client misbehaviour" },
+    ClientStateVerificationFailed | _ | { "client state verification failed" },
+    ClientConsensusStateVerificationFailed | _ | {
+    "client consensus state verification failed" }, ConnectionStateVerificationFailed | _
+    | { "connection state verification failed" }, ChannelStateVerificationFailed | _ | {
+    "channel state verification failed" }, PacketCommitmentVerificationFailed | _ | {
+    "packet commitment verification failed" }, PacketAcknowledgementVerificationFailed |
+    _ | { "packet acknowledgement verification failed" }, PacketReceiptVerificationFailed
+    | _ | { "packet receipt verification failed" }, NextSequenceReceiveVerificationFailed
+    | _ | { "next sequence receive verification failed" }, SelfConsensusStateNotFound | _
+    | { "self consensus state not found" }, UpdateLightClientFailed | _ | {
+    "unable to update light client" }, InvalidUpdateClientProposal | _ | {
+    "invalid update client proposal" }, InvalidClientUpgrade | _ | {
+    "invalid client upgrade" }, InvalidHeight | _ | { "invalid height" },
+    InvalidClientStateSubstitute | _ | { "invalid client state substitute" },
+    InvalidUpgradeProposal | _ | { "invalid upgrade proposal" }, InactiveClient | _ | {
+    "client is not active" }, UnknownClient { code : u32 } | e | {
+    format!("unknown client error: {}", e.code) }, }
 }
-
-// The error code mapping follows the Go code at
-// ibc-go/modules/core/02-client/types/errors.go
+#[prusti_contracts::trusted]
 fn client_error_from_code(code: u32) -> ClientError {
     match code {
         2 => ClientError::light_client_already_exists(),
@@ -162,13 +76,7 @@ fn client_error_from_code(code: u32) -> ClientError {
         _ => ClientError::unknown_client(code),
     }
 }
-
-// Converts the error in a TxResult into SdkError with the same
-// mapping as defined in ibc-go and cosmos-sdk. This assumes the
-// target chain we are interacting with are using cosmos-sdk and ibc-go.
-//
-// TODO: investigate ways to automatically generate the mapping by parsing
-// the errors.go source code directly
+#[prusti_contracts::trusted]
 pub fn sdk_error_from_tx_result(result: &TxResult) -> SdkError {
     match result.code {
         Code::Ok => SdkError::unexpected_ok(),
@@ -177,24 +85,21 @@ pub fn sdk_error_from_tx_result(result: &TxResult) -> SdkError {
             if codespace == "client" {
                 SdkError::client(client_error_from_code(code))
             } else {
-                // TODO: Implement mapping for other codespaces in ibc-go
                 SdkError::unknown_sdk(codespace, code)
             }
         }
     }
 }
-
 /// Converts error codes originating from `broadcast_tx_sync` responses
 /// into IBC relayer domain-type errors.
 /// See [`tendermint_rpc::endpoint::broadcast::tx_sync::Response`].
 /// Cf: <https://github.com/cosmos/cosmos-sdk/blob/v0.42.10/types/errors/errors.go>
+#[prusti_contracts::trusted]
 pub fn sdk_error_from_tx_sync_error_code(code: u32) -> SdkError {
     match code {
-        // The primary reason (we know of) causing broadcast_tx_sync to fail
-        // is due to "out of gas" errors. These are unrecoverable at the moment
-        // on the Hermes side. We'll inform the user to check for misconfig.
         11 => SdkError::out_of_gas(code),
         13 => SdkError::insufficient_fee(code),
         _ => SdkError::unknown_tx_sync(code),
     }
 }
+

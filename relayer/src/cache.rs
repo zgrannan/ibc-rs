@@ -5,34 +5,27 @@
 use core::fmt::Formatter;
 use std::fmt;
 use std::time::Duration;
-
 use moka::sync::Cache as MokaCache;
-
 use ibc::core::ics02_client::client_state::AnyClientState;
 use ibc::core::ics02_client::height::Height;
 use ibc::core::ics03_connection::connection::ConnectionEnd;
 use ibc::core::ics04_channel::channel::ChannelEnd;
 use ibc::core::ics24_host::identifier::{ClientId, ConnectionId, PortChannelId};
-
 const CHANNEL_CACHE_TTL: Duration = Duration::from_secs(60);
 const CONNECTION_CACHE_TTL: Duration = Duration::from_secs(10 * 60);
 const CLIENT_STATE_CACHE_TTL: Duration = Duration::from_millis(500);
 const LATEST_HEIGHT_CACHE_TTL: Duration = Duration::from_millis(200);
-
 const CHANNEL_CACHE_CAPACITY: u64 = 10_000;
 const CONNECTION_CACHE_CAPACITY: u64 = 10_000;
 const CLIENT_STATE_CACHE_CAPACITY: u64 = 10_000;
-
 /// Whether or not a result was in cache (ie. a cache hit)
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum CacheStatus {
     Hit,
     Miss,
 }
-
 /// Alias for a result and its cache status.
 pub type CacheResult<A, E> = Result<(A, CacheStatus), E>;
-
 /// The main cache data structure, which comprises multiple sub-caches for caching
 /// different chain components, each with different time-to-live values.
 ///
@@ -48,36 +41,32 @@ pub struct Cache {
     /// The latest `Height` associated with the chain runtime this `Cache` is associated with.
     latest_height: MokaCache<(), Height>,
 }
-
 impl Default for Cache {
+    #[prusti_contracts::trusted]
     fn default() -> Self {
         Self::new()
     }
 }
-
 impl Cache {
     /// Initializes a new empty [`Cache`] with default time-to-live values.
+    #[prusti_contracts::trusted]
     pub fn new() -> Cache {
         let channels = MokaCache::builder()
             .time_to_live(CHANNEL_CACHE_TTL)
             .max_capacity(CHANNEL_CACHE_CAPACITY)
             .build();
-
         let connections = MokaCache::builder()
             .time_to_live(CONNECTION_CACHE_TTL)
             .max_capacity(CONNECTION_CACHE_CAPACITY)
             .build();
-
         let client_states = MokaCache::builder()
             .time_to_live(CLIENT_STATE_CACHE_TTL)
             .max_capacity(CLIENT_STATE_CACHE_CAPACITY)
             .build();
-
         let latest_height = MokaCache::builder()
             .time_to_live(LATEST_HEIGHT_CACHE_TTL)
             .max_capacity(1)
             .build();
-
         Cache {
             channels,
             connections,
@@ -85,11 +74,11 @@ impl Cache {
             latest_height,
         }
     }
-
     /// Return a cached [`ChannelEnd`] via its [`PortChannelId`] if it exists in the cache.
     /// Otherwise, attempts to fetch it via the supplied fetcher function `F`. If `F`
     /// returns successfully with the channel end in an open state, a copy of it is stored in
     /// the cache before it is returned.
+    #[prusti_contracts::trusted]
     pub fn get_or_try_insert_channel_with<F, E>(
         &self,
         id: &PortChannelId,
@@ -99,10 +88,8 @@ impl Cache {
         F: FnOnce() -> Result<ChannelEnd, E>,
     {
         if let Some(chan) = self.channels.get(id) {
-            // If cache hit, return it.
             Ok((chan, CacheStatus::Hit))
         } else {
-            // Only cache a channel end if the channel is open.
             let chan = f()?;
             if chan.state().is_open() {
                 self.channels.insert(id.clone(), chan.clone());
@@ -110,11 +97,11 @@ impl Cache {
             Ok((chan, CacheStatus::Miss))
         }
     }
-
     /// Return a cached [`ConnectionEnd`] via its [`ConnectionId`] if it exists in the cache.
     /// Otherwise, attempts to fetch it via the supplied fetcher function `F`. If `F`
     /// returns successfully with the connection end in an open state, a copy of it is
     /// in the cache before it is returned.
+    #[prusti_contracts::trusted]
     pub fn get_or_try_insert_connection_with<F, E>(
         &self,
         id: &ConnectionId,
@@ -133,11 +120,11 @@ impl Cache {
             Ok((conn, CacheStatus::Miss))
         }
     }
-
     /// Return a cached [`AnyClientState`] via its [`ClientId`] if it exists in the cache.
     /// Otherwise, attempts to fetch it via the supplied fetcher function `F`. If `F`
     /// returns successfully with the client state, a copy of it is stored in the cache
     /// before it is returned.
+    #[prusti_contracts::trusted]
     pub fn get_or_try_insert_client_state_with<F, E>(
         &self,
         id: &ClientId,
@@ -154,7 +141,6 @@ impl Cache {
             Ok((state, CacheStatus::Miss))
         }
     }
-
     /// Returns the latest [`Height`] value if it exists in the cache.
     /// Otherwise, attempts to fetch it via the supplied fetcher function `F`. If
     /// `F` returns successfully with the latest height, a copy of it is stored in the
@@ -162,7 +148,11 @@ impl Cache {
     ///
     /// This value is cached with a small time-to-live so that the latest height
     /// query returns the same height if the same query is repeated within a small time frame.
-    pub fn get_or_try_update_latest_height_with<F, E>(&self, f: F) -> CacheResult<Height, E>
+    #[prusti_contracts::trusted]
+    pub fn get_or_try_update_latest_height_with<F, E>(
+        &self,
+        f: F,
+    ) -> CacheResult<Height, E>
     where
         F: FnOnce() -> Result<Height, E>,
     {
@@ -175,9 +165,10 @@ impl Cache {
         }
     }
 }
-
 impl fmt::Debug for Cache {
+    #[prusti_contracts::trusted]
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("Cache").finish_non_exhaustive()
     }
 }
+

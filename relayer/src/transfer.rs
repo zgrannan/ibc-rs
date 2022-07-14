@@ -1,5 +1,4 @@
 use core::time::Duration;
-
 use flex_error::{define_error, DetailOnly};
 use ibc::applications::transfer::error::Error as Ics20Error;
 use ibc::applications::transfer::msgs::transfer::MsgTransfer;
@@ -12,63 +11,27 @@ use ibc::timestamp::{Timestamp, TimestampOverflowError};
 use ibc::tx_msg::Msg;
 use ibc_proto::cosmos::base::v1beta1::Coin;
 use ibc_proto::google::protobuf::Any;
-
 use crate::chain::endpoint::ChainStatus;
 use crate::chain::handle::ChainHandle;
 use crate::chain::tracking::TrackedMsgs;
 use crate::error::Error;
-
 define_error! {
-    TransferError {
-        Relayer
-            [ Error ]
-            |_| { "relayer error" },
-
-        Key
-            [ Error ]
-            |_| { "key error" },
-
-        Submit
-            { chain_id: ChainId }
-            [ Error ]
-            |e| {
-                format!("failed while submitting the Transfer message to chain {0}",
-                    e.chain_id)
-            },
-
-        TimestampOverflow
-            [ DetailOnly<TimestampOverflowError> ]
-            |_| { "timestamp overflow" },
-
-        TxResponse
-            { event: String }
-            |e| {
-                format!("tx response event consists of an error: {}",
-                    e.event)
-            },
-
-        UnexpectedEvent
-            { event: IbcEvent }
-            |e| {
-                format!("internal error, expected IBCEvent::ChainError, got {:?}",
-                    e.event)
-            },
-
-        TokenTransfer
-            [ Ics20Error ]
-            |_| { "Token transfer error" },
-
-        ZeroTimeout
-            | _ | { "packet timeout height and packet timeout timestamp cannot both be 0" },
-    }
+    TransferError { Relayer[Error] | _ | { "relayer error" }, Key[Error] | _ | {
+    "key error" }, Submit { chain_id : ChainId } [Error] | e | {
+    format!("failed while submitting the Transfer message to chain {0}", e.chain_id) },
+    TimestampOverflow[DetailOnly < TimestampOverflowError >] | _ | { "timestamp overflow"
+    }, TxResponse { event : String } | e | {
+    format!("tx response event consists of an error: {}", e.event) }, UnexpectedEvent {
+    event : IbcEvent } | e | {
+    format!("internal error, expected IBCEvent::ChainError, got {:?}", e.event) },
+    TokenTransfer[Ics20Error] | _ | { "Token transfer error" }, ZeroTimeout | _ | {
+    "packet timeout height and packet timeout timestamp cannot both be 0" }, }
 }
-
 #[derive(Copy, Clone)]
 pub struct TransferTimeout {
     pub timeout_height: TimeoutHeight,
     pub timeout_timestamp: Timestamp,
 }
-
 impl TransferTimeout {
     /**
        Construct the transfer timeout parameters from the given timeout
@@ -80,6 +43,7 @@ impl TransferTimeout {
        If both height offset and duration are zero, then the packet will
        never expire.
     */
+    #[prusti_contracts::trusted]
     pub fn new(
         timeout_height_offset: u64,
         timeout_duration: Duration,
@@ -88,26 +52,20 @@ impl TransferTimeout {
         let timeout_height = if timeout_height_offset == 0 {
             TimeoutHeight::no_timeout()
         } else {
-            destination_chain_status
-                .height
-                .add(timeout_height_offset)
-                .into()
+            destination_chain_status.height.add(timeout_height_offset).into()
         };
-
         let timeout_timestamp = if timeout_duration == Duration::ZERO {
             Timestamp::none()
         } else {
             (destination_chain_status.timestamp + timeout_duration)
                 .map_err(TransferError::timestamp_overflow)?
         };
-
         Ok(TransferTimeout {
             timeout_height,
             timeout_timestamp,
         })
     }
 }
-
 #[derive(Clone, Debug)]
 pub struct TransferOptions {
     pub packet_src_port_id: PortId,
@@ -119,7 +77,7 @@ pub struct TransferOptions {
     pub timeout_duration: Duration,
     pub number_msgs: usize,
 }
-
+#[prusti_contracts::trusted]
 pub fn build_transfer_message(
     packet_src_port_id: PortId,
     packet_src_channel_id: ChannelId,
@@ -142,29 +100,24 @@ pub fn build_transfer_message(
         timeout_height,
         timeout_timestamp,
     };
-
     msg.to_any()
 }
-
+#[prusti_contracts::trusted]
 pub fn build_and_send_transfer_messages<SrcChain: ChainHandle, DstChain: ChainHandle>(
-    packet_src_chain: &SrcChain, // the chain whose account is debited
-    packet_dst_chain: &DstChain, // the chain whose account eventually gets credited
+    packet_src_chain: &SrcChain,
+    packet_dst_chain: &DstChain,
     opts: &TransferOptions,
 ) -> Result<Vec<IbcEvent>, TransferError> {
     let receiver = packet_dst_chain.get_signer().map_err(TransferError::key)?;
-
     let sender = packet_src_chain.get_signer().map_err(TransferError::key)?;
-
     let destination_chain_status = packet_dst_chain
         .query_application_status()
         .map_err(TransferError::relayer)?;
-
     let timeout = TransferTimeout::new(
         opts.timeout_height_offset,
         opts.timeout_duration,
         &destination_chain_status,
     )?;
-
     let msg = MsgTransfer {
         source_port: opts.packet_src_port_id.clone(),
         source_channel: opts.packet_src_channel_id.clone(),
@@ -177,30 +130,21 @@ pub fn build_and_send_transfer_messages<SrcChain: ChainHandle, DstChain: ChainHa
         timeout_height: timeout.timeout_height,
         timeout_timestamp: timeout.timeout_timestamp,
     };
-
     let raw_msg = msg.to_any();
     let msgs = vec![raw_msg; opts.number_msgs];
-
     let events = packet_src_chain
         .send_messages_and_wait_commit(TrackedMsgs::new_static(msgs, "ft-transfer"))
         .map_err(|e| TransferError::submit(packet_src_chain.id(), e))?;
-
-    // Check if the chain rejected the transaction
-    let result = events
-        .iter()
-        .find(|event| matches!(event, IbcEvent::ChainError(_)));
-
+    let result = events.iter().find(|event| matches!(event, IbcEvent::ChainError(_)));
     match result {
         None => Ok(events),
         Some(err) => {
             if let IbcEvent::ChainError(err) = err {
                 Err(TransferError::tx_response(err.clone()))
             } else {
-                panic!(
-                    "internal error, expected IBCEvent::ChainError, got {:?}",
-                    err
-                )
+                panic!("internal error, expected IBCEvent::ChainError, got {:?}", err)
             }
         }
     }
 }
+

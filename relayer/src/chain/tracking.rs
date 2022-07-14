@@ -1,8 +1,6 @@
 use core::fmt;
-
 use ibc_proto::google::protobuf::Any;
 use uuid::Uuid;
-
 /// Identifier used to track an `EventBatch` along
 /// the relaying pipeline until the corresponding
 /// transactions are submitted and/or confirmed.
@@ -15,20 +13,20 @@ pub enum TrackingId {
     /// the CLI or during packet clearing.
     Static(&'static str),
 }
-
 impl TrackingId {
     /// See [`TrackingId::Uuid`]
+    #[prusti_contracts::trusted]
     pub fn new_uuid() -> Self {
         Self::Uuid(Uuid::new_v4())
     }
-
     /// See [`TrackingId::Static`]
+    #[prusti_contracts::trusted]
     pub fn new_static(s: &'static str) -> Self {
         Self::Static(s)
     }
 }
-
 impl fmt::Display for TrackingId {
+    #[prusti_contracts::trusted]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             TrackingId::Uuid(u) => {
@@ -40,7 +38,6 @@ impl fmt::Display for TrackingId {
         }
     }
 }
-
 /// A wrapper over a vector of proto-encoded messages
 /// (`Vec<Any>`), which has an associated tracking
 /// number.
@@ -53,45 +50,46 @@ pub struct TrackedMsgs {
     pub msgs: Vec<Any>,
     pub tracking_id: TrackingId,
 }
-
 impl TrackedMsgs {
+    #[prusti_contracts::trusted]
     pub fn new(msgs: Vec<Any>, tracking_id: TrackingId) -> Self {
         Self { msgs, tracking_id }
     }
-
+    #[prusti_contracts::trusted]
     pub fn new_static(msgs: Vec<Any>, tracking_id: &'static str) -> Self {
         Self {
             msgs,
             tracking_id: TrackingId::Static(tracking_id),
         }
     }
-
+    #[prusti_contracts::trusted]
     pub fn new_uuid(msgs: Vec<Any>, tracking_id: Uuid) -> Self {
         Self {
             msgs,
             tracking_id: TrackingId::Uuid(tracking_id),
         }
     }
-
+    #[prusti_contracts::trusted]
     pub fn new_single(msg: Any, tracking_id: &'static str) -> Self {
         Self {
             msgs: vec![msg],
             tracking_id: TrackingId::Static(tracking_id),
         }
     }
-
+    #[prusti_contracts::trusted]
     pub fn new_single_uuid(msg: Any, tracking_id: Uuid) -> Self {
         Self {
             msgs: vec![msg],
             tracking_id: TrackingId::Uuid(tracking_id),
         }
     }
-
+    #[prusti_contracts::trusted]
     pub fn messages(&self) -> &Vec<Any> {
         &self.msgs
     }
-
+    #[prusti_contracts::trusted]
     pub fn tracking_id(&self) -> TrackingId {
         self.tracking_id
     }
 }
+

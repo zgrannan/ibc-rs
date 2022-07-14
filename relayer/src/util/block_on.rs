@@ -1,8 +1,7 @@
 //! Utility function to execute a future synchronously
-
 use futures::Future;
-
 /// Spawns a new tokio runtime and use it to block on the given future.
+#[prusti_contracts::trusted]
 pub fn block_on<F: Future>(future: F) -> F::Output {
     tokio::runtime::Builder::new_current_thread()
         .enable_all()
@@ -10,3 +9,4 @@ pub fn block_on<F: Future>(future: F) -> F::Output {
         .unwrap()
         .block_on(future)
 }
+

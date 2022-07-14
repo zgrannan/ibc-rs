@@ -1,39 +1,39 @@
 use ibc::core::ics02_client::misbehaviour::MisbehaviourEvidence;
 use tendermint_testgen::light_block::TmLightBlock;
-
 use ibc::clients::ics07_tendermint::header::Header as TmHeader;
 use ibc::core::ics02_client::client_state::AnyClientState;
 use ibc::core::ics02_client::events::UpdateClient;
 use ibc::core::ics24_host::identifier::ChainId;
 use ibc::mock::host::HostBlock;
 use ibc::Height;
-
 use crate::chain::endpoint::ChainEndpoint;
 use crate::chain::mock::MockChain;
 use crate::error::Error;
-
 use super::Verified;
 use ibc::timestamp::Timestamp;
-
 /// A light client serving a mock chain.
 pub struct LightClient {
     chain_id: ChainId,
 }
-
 impl LightClient {
+    #[prusti_contracts::trusted]
     pub fn new(chain: &MockChain) -> LightClient {
         LightClient {
             chain_id: chain.id().clone(),
         }
     }
-
     /// Returns a LightBlock at the requested height `h`.
+    #[prusti_contracts::trusted]
     fn light_block(&self, h: Height) -> TmLightBlock {
-        HostBlock::generate_tm_block(self.chain_id.clone(), h.revision_height(), Timestamp::now())
+        HostBlock::generate_tm_block(
+            self.chain_id.clone(),
+            h.revision_height(),
+            Timestamp::now(),
+        )
     }
 }
-
 impl super::LightClient<MockChain> for LightClient {
+    #[prusti_contracts::trusted]
     fn verify(
         &mut self,
         _trusted: Height,
@@ -45,11 +45,11 @@ impl super::LightClient<MockChain> for LightClient {
             supporting: Vec::new(),
         })
     }
-
+    #[prusti_contracts::trusted]
     fn fetch(&mut self, height: Height) -> Result<TmLightBlock, Error> {
         Ok(self.light_block(height))
     }
-
+    #[prusti_contracts::trusted]
     fn check_misbehaviour(
         &mut self,
         _update: UpdateClient,
@@ -57,30 +57,27 @@ impl super::LightClient<MockChain> for LightClient {
     ) -> Result<Option<MisbehaviourEvidence>, Error> {
         unimplemented!()
     }
-
+    #[prusti_contracts::trusted]
     fn header_and_minimal_set(
         &mut self,
         trusted_height: Height,
         target_height: Height,
         client_state: &AnyClientState,
     ) -> Result<Verified<TmHeader>, Error> {
-        let Verified { target, supporting } =
-            self.verify(trusted_height, target_height, client_state)?;
-
+        let Verified { target, supporting } = self
+            .verify(trusted_height, target_height, client_state)?;
         assert!(supporting.is_empty());
-
         let succ_trusted = self.fetch(trusted_height.increment())?;
-
         let target = TmHeader {
             signed_header: target.signed_header,
             validator_set: target.validators,
             trusted_height,
             trusted_validator_set: succ_trusted.validators,
         };
-
         Ok(Verified {
             target,
             supporting: Vec::new(),
         })
     }
 }
+

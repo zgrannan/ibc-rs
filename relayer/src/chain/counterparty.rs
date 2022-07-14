@@ -1,9 +1,7 @@
 use std::collections::HashSet;
-
 use ibc::core::ics04_channel::packet::Sequence;
 use serde::{Deserialize, Serialize};
 use tracing::{error, trace};
-
 use super::requests::{
     IncludeProof, PageRequest, QueryChannelRequest, QueryClientConnectionsRequest,
     QueryClientStateRequest, QueryConnectionRequest, QueryPacketAcknowledgementsRequest,
@@ -30,7 +28,7 @@ use ibc::{
     },
     Height,
 };
-
+#[prusti_contracts::trusted]
 pub fn counterparty_chain_from_connection(
     src_chain: &impl ChainHandle,
     src_connection_id: &ConnectionId,
@@ -44,7 +42,6 @@ pub fn counterparty_chain_from_connection(
             IncludeProof::No,
         )
         .map_err(Error::relayer)?;
-
     let client_id = connection_end.client_id();
     let (client_state, _) = src_chain
         .query_client_state(
@@ -55,14 +52,13 @@ pub fn counterparty_chain_from_connection(
             IncludeProof::No,
         )
         .map_err(Error::relayer)?;
-
     trace!(
-        chain_id=%src_chain.id(), connection_id=%src_connection_id,
+        chain_id =% src_chain.id(), connection_id =% src_connection_id,
         "counterparty chain: {}", client_state.chain_id()
     );
     Ok(client_state.chain_id())
 }
-
+#[prusti_contracts::trusted]
 fn connection_on_destination(
     connection_id_on_source: &ConnectionId,
     counterparty_client_id: &ClientId,
@@ -73,7 +69,6 @@ fn connection_on_destination(
             client_id: counterparty_client_id.clone(),
         })
         .map_err(Error::relayer)?;
-
     for counterparty_connection in counterparty_connections.into_iter() {
         let (counterparty_connection_end, _) = counterparty_chain
             .query_connection(
@@ -84,7 +79,6 @@ fn connection_on_destination(
                 IncludeProof::No,
             )
             .map_err(Error::relayer)?;
-
         let local_connection_end = &counterparty_connection_end.counterparty();
         if let Some(local_connection_id) = local_connection_end.connection_id() {
             if local_connection_id == connection_id_on_source {
@@ -94,12 +88,14 @@ fn connection_on_destination(
     }
     Ok(None)
 }
-
+#[prusti_contracts::trusted]
 pub fn connection_state_on_destination(
     connection: &IdentifiedConnectionEnd,
     counterparty_chain: &impl ChainHandle,
 ) -> Result<ConnectionState, Error> {
-    if let Some(remote_connection_id) = connection.connection_end.counterparty().connection_id() {
+    if let Some(remote_connection_id)
+        = connection.connection_end.counterparty().connection_id()
+    {
         let (connection_end, _) = counterparty_chain
             .query_connection(
                 QueryConnectionRequest {
@@ -109,34 +105,32 @@ pub fn connection_state_on_destination(
                 IncludeProof::No,
             )
             .map_err(Error::relayer)?;
-
         Ok(connection_end.state)
     } else {
-        // The remote connection id (used on `counterparty_chain`) is unknown.
-        // Try to retrieve this id by looking at client connections.
-        let counterparty_client_id = connection.connection_end.counterparty().client_id();
-
+        let counterparty_client_id = connection
+            .connection_end
+            .counterparty()
+            .client_id();
         let dst_connection = connection_on_destination(
             &connection.connection_id,
             counterparty_client_id,
             counterparty_chain,
         )?;
-
-        dst_connection.map_or_else(
-            || Ok(ConnectionState::Uninitialized),
-            |remote_connection| Ok(remote_connection.state),
-        )
+        dst_connection
+            .map_or_else(
+                || Ok(ConnectionState::Uninitialized),
+                |remote_connection| Ok(remote_connection.state),
+            )
     }
 }
-
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ChannelConnectionClient {
     pub channel: IdentifiedChannelEnd,
     pub connection: IdentifiedConnectionEnd,
     pub client: IdentifiedAnyClientState,
 }
-
 impl ChannelConnectionClient {
+    #[prusti_contracts::trusted]
     pub fn new(
         channel: IdentifiedChannelEnd,
         connection: IdentifiedConnectionEnd,
@@ -149,9 +143,9 @@ impl ChannelConnectionClient {
         }
     }
 }
-
 /// Returns the [`ChannelConnectionClient`] associated with the
 /// provided port and channel id.
+#[prusti_contracts::trusted]
 pub fn channel_connection_client(
     chain: &impl ChainHandle,
     port_id: &PortId,
@@ -167,20 +161,15 @@ pub fn channel_connection_client(
             IncludeProof::No,
         )
         .map_err(Error::relayer)?;
-
     if channel_end.state_matches(&State::Uninitialized) {
-        return Err(Error::channel_uninitialized(
-            port_id.clone(),
-            channel_id.clone(),
-            chain.id(),
-        ));
+        return Err(
+            Error::channel_uninitialized(port_id.clone(), channel_id.clone(), chain.id()),
+        );
     }
-
     let connection_id = channel_end
         .connection_hops()
         .first()
         .ok_or_else(|| Error::missing_connection_hops(channel_id.clone(), chain.id()))?;
-
     let (connection_end, _) = chain
         .query_connection(
             QueryConnectionRequest {
@@ -190,15 +179,15 @@ pub fn channel_connection_client(
             IncludeProof::No,
         )
         .map_err(Error::relayer)?;
-
     if !connection_end.is_open() {
-        return Err(Error::connection_not_open(
-            connection_id.clone(),
-            channel_id.clone(),
-            chain.id(),
-        ));
+        return Err(
+            Error::connection_not_open(
+                connection_id.clone(),
+                channel_id.clone(),
+                chain.id(),
+            ),
+        );
     }
-
     let client_id = connection_end.client_id();
     let (client_state, _) = chain
         .query_client_state(
@@ -209,14 +198,16 @@ pub fn channel_connection_client(
             IncludeProof::No,
         )
         .map_err(Error::relayer)?;
-
     let client = IdentifiedAnyClientState::new(client_id.clone(), client_state);
     let connection = IdentifiedConnectionEnd::new(connection_id.clone(), connection_end);
-    let channel = IdentifiedChannelEnd::new(port_id.clone(), channel_id.clone(), channel_end);
-
+    let channel = IdentifiedChannelEnd::new(
+        port_id.clone(),
+        channel_id.clone(),
+        channel_end,
+    );
     Ok(ChannelConnectionClient::new(channel, connection, client))
 }
-
+#[prusti_contracts::trusted]
 pub fn counterparty_chain_from_channel(
     src_chain: &impl ChainHandle,
     src_channel_id: &ChannelId,
@@ -225,7 +216,7 @@ pub fn counterparty_chain_from_channel(
     channel_connection_client(src_chain, src_port_id, src_channel_id)
         .map(|c| c.client.client_state.chain_id())
 }
-
+#[prusti_contracts::trusted]
 fn fetch_channel_on_destination(
     port_id: &PortId,
     channel_id: &ChannelId,
@@ -238,7 +229,6 @@ fn fetch_channel_on_destination(
             pagination: Some(PageRequest::all()),
         })
         .map_err(Error::relayer)?;
-
     for counterparty_channel in counterparty_channels.into_iter() {
         let local_channel_end = &counterparty_channel.channel_end.remote;
         if let Some(local_channel_id) = local_channel_end.channel_id() {
@@ -249,19 +239,26 @@ fn fetch_channel_on_destination(
     }
     Ok(None)
 }
-
+#[prusti_contracts::trusted]
 pub fn channel_state_on_destination(
     channel: &IdentifiedChannelEnd,
     connection: &IdentifiedConnectionEnd,
     counterparty_chain: &impl ChainHandle,
 ) -> Result<State, Error> {
-    let remote_channel = channel_on_destination(channel, connection, counterparty_chain)?;
-    Ok(remote_channel.map_or_else(
-        || State::Uninitialized,
-        |remote_channel| remote_channel.channel_end.state,
-    ))
+    let remote_channel = channel_on_destination(
+        channel,
+        connection,
+        counterparty_chain,
+    )?;
+    Ok(
+        remote_channel
+            .map_or_else(
+                || State::Uninitialized,
+                |remote_channel| remote_channel.channel_end.state,
+            ),
+    )
 }
-
+#[prusti_contracts::trusted]
 pub fn channel_on_destination(
     channel: &IdentifiedChannelEnd,
     connection: &IdentifiedConnectionEnd,
@@ -283,9 +280,10 @@ pub fn channel_on_destination(
                 channel_end: c,
             })
             .map_err(Error::relayer)?;
-
         Ok(Some(counterparty))
-    } else if let Some(remote_connection_id) = connection.end().counterparty().connection_id() {
+    } else if let Some(remote_connection_id)
+            = connection.end().counterparty().connection_id()
+        {
         fetch_channel_on_destination(
             &channel.port_id,
             &channel.channel_id,
@@ -296,11 +294,11 @@ pub fn channel_on_destination(
         Ok(None)
     }
 }
-
 /// Queries a channel end on a [`ChainHandle`], and verifies
 /// that the counterparty field on that channel end matches an
 /// expected counterparty.
 /// Returns `Ok` if the counterparty matches, and `Err` otherwise.
+#[prusti_contracts::trusted]
 pub fn check_channel_counterparty(
     target_chain: impl ChainHandle,
     target_pchan: &PortChannelId,
@@ -316,7 +314,6 @@ pub fn check_channel_counterparty(
             IncludeProof::No,
         )
         .map_err(|e| ChannelError::query(target_chain.id(), e))?;
-
     let counterparty = channel_end_dst.remote;
     match counterparty.channel_id {
         Some(actual_channel_id) => {
@@ -325,40 +322,41 @@ pub fn check_channel_counterparty(
                 port_id: counterparty.port_id,
             };
             if &actual != expected {
-                return Err(ChannelError::mismatch_channel_ends(
-                    target_chain.id(),
-                    target_pchan.clone(),
-                    expected.clone(),
-                    actual,
-                ));
+                return Err(
+                    ChannelError::mismatch_channel_ends(
+                        target_chain.id(),
+                        target_pchan.clone(),
+                        expected.clone(),
+                        actual,
+                    ),
+                );
             }
         }
         None => {
             error!(
-                "channel {} on chain {} has no counterparty channel id ",
-                target_pchan,
+                "channel {} on chain {} has no counterparty channel id ", target_pchan,
                 target_chain.id()
             );
-            return Err(ChannelError::incomplete_channel_state(
-                target_chain.id(),
-                target_pchan.clone(),
-            ));
+            return Err(
+                ChannelError::incomplete_channel_state(
+                    target_chain.id(),
+                    target_pchan.clone(),
+                ),
+            );
         }
     }
-
     Ok(())
 }
-
 /// Returns the sequences of the packet commitments on a given chain and channel (port_id + channel_id).
 /// These are the sequences of the packets that were either:
 ///  - not yet received by the counterparty chain, or
 ///  - received on counterparty chain but not yet acknowledged by this chain,
+#[prusti_contracts::trusted]
 pub fn commitments_on_chain(
     chain: &impl ChainHandle,
     port_id: &PortId,
     channel_id: &ChannelId,
 ) -> Result<(Vec<Sequence>, Height), Error> {
-    // get the packet commitments on the counterparty/ source chain
     let (mut commit_sequences, response_height) = chain
         .query_packet_commitments(QueryPacketCommitmentsRequest {
             port_id: port_id.clone(),
@@ -366,14 +364,12 @@ pub fn commitments_on_chain(
             pagination: Some(PageRequest::all()),
         })
         .map_err(Error::relayer)?;
-
     commit_sequences.sort_unstable();
-
     Ok((commit_sequences, response_height))
 }
-
 /// Returns the sequences of the packets that were sent on the counterparty chain but for which
 /// `MsgRecvPacket`-s have not been received on a given chain and channel (port_id + channel_id)
+#[prusti_contracts::trusted]
 pub fn unreceived_packets_sequences(
     chain: &impl ChainHandle,
     port_id: &PortId,
@@ -383,7 +379,6 @@ pub fn unreceived_packets_sequences(
     if commitments_on_counterparty.is_empty() {
         return Ok(vec![]);
     }
-
     chain
         .query_unreceived_packets(QueryUnreceivedPacketsRequest {
             port_id: port_id.clone(),
@@ -392,9 +387,9 @@ pub fn unreceived_packets_sequences(
         })
         .map_err(Error::relayer)
 }
-
 /// Returns the sequences of the written acknowledgments on a given chain and channel (port_id + channel_id), out of
 /// the commitments still present on the counterparty chain.
+#[prusti_contracts::trusted]
 pub fn packet_acknowledgements(
     chain: &impl ChainHandle,
     port_id: &PortId,
@@ -402,8 +397,6 @@ pub fn packet_acknowledgements(
     commit_sequences: Vec<Sequence>,
 ) -> Result<(Vec<Sequence>, Height), Error> {
     let commit_set = commit_sequences.iter().cloned().collect::<HashSet<_>>();
-
-    // Get the packet acknowledgments on counterparty/source chain
     let (mut acked_sequences, response_height) = chain
         .query_packet_acknowledgements(QueryPacketAcknowledgementsRequest {
             port_id: port_id.clone(),
@@ -412,16 +405,14 @@ pub fn packet_acknowledgements(
             packet_commitment_sequences: commit_sequences,
         })
         .map_err(Error::relayer)?;
-
     acked_sequences.retain(|s| commit_set.contains(s));
     acked_sequences.sort_unstable();
-
     Ok((acked_sequences, response_height))
 }
-
 /// Returns the sequences of the packets that were sent on the chain and for which:
 ///  - `MsgRecvPacket`-s have been received on the counterparty chain but
 ///  - `MsgAcknowledgement`-s have NOT been received by the chain
+#[prusti_contracts::trusted]
 pub fn unreceived_acknowledgements_sequences(
     chain: &impl ChainHandle,
     port_id: &PortId,
@@ -431,7 +422,6 @@ pub fn unreceived_acknowledgements_sequences(
     if acks_on_counterparty.is_empty() {
         return Ok(vec![]);
     }
-
     chain
         .query_unreceived_acknowledgements(QueryUnreceivedAcksRequest {
             port_id: port_id.clone(),
@@ -440,7 +430,6 @@ pub fn unreceived_acknowledgements_sequences(
         })
         .map_err(Error::relayer)
 }
-
 /// Given a channel, this method returns:
 /// - The sequences of the packets _sent_ on the counterparty chain and not _received_ by
 ///   the (target) chain.
@@ -465,6 +454,7 @@ pub fn unreceived_acknowledgements_sequences(
 ///
 ///    This step relies on [`unreceived_packets_sequences`], see that method for more details.
 ///
+#[prusti_contracts::trusted]
 pub fn unreceived_packets(
     chain: &impl ChainHandle,
     counterparty_chain: &impl ChainHandle,
@@ -475,13 +465,15 @@ pub fn unreceived_packets(
         &path.counterparty_port_id,
         &path.counterparty_channel_id,
     )?;
-
-    let packet_seq_nrs =
-        unreceived_packets_sequences(chain, &path.port_id, &path.channel_id, commit_sequences)?;
-
+    let packet_seq_nrs = unreceived_packets_sequences(
+        chain,
+        &path.port_id,
+        &path.channel_id,
+        commit_sequences,
+    )?;
     Ok((packet_seq_nrs, h))
 }
-
+#[prusti_contracts::trusted]
 pub fn acknowledgements_on_chain(
     chain: &impl ChainHandle,
     counterparty_chain: &impl ChainHandle,
@@ -492,23 +484,19 @@ pub fn acknowledgements_on_chain(
         .channel_id
         .as_ref()
         .ok_or_else(Error::missing_counterparty_channel_id)?;
-
     let (commitments_on_counterparty, _) = commitments_on_chain(
         counterparty_chain,
         &counterparty.port_id,
         counterparty_channel_id,
     )?;
-
     let (sequences, height) = packet_acknowledgements(
         chain,
         &channel.port_id,
         &channel.channel_id,
         commitments_on_counterparty,
     )?;
-
     Ok((sequences, height))
 }
-
 /// Given a channel, this method returns:
 /// - The sequences of all packets _received on the counterparty chain and not _acknowledged_ by
 ///   the (target) chain.
@@ -538,30 +526,31 @@ pub fn acknowledgements_on_chain(
 ///     this query fetches the subset for which acknowledgements have not been
 ///     received by the target chain.
 ///     This step relies on [`unreceived_acknowledgements_sequences`].
+#[prusti_contracts::trusted]
 pub fn unreceived_acknowledgements(
     chain: &impl ChainHandle,
     counterparty_chain: &impl ChainHandle,
     path: &PathIdentifiers,
 ) -> Result<(Vec<Sequence>, Height), Error> {
-    let (commitments_on_src, _) = commitments_on_chain(chain, &path.port_id, &path.channel_id)?;
-
+    let (commitments_on_src, _) = commitments_on_chain(
+        chain,
+        &path.port_id,
+        &path.channel_id,
+    )?;
     let (acks_on_counterparty, src_response_height) = packet_acknowledgements(
         counterparty_chain,
         &path.counterparty_port_id,
         &path.counterparty_channel_id,
         commitments_on_src,
     )?;
-
     let sns = unreceived_acknowledgements_sequences(
         chain,
         &path.port_id,
         &path.channel_id,
         acks_on_counterparty,
     )?;
-
     Ok((sns, src_response_height))
 }
-
 /// A structure to display pending packet commitment IDs
 /// at one end of a channel.
 #[derive(Debug, Serialize)]
@@ -572,7 +561,7 @@ pub struct PendingPackets {
     /// but the acknowledgement is not yet received on the local chain.
     pub unreceived_acks: Vec<Sequence>,
 }
-
+#[prusti_contracts::trusted]
 pub fn pending_packet_summary(
     chain: &impl ChainHandle,
     counterparty_chain: &impl ChainHandle,
@@ -583,33 +572,32 @@ pub fn pending_packet_summary(
         .channel_id
         .as_ref()
         .ok_or_else(Error::missing_counterparty_channel_id)?;
-
-    let (commitments_on_src, _) =
-        commitments_on_chain(chain, &channel.port_id, &channel.channel_id)?;
-
+    let (commitments_on_src, _) = commitments_on_chain(
+        chain,
+        &channel.port_id,
+        &channel.channel_id,
+    )?;
     let unreceived = unreceived_packets_sequences(
         counterparty_chain,
         &counterparty.port_id,
         counterparty_channel_id,
         commitments_on_src.clone(),
     )?;
-
     let (acks_on_counterparty, _) = packet_acknowledgements(
         counterparty_chain,
         &counterparty.port_id,
         counterparty_channel_id,
         commitments_on_src,
     )?;
-
     let pending_acks = unreceived_acknowledgements_sequences(
         chain,
         &channel.port_id,
         &channel.channel_id,
         acks_on_counterparty,
     )?;
-
     Ok(PendingPackets {
         unreceived_packets: unreceived,
         unreceived_acks: pending_acks,
     })
 }
+

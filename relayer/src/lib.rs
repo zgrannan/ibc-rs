@@ -8,18 +8,12 @@
     rust_2018_idioms
 )]
 #![allow(clippy::too_many_arguments)]
-// TODO: disable unwraps:
-//  https://github.com/informalsystems/ibc-rs/issues/987
-// #![cfg_attr(not(test), deny(clippy::unwrap_used))]
-
 //! IBC Relayer implementation as a library.
 //!
 //! For the IBC relayer binary, please see [Hermes] (`ibc-relayer-cli` crate).
 //!
 //! [Hermes]: https://docs.rs/ibc-relayer-cli/0.2.0/
-
 extern crate alloc;
-
 pub mod account;
 pub mod cache;
 pub mod chain;
@@ -46,3 +40,4 @@ pub mod transfer;
 pub mod upgrade_chain;
 pub mod util;
 pub mod worker;
+

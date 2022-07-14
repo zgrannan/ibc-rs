@@ -1,15 +1,10 @@
-// If the `telemetry` feature is enabled, re-export the `ibc-telemetry` state.
 #[cfg(feature = "telemetry")]
 pub type Telemetry = alloc::sync::Arc<ibc_telemetry::TelemetryState>;
-
-// Otherwise, define and export a dummy type.
 #[cfg(not(feature = "telemetry"))]
 #[derive(Clone, Debug)]
 pub struct TelemetryDisabled;
-
 #[cfg(not(feature = "telemetry"))]
 pub type Telemetry = TelemetryDisabled;
-
 /// A macro to send metric updates via a telemetry handle,
 /// only if the `telemetry` feature is enabled.
 /// Otherwise, it compiles to a no-op.
@@ -32,16 +27,10 @@ pub type Telemetry = TelemetryDisabled;
 #[macro_export]
 macro_rules! telemetry {
     ($id:ident, $($args:expr),* $(,)*) => {
-        #[cfg(feature = "telemetry")]
-        {
-            ::ibc_telemetry::global().$id($($args),*);
-        }
+        #[cfg(feature = "telemetry")] { ::ibc_telemetry::global().$id ($($args),*); }
     };
-
     ($e:expr) => {
-        #[cfg(feature = "telemetry")]
-        {
-            $e;
-        }
+        #[cfg(feature = "telemetry")] { $e; }
     };
 }
+
