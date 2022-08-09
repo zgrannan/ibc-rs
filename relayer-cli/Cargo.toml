@@ -69,7 +69,7 @@ version = "=0.23.7"
 features = ["http-client", "websocket-client"]
 
 [dependencies.tendermint-light-client]
-version = "=0.23.7"
+version = "=0.23.9"
 features = ["unstable"]
 
 [dependencies.tendermint-light-client-verifier]
