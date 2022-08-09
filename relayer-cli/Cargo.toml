@@ -61,7 +61,7 @@ console = "0.15.0"
 version = "=0.23.7"
 
 [dependencies.tendermint]
-version = "=0.23.7"
+version = "=0.23.9"
 features = ["secp256k1"]
 
 [dependencies.tendermint-rpc]
