@@ -1,13 +1,25 @@
 use std::collections::HashSet;
 use std::collections::HashMap;
 use prusti_contracts::*;
-type CoinId = u32;
+
 type AccountId = u32;
+type Address = u32;
+type Channel = u32;
+type CoinId = u32;
+type Height = u32;
 type Ics20Error = u32;
+type Path = u32;
+type Port = u32;
+
+#[derive(Clone, Copy)]
+struct PrefixedDenom {
+   path: Path,
+   base: CoinId
+}
 
 #[derive(Clone, Copy)]
 struct PrefixedCoin {
-    denom: CoinId,
+    denom: PrefixedDenom,
     amount: u32
 }
 
@@ -31,14 +43,14 @@ impl Bank {
 
     #[pure]
     #[trusted]
-    fn balance(&self, accountId: AccountId, coin_id: CoinId) -> u32 {
+    fn balance(&self, accountId: AccountId, coin_id: PrefixedDenom) -> u32 {
         unimplemented!()
     }
 
     #[requires(self.balance(acct1, amt.denom) >= amt.amount)]
     #[ensures(
         result.is_ok() ==> forall(
-            |acct_id: AccountId, coin_id: CoinId|
+            |acct_id: AccountId, coin_id: PrefixedDenom|
                self.balance(acct_id, coin_id) == old(self).balance(acct_id, coin_id))
     )]
     fn send_coins_involution(&mut self, acct1: AccountId, acct2: AccountId, amt: PrefixedCoin) -> Result<(), Ics20Error> {
@@ -51,14 +63,14 @@ impl Bank {
 
     #[ensures(
         result.is_ok() ==> forall(
-            |acct_id: AccountId, coin_id: CoinId|
-            (acct_id != from && acct_id != to) || coin_id != amt.denom ==>
+            |acct_id: AccountId, coin_id: PrefixedDenom|
+            (acct_id != from && !(acct_id === to)) || !(coin_id === old(amt.denom)) ==>
                 self.balance(acct_id, coin_id) == old(self).balance(acct_id, coin_id))
     )]
     #[ensures(
         result.is_ok() ==>
             forall(
-            |coin_id: CoinId| coin_id == amt.denom ==>
+            |coin_id: PrefixedDenom| coin_id === old(amt.denom) ==>
                 self.balance(to, coin_id) == old(&self).balance(to, coin_id) + amt.amount &&
                 self.balance(from, coin_id) == old(&self).balance(from, coin_id) - amt.amount)
 
@@ -75,7 +87,7 @@ impl Bank {
 
     #[ensures(
         result.is_ok() ==> forall(
-            |acct_id: AccountId, coin_id: CoinId|
+            |acct_id: AccountId, coin_id: PrefixedDenom|
                self.balance(acct_id, coin_id) == old(self).balance(acct_id, coin_id))
     )]
     fn mint_burn_involution(&mut self, acct: AccountId, amt: PrefixedCoin) -> Result<(), Ics20Error>{
@@ -88,12 +100,12 @@ impl Bank {
 
     /// This function to enable minting ibc tokens to a user account
     #[ensures(
-        result.is_ok() ==> self.balance(account, amt.denom) == old(self).balance(account, amt.denom) + amt.amount
+        result.is_ok() ==> self.balance(account, old(amt.denom)) == old(self).balance(account, old(amt.denom)) + amt.amount
     )]
     #[ensures(
         result.is_ok() ==> forall(
-            |acct_id: AccountId, coin_id: CoinId|
-            (acct_id != account) || coin_id != amt.denom ==>
+            |acct_id: AccountId, coin_id: PrefixedDenom|
+            !(acct_id === account) || !(coin_id === old(amt.denom)) ==>
                 self.balance(acct_id, coin_id) == old(self).balance(acct_id, coin_id))
     )]
     #[trusted]
@@ -108,12 +120,12 @@ impl Bank {
     /// This function should enable burning of minted tokens in a user account
     #[requires(self.balance(account, amt.denom) >= amt.amount)]
     #[ensures(
-        result.is_ok() ==> self.balance(account, amt.denom) == old(self).balance(account, amt.denom) - amt.amount
+        result.is_ok() ==> self.balance(account, old(amt.denom)) == old(self).balance(account, old(amt.denom)) - amt.amount
     )]
     #[ensures(
         result.is_ok() ==> forall(
-            |acct_id: AccountId, coin_id: CoinId|
-            (acct_id != account) || coin_id != amt.denom ==>
+            |acct_id: AccountId, coin_id: PrefixedDenom|
+            !(acct_id === account) || !(coin_id === old(amt.denom)) ==>
                 self.balance(acct_id, coin_id) == old(self).balance(acct_id, coin_id))
     )]
     #[trusted]
@@ -124,6 +136,41 @@ impl Bank {
     ) -> Result<(), Ics20Error> {
         Ok(())
     }
+}
+
+struct App {
+   bank: Bank
+}
+
+#[pure]
+#[trusted]
+fn is_prefix(source_port: Port, channel: Channel, denomination: Path) -> bool {
+    unimplemented!()
+}
+
+#[pure]
+#[trusted]
+fn channel_escrow_addresses(source_channel: Channel) -> Address {
+    unimplemented!()
+}
+
+impl App {
+    // fn sendFungibleTokens(
+    //     &mut self,
+    //     denomination: Path,
+    //     amount: u32,
+    //     sender: AccountId,
+    //     receiver: AccountId,
+    //     source_port: Port,
+    //     source_channel: Channel,
+    //     timeoutHeight: Height,
+    // ) {
+    //     let source = is_prefix(source_port, source_channel, denomination);
+    //     if source {
+    //         let escrow_account = channel_escrow_addresses(source_channel);
+    //         self.bank.send_coins(sender, escrow_account, denomination, amount);
+    //     }
+    // }
 }
 
 fn main(){}
