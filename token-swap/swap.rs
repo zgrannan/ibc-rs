@@ -247,6 +247,10 @@ impl App {
         }
     }
 
+    // #[requires(
+    //     is_prefix(packet.source_port, packet.source_channel, data.denom)
+    //            ==> self.
+    // )];
     fn refund_tokens(
         &mut self,
         packet: Packet
@@ -267,6 +271,21 @@ impl App {
                 PrefixedCoin { denom: data.denom, amount: data.amount }
             );
         }
+    }
+
+    fn on_acknowledge_packet(&mut self, packet: Packet, success: bool) {
+        if(!success) {
+           self.refund_tokens(packet);
+        }
+    }
+
+    fn on_timeout_packet(&mut self, packet: Packet) {
+        self.refund_tokens(packet);
+    }
+
+    #[requires(false)]
+    fn on_timeout_packet_close(packet: Packet) {
+
     }
 }
 
