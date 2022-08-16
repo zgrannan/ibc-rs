@@ -12,6 +12,23 @@ type Path = u32;
 type Port = u32;
 
 #[derive(Clone, Copy)]
+struct Packet {
+    data: FungibleTokenPacketData,
+    dest_port: Port,
+    dest_channel: Channel,
+    source_port: Port,
+    source_channel: Channel
+}
+
+#[derive(Clone, Copy)]
+struct FungibleTokenPacketData {
+    sender: AccountId,
+    receiver: AccountId,
+    denom: PrefixedDenom,
+    amount: u32
+}
+
+#[derive(Clone, Copy)]
 struct PrefixedDenom {
    path: Path,
    base: CoinId
@@ -54,25 +71,25 @@ impl Bank {
                self.balance(acct_id, coin_id) == old(self).balance(acct_id, coin_id))
     )]
     fn send_coins_involution(&mut self, acct1: AccountId, acct2: AccountId, amt: PrefixedCoin) -> Result<(), Ics20Error> {
-        let err = self.send_coins(acct1, acct2, amt);
+        let err = self.send_coins(acct1, acct2, amt.denom, amt.amount);
         if !err.is_ok() {
             return err;
         }
-        self.send_coins(acct2, acct1, amt)
+        self.send_coins(acct2, acct1, amt.denom, amt.amount)
     }
 
     #[ensures(
         result.is_ok() ==> forall(
             |acct_id: AccountId, coin_id: PrefixedDenom|
-            (acct_id != from && !(acct_id === to)) || !(coin_id === old(amt.denom)) ==>
+            (acct_id != from && !(acct_id === to)) || !(coin_id === old(denom)) ==>
                 self.balance(acct_id, coin_id) == old(self).balance(acct_id, coin_id))
     )]
     #[ensures(
         result.is_ok() ==>
             forall(
-            |coin_id: PrefixedDenom| coin_id === old(amt.denom) ==>
-                self.balance(to, coin_id) == old(&self).balance(to, coin_id) + amt.amount &&
-                self.balance(from, coin_id) == old(&self).balance(from, coin_id) - amt.amount)
+            |coin_id: PrefixedDenom| coin_id === old(denom) ==>
+                self.balance(to, coin_id) == old(&self).balance(to, coin_id) + amount &&
+                self.balance(from, coin_id) == old(&self).balance(from, coin_id) - amount)
 
     )]
     #[trusted]
@@ -80,7 +97,8 @@ impl Bank {
         &mut self,
         from: AccountId,
         to: AccountId,
-        amt: PrefixedCoin,
+        denom: PrefixedDenom,
+        amount: u32,
     ) -> Result<(), Ics20Error>{
         unimplemented!()
     }
@@ -150,6 +168,18 @@ fn is_prefix(source_port: Port, channel: Channel, denomination: PrefixedDenom) -
 
 #[pure]
 #[trusted]
+fn drop_prefix(source_port: Port, channel: Channel, denomination: PrefixedDenom) -> PrefixedDenom {
+    unimplemented!()
+}
+
+#[pure]
+#[trusted]
+fn with_prefix(source_port: Port, channel: Channel, denomination: PrefixedDenom) -> PrefixedDenom {
+    unimplemented!()
+}
+
+#[pure]
+#[trusted]
 fn channel_escrow_addresses(source_channel: Channel) -> Address {
     unimplemented!()
 }
@@ -171,10 +201,8 @@ impl App {
             self.bank.send_coins(
                 sender,
                 escrow_account,
-                PrefixedCoin {
-                    denom: denomination,
-                    amount
-                }
+                denomination,
+                amount
             )
         } else {
             self.bank.burn_coins(
@@ -184,6 +212,60 @@ impl App {
                     amount
                 }
             )
+        }
+    }
+
+    fn on_recv_packet(
+        &mut self,
+        packet: Packet
+     ) -> bool {
+        let data = packet.data;
+        let source = is_prefix(packet.source_port, packet.source_channel, data.denom);
+        if source {
+            let escrow_account = channel_escrow_addresses(packet.dest_channel);
+            let send_result = self.bank.send_coins(
+                escrow_account,
+                data.receiver,
+                drop_prefix(packet.source_port, packet.source_channel, data.denom),
+                data.amount
+            );
+            return send_result.is_ok();
+        } else {
+            let prefixed = with_prefix(
+                packet.dest_port,
+                packet.dest_channel,
+                data.denom
+            );
+            let mint_result = self.bank.mint_coins(
+                data.receiver,
+                PrefixedCoin {
+                   denom: prefixed,
+                   amount: data.amount
+                }
+            );
+            return mint_result.is_ok();
+        }
+    }
+
+    fn refund_tokens(
+        &mut self,
+        packet: Packet
+    ) {
+        let data = packet.data;
+        let source = is_prefix(packet.source_port, packet.source_channel, data.denom);
+        if source {
+            let escrow_account = channel_escrow_addresses(packet.source_channel);
+            let send_result = self.bank.send_coins(
+                escrow_account,
+                data.sender,
+                data.denom,
+                data.amount
+            );
+        } else {
+            self.bank.mint_coins(
+                data.sender,
+                PrefixedCoin { denom: data.denom, amount: data.amount }
+            );
         }
     }
 }
