@@ -55,7 +55,7 @@ impl Bank {
     )]
     fn send_coins_involution(&mut self, acct1: AccountId, acct2: AccountId, amt: PrefixedCoin) -> Result<(), Ics20Error> {
         let err = self.send_coins(acct1, acct2, amt);
-        if(!err.is_ok()){
+        if !err.is_ok() {
             return err;
         }
         self.send_coins(acct2, acct1, amt)
@@ -92,7 +92,7 @@ impl Bank {
     )]
     fn mint_burn_involution(&mut self, acct: AccountId, amt: PrefixedCoin) -> Result<(), Ics20Error>{
         let err = self.mint_coins(acct, amt);
-        if(!err.is_ok()){
+        if !err.is_ok() {
            return err;
         }
         self.burn_coins(acct, amt)
@@ -118,7 +118,7 @@ impl Bank {
     }
 
     /// This function should enable burning of minted tokens in a user account
-    #[requires(self.balance(account, amt.denom) >= amt.amount)]
+    #[ensures(result.is_ok() == (self.balance(account, old(amt.denom)) == amt.amount))]
     #[ensures(
         result.is_ok() ==> self.balance(account, old(amt.denom)) == old(self).balance(account, old(amt.denom)) - amt.amount
     )]
@@ -144,7 +144,7 @@ struct App {
 
 #[pure]
 #[trusted]
-fn is_prefix(source_port: Port, channel: Channel, denomination: Path) -> bool {
+fn is_prefix(source_port: Port, channel: Channel, denomination: PrefixedDenom) -> bool {
     unimplemented!()
 }
 
@@ -155,22 +155,37 @@ fn channel_escrow_addresses(source_channel: Channel) -> Address {
 }
 
 impl App {
-    // fn sendFungibleTokens(
-    //     &mut self,
-    //     denomination: Path,
-    //     amount: u32,
-    //     sender: AccountId,
-    //     receiver: AccountId,
-    //     source_port: Port,
-    //     source_channel: Channel,
-    //     timeoutHeight: Height,
-    // ) {
-    //     let source = is_prefix(source_port, source_channel, denomination);
-    //     if source {
-    //         let escrow_account = channel_escrow_addresses(source_channel);
-    //         self.bank.send_coins(sender, escrow_account, denomination, amount);
-    //     }
-    // }
+    fn send_fungible_tokens(
+        &mut self,
+        denomination: PrefixedDenom,
+        amount: u32,
+        sender: AccountId,
+        receiver: AccountId,
+        source_port: Port,
+        source_channel: Channel,
+        timeoutHeight: Height,
+    ) -> Result<(), Ics20Error>{
+        let source = is_prefix(source_port, source_channel, denomination);
+        if source {
+            let escrow_account = channel_escrow_addresses(source_channel);
+            self.bank.send_coins(
+                sender,
+                escrow_account,
+                PrefixedCoin {
+                    denom: denomination,
+                    amount
+                }
+            )
+        } else {
+            self.bank.burn_coins(
+                sender,
+                PrefixedCoin {
+                    denom: denomination,
+                    amount
+                }
+            )
+        }
+    }
 }
 
 fn main(){}
