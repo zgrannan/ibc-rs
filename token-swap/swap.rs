@@ -78,19 +78,28 @@ impl Bank {
         self.send_coins(acct2, acct1, amt.denom, amt.amount)
     }
 
-    #[ensures(
-        result.is_ok() ==> forall(
+    predicate! {
+        fn send_coins_post(
+            &self,
+            old_self: &Self,
+            from: AccountId,
+            to: AccountId,
+            denom: PrefixedDenom,
+            amount: u32
+        ) -> bool {
+        forall(
             |acct_id: AccountId, coin_id: PrefixedDenom|
-            (acct_id != from && !(acct_id === to)) || !(coin_id === old(denom)) ==>
-                self.balance(acct_id, coin_id) == old(self).balance(acct_id, coin_id))
-    )]
-    #[ensures(
-        result.is_ok() ==>
-            forall(
-            |coin_id: PrefixedDenom| coin_id === old(denom) ==>
-                self.balance(to, coin_id) == old(&self).balance(to, coin_id) + amount &&
-                self.balance(from, coin_id) == old(&self).balance(from, coin_id) - amount)
+            (acct_id != from && !(acct_id === to)) || !(coin_id === denom) ==>
+                self.balance(acct_id, coin_id) == old_self.balance(acct_id, coin_id)) &&
+        forall(
+                    |coin_id: PrefixedDenom| coin_id === denom ==>
+                        self.balance(to, coin_id) == old_self.balance(to, coin_id) + amount &&
+                        self.balance(from, coin_id) == old_self.balance(from, coin_id) - amount)
+        }
+    }
 
+    #[ensures(
+        result.is_ok() ==> self.send_coins_post(old(self), from, to, denom, amount)
     )]
     #[trusted]
     fn send_coins(
@@ -185,6 +194,16 @@ fn channel_escrow_addresses(source_channel: Channel) -> Address {
 }
 
 impl App {
+    #[ensures(
+        result.is_ok() && is_prefix(source_port, source_channel, denomination) ==>
+            self.bank.send_coins_post(
+                old(&self.bank),
+                sender,
+                channel_escrow_addresses(source_channel),
+                denomination,
+                amount
+            )
+    )]
     fn send_fungible_tokens(
         &mut self,
         denomination: PrefixedDenom,
