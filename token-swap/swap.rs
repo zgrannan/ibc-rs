@@ -247,10 +247,10 @@ impl App {
         }
     }
 
-    // #[requires(
-    //     is_prefix(packet.source_port, packet.source_channel, data.denom)
-    //            ==> self.
-    // )];
+    #[requires(
+        is_prefix(packet.source_port, packet.source_channel, packet.data.denom)
+               ==> self.bank.balance(packet.data.sender, packet.data.denom) >= packet.data.amount)
+    ]
     fn refund_tokens(
         &mut self,
         packet: Packet
@@ -273,12 +273,20 @@ impl App {
         }
     }
 
+    #[requires(
+        (!success && is_prefix(packet.source_port, packet.source_channel, packet.data.denom))
+               ==> self.bank.balance(packet.data.sender, packet.data.denom) >= packet.data.amount)
+    ]
     fn on_acknowledge_packet(&mut self, packet: Packet, success: bool) {
         if(!success) {
            self.refund_tokens(packet);
         }
     }
 
+    #[requires(
+        is_prefix(packet.source_port, packet.source_channel, packet.data.denom)
+          ==> self.bank.balance(packet.data.sender, packet.data.denom) >= packet.data.amount)
+    ]
     fn on_timeout_packet(&mut self, packet: Packet) {
         self.refund_tokens(packet);
     }
