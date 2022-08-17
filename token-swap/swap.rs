@@ -192,11 +192,10 @@ impl App {
         sender: AccountId,
         receiver: AccountId,
         source_port: Port,
-        source_channel: Channel,
-        timeoutHeight: Height,
-    ) -> Result<(), Ics20Error>{
+        source_channel: Channel
+    ) -> Result<FungibleTokenPacketData, Ics20Error> {
         let source = is_prefix(source_port, source_channel, denomination);
-        if source {
+        let result = if source {
             let escrow_account = channel_escrow_addresses(source_channel);
             self.bank.send_coins(
                 sender,
@@ -212,6 +211,16 @@ impl App {
                     amount
                 }
             )
+        };
+        if !result.is_ok() {
+            return Err(0);
+        } else {
+            return Ok(FungibleTokenPacketData {
+                sender,
+                receiver,
+                denom: denomination,
+                amount
+            });
         }
     }
 
@@ -278,7 +287,7 @@ impl App {
                ==> self.bank.balance(packet.data.sender, packet.data.denom) >= packet.data.amount)
     ]
     fn on_acknowledge_packet(&mut self, packet: Packet, success: bool) {
-        if(!success) {
+        if !success {
            self.refund_tokens(packet);
         }
     }
@@ -291,9 +300,31 @@ impl App {
         self.refund_tokens(packet);
     }
 
+    // This function cannot be called, because channel is unordered.
     #[requires(false)]
     fn on_timeout_packet_close(packet: Packet) {
 
+    }
+
+    fn example_run(
+        &mut self,
+        denomination: PrefixedDenom,
+        amount: u32,
+        sender: AccountId,
+        receiver: AccountId,
+        source_port: Port,
+        source_channel: Channel,
+        dest_port: Port,
+        dest_channel: Channel,
+    ){
+        self.send_fungible_tokens(
+            denomination,
+            amount,
+            sender,
+            receiver,
+            source_port,
+            source_channel
+        );
     }
 }
 
