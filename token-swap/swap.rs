@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+#![allow(dead_code, unused)]
 use std::collections::HashMap;
 use prusti_contracts::*;
 
@@ -12,7 +12,7 @@ type Path = u32;
 type Port = u32;
 
 #[derive(Clone, Copy)]
-struct Packet {
+pub struct Packet {
     data: FungibleTokenPacketData,
     dest_port: Port,
     dest_channel: Channel,
@@ -21,7 +21,7 @@ struct Packet {
 }
 
 #[derive(Clone, Copy)]
-struct FungibleTokenPacketData {
+pub struct FungibleTokenPacketData {
     sender: AccountId,
     receiver: AccountId,
     denom: PrefixedCoin,
@@ -29,12 +29,12 @@ struct FungibleTokenPacketData {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
-struct PrefixedCoin {
+pub struct PrefixedCoin {
    path: Path,
    base: CoinId
 }
 
-struct Bank {
+pub struct Bank {
     accounts: HashMap<(AccountId, PrefixedCoin), u32>
 }
 
@@ -70,7 +70,7 @@ impl Bank {
     #[ensures(
         forall(|cid: CoinId| self.total_balance(coin_id) == prev.total_balance(coin_id))
     )]
-    fn total_balance_move_lemma(&self,
+    pub fn total_balance_move_lemma(&self,
       prev: &Bank,
       coin_id: CoinId,
       account_add: AccountId,
@@ -78,17 +78,29 @@ impl Bank {
       amt: u32
     ) {}
 
-    fn sub_denom_lemma(&self,
+    #[trusted]
+    #[requires(prev.balance(acct, denom) >= amt)]
+    #[requires(self.balance(acct, denom) == prev.balance(acct, denom) - amt)]
+    #[requires(
+        forall(
+            |acct_id: AccountId, coin_id: PrefixedCoin|
+            (acct_id != acct && !(coin_id === denom) ==>
+                self.balance(acct_id, coin_id) == prev.balance(acct_id, coin_id))
+    ))]
+    #[ensures(self.total_account_balance(acct, denom.base) == prev.total_account_balance(acct, denom.base) - amt)]
+    pub fn sub_denom_lemma(&self,
        prev: &Bank,
-       denom: PrefixedCoin
+       acct: AccountId,
+       denom: PrefixedCoin,
+       amt: u32
     ) {}
 
     #[pure]
     #[trusted]
-    fn total_balance(&self, coin_id: CoinId) -> u32 {
+    pub fn total_balance(&self, coin_id: CoinId) -> u32 {
         let mut result = 0;
-        for (((_, denom), amt)) in &self.accounts {
-            if(denom.base == coin_id) {
+        for ((_, denom), amt) in &self.accounts {
+            if denom.base == coin_id {
                 result += amt;
             }
         }
@@ -97,10 +109,10 @@ impl Bank {
 
     #[pure]
     #[trusted]
-    fn total_account_balance(&self, account_id: AccountId, coin_id: CoinId) -> u32 {
+    pub fn total_account_balance(&self, account_id: AccountId, coin_id: CoinId) -> u32 {
         let mut result = 0;
-        for (((acct, denom), amt)) in &self.accounts {
-            if(*acct == account_id && denom.base == coin_id) {
+        for ((acct, denom), amt) in &self.accounts {
+            if *acct == account_id && denom.base == coin_id {
                 result += amt;
             }
         }
@@ -109,7 +121,7 @@ impl Bank {
 
     #[pure]
     #[trusted]
-    fn balance(&self, account_id: AccountId, denom: PrefixedCoin) -> u32 {
+    pub fn balance(&self, account_id: AccountId, denom: PrefixedCoin) -> u32 {
         *self.accounts.get(&(account_id, denom)).unwrap_or(&0)
     }
 
@@ -119,7 +131,7 @@ impl Bank {
             |acct_id: AccountId, coin_id: PrefixedCoin|
                self.balance(acct_id, coin_id) == old(self).balance(acct_id, coin_id))
     )]
-    fn send_coins_involution(
+    pub fn send_coins_involution(
         &mut self,
         acct1: AccountId,
         acct2: AccountId,
@@ -133,7 +145,7 @@ impl Bank {
     }
 
     predicate! {
-        fn send_coins_post(
+        pub fn send_coins_post(
             &self,
             old_self: &Self,
             from: AccountId,
@@ -156,7 +168,7 @@ impl Bank {
         result.is_ok() ==> self.send_coins_post(old(self), from, to, denom, amount)
     )]
     #[trusted]
-    fn send_coins(
+    pub fn send_coins(
         &mut self,
         from: AccountId,
         to: AccountId,
@@ -171,7 +183,7 @@ impl Bank {
             |acct_id: AccountId, coin_id: PrefixedCoin|
                self.balance(acct_id, coin_id) == old(self).balance(acct_id, coin_id))
     )]
-    fn mint_burn_involution(&mut self, acct: AccountId, coin: PrefixedCoin, amount: u32) -> Result<(), Ics20Error>{
+    pub fn mint_burn_involution(&mut self, acct: AccountId, coin: PrefixedCoin, amount: u32) -> Result<(), Ics20Error>{
         let err = self.mint_coins(acct, coin, amount);
         if !err.is_ok() {
            return err;
@@ -190,7 +202,7 @@ impl Bank {
                 self.balance(acct_id, coin_id) == old(self).balance(acct_id, coin_id))
     )]
     #[trusted]
-    fn mint_coins(
+    pub fn mint_coins(
         &mut self,
         account: AccountId,
         coin: PrefixedCoin,
@@ -211,7 +223,7 @@ impl Bank {
                 self.balance(acct_id, coin_id) == old(self).balance(acct_id, coin_id))
     )]
     #[trusted]
-    fn burn_coins(
+    pub fn burn_coins(
         &mut self,
         account: AccountId,
         coin: PrefixedCoin,
@@ -227,29 +239,32 @@ struct App {
 
 #[pure]
 #[trusted]
-fn is_prefix(source_port: Port, channel: Channel, denomination: PrefixedCoin) -> bool {
+pub fn is_prefix(source_port: Port, channel: Channel, denomination: PrefixedCoin) -> bool {
     unimplemented!()
 }
 
 #[pure]
 #[trusted]
-fn drop_prefix(source_port: Port, channel: Channel, denomination: PrefixedCoin) -> PrefixedCoin {
+pub fn drop_prefix(source_port: Port, channel: Channel, denomination: PrefixedCoin) -> PrefixedCoin {
     unimplemented!()
 }
 
 #[pure]
 #[trusted]
-fn with_prefix(source_port: Port, channel: Channel, denomination: PrefixedCoin) -> PrefixedCoin {
+pub fn with_prefix(source_port: Port, channel: Channel, denomination: PrefixedCoin) -> PrefixedCoin {
     unimplemented!()
 }
 
 #[pure]
 #[trusted]
-fn channel_escrow_addresses(source_channel: Channel) -> Address {
+pub fn channel_escrow_addresses(source_channel: Channel) -> Address {
     unimplemented!()
 }
 
 impl App {
+    #[ensures(
+        result.is_ok() ==> old(self.bank.balance(sender, denomination)) >= amount
+    )]
     #[ensures(
         result.is_ok() && is_prefix(source_port, source_channel, denomination) ==>
             self.bank.send_coins_post(
@@ -260,7 +275,7 @@ impl App {
                 amount
             )
     )]
-    fn send_fungible_tokens(
+    pub fn send_fungible_tokens(
         &mut self,
         denomination: PrefixedCoin,
         amount: u32,
@@ -297,7 +312,7 @@ impl App {
         }
     }
 
-    fn on_recv_packet(
+    pub fn on_recv_packet(
         &mut self,
         packet: Packet
      ) -> bool {
@@ -331,7 +346,7 @@ impl App {
         is_prefix(packet.source_port, packet.source_channel, packet.data.denom)
                ==> self.bank.balance(packet.data.sender, packet.data.denom) >= packet.data.amount)
     ]
-    fn refund_tokens(
+    pub fn refund_tokens(
         &mut self,
         packet: Packet
     ) {
@@ -358,7 +373,7 @@ impl App {
         (!success && is_prefix(packet.source_port, packet.source_channel, packet.data.denom))
                ==> self.bank.balance(packet.data.sender, packet.data.denom) >= packet.data.amount)
     ]
-    fn on_acknowledge_packet(&mut self, packet: Packet, success: bool) {
+    pub fn on_acknowledge_packet(&mut self, packet: Packet, success: bool) {
         if !success {
            self.refund_tokens(packet);
         }
@@ -368,13 +383,13 @@ impl App {
         is_prefix(packet.source_port, packet.source_channel, packet.data.denom)
           ==> self.bank.balance(packet.data.sender, packet.data.denom) >= packet.data.amount)
     ]
-    fn on_timeout_packet(&mut self, packet: Packet) {
+    pub fn on_timeout_packet(&mut self, packet: Packet) {
         self.refund_tokens(packet);
     }
 
     // This function cannot be called, because channel is unordered.
     #[requires(false)]
-    fn on_timeout_packet_close(packet: Packet) {
+    pub fn on_timeout_packet_close(packet: Packet) {
 
     }
 
@@ -383,7 +398,7 @@ impl App {
             |coin_id: CoinId|
                 (&self.bank).total_balance(coin_id) == old(&self.bank).total_balance(coin_id)
     ))]
-    fn example_run(
+    pub fn example_run(
         &mut self,
         denomination: PrefixedCoin,
         amount: u32,
@@ -405,6 +420,13 @@ impl App {
         if !send_result.is_ok() {
             return
         }
+
+        assert!(old(self.bank.balance(sender, denomination)) >= amount);
+
+        // The total quantity of denomination.base for `sender` has been decreased by amount
+        self.bank.sub_denom_lemma(old(&self.bank), sender, denomination, amount);
+
+
         assert!(old(self.bank.total_account_balance(sender, denomination.base)) >= amount);
         assert!(
             self.bank.total_account_balance(sender, denomination.base) ==
@@ -412,4 +434,4 @@ impl App {
     }
 }
 
-fn main(){}
+pub fn main(){}
