@@ -28,7 +28,7 @@ struct FungibleTokenPacketData {
     amount: u32
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 struct PrefixedDenom {
    path: Path,
    base: CoinId
@@ -41,7 +41,7 @@ struct PrefixedCoin {
 }
 
 struct Bank {
-    accounts: HashMap<AccountId, HashSet<PrefixedCoin>>
+    accounts: HashMap<(AccountId, PrefixedDenom), u32>
 }
 
 #[extern_spec]
@@ -58,10 +58,65 @@ impl<T: PartialEq, U: std::fmt::Debug + PartialEq> std::result::Result<T, U> {
 
 impl Bank {
 
+    #[trusted]
+    #[requires(
+        forall(|acct_id: AccountId, cid: CoinId|
+           (acct_id != account_add && acct_id != account_remove) || (cid != coin_id) ==>
+               self.total_account_balance(acct_id, cid) == prev.total_account_balance(acct_id, cid)
+        ))
+    ]
+    #[requires(
+        self.total_account_balance(account_add, coin_id) ==
+        prev.total_account_balance(account_add, coin_id) + amt
+    )]
+    #[requires(
+        self.total_account_balance(account_remove, coin_id) ==
+        prev.total_account_balance(account_remove, coin_id) - amt
+    )]
+    #[ensures(
+        forall(|cid: CoinId| self.total_balance(coin_id) == prev.total_balance(coin_id))
+    )]
+    fn total_balance_move_lemma(&self,
+      prev: &Bank,
+      coin_id: CoinId,
+      account_add: AccountId,
+      account_remove: AccountId,
+      amt: u32
+    ) {}
+
+    fn sub_denom_lemma(&self,
+       prev: &Bank,
+       denom: PrefixedDenom
+    ) {}
+
     #[pure]
     #[trusted]
-    fn balance(&self, accountId: AccountId, coin_id: PrefixedDenom) -> u32 {
-        unimplemented!()
+    fn total_balance(&self, coin_id: CoinId) -> u32 {
+        let mut result = 0;
+        for (((_, denom), amt)) in &self.accounts {
+            if(denom.base == coin_id) {
+                result += amt;
+            }
+        }
+        return result;
+    }
+
+    #[pure]
+    #[trusted]
+    fn total_account_balance(&self, account_id: AccountId, coin_id: CoinId) -> u32 {
+        let mut result = 0;
+        for (((acct, denom), amt)) in &self.accounts {
+            if(*acct == account_id && denom.base == coin_id) {
+                result += amt;
+            }
+        }
+        return result;
+    }
+
+    #[pure]
+    #[trusted]
+    fn balance(&self, account_id: AccountId, denom: PrefixedDenom) -> u32 {
+        *self.accounts.get(&(account_id, denom)).unwrap_or(&0)
     }
 
     #[requires(self.balance(acct1, amt.denom) >= amt.amount)]
@@ -325,6 +380,11 @@ impl App {
 
     }
 
+    #[ensures(
+        forall(
+            |coin_id: CoinId|
+                (&self.bank).total_balance(coin_id) == old(&self.bank).total_balance(coin_id)
+    ))]
     fn example_run(
         &mut self,
         denomination: PrefixedDenom,
@@ -336,7 +396,7 @@ impl App {
         dest_port: Port,
         dest_channel: Channel,
     ){
-        self.send_fungible_tokens(
+        let send_result = self.send_fungible_tokens(
             denomination,
             amount,
             sender,
@@ -344,6 +404,13 @@ impl App {
             source_port,
             source_channel
         );
+        if !send_result.is_ok() {
+            return
+        }
+        assert!(old(self.bank.total_account_balance(sender, denomination.base)) >= amount);
+        assert!(
+            self.bank.total_account_balance(sender, denomination.base) ==
+                old(self.bank.total_account_balance(sender, denomination.base)) - amount);
     }
 }
 
