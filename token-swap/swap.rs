@@ -24,24 +24,18 @@ struct Packet {
 struct FungibleTokenPacketData {
     sender: AccountId,
     receiver: AccountId,
-    denom: PrefixedDenom,
+    denom: PrefixedCoin,
     amount: u32
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
-struct PrefixedDenom {
+struct PrefixedCoin {
    path: Path,
    base: CoinId
 }
 
-#[derive(Clone, Copy)]
-struct PrefixedCoin {
-    denom: PrefixedDenom,
-    amount: u32
-}
-
 struct Bank {
-    accounts: HashMap<(AccountId, PrefixedDenom), u32>
+    accounts: HashMap<(AccountId, PrefixedCoin), u32>
 }
 
 #[extern_spec]
@@ -86,7 +80,7 @@ impl Bank {
 
     fn sub_denom_lemma(&self,
        prev: &Bank,
-       denom: PrefixedDenom
+       denom: PrefixedCoin
     ) {}
 
     #[pure]
@@ -115,22 +109,27 @@ impl Bank {
 
     #[pure]
     #[trusted]
-    fn balance(&self, account_id: AccountId, denom: PrefixedDenom) -> u32 {
+    fn balance(&self, account_id: AccountId, denom: PrefixedCoin) -> u32 {
         *self.accounts.get(&(account_id, denom)).unwrap_or(&0)
     }
 
-    #[requires(self.balance(acct1, amt.denom) >= amt.amount)]
+    #[requires(self.balance(acct1, coin) >= amt)]
     #[ensures(
         result.is_ok() ==> forall(
-            |acct_id: AccountId, coin_id: PrefixedDenom|
+            |acct_id: AccountId, coin_id: PrefixedCoin|
                self.balance(acct_id, coin_id) == old(self).balance(acct_id, coin_id))
     )]
-    fn send_coins_involution(&mut self, acct1: AccountId, acct2: AccountId, amt: PrefixedCoin) -> Result<(), Ics20Error> {
-        let err = self.send_coins(acct1, acct2, amt.denom, amt.amount);
+    fn send_coins_involution(
+        &mut self,
+        acct1: AccountId,
+        acct2: AccountId,
+        coin: PrefixedCoin,
+        amt: u32) -> Result<(), Ics20Error> {
+        let err = self.send_coins(acct1, acct2, coin, amt);
         if !err.is_ok() {
             return err;
         }
-        self.send_coins(acct2, acct1, amt.denom, amt.amount)
+        self.send_coins(acct2, acct1, coin, amt)
     }
 
     predicate! {
@@ -139,15 +138,15 @@ impl Bank {
             old_self: &Self,
             from: AccountId,
             to: AccountId,
-            denom: PrefixedDenom,
+            denom: PrefixedCoin,
             amount: u32
         ) -> bool {
         forall(
-            |acct_id: AccountId, coin_id: PrefixedDenom|
+            |acct_id: AccountId, coin_id: PrefixedCoin|
             (acct_id != from && !(acct_id === to)) || !(coin_id === denom) ==>
                 self.balance(acct_id, coin_id) == old_self.balance(acct_id, coin_id)) &&
         forall(
-                    |coin_id: PrefixedDenom| coin_id === denom ==>
+                    |coin_id: PrefixedCoin| coin_id === denom ==>
                         self.balance(to, coin_id) == old_self.balance(to, coin_id) + amount &&
                         self.balance(from, coin_id) == old_self.balance(from, coin_id) - amount)
         }
@@ -161,7 +160,7 @@ impl Bank {
         &mut self,
         from: AccountId,
         to: AccountId,
-        denom: PrefixedDenom,
+        denom: PrefixedCoin,
         amount: u32,
     ) -> Result<(), Ics20Error>{
         unimplemented!()
@@ -169,52 +168,54 @@ impl Bank {
 
     #[ensures(
         result.is_ok() ==> forall(
-            |acct_id: AccountId, coin_id: PrefixedDenom|
+            |acct_id: AccountId, coin_id: PrefixedCoin|
                self.balance(acct_id, coin_id) == old(self).balance(acct_id, coin_id))
     )]
-    fn mint_burn_involution(&mut self, acct: AccountId, amt: PrefixedCoin) -> Result<(), Ics20Error>{
-        let err = self.mint_coins(acct, amt);
+    fn mint_burn_involution(&mut self, acct: AccountId, coin: PrefixedCoin, amount: u32) -> Result<(), Ics20Error>{
+        let err = self.mint_coins(acct, coin, amount);
         if !err.is_ok() {
            return err;
         }
-        self.burn_coins(acct, amt)
+        self.burn_coins(acct, coin, amount)
     }
 
     /// This function to enable minting ibc tokens to a user account
     #[ensures(
-        result.is_ok() ==> self.balance(account, old(amt.denom)) == old(self).balance(account, old(amt.denom)) + amt.amount
+        result.is_ok() ==> self.balance(account, old(coin)) == old(self).balance(account, old(coin)) + amount
     )]
     #[ensures(
         result.is_ok() ==> forall(
-            |acct_id: AccountId, coin_id: PrefixedDenom|
-            !(acct_id === account) || !(coin_id === old(amt.denom)) ==>
+            |acct_id: AccountId, coin_id: PrefixedCoin|
+            !(acct_id === account) || !(coin_id === old(coin)) ==>
                 self.balance(acct_id, coin_id) == old(self).balance(acct_id, coin_id))
     )]
     #[trusted]
     fn mint_coins(
         &mut self,
         account: AccountId,
-        amt: PrefixedCoin,
+        coin: PrefixedCoin,
+        amount: u32
     ) -> Result<(), Ics20Error> {
         Ok(())
     }
 
     /// This function should enable burning of minted tokens in a user account
-    #[ensures(result.is_ok() == (self.balance(account, old(amt.denom)) == amt.amount))]
+    #[ensures(result.is_ok() == (self.balance(account, old(coin)) == amount))]
     #[ensures(
-        result.is_ok() ==> self.balance(account, old(amt.denom)) == old(self).balance(account, old(amt.denom)) - amt.amount
+        result.is_ok() ==> self.balance(account, old(coin)) == old(self).balance(account, old(coin)) - amount
     )]
     #[ensures(
         result.is_ok() ==> forall(
-            |acct_id: AccountId, coin_id: PrefixedDenom|
-            !(acct_id === account) || !(coin_id === old(amt.denom)) ==>
+            |acct_id: AccountId, coin_id: PrefixedCoin|
+            !(acct_id === account) || !(coin_id === old(coin)) ==>
                 self.balance(acct_id, coin_id) == old(self).balance(acct_id, coin_id))
     )]
     #[trusted]
     fn burn_coins(
         &mut self,
         account: AccountId,
-        amt: PrefixedCoin,
+        coin: PrefixedCoin,
+        amount: u32
     ) -> Result<(), Ics20Error> {
         Ok(())
     }
@@ -226,19 +227,19 @@ struct App {
 
 #[pure]
 #[trusted]
-fn is_prefix(source_port: Port, channel: Channel, denomination: PrefixedDenom) -> bool {
+fn is_prefix(source_port: Port, channel: Channel, denomination: PrefixedCoin) -> bool {
     unimplemented!()
 }
 
 #[pure]
 #[trusted]
-fn drop_prefix(source_port: Port, channel: Channel, denomination: PrefixedDenom) -> PrefixedDenom {
+fn drop_prefix(source_port: Port, channel: Channel, denomination: PrefixedCoin) -> PrefixedCoin {
     unimplemented!()
 }
 
 #[pure]
 #[trusted]
-fn with_prefix(source_port: Port, channel: Channel, denomination: PrefixedDenom) -> PrefixedDenom {
+fn with_prefix(source_port: Port, channel: Channel, denomination: PrefixedCoin) -> PrefixedCoin {
     unimplemented!()
 }
 
@@ -261,7 +262,7 @@ impl App {
     )]
     fn send_fungible_tokens(
         &mut self,
-        denomination: PrefixedDenom,
+        denomination: PrefixedCoin,
         amount: u32,
         sender: AccountId,
         receiver: AccountId,
@@ -280,10 +281,8 @@ impl App {
         } else {
             self.bank.burn_coins(
                 sender,
-                PrefixedCoin {
-                    denom: denomination,
-                    amount
-                }
+                denomination,
+                amount
             )
         };
         if !result.is_ok() {
@@ -321,10 +320,8 @@ impl App {
             );
             let mint_result = self.bank.mint_coins(
                 data.receiver,
-                PrefixedCoin {
-                   denom: prefixed,
-                   amount: data.amount
-                }
+                prefixed,
+                data.amount
             );
             return mint_result.is_ok();
         }
@@ -351,7 +348,8 @@ impl App {
         } else {
             self.bank.mint_coins(
                 data.sender,
-                PrefixedCoin { denom: data.denom, amount: data.amount }
+                data.denom,
+                data.amount
             );
         }
     }
@@ -387,7 +385,7 @@ impl App {
     ))]
     fn example_run(
         &mut self,
-        denomination: PrefixedDenom,
+        denomination: PrefixedCoin,
         amount: u32,
         sender: AccountId,
         receiver: AccountId,
