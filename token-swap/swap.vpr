@@ -145,7 +145,8 @@ method doTransfer(
     to: AccountID,
     prefix: Prefix,
     coin: Coin,
-    amt: Int
+    amt: Int,
+    ghostPerm: Ref
 ) 
     requires forall r : ResourceHolder,c : Coin :: acc(ghostBalance(r, toResource(c)).resourceAmount)
     requires acc(bank.bankBalances)
@@ -155,6 +156,8 @@ method doTransfer(
         ghostBalance(toResourceHolder(chain1(), acctID), toResource(c)).resourceAmount
     )
     requires amt >= 0
+    requires acc(ghostPerm.actionPerm)
+    requires canTransferOut(ghostPerm.actionPerm, toResourceHolder(chain1(), from), toResource(coin), amt)
     ensures acc(bank.bankBalances)
     ensures balancesPositive(bank.bankBalances)
     ensures forall r : ResourceHolder,c : Coin :: acc(ghostBalance(r, toResource(c)).resourceAmount)
@@ -163,8 +166,6 @@ method doTransfer(
         ghostBalance(toResourceHolder(chain1(), acctID), toResource(c)).resourceAmount)
     )
 {
-    var permRef: Ref 
-    permRef := assumePermission(toResourceHolder(chain1(), from), toResource(coin), amt)
     if(from != to && hasCoin(bank.bankBalances, from, coin) && 
        prefix in bank.bankBalances[from][coin] && 
        bank.bankBalances[from][coin][prefix] >= amt) {
@@ -173,7 +174,7 @@ method doTransfer(
             toResourceHolder(chain1(), to),
             toResource(coin),
             amt,
-            permRef
+            ghostPerm
         )
         updateBalance(bank, from, prefix, coin, (0 - amt))
         updateBalance(bank, to, prefix, coin, amt)
