@@ -125,10 +125,12 @@ domain Coin {
     function mkCoin(id: Int): Coin
 }
 
+
 define updateBalance(bank, acctID, prefix, coin, amt){
     var coinMap : Map[Coin, Map[Prefix, Int]]:= bank.bankBalances[acctID]
     var prefixMap : Map[Prefix, Int] := coinMap[coin]
     prefixMap := prefixMap[prefix := prefixMap[prefix] + amt]
+    assume sumValues(prefixMap) == sumValues(coinMap[coin]) + amt
     coinMap := coinMap[coin := prefixMap]
     bank.bankBalances := bank.bankBalances[acctID := coinMap]
 }
@@ -156,7 +158,6 @@ method doTransfer(
         balanceOfM(bank.bankBalances, acctID, c) == 
         ghostBalance(toResourceHolder(chain1(), acctID), toResource(c)).resourceAmount
     )
-    requires (forall p : Prefix :: p in bank.bankBalances[from][coin] ==> bank.bankBalances[from][coin][p] >= 0)
     requires amt >= 0
     ensures acc(bank.bankBalances)
     ensures balancesPositive(bank.bankBalances)
@@ -170,9 +171,7 @@ method doTransfer(
 {
     var permRef: Ref 
     permRef := assumePermission(toResourceHolder(chain1(), from), toResource(coin), amt)
-    assert acc(ghostBalance(toResourceHolder(chain1(), to), toResource(coin)).resourceAmount)
     if(bank.bankBalances[from][coin][prefix] >= amt) {
-        assert sumValues(bank.bankBalances[from][coin]) >= amt
         ghostTransfer(
             toResourceHolder(chain1(), from),
             toResourceHolder(chain1(), to),
@@ -181,15 +180,7 @@ method doTransfer(
             permRef
         )
         updateBalance(bank, from, prefix, coin, (0 - amt))
-        assume(
-            balanceOfM(bank.bankBalances, from, coin) == 
-            balanceOfM(old(bank.bankBalances), from, coin) - amt)
         updateBalance(bank, to, prefix, coin, amt)
-        assume(
-            balanceOfM(bank.bankBalances, to, coin) == 
-            balanceOfM(old(bank.bankBalances), to, coin) + amt)
-        assert(bank.bankBalances[from][coin][prefix] == old(bank.bankBalances[from][coin][prefix]) - amt)
-        assert(bank.bankBalances[to][coin][prefix] == old(bank.bankBalances[to][coin][prefix]) + amt)
     }
     // var fromCoinBalance: Map[Prefix, Int] := bank.bankBalances[from][coin]
     // fromCoinBalance := fromCoinBalance[prefix := (fromCoinBalance[prefix] - amt)]
