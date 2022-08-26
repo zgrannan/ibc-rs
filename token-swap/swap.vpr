@@ -60,17 +60,11 @@ method ghostTransfer(
     ghostBalance(to, resource).resourceAmount := ghostBalance(to, resource).resourceAmount + amount
 }
 
-domain Sum {
-    // axiom sumIncrement {
-    //     forall map: Map[Prefix, Int], key: Prefix, value: Int :: 
-    //       sumValues(map[key := value]) == sumValues(map) + value
-    // }
-}
-
 // Monomorphised
 function sumValues(map: Map[Prefix, Int]): Int
     requires forall p : Prefix :: p in map ==> map[p] >= 0
     ensures forall p : Prefix :: p in map ==> map[p] <= result
+    ensures map == Map() ==> result == 0
 
 // NONGHOST
 
@@ -127,8 +121,18 @@ domain Coin {
 
 
 define updateBalance(bank, acctID, prefix, coin, amt){
+    if (!(acctID in bank.bankBalances)) {
+        bank.bankBalances := bank.bankBalances[acctID := Map()]
+    }
     var coinMap : Map[Coin, Map[Prefix, Int]]:= bank.bankBalances[acctID]
+    if (!(coin in coinMap)) {
+        coinMap := coinMap[coin := Map()]
+        assert(sumValues(coinMap[coin]) == 0)
+    }
     var prefixMap : Map[Prefix, Int] := coinMap[coin]
+    if (!(prefix in prefixMap)) {
+       prefixMap := prefixMap[prefix := 0]
+    }
     prefixMap := prefixMap[prefix := prefixMap[prefix] + amt]
     assume sumValues(prefixMap) == sumValues(coinMap[coin]) + amt
     coinMap := coinMap[coin := prefixMap]
@@ -146,16 +150,8 @@ method doTransfer(
     requires forall r : ResourceHolder,c : Coin :: acc(ghostBalance(r, toResource(c)).resourceAmount)
     requires acc(bank.bankBalances)
     requires balancesPositive(bank.bankBalances)
-    requires hasCoin(bank.bankBalances, from, coin)
-    requires prefix in bank.bankBalances[from][coin]
-    requires to in bank.bankBalances
-    requires coin in bank.bankBalances[to]
-    requires prefix in bank.bankBalances[to][coin]
-    requires from != to
     requires (forall acctID : AccountID, c : Coin ::
-        {ghostBalance(toResourceHolder(chain1(), acctID), toResource(c))}
-        hasCoin(bank.bankBalances, acctID, c) ==>
-        balanceOfM(bank.bankBalances, acctID, c) == 
+        balanceOf(bank.bankBalances, acctID, c) == 
         ghostBalance(toResourceHolder(chain1(), acctID), toResource(c)).resourceAmount
     )
     requires amt >= 0
@@ -163,15 +159,15 @@ method doTransfer(
     ensures balancesPositive(bank.bankBalances)
     ensures forall r : ResourceHolder,c : Coin :: acc(ghostBalance(r, toResource(c)).resourceAmount)
     ensures (forall acctID : AccountID, c : Coin :: 
-        {ghostBalance(toResourceHolder(chain1(), acctID), toResource(c))}
-        hasCoin(bank.bankBalances, acctID, c) ==>
-        (balanceOfM(bank.bankBalances, acctID, c) == 
+        (balanceOf(bank.bankBalances, acctID, c) == 
         ghostBalance(toResourceHolder(chain1(), acctID), toResource(c)).resourceAmount)
     )
 {
     var permRef: Ref 
     permRef := assumePermission(toResourceHolder(chain1(), from), toResource(coin), amt)
-    if(bank.bankBalances[from][coin][prefix] >= amt) {
+    if(from != to && hasCoin(bank.bankBalances, from, coin) && 
+       prefix in bank.bankBalances[from][coin] && 
+       bank.bankBalances[from][coin][prefix] >= amt) {
         ghostTransfer(
             toResourceHolder(chain1(), from),
             toResourceHolder(chain1(), to),
@@ -182,12 +178,4 @@ method doTransfer(
         updateBalance(bank, from, prefix, coin, (0 - amt))
         updateBalance(bank, to, prefix, coin, amt)
     }
-    // var fromCoinBalance: Map[Prefix, Int] := bank.bankBalances[from][coin]
-    // fromCoinBalance := fromCoinBalance[prefix := (fromCoinBalance[prefix] - amt)]
-    // var toCoinBalance: Map[Prefix, Int] := bank.bankBalances[to][coin]
-    // toCoinBalance := toCoinBalance[prefix := (toCoinBalance[prefix] + amt)]
-    // var newFrom : Map[Coin, Map[Prefix, Int]] := bank.bankBalances[from]
-    // newFrom := newFrom[c]
-    // bank.bankBalances := bank.bankBalances[from := newFrom]
-
 }
