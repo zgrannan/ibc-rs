@@ -16,9 +16,11 @@ function total(resources: Set[ResourceHolder], resource: Resource): Int
 
 function ghostToMap(resources: Set[ResourceHolder]): Map[ResourceHolder, Map[Resource, Int]]
     requires forall rh : ResourceHolder, resource: Resource :: acc(balance(rh, resource).resourceAmount)
+    ensures forall rh : ResourceHolder :: rh in resources ==> rh in result
+    ensures forall rh : ResourceHolder, res: Resource :: (rh in result && res in result[rh]) ==> 
+        result[rh][res] == balance(rh, res).resourceAmount
 
 domain Resource {
-
 
 }
 
@@ -48,7 +50,7 @@ method ghostTransfer(
    requires acc(balance(to, resource).resourceAmount)
    requires acc(permRef.actionPerm)
    requires(amount >= 0)
-   requires(balance(to, resource).resourceAmount >= amount)
+   requires(balance(from, resource).resourceAmount >= amount)
    requires canTransferOut(permRef.actionPerm, from, resource, amount)
    ensures acc(balance(from, resource).resourceAmount)
    ensures acc(balance(to, resource).resourceAmount)
@@ -64,14 +66,42 @@ method ghostTransfer(
     balance(to, resource).resourceAmount := balance(to, resource).resourceAmount + amount
 }
 
+// Monomorphised
+function sumValues(map: Map[Prefix, Int]): Int
+    requires forall p : Prefix :: p in map ==> map[p] >= 0
+    ensures forall p : Prefix :: p in map ==> map[p] <= result
+
 // NONGHOST
 
+domain ChainID {
+    function chain1() : ChainID
+    function chain2() : ChainID
+    axiom {
+        chain1() != chain2()
+    }
+
+}
 field bankBalances: Map[AccountID, Map[Coin, Map[Prefix, Int]]]
 
 function realToMap(map: Map[AccountID, Map[Coin, Map[Prefix, Int]]]): Map[ResourceHolder, Map[Resource, Int]]
+    ensures (
+        forall accountID : AccountID, c : Coin :: (accountID in map && c in map[accountID]) ==> 
+        (forall prefix : Prefix :: prefix in map[accountID][c] ==> map[accountID][c][prefix] >= 0) &&
+        (toResourceHolder(chain1(), accountID) in result && 
+        toResource(c) in result[toResourceHolder(chain1(), accountID)] &&
+        result[toResourceHolder(chain1(), accountID)][toResource(c)] == sumValues(map[accountID][c]))
+    )
+    // ensures (
+    //     forall accountID : AccountID :: accountID in map ==> toResourceHolder(chain1(), accountID) in result
+    // )
+
 
 domain AccountID {
-    function toResourceHolder(acctId: AccountID): ResourceHolder
+    function toResourceHolder(chainID : ChainID, acctId: AccountID): ResourceHolder
+
+    axiom {
+        forall c1 : ChainID, c2 : ChainID, a1 : AccountID, a2: AccountID :: c1 != c2 || a1 != a2 ==> toResourceHolder(c1, a1) != toResourceHolder(c2, a2)
+    }
 }
 
 domain Prefix {
@@ -108,24 +138,30 @@ method doTransfer(
     requires to in bank.bankBalances
     requires coin in bank.bankBalances[to]
     requires prefix in bank.bankBalances[to][coin]
+    requires toResourceHolder(chain1(), from) in ghostAccounts
     requires realToMap(bank.bankBalances) == ghostToMap(ghostAccounts)
+    requires (forall p : Prefix :: p in bank.bankBalances[from][coin] ==> bank.bankBalances[from][coin][p] >= 0)
+    requires amt >= 0
     ensures acc(bank.bankBalances)
     ensures forall r : ResourceHolder :: acc(balance(r, toResource(coin)).resourceAmount)
     ensures realToMap(bank.bankBalances) == ghostToMap(ghostAccounts)
     // ensures(total(ghostAccounts, toResource(coin)) == old(total(ghostAccounts, toResource(coin))))
 {
     var permRef: Ref 
-    permRef := assumePermission(toResourceHolder(from), toResource(coin), amt)
-    assert acc(balance(toResourceHolder(to), toResource(coin)).resourceAmount)
-    ghostTransfer(
-        toResourceHolder(from),
-        toResourceHolder(to),
-        toResource(coin),
-        amt,
-        permRef
-    )
-    updateBalance(bank, from, prefix, coin, (0 - amt))
-    updateBalance(bank, to, prefix, coin, amt)
+    permRef := assumePermission(toResourceHolder(chain1(), from), toResource(coin), amt)
+    assert acc(balance(toResourceHolder(chain2(), to), toResource(coin)).resourceAmount)
+    if(bank.bankBalances[from][coin][prefix] >= amt) {
+        assert sumValues(bank.bankBalances[from][coin]) >= amt
+        ghostTransfer(
+            toResourceHolder(chain1(), from),
+            toResourceHolder(chain2(), to),
+            toResource(coin),
+            amt,
+            permRef
+        )
+        updateBalance(bank, from, prefix, coin, (0 - amt))
+        updateBalance(bank, to, prefix, coin, amt)
+    }
     // var fromCoinBalance: Map[Prefix, Int] := bank.bankBalances[from][coin]
     // fromCoinBalance := fromCoinBalance[prefix := (fromCoinBalance[prefix] - amt)]
     // var toCoinBalance: Map[Prefix, Int] := bank.bankBalances[to][coin]
