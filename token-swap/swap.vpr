@@ -2,23 +2,17 @@
 
 domain ResourceHolder {
     // Accounts 
-    function balance(rh: ResourceHolder, resource: Resource): Ref
+    function ghostBalance(rh: ResourceHolder, resource: Resource): Ref
 
     axiom balanceInjective {
         forall owner1: ResourceHolder, owner2: ResourceHolder, resource1: Resource, resource2: Resource :: 
-        owner1 != owner2 || resource1 != resource2 ==> balance(owner1, resource1) != balance(owner2, resource2)
+        owner1 != owner2 || resource1 != resource2 ==> ghostBalance(owner1, resource1) != ghostBalance(owner2, resource2)
     }
 
 }
 
 function total(resources: Set[ResourceHolder], resource: Resource): Int
-    requires forall r : ResourceHolder :: acc(balance(r, resource).resourceAmount)
-
-function ghostToMap(resources: Set[ResourceHolder]): Map[ResourceHolder, Map[Resource, Int]]
-    requires forall rh : ResourceHolder, resource: Resource :: acc(balance(rh, resource).resourceAmount)
-    ensures forall rh : ResourceHolder :: rh in resources ==> rh in result
-    ensures forall rh : ResourceHolder, res: Resource :: (rh in result && res in result[rh]) ==> 
-        result[rh][res] == balance(rh, res).resourceAmount
+    requires forall r : ResourceHolder :: acc(ghostBalance(r, resource).resourceAmount)
 
 domain Resource {
 
@@ -46,24 +40,31 @@ method ghostTransfer(
     amount: Int,
     permRef: Ref
 )
-   requires acc(balance(from, resource).resourceAmount)
-   requires acc(balance(to, resource).resourceAmount)
+   requires acc(ghostBalance(from, resource).resourceAmount)
+   requires acc(ghostBalance(to, resource).resourceAmount)
    requires acc(permRef.actionPerm)
    requires(amount >= 0)
-   requires(balance(from, resource).resourceAmount >= amount)
+   requires(ghostBalance(from, resource).resourceAmount >= amount)
    requires canTransferOut(permRef.actionPerm, from, resource, amount)
-   ensures acc(balance(from, resource).resourceAmount)
-   ensures acc(balance(to, resource).resourceAmount)
-   ensures balance(from, resource).resourceAmount == old(balance(from, resource).resourceAmount) - amount
-   ensures balance(to, resource).resourceAmount == old(balance(to, resource).resourceAmount) + amount
+   ensures acc(ghostBalance(from, resource).resourceAmount)
+   ensures acc(ghostBalance(to, resource).resourceAmount)
+   ensures ghostBalance(from, resource).resourceAmount == old(ghostBalance(from, resource).resourceAmount) - amount
+   ensures ghostBalance(to, resource).resourceAmount == old(ghostBalance(to, resource).resourceAmount) + amount
 
    // Sanity check: total sum of resource unchanged
-   ensures (balance(from, resource).resourceAmount + balance(to, resource).resourceAmount) ==
-           old(balance(from, resource).resourceAmount + balance(to, resource).resourceAmount)
+   ensures (ghostBalance(from, resource).resourceAmount + ghostBalance(to, resource).resourceAmount) ==
+           old(ghostBalance(from, resource).resourceAmount + ghostBalance(to, resource).resourceAmount)
 
 {
-    balance(from, resource).resourceAmount := balance(from, resource).resourceAmount - amount
-    balance(to, resource).resourceAmount := balance(to, resource).resourceAmount + amount
+    ghostBalance(from, resource).resourceAmount := ghostBalance(from, resource).resourceAmount - amount
+    ghostBalance(to, resource).resourceAmount := ghostBalance(to, resource).resourceAmount + amount
+}
+
+domain Sum {
+    // axiom sumIncrement {
+    //     forall map: Map[Prefix, Int], key: Prefix, value: Int :: 
+    //       sumValues(map[key := value]) == sumValues(map) + value
+    // }
 }
 
 // Monomorphised
@@ -83,23 +84,29 @@ domain ChainID {
 }
 field bankBalances: Map[AccountID, Map[Coin, Map[Prefix, Int]]]
 
-function realToMap(map: Map[AccountID, Map[Coin, Map[Prefix, Int]]]): Map[ResourceHolder, Map[Resource, Int]]
-    ensures (
-        forall accountID : AccountID, c : Coin :: (accountID in map && c in map[accountID]) ==> 
-        (forall prefix : Prefix :: prefix in map[accountID][c] ==> map[accountID][c][prefix] >= 0) &&
-        (toResourceHolder(chain1(), accountID) in result && 
-        toResource(c) in result[toResourceHolder(chain1(), accountID)] &&
-        result[toResourceHolder(chain1(), accountID)][toResource(c)] == sumValues(map[accountID][c]))
-    )
-    // ensures (
-    //     forall accountID : AccountID :: accountID in map ==> toResourceHolder(chain1(), accountID) in result
-    // )
+define hasCoin(map, acctID, c) (
+    acctID in map && c in map[acctID]
+)
 
+define balancesPositive(map) (
+    (forall acctID: AccountID, c: Coin, p: Prefix :: 
+        (hasCoin(map, acctID, c) && p in map[acctID][c]) ==> map[acctID][c][p] >= 0)
+)
+
+define balanceOfM(map, acctID, c) (
+    sumValues(map[acctID][c])
+)
+
+function balanceOf(map: Map[AccountID, Map[Coin, Map[Prefix, Int]]], acctID: AccountID, c: Coin): Int
+    requires balancesPositive(map)
+ {
+    hasCoin(map, acctID, c) ? balanceOfM(map, acctID, c) : 0
+ }
 
 domain AccountID {
     function toResourceHolder(chainID : ChainID, acctId: AccountID): ResourceHolder
 
-    axiom {
+    axiom injective {
         forall c1 : ChainID, c2 : ChainID, a1 : AccountID, a2: AccountID :: c1 != c2 || a1 != a2 ==> toResourceHolder(c1, a1) != toResourceHolder(c2, a2)
     }
 }
@@ -110,6 +117,12 @@ domain Prefix {
 
 domain Coin {
     function toResource(coin: Coin): Resource
+
+    axiom toResourceInjective {
+        forall c1 : Coin, c2: Coin :: c1 != c2 ==> toResource(c1) != toResource(c2)
+    }
+
+    function mkCoin(id: Int): Coin
 }
 
 define updateBalance(bank, acctID, prefix, coin, amt){
@@ -121,7 +134,6 @@ define updateBalance(bank, acctID, prefix, coin, amt){
 }
 
 method doTransfer(
-    ghostAccounts: Set[ResourceHolder],
     bank: Ref,
     from: AccountID,
     to: AccountID,
@@ -129,38 +141,55 @@ method doTransfer(
     coin: Coin,
     amt: Int
 ) 
-    requires forall r : ResourceHolder :: acc(balance(r, toResource(coin)).resourceAmount)
-    // requires acc(balance(toResourceHolder(to), toResource(coin)).resourceAmount)
+    requires forall r : ResourceHolder,c : Coin :: acc(ghostBalance(r, toResource(c)).resourceAmount)
     requires acc(bank.bankBalances)
-    requires from in bank.bankBalances
-    requires coin in bank.bankBalances[from]
+    requires balancesPositive(bank.bankBalances)
+    requires hasCoin(bank.bankBalances, from, coin)
     requires prefix in bank.bankBalances[from][coin]
     requires to in bank.bankBalances
     requires coin in bank.bankBalances[to]
     requires prefix in bank.bankBalances[to][coin]
-    requires toResourceHolder(chain1(), from) in ghostAccounts
-    requires realToMap(bank.bankBalances) == ghostToMap(ghostAccounts)
+    requires from != to
+    requires (forall acctID : AccountID, c : Coin ::
+        {ghostBalance(toResourceHolder(chain1(), acctID), toResource(c))}
+        hasCoin(bank.bankBalances, acctID, c) ==>
+        balanceOfM(bank.bankBalances, acctID, c) == 
+        ghostBalance(toResourceHolder(chain1(), acctID), toResource(c)).resourceAmount
+    )
     requires (forall p : Prefix :: p in bank.bankBalances[from][coin] ==> bank.bankBalances[from][coin][p] >= 0)
     requires amt >= 0
     ensures acc(bank.bankBalances)
-    ensures forall r : ResourceHolder :: acc(balance(r, toResource(coin)).resourceAmount)
-    ensures realToMap(bank.bankBalances) == ghostToMap(ghostAccounts)
-    // ensures(total(ghostAccounts, toResource(coin)) == old(total(ghostAccounts, toResource(coin))))
+    ensures balancesPositive(bank.bankBalances)
+    ensures forall r : ResourceHolder,c : Coin :: acc(ghostBalance(r, toResource(c)).resourceAmount)
+    ensures (forall acctID : AccountID, c : Coin :: 
+        {ghostBalance(toResourceHolder(chain1(), acctID), toResource(c))}
+        hasCoin(bank.bankBalances, acctID, c) ==>
+        (balanceOfM(bank.bankBalances, acctID, c) == 
+        ghostBalance(toResourceHolder(chain1(), acctID), toResource(c)).resourceAmount)
+    )
 {
     var permRef: Ref 
     permRef := assumePermission(toResourceHolder(chain1(), from), toResource(coin), amt)
-    assert acc(balance(toResourceHolder(chain2(), to), toResource(coin)).resourceAmount)
+    assert acc(ghostBalance(toResourceHolder(chain1(), to), toResource(coin)).resourceAmount)
     if(bank.bankBalances[from][coin][prefix] >= amt) {
         assert sumValues(bank.bankBalances[from][coin]) >= amt
         ghostTransfer(
             toResourceHolder(chain1(), from),
-            toResourceHolder(chain2(), to),
+            toResourceHolder(chain1(), to),
             toResource(coin),
             amt,
             permRef
         )
         updateBalance(bank, from, prefix, coin, (0 - amt))
+        assume(
+            balanceOfM(bank.bankBalances, from, coin) == 
+            balanceOfM(old(bank.bankBalances), from, coin) - amt)
         updateBalance(bank, to, prefix, coin, amt)
+        assume(
+            balanceOfM(bank.bankBalances, to, coin) == 
+            balanceOfM(old(bank.bankBalances), to, coin) + amt)
+        assert(bank.bankBalances[from][coin][prefix] == old(bank.bankBalances[from][coin][prefix]) - amt)
+        assert(bank.bankBalances[to][coin][prefix] == old(bank.bankBalances[to][coin][prefix]) + amt)
     }
     // var fromCoinBalance: Map[Prefix, Int] := bank.bankBalances[from][coin]
     // fromCoinBalance := fromCoinBalance[prefix := (fromCoinBalance[prefix] - amt)]
