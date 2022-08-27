@@ -60,13 +60,9 @@ method ghostTransfer(
     ghostBalance(to, resource).resourceAmount := ghostBalance(to, resource).resourceAmount + amount
 }
 
-// Monomorphised
-function sumValues(map: Map[Prefix, Int]): Int
-    requires forall p : Prefix :: p in map ==> map[p] >= 0
-    ensures forall p : Prefix :: p in map ==> map[p] <= result
-    ensures map == Map() ==> result == 0
 
 // NONGHOST
+
 
 domain ChainID {
     function chain1() : ChainID
@@ -109,6 +105,12 @@ domain Prefix {
 
 }
 
+// Monomorphised
+function sumValues(map: Map[Prefix, Int]): Int
+    requires forall p : Prefix :: p in map ==> map[p] >= 0
+    ensures forall p : Prefix :: p in map ==> map[p] <= result
+    ensures map == Map() ==> result == 0
+
 domain Coin {
     function toResource(coin: Coin): Resource
 
@@ -127,7 +129,6 @@ define updateBalance(bank, acctID, prefix, coin, amt){
     var coinMap : Map[Coin, Map[Prefix, Int]]:= bank.bankBalances[acctID]
     if (!(coin in coinMap)) {
         coinMap := coinMap[coin := Map()]
-        assert(sumValues(coinMap[coin]) == 0)
     }
     var prefixMap : Map[Prefix, Int] := coinMap[coin]
     if (!(prefix in prefixMap)) {
@@ -139,7 +140,16 @@ define updateBalance(bank, acctID, prefix, coin, amt){
     bank.bankBalances := bank.bankBalances[acctID := coinMap]
 }
 
-method doTransfer(
+define bankInvariants(bankBalances) (
+    forall r : ResourceHolder,c : Coin :: acc(ghostBalance(r, toResource(c)).resourceAmount) &&
+    balancesPositive(bankBalances) &&
+    (forall acctID : AccountID, c : Coin ::
+            balanceOf(bankBalances, acctID, c) == 
+            ghostBalance(toResourceHolder(chain1(), acctID), toResource(c)).resourceAmount
+    )
+)
+
+method bankTransferTokens(
     bank: Ref,
     from: AccountID,
     to: AccountID,
@@ -147,29 +157,22 @@ method doTransfer(
     coin: Coin,
     amt: Int,
     ghostPerm: Ref
-) 
-    requires forall r : ResourceHolder,c : Coin :: acc(ghostBalance(r, toResource(c)).resourceAmount)
+) returns (success: Bool)
     requires acc(bank.bankBalances)
-    requires balancesPositive(bank.bankBalances)
-    requires (forall acctID : AccountID, c : Coin ::
-        balanceOf(bank.bankBalances, acctID, c) == 
-        ghostBalance(toResourceHolder(chain1(), acctID), toResource(c)).resourceAmount
-    )
+    requires bankInvariants(bank.bankBalances)
     requires amt >= 0
     requires acc(ghostPerm.actionPerm)
     requires canTransferOut(ghostPerm.actionPerm, toResourceHolder(chain1(), from), toResource(coin), amt)
     ensures acc(bank.bankBalances)
-    ensures balancesPositive(bank.bankBalances)
-    ensures forall r : ResourceHolder,c : Coin :: acc(ghostBalance(r, toResource(c)).resourceAmount)
-    ensures (forall acctID : AccountID, c : Coin :: 
-        (balanceOf(bank.bankBalances, acctID, c) == 
-        ghostBalance(toResourceHolder(chain1(), acctID), toResource(c)).resourceAmount)
-    )
+    ensures bankInvariants(bank.bankBalances)
+    ensures !success ==> bank.bankBalances == old(bank.bankBalances)
+    ensures success ==> balanceOf(bank.bankBalances, from, coin) == old(balanceOf(bank.bankBalances, from, coin) - amt)
+    ensures success ==> balanceOf(bank.bankBalances, to, coin) == old(balanceOf(bank.bankBalances, to, coin) + amt)
 {
     if(from != to && hasCoin(bank.bankBalances, from, coin) && 
        prefix in bank.bankBalances[from][coin] && 
        bank.bankBalances[from][coin][prefix] >= amt) {
-        ghostTransfer(
+       ghostTransfer(
             toResourceHolder(chain1(), from),
             toResourceHolder(chain1(), to),
             toResource(coin),
@@ -178,5 +181,8 @@ method doTransfer(
         )
         updateBalance(bank, from, prefix, coin, (0 - amt))
         updateBalance(bank, to, prefix, coin, amt)
+        success := true
+    } else {
+        success := false
     }
 }
