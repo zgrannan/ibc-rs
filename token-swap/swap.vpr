@@ -20,6 +20,7 @@ domain Resource {
 
 domain ActionPerm {
     function canTransferOut(thePerm: ActionPerm, from: ResourceHolder, resource: Resource, amount: Int): Bool
+    function canMint(thePerm: ActionPerm, to: ResourceHolder, resource: Resource, amount: Int): Bool
 }
 
 // A permission to perform an action on a resource
@@ -29,9 +30,20 @@ field actionPerm: ActionPerm
 // Field of returned ref from `balance`
 field resourceAmount: Int
 
-method assumePermission(from: ResourceHolder, resource: Resource, amt: Int) returns (permRef: Ref)
-  ensures acc(permRef.actionPerm)
-  ensures canTransferOut(permRef.actionPerm, from, resource, amt)
+method ghostMint(
+    to: ResourceHolder, 
+    resource: Resource,
+    amount: Int,
+    permRef: Ref
+) 
+   requires acc(ghostBalance(to, resource).resourceAmount)
+   requires acc(permRef.actionPerm)
+   requires(ghostBalance(to, resource).resourceAmount + amount >= 0)
+   ensures acc(ghostBalance(to, resource).resourceAmount)
+   ensures ghostBalance(to, resource).resourceAmount == old(ghostBalance(to, resource).resourceAmount) + amount
+{
+    ghostBalance(to, resource).resourceAmount := ghostBalance(to, resource).resourceAmount + amount
+}
 
 method ghostTransfer(
     from: ResourceHolder, 
@@ -149,6 +161,65 @@ define bankInvariants(bankBalances) (
     )
 )
 
+define Bank(bank) (
+    acc(bank.bankBalances) && bankInvariants(bank.bankBalances)
+)
+
+method bankMintTokens(
+    bank: Ref,
+    to: AccountID,
+    prefix: Prefix,
+    coin: Coin,
+    amt: Int,
+    ghostPerm: Ref
+) 
+    requires Bank(bank)
+    requires acc(ghostPerm.actionPerm)
+    requires amt >= 0
+    requires canMint(ghostPerm.actionPerm, toResourceHolder(chain1(), to), toResource(coin), amt)
+    ensures Bank(bank)
+    ensures balanceOf(bank.bankBalances, to, coin) == old(balanceOf(bank.bankBalances, to, coin) + amt)
+{
+    ghostMint(
+        toResourceHolder(chain1(), to),
+        toResource(coin),
+        amt,
+        ghostPerm
+    )
+    updateBalance(bank, to, prefix, coin, amt)
+}
+
+method bankBurnTokens(
+    bank: Ref,
+    from: AccountID,
+    prefix: Prefix,
+    coin: Coin,
+    amt: Int,
+    ghostPerm: Ref
+) returns (success: Bool)
+    requires Bank(bank)
+    requires acc(ghostPerm.actionPerm)
+    requires canMint(ghostPerm.actionPerm, toResourceHolder(chain1(), from), toResource(coin), 0 - amt)
+    ensures Bank(bank)
+    ensures !success ==> bank.bankBalances == old(bank.bankBalances)
+    ensures success ==> balanceOf(bank.bankBalances, from, coin) == old(balanceOf(bank.bankBalances, from, coin) - amt)
+{
+    if(hasCoin(bank.bankBalances, from, coin) && 
+       prefix in bank.bankBalances[from][coin] && 
+       bank.bankBalances[from][coin][prefix] >= amt) {
+        ghostMint(
+            toResourceHolder(chain1(), from),
+            toResource(coin),
+            0 - amt,
+            ghostPerm
+        )
+        updateBalance(bank, from, prefix, coin, 0 - amt)
+        success := true
+    } else {
+        success := false
+    }
+}
+
 method bankTransferTokens(
     bank: Ref,
     from: AccountID,
@@ -158,13 +229,11 @@ method bankTransferTokens(
     amt: Int,
     ghostPerm: Ref
 ) returns (success: Bool)
-    requires acc(bank.bankBalances)
-    requires bankInvariants(bank.bankBalances)
+    requires Bank(bank)
     requires amt >= 0
     requires acc(ghostPerm.actionPerm)
     requires canTransferOut(ghostPerm.actionPerm, toResourceHolder(chain1(), from), toResource(coin), amt)
-    ensures acc(bank.bankBalances)
-    ensures bankInvariants(bank.bankBalances)
+    ensures Bank(bank)
     ensures !success ==> bank.bankBalances == old(bank.bankBalances)
     ensures success ==> balanceOf(bank.bankBalances, from, coin) == old(balanceOf(bank.bankBalances, from, coin) - amt)
     ensures success ==> balanceOf(bank.bankBalances, to, coin) == old(balanceOf(bank.bankBalances, to, coin) + amt)
