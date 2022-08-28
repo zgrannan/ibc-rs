@@ -263,6 +263,32 @@ domain Channel {
 
 }
 
+adt FungibleTokenPacketData {
+    PacketData(
+        path: Path,
+        coin: Coin,
+        sender: AccountID,
+        receiver: AccountID,
+        amount: Int
+    )
+}
+
+adt Packet {
+    _Packet(
+        sourcePort: Port,
+        sourceChannel: Channel,
+        destPort: Port,
+        destChannel: Channel,
+        data: FungibleTokenPacketData
+    )
+}
+
+adt FungibleTokenPacketAcknowledgement {
+    Ack(
+        success: Bool
+    )
+}
+
 function escrowAddress(bank: Ref, channel: Channel): AccountID
 
 method sendFungibleTokens(
@@ -352,41 +378,35 @@ method refundTokens(
 
 method onRecvPacket(
     bank: Ref,
-    path: Path,
-    sourcePort: Port,
-    sourceChannel: Channel,
-    destChannel: Channel,
-    coin: Coin,
-    amt: Int,
-    receiver: AccountID,
+    packet: Packet,
     ghostPerm: Ref
 ) returns (success: Bool) 
     requires Bank(bank)
-    requires amt >= 0
+    requires packet.data.amount >= 0
     requires acc(ghostPerm.actionPerm)
-    requires startsWith(path, sourcePort, sourceChannel) ==> 
-        canTransferOut(ghostPerm.actionPerm, toResourceHolder(escrowAddress(bank, destChannel)), toResource(coin), amt)
-    requires !startsWith(path, sourcePort, sourceChannel) ==> 
-        canMint(ghostPerm.actionPerm, toResourceHolder(receiver), toResource(coin), amt)
+    requires startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel) ==> 
+        canTransferOut(ghostPerm.actionPerm, toResourceHolder(escrowAddress(bank, packet.destChannel)), toResource(packet.data.coin), packet.data.amount)
+    requires !startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel) ==> 
+        canMint(ghostPerm.actionPerm, toResourceHolder(packet.data.receiver), toResource(packet.data.coin), packet.data.amount)
     ensures Bank(bank)
 {
-    if(startsWith(path, sourcePort, sourceChannel)) {
+    if(startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel)) {
         success := bankTransferTokens(
             bank,
-            escrowAddress(bank, destChannel),
-            receiver,
-            dropPrefix(path, sourcePort, sourceChannel),
-            coin,
-            amt,
+            escrowAddress(bank, packet.destChannel),
+            packet.data.receiver,
+            dropPrefix(packet.data.path, packet.sourcePort, packet.sourceChannel),
+            packet.data.coin,
+            packet.data.amount,
             ghostPerm
         )
     } else {
         success := bankMintTokens(
             bank,
-            receiver,
-            prependPrefix(path, sourcePort, sourceChannel),
-            coin,
-            amt,
+            packet.data.receiver,
+            prependPrefix(packet.data.path, packet.destPort, packet.destChannel),
+            packet.data.coin,
+            packet.data.amount,
             ghostPerm
         )
     }
