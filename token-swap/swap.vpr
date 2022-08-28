@@ -79,14 +79,14 @@ method ghostTransfer(
 
 // NONGHOST
 
-field bankBalances: Map[AccountID, Map[Coin, Map[Prefix, Int]]]
+field bankBalances: Map[AccountID, Map[Coin, Map[Path, Int]]]
 
 define hasCoin(map, acctID, c) (
     acctID in map && c in map[acctID]
 )
 
 define balancesPositive(map) (
-    (forall acctID: AccountID, c: Coin, p: Prefix :: 
+    (forall acctID: AccountID, c: Coin, p: Path :: 
         (hasCoin(map, acctID, c) && p in map[acctID][c]) ==> map[acctID][c][p] >= 0)
 )
 
@@ -94,7 +94,7 @@ define balanceOfM(map, acctID, c) (
     sumValues(map[acctID][c])
 )
 
-function balanceOf(map: Map[AccountID, Map[Coin, Map[Prefix, Int]]], acctID: AccountID, c: Coin): Int
+function balanceOf(map: Map[AccountID, Map[Coin, Map[Path, Int]]], acctID: AccountID, c: Coin): Int
     requires balancesPositive(map)
  {
     hasCoin(map, acctID, c) ? balanceOfM(map, acctID, c) : 0
@@ -108,14 +108,18 @@ domain AccountID {
     }
 }
 
-domain Prefix {
-    function startsWith(prefix: Prefix, port: Port, channel: Channel): Bool
+domain Path {
+    function startsWith(path: Path, port: Port, channel: Channel): Bool
+    function prependPrefix(path: Path, port: Port, channel: Channel): Path
 }
 
+function dropPrefix(path: Path, port: Port, channel: Channel): Path
+  requires(startsWith(path, port, channel))
+
 // Monomorphised
-function sumValues(map: Map[Prefix, Int]): Int
-    requires forall p : Prefix :: p in map ==> map[p] >= 0
-    ensures forall p : Prefix :: p in map ==> map[p] <= result
+function sumValues(map: Map[Path, Int]): Int
+    requires forall p : Path :: p in map ==> map[p] >= 0
+    ensures forall p : Path :: p in map ==> map[p] <= result
     ensures map == Map() ==> result == 0
 
 domain Coin {
@@ -129,21 +133,21 @@ domain Coin {
 }
 
 
-define updateBalance(bank, acctID, prefix, coin, amt){
+define updateBalance(bank, acctID, path, coin, amt){
     if (!(acctID in bank.bankBalances)) {
         bank.bankBalances := bank.bankBalances[acctID := Map()]
     }
-    var coinMap : Map[Coin, Map[Prefix, Int]]:= bank.bankBalances[acctID]
+    var coinMap : Map[Coin, Map[Path, Int]]:= bank.bankBalances[acctID]
     if (!(coin in coinMap)) {
         coinMap := coinMap[coin := Map()]
     }
-    var prefixMap : Map[Prefix, Int] := coinMap[coin]
-    if (!(prefix in prefixMap)) {
-       prefixMap := prefixMap[prefix := 0]
+    var pathMap : Map[Path, Int] := coinMap[coin]
+    if (!(path in pathMap)) {
+       pathMap := pathMap[path := 0]
     }
-    prefixMap := prefixMap[prefix := prefixMap[prefix] + amt]
-    assume sumValues(prefixMap) == sumValues(coinMap[coin]) + amt
-    coinMap := coinMap[coin := prefixMap]
+    pathMap := pathMap[path := pathMap[path] + amt]
+    assume sumValues(pathMap) == sumValues(coinMap[coin]) + amt
+    coinMap := coinMap[coin := pathMap]
     bank.bankBalances := bank.bankBalances[acctID := coinMap]
 }
 
@@ -163,11 +167,11 @@ define Bank(bank) (
 method bankMintTokens(
     bank: Ref,
     to: AccountID,
-    prefix: Prefix,
+    path: Path,
     coin: Coin,
     amt: Int,
     ghostPerm: Ref
-) 
+) returns (success: Bool)
     requires Bank(bank)
     requires acc(ghostPerm.actionPerm)
     requires amt >= 0
@@ -181,13 +185,13 @@ method bankMintTokens(
         amt,
         ghostPerm
     )
-    updateBalance(bank, to, prefix, coin, amt)
+    updateBalance(bank, to, path, coin, amt)
 }
 
 method bankBurnTokens(
     bank: Ref,
     from: AccountID,
-    prefix: Prefix,
+    path: Path,
     coin: Coin,
     amt: Int,
     ghostPerm: Ref
@@ -200,15 +204,15 @@ method bankBurnTokens(
     ensures success ==> balanceOf(bank.bankBalances, from, coin) == old(balanceOf(bank.bankBalances, from, coin) - amt)
 {
     if(hasCoin(bank.bankBalances, from, coin) && 
-       prefix in bank.bankBalances[from][coin] && 
-       bank.bankBalances[from][coin][prefix] >= amt) {
+       path in bank.bankBalances[from][coin] && 
+       bank.bankBalances[from][coin][path] >= amt) {
         ghostMint(
             toResourceHolder(from),
             toResource(coin),
             0 - amt,
             ghostPerm
         )
-        updateBalance(bank, from, prefix, coin, 0 - amt)
+        updateBalance(bank, from, path, coin, 0 - amt)
         success := true
     } else {
         success := false
@@ -219,7 +223,7 @@ method bankTransferTokens(
     bank: Ref,
     from: AccountID,
     to: AccountID,
-    prefix: Prefix,
+    path: Path,
     coin: Coin,
     amt: Int,
     ghostPerm: Ref
@@ -234,8 +238,8 @@ method bankTransferTokens(
     ensures success ==> balanceOf(bank.bankBalances, to, coin) == old(balanceOf(bank.bankBalances, to, coin) + amt)
 {
     if(from != to && hasCoin(bank.bankBalances, from, coin) && 
-       prefix in bank.bankBalances[from][coin] && 
-       bank.bankBalances[from][coin][prefix] >= amt) {
+       path in bank.bankBalances[from][coin] && 
+       bank.bankBalances[from][coin][path] >= amt) {
        ghostTransfer(
             toResourceHolder(from),
             toResourceHolder(to),
@@ -243,8 +247,8 @@ method bankTransferTokens(
             amt,
             ghostPerm
         )
-        updateBalance(bank, from, prefix, coin, (0 - amt))
-        updateBalance(bank, to, prefix, coin, amt)
+        updateBalance(bank, from, path, coin, (0 - amt))
+        updateBalance(bank, to, path, coin, amt)
         success := true
     } else {
         success := false
@@ -263,7 +267,7 @@ function escrowAddress(bank: Ref, channel: Channel): AccountID
 
 method sendFungibleTokens(
     bank: Ref,
-    prefix: Prefix,
+    path: Path,
     coin: Coin,
     amount: Int,
     sender: AccountID,
@@ -275,19 +279,19 @@ method sendFungibleTokens(
     requires Bank(bank)
     requires amount >= 0
     requires acc(ghostPerm.actionPerm)
-    requires !startsWith(prefix, sourcePort, sourceChannel) ==> 
+    requires !startsWith(path, sourcePort, sourceChannel) ==> 
         canTransferOut(ghostPerm.actionPerm, toResourceHolder(sender), toResource(coin), amount)
-    requires startsWith(prefix, sourcePort, sourceChannel) ==> 
+    requires startsWith(path, sourcePort, sourceChannel) ==> 
         canBurn(ghostPerm.actionPerm, toResourceHolder(sender), toResource(coin), amount)
     ensures Bank(bank)
     ensures !success ==> bank.bankBalances == old(bank.bankBalances)
 {
-    if(!startsWith(prefix, sourcePort, sourceChannel)) {
+    if(!startsWith(path, sourcePort, sourceChannel)) {
         success := bankTransferTokens(
             bank,
             sender,
             escrowAddress(bank, sourceChannel),
-            prefix,
+            path,
             coin,
             amount,
             ghostPerm
@@ -296,7 +300,7 @@ method sendFungibleTokens(
         success := bankBurnTokens(
             bank,
             sender,
-            prefix,
+            path,
             coin,
             amount,
             ghostPerm
@@ -306,7 +310,7 @@ method sendFungibleTokens(
 
 method onRecvPacket(
     bank: Ref,
-    prefix: Prefix,
+    path: Path,
     sourcePort: Port,
     sourceChannel: Channel,
     destChannel: Channel,
@@ -318,23 +322,30 @@ method onRecvPacket(
     requires Bank(bank)
     requires amt >= 0
     requires acc(ghostPerm.actionPerm)
-    requires startsWith(prefix, sourcePort, sourceChannel) ==> 
+    requires startsWith(path, sourcePort, sourceChannel) ==> 
         canTransferOut(ghostPerm.actionPerm, toResourceHolder(escrowAddress(bank, destChannel)), toResource(coin), amt)
-    // requires startsWith(prefix, sourcePort, sourceChannel) ==> 
-    //     canBurn(ghostPerm.actionPerm, toResourceHolder(sender), toResource(coin), amount)
+    requires !startsWith(path, sourcePort, sourceChannel) ==> 
+        canMint(ghostPerm.actionPerm, toResourceHolder(receiver), toResource(coin), amt)
     ensures Bank(bank)
 {
-    if(startsWith(prefix, sourcePort, sourceChannel)) {
+    if(startsWith(path, sourcePort, sourceChannel)) {
         success := bankTransferTokens(
             bank,
             escrowAddress(bank, destChannel),
             receiver,
-            prefix,
+            dropPrefix(path, sourcePort, sourceChannel),
             coin,
             amt,
             ghostPerm
         )
     } else {
-
+        success := bankMintTokens(
+            bank,
+            receiver,
+            prependPrefix(path, sourcePort, sourceChannel),
+            coin,
+            amt,
+            ghostPerm
+        )
     }
 }
