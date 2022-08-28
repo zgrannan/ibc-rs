@@ -308,6 +308,48 @@ method sendFungibleTokens(
     }
 }
 
+method refundTokens(
+    bank: Ref,
+    sourcePort: Port,
+    sourceChannel: Channel,
+    sender: AccountID,
+    path: Path,
+    coin: Coin,
+    amt: Int,
+    ghostPerm: Ref
+) 
+    requires Bank(bank)
+    requires amt >= 0
+    requires acc(ghostPerm.actionPerm)
+    requires !startsWith(path, sourcePort, sourceChannel) ==> canTransferOut(ghostPerm.actionPerm, toResourceHolder(escrowAddress(bank, sourceChannel)), toResource(coin), amt)
+    requires startsWith(path, sourcePort, sourceChannel) ==> canMint(ghostPerm.actionPerm, toResourceHolder(sender), toResource(coin), amt)
+    ensures Bank(bank)
+{
+    var success: Bool
+
+    if(!startsWith(path, sourcePort, sourceChannel)) {
+        success := bankTransferTokens(
+            bank,
+            escrowAddress(bank, sourceChannel),
+            sender,
+            path,
+            coin,
+            amt,
+            ghostPerm
+        )
+    } else {
+        success := bankMintTokens(
+            bank,
+            sender,
+            path,
+            coin,
+            amt,
+            ghostPerm
+        )
+
+    }
+}
+
 method onRecvPacket(
     bank: Ref,
     path: Path,
@@ -348,4 +390,30 @@ method onRecvPacket(
             ghostPerm
         )
     }
+}
+
+method sendSource(
+    bank1: Ref,
+    bank2: Ref,
+    path: Path,
+    coin: Coin,
+    amount: Int,
+    sender: AccountID,
+    receiver: AccountID,
+    sourcePort: Port,
+    sourceChannel: Channel,
+    ghostPerm1: Ref,
+    ghostPerm2: Ref
+) 
+    requires Bank(bank1)
+    requires amount >= 0
+    requires !startsWith(path, sourcePort, sourceChannel)
+    requires acc(ghostPerm1.actionPerm)
+    requires canTransferOut(ghostPerm1.actionPerm, toResourceHolder(sender), toResource(coin), amount)
+    ensures Bank(bank1)
+{
+    var success: Bool
+    success := sendFungibleTokens(bank1, path, coin, amount, sender, receiver, sourcePort, sourceChannel, ghostPerm1)
+    
+
 }
