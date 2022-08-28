@@ -23,6 +23,10 @@ domain ActionPerm {
     function canMint(thePerm: ActionPerm, to: ResourceHolder, resource: Resource, amount: Int): Bool
 }
 
+function canBurn(thePerm: ActionPerm, to: ResourceHolder, resource: Resource, amount: Int): Bool {
+    canMint(thePerm, to, resource, 0 - amount)
+}
+
 // A permission to perform an action on a resource
 field actionPerm: ActionPerm
 
@@ -75,15 +79,6 @@ method ghostTransfer(
 
 // NONGHOST
 
-
-domain ChainID {
-    function chain1() : ChainID
-    function chain2() : ChainID
-    axiom {
-        chain1() != chain2()
-    }
-
-}
 field bankBalances: Map[AccountID, Map[Coin, Map[Prefix, Int]]]
 
 define hasCoin(map, acctID, c) (
@@ -106,15 +101,15 @@ function balanceOf(map: Map[AccountID, Map[Coin, Map[Prefix, Int]]], acctID: Acc
  }
 
 domain AccountID {
-    function toResourceHolder(chainID : ChainID, acctId: AccountID): ResourceHolder
+    function toResourceHolder(acctId: AccountID): ResourceHolder
 
     axiom injective {
-        forall c1 : ChainID, c2 : ChainID, a1 : AccountID, a2: AccountID :: c1 != c2 || a1 != a2 ==> toResourceHolder(c1, a1) != toResourceHolder(c2, a2)
+        forall a1 : AccountID, a2: AccountID :: a1 != a2 ==> toResourceHolder(a1) != toResourceHolder(a2)
     }
 }
 
 domain Prefix {
-
+    function startsWith(prefix: Prefix, port: Port, channel: Channel): Bool
 }
 
 // Monomorphised
@@ -157,7 +152,7 @@ define bankInvariants(bankBalances) (
     balancesPositive(bankBalances) &&
     (forall acctID : AccountID, c : Coin ::
             balanceOf(bankBalances, acctID, c) == 
-            ghostBalance(toResourceHolder(chain1(), acctID), toResource(c)).resourceAmount
+            ghostBalance(toResourceHolder(acctID), toResource(c)).resourceAmount
     )
 )
 
@@ -176,12 +171,12 @@ method bankMintTokens(
     requires Bank(bank)
     requires acc(ghostPerm.actionPerm)
     requires amt >= 0
-    requires canMint(ghostPerm.actionPerm, toResourceHolder(chain1(), to), toResource(coin), amt)
+    requires canMint(ghostPerm.actionPerm, toResourceHolder(to), toResource(coin), amt)
     ensures Bank(bank)
     ensures balanceOf(bank.bankBalances, to, coin) == old(balanceOf(bank.bankBalances, to, coin) + amt)
 {
     ghostMint(
-        toResourceHolder(chain1(), to),
+        toResourceHolder(to),
         toResource(coin),
         amt,
         ghostPerm
@@ -199,7 +194,7 @@ method bankBurnTokens(
 ) returns (success: Bool)
     requires Bank(bank)
     requires acc(ghostPerm.actionPerm)
-    requires canMint(ghostPerm.actionPerm, toResourceHolder(chain1(), from), toResource(coin), 0 - amt)
+    requires canMint(ghostPerm.actionPerm, toResourceHolder(from), toResource(coin), 0 - amt)
     ensures Bank(bank)
     ensures !success ==> bank.bankBalances == old(bank.bankBalances)
     ensures success ==> balanceOf(bank.bankBalances, from, coin) == old(balanceOf(bank.bankBalances, from, coin) - amt)
@@ -208,7 +203,7 @@ method bankBurnTokens(
        prefix in bank.bankBalances[from][coin] && 
        bank.bankBalances[from][coin][prefix] >= amt) {
         ghostMint(
-            toResourceHolder(chain1(), from),
+            toResourceHolder(from),
             toResource(coin),
             0 - amt,
             ghostPerm
@@ -232,7 +227,7 @@ method bankTransferTokens(
     requires Bank(bank)
     requires amt >= 0
     requires acc(ghostPerm.actionPerm)
-    requires canTransferOut(ghostPerm.actionPerm, toResourceHolder(chain1(), from), toResource(coin), amt)
+    requires canTransferOut(ghostPerm.actionPerm, toResourceHolder(from), toResource(coin), amt)
     ensures Bank(bank)
     ensures !success ==> bank.bankBalances == old(bank.bankBalances)
     ensures success ==> balanceOf(bank.bankBalances, from, coin) == old(balanceOf(bank.bankBalances, from, coin) - amt)
@@ -242,8 +237,8 @@ method bankTransferTokens(
        prefix in bank.bankBalances[from][coin] && 
        bank.bankBalances[from][coin][prefix] >= amt) {
        ghostTransfer(
-            toResourceHolder(chain1(), from),
-            toResourceHolder(chain1(), to),
+            toResourceHolder(from),
+            toResourceHolder(to),
             toResource(coin),
             amt,
             ghostPerm
@@ -253,5 +248,93 @@ method bankTransferTokens(
         success := true
     } else {
         success := false
+    }
+}
+
+domain Port {
+
+}
+
+domain Channel {
+
+}
+
+function escrowAddress(bank: Ref, channel: Channel): AccountID
+
+method sendFungibleTokens(
+    bank: Ref,
+    prefix: Prefix,
+    coin: Coin,
+    amount: Int,
+    sender: AccountID,
+    receiver: AccountID,
+    sourcePort: Port,
+    sourceChannel: Channel,
+    ghostPerm: Ref
+) returns (success: Bool)
+    requires Bank(bank)
+    requires amount >= 0
+    requires acc(ghostPerm.actionPerm)
+    requires !startsWith(prefix, sourcePort, sourceChannel) ==> 
+        canTransferOut(ghostPerm.actionPerm, toResourceHolder(sender), toResource(coin), amount)
+    requires startsWith(prefix, sourcePort, sourceChannel) ==> 
+        canBurn(ghostPerm.actionPerm, toResourceHolder(sender), toResource(coin), amount)
+    ensures Bank(bank)
+    ensures !success ==> bank.bankBalances == old(bank.bankBalances)
+{
+    if(!startsWith(prefix, sourcePort, sourceChannel)) {
+        success := bankTransferTokens(
+            bank,
+            sender,
+            escrowAddress(bank, sourceChannel),
+            prefix,
+            coin,
+            amount,
+            ghostPerm
+        )
+    } else {
+        success := bankBurnTokens(
+            bank,
+            sender,
+            prefix,
+            coin,
+            amount,
+            ghostPerm
+        )
+    }
+}
+
+method onRecvPacket(
+    bank: Ref,
+    prefix: Prefix,
+    sourcePort: Port,
+    sourceChannel: Channel,
+    destChannel: Channel,
+    coin: Coin,
+    amt: Int,
+    receiver: AccountID,
+    ghostPerm: Ref
+) returns (success: Bool) 
+    requires Bank(bank)
+    requires amt >= 0
+    requires acc(ghostPerm.actionPerm)
+    requires startsWith(prefix, sourcePort, sourceChannel) ==> 
+        canTransferOut(ghostPerm.actionPerm, toResourceHolder(escrowAddress(bank, destChannel)), toResource(coin), amt)
+    // requires startsWith(prefix, sourcePort, sourceChannel) ==> 
+    //     canBurn(ghostPerm.actionPerm, toResourceHolder(sender), toResource(coin), amount)
+    ensures Bank(bank)
+{
+    if(startsWith(prefix, sourcePort, sourceChannel)) {
+        success := bankTransferTokens(
+            bank,
+            escrowAddress(bank, destChannel),
+            receiver,
+            prefix,
+            coin,
+            amt,
+            ghostPerm
+        )
+    } else {
+
     }
 }
