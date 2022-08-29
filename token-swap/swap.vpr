@@ -110,8 +110,18 @@ domain AccountID {
 
 domain Path {
     function startsWith(path: Path, port: Port, channel: Channel): Bool
-    function prependPrefix(path: Path, port: Port, channel: Channel): Path
+
+    axiom startsWithUniq {
+        forall p: Path, port1: Port, port2: Port, ch1: Channel, ch2: Channel ::
+            startsWith(p, port1, ch1) && (port1 != port2 || ch1 != ch2) ==> !startsWith(
+                p, port2, ch2
+            )
+    }
 }
+
+function prependPrefix(path: Path, port: Port, channel: Channel): Path
+  ensures(startsWith(result, port, channel))
+
 
 function dropPrefix(path: Path, port: Port, channel: Channel): Path
   requires(startsWith(path, port, channel))
@@ -283,6 +293,15 @@ adt Packet {
     )
 }
 
+function mkPacket(
+  sourcePort: Port,
+  sourceChannel: Channel,
+  data: FungibleTokenPacketData
+): Packet
+  ensures result.sourcePort == sourcePort
+  ensures result.sourceChannel == sourceChannel
+  ensures result.data == data
+
 adt FungibleTokenPacketAcknowledgement {
     Ack(
         success: Bool
@@ -301,7 +320,7 @@ method sendFungibleTokens(
     sourcePort: Port,
     sourceChannel: Channel,
     ghostPerm: Ref
-) returns (success: Bool)
+) returns (success: Bool, packet: Packet)
     requires Bank(bank)
     requires amount >= 0
     requires acc(ghostPerm.actionPerm)
@@ -309,8 +328,9 @@ method sendFungibleTokens(
         canTransferOut(ghostPerm.actionPerm, toResourceHolder(sender), toResource(coin), amount)
     requires startsWith(path, sourcePort, sourceChannel) ==> 
         canBurn(ghostPerm.actionPerm, toResourceHolder(sender), toResource(coin), amount)
-    ensures Bank(bank)
-    ensures !success ==> bank.bankBalances == old(bank.bankBalances)
+   ensures Bank(bank)
+   ensures !success ==> bank.bankBalances == old(bank.bankBalances)
+   ensures success ==> (packet == mkPacket(sourcePort, sourceChannel, PacketData(path, coin, sender, receiver, amount)))
 {
     if(!startsWith(path, sourcePort, sourceChannel)) {
         success := bankTransferTokens(
@@ -332,44 +352,49 @@ method sendFungibleTokens(
             ghostPerm
         )
     }
+    var data: FungibleTokenPacketData := PacketData(
+        path,
+        coin,
+        sender,
+        receiver,
+        amount
+    )
+    packet := mkPacket(sourcePort, sourceChannel, data)
 }
 
 method refundTokens(
     bank: Ref,
-    sourcePort: Port,
-    sourceChannel: Channel,
-    sender: AccountID,
-    path: Path,
-    coin: Coin,
-    amt: Int,
+    packet: Packet,
     ghostPerm: Ref
 ) 
     requires Bank(bank)
-    requires amt >= 0
+    requires packet.data.amount >= 0
     requires acc(ghostPerm.actionPerm)
-    requires !startsWith(path, sourcePort, sourceChannel) ==> canTransferOut(ghostPerm.actionPerm, toResourceHolder(escrowAddress(bank, sourceChannel)), toResource(coin), amt)
-    requires startsWith(path, sourcePort, sourceChannel) ==> canMint(ghostPerm.actionPerm, toResourceHolder(sender), toResource(coin), amt)
+    requires !startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel) ==> 
+        canTransferOut(ghostPerm.actionPerm, toResourceHolder(escrowAddress(bank, packet.sourceChannel)), toResource(packet.data.coin), packet.data.amount)
+    requires startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel) ==> 
+        canMint(ghostPerm.actionPerm, toResourceHolder(packet.data.sender), toResource(packet.data.coin), packet.data.amount)
     ensures Bank(bank)
 {
     var success: Bool
 
-    if(!startsWith(path, sourcePort, sourceChannel)) {
+    if(!startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel)) {
         success := bankTransferTokens(
             bank,
-            escrowAddress(bank, sourceChannel),
-            sender,
-            path,
-            coin,
-            amt,
+            escrowAddress(bank, packet.sourceChannel),
+            packet.data.sender,
+            packet.data.path,
+            packet.data.coin,
+            packet.data.amount,
             ghostPerm
         )
     } else {
         success := bankMintTokens(
             bank,
-            sender,
-            path,
-            coin,
-            amt,
+            packet.data.sender,
+            packet.data.path,
+            packet.data.coin,
+            packet.data.amount,
             ghostPerm
         )
 
@@ -380,7 +405,7 @@ method onRecvPacket(
     bank: Ref,
     packet: Packet,
     ghostPerm: Ref
-) returns (success: Bool) 
+) returns (ack: FungibleTokenPacketAcknowledgement) 
     requires Bank(bank)
     requires packet.data.amount >= 0
     requires acc(ghostPerm.actionPerm)
@@ -390,6 +415,7 @@ method onRecvPacket(
         canMint(ghostPerm.actionPerm, toResourceHolder(packet.data.receiver), toResource(packet.data.coin), packet.data.amount)
     ensures Bank(bank)
 {
+    var success: Bool
     if(startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel)) {
         success := bankTransferTokens(
             bank,
@@ -410,9 +436,33 @@ method onRecvPacket(
             ghostPerm
         )
     }
+    ack := Ack(success)
 }
 
-method sendSource(
+method onAcknowledgePacket(
+    bank: Ref,
+    ack: FungibleTokenPacketAcknowledgement,
+    packet: Packet,
+    ghostPerm: Ref
+) 
+    requires Bank(bank)
+    requires packet.data.amount >= 0
+    requires acc(ghostPerm.actionPerm)
+    requires (!ack.success && !startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel)) ==> 
+        canTransferOut(ghostPerm.actionPerm, toResourceHolder(escrowAddress(bank, packet.sourceChannel)), toResource(packet.data.coin), packet.data.amount)
+    requires (!ack.success && startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel)) ==> 
+        canMint(ghostPerm.actionPerm, toResourceHolder(packet.data.sender), toResource(packet.data.coin), packet.data.amount)
+    ensures Bank(bank)
+{
+    if(!ack.success) {
+        refundTokens(bank, packet, ghostPerm)
+    } else {
+
+    }
+
+}
+
+method roundTrip(
     bank1: Ref,
     bank2: Ref,
     path: Path,
@@ -422,18 +472,64 @@ method sendSource(
     receiver: AccountID,
     sourcePort: Port,
     sourceChannel: Channel,
+    destPort: Port,
+    destChannel: Channel,
     ghostPerm1: Ref,
-    ghostPerm2: Ref
+    ghostPerm2: Ref,
+    ghostPerm3: Ref,
+    ghostPerm4: Ref,
+    ghostPerm5: Ref,
+    ghostPerm6: Ref
 ) 
     requires Bank(bank1)
+    requires Bank(bank2)
     requires amount >= 0
     requires !startsWith(path, sourcePort, sourceChannel)
     requires acc(ghostPerm1.actionPerm)
+    requires acc(ghostPerm2.actionPerm)
+    requires acc(ghostPerm3.actionPerm)
+    requires acc(ghostPerm4.actionPerm)
+    requires acc(ghostPerm5.actionPerm)
+    requires acc(ghostPerm6.actionPerm)
     requires canTransferOut(ghostPerm1.actionPerm, toResourceHolder(sender), toResource(coin), amount)
+    requires canMint(ghostPerm2.actionPerm, toResourceHolder(receiver), toResource(coin), amount)
+    requires canBurn(ghostPerm4.actionPerm, toResourceHolder(receiver), toResource(coin), amount)
+    requires canTransferOut(ghostPerm5.actionPerm, toResourceHolder(escrowAddress(bank1, sourceChannel)), toResource(coin), amount)
+    requires sourceChannel != destChannel
     ensures Bank(bank1)
+    ensures Bank(bank2)
+    ensures ghostBalance(toResourceHolder(sender), toResource(coin)).resourceAmount == old(ghostBalance(toResourceHolder(sender), toResource(coin)).resourceAmount)
+    ensures ghostBalance(toResourceHolder(receiver), toResource(coin)).resourceAmount == old(ghostBalance(toResourceHolder(receiver), toResource(coin)).resourceAmount)
+    // ensures bank1.bankBalances == old(bank1.bankBalances)
 {
     var success: Bool
-    success := sendFungibleTokens(bank1, path, coin, amount, sender, receiver, sourcePort, sourceChannel, ghostPerm1)
-    
+    var packet: Packet
 
+    success, packet := sendFungibleTokens(bank1, path, coin, amount, sender, receiver, sourcePort, sourceChannel, ghostPerm1)
+    assume packet.destPort == destPort
+    assume packet.destChannel == destChannel
+    var ack: FungibleTokenPacketAcknowledgement 
+    assume success
+    ack := onRecvPacket(bank2, packet, ghostPerm2)
+    assume ack.success
+    onAcknowledgePacket(bank1, ack, packet, ghostPerm3)
+
+    success, packet := sendFungibleTokens(
+        bank2, 
+        prependPrefix(path, destPort, destChannel), 
+        coin, 
+        amount, 
+        receiver, 
+        sender, 
+        destPort, 
+        destChannel, 
+        ghostPerm4
+    )
+    assume success
+    assert startsWith(packet.data.path, destPort, destChannel)
+    assert !startsWith(packet.data.path, sourcePort, sourceChannel)
+    assume packet.destChannel == sourceChannel
+    ack := onRecvPacket(bank1, packet, ghostPerm5)
+    assume ack.success
+    onAcknowledgePacket(bank2, ack, packet, ghostPerm6)
 }
