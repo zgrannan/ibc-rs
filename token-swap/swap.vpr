@@ -9,13 +9,15 @@ domain ResourceHolder {
         owner1 != owner2 || resource1 != resource2 ==> ghostBalance(owner1, resource1) != ghostBalance(owner2, resource2)
     }
 
+    function mkResourceHolder(id: Int): ResourceHolder
+
 }
 
 function total(resources: Set[ResourceHolder], resource: Resource): Int
     requires forall r : ResourceHolder :: acc(ghostBalance(r, resource).resourceAmount)
 
 domain Resource {
-
+    function mkResource(id: Int): Resource
 }
 
 domain ActionPerm {
@@ -101,29 +103,30 @@ function balanceOf(map: Map[AccountID, Map[Coin, Map[Path, Int]]], acctID: Accou
  }
 
 domain AccountID {
-    function toResourceHolder(acctId: AccountID): ResourceHolder
+    function toResourceHolder(bank: Ref, acctId: AccountID): ResourceHolder
 
     axiom injective {
-        forall a1 : AccountID, a2: AccountID :: a1 != a2 ==> toResourceHolder(a1) != toResourceHolder(a2)
+        forall c1: Ref, c2: Ref,  a1 : AccountID, a2: AccountID :: a1 != a2 ||  c1 != c2 ==> 
+            toResourceHolder(c1, a1) != toResourceHolder(c2, a2)
     }
 }
 
 domain Path {
-    function startsWith(path: Path, port: Port, channel: Channel): Bool
+    function startsWith(path: Path, port: Port, channel: ChannelEnd): Bool
 
     axiom startsWithUniq {
-        forall p: Path, port1: Port, port2: Port, ch1: Channel, ch2: Channel ::
+        forall p: Path, port1: Port, port2: Port, ch1: ChannelEnd, ch2: ChannelEnd ::
             startsWith(p, port1, ch1) && (port1 != port2 || ch1 != ch2) ==> !startsWith(
                 p, port2, ch2
             )
     }
 }
 
-function prependPrefix(path: Path, port: Port, channel: Channel): Path
+function prependPrefix(path: Path, port: Port, channel: ChannelEnd): Path
   ensures(startsWith(result, port, channel))
 
 
-function dropPrefix(path: Path, port: Port, channel: Channel): Path
+function dropPrefix(path: Path, port: Port, channel: ChannelEnd): Path
   requires(startsWith(path, port, channel))
 
 // Monomorphised
@@ -161,17 +164,19 @@ define updateBalance(bank, acctID, path, coin, amt){
     bank.bankBalances := bank.bankBalances[acctID := coinMap]
 }
 
-define bankInvariants(bankBalances) (
-    forall r : ResourceHolder,c : Coin :: acc(ghostBalance(r, toResource(c)).resourceAmount) &&
-    balancesPositive(bankBalances) &&
+define bankInvariants(bank) (
+    balancesPositive(bank.bankBalances) &&
     (forall acctID : AccountID, c : Coin ::
-            balanceOf(bankBalances, acctID, c) == 
-            ghostBalance(toResourceHolder(acctID), toResource(c)).resourceAmount
+            balanceOf(bank.bankBalances, acctID, c) == 
+            ghostBalance(toResourceHolder(bank, acctID), toResource(c)).resourceAmount
     )
+)
+define bankResourcesAcc(bank) (
+    forall acctID: AccountID, c : Coin :: acc(ghostBalance(toResourceHolder(bank, acctID), toResource(c)).resourceAmount)
 )
 
 define Bank(bank) (
-    acc(bank.bankBalances) && bankInvariants(bank.bankBalances)
+    acc(bank.bankBalances) && bankResourcesAcc(bank) && bankInvariants(bank)
 )
 
 method bankMintTokens(
@@ -185,12 +190,12 @@ method bankMintTokens(
     requires Bank(bank)
     requires acc(ghostPerm.actionPerm)
     requires amt >= 0
-    requires canMint(ghostPerm.actionPerm, toResourceHolder(to), toResource(coin), amt)
+    requires canMint(ghostPerm.actionPerm, toResourceHolder(bank,to), toResource(coin), amt)
     ensures Bank(bank)
     ensures balanceOf(bank.bankBalances, to, coin) == old(balanceOf(bank.bankBalances, to, coin) + amt)
 {
     ghostMint(
-        toResourceHolder(to),
+        toResourceHolder(bank,to),
         toResource(coin),
         amt,
         ghostPerm
@@ -208,7 +213,7 @@ method bankBurnTokens(
 ) returns (success: Bool)
     requires Bank(bank)
     requires acc(ghostPerm.actionPerm)
-    requires canMint(ghostPerm.actionPerm, toResourceHolder(from), toResource(coin), 0 - amt)
+    requires canMint(ghostPerm.actionPerm, toResourceHolder(bank, from), toResource(coin), 0 - amt)
     ensures Bank(bank)
     ensures !success ==> bank.bankBalances == old(bank.bankBalances)
     ensures success ==> balanceOf(bank.bankBalances, from, coin) == old(balanceOf(bank.bankBalances, from, coin) - amt)
@@ -217,7 +222,7 @@ method bankBurnTokens(
        path in bank.bankBalances[from][coin] && 
        bank.bankBalances[from][coin][path] >= amt) {
         ghostMint(
-            toResourceHolder(from),
+            toResourceHolder(bank, from),
             toResource(coin),
             0 - amt,
             ghostPerm
@@ -241,7 +246,7 @@ method bankTransferTokens(
     requires Bank(bank)
     requires amt >= 0
     requires acc(ghostPerm.actionPerm)
-    requires canTransferOut(ghostPerm.actionPerm, toResourceHolder(from), toResource(coin), amt)
+    requires canTransferOut(ghostPerm.actionPerm, toResourceHolder(bank, from), toResource(coin), amt)
     ensures Bank(bank)
     ensures !success ==> bank.bankBalances == old(bank.bankBalances)
     ensures success ==> balanceOf(bank.bankBalances, from, coin) == old(balanceOf(bank.bankBalances, from, coin) - amt)
@@ -251,8 +256,8 @@ method bankTransferTokens(
        path in bank.bankBalances[from][coin] && 
        bank.bankBalances[from][coin][path] >= amt) {
        ghostTransfer(
-            toResourceHolder(from),
-            toResourceHolder(to),
+            toResourceHolder(bank, from),
+            toResourceHolder(bank, to),
             toResource(coin),
             amt,
             ghostPerm
@@ -267,10 +272,12 @@ method bankTransferTokens(
 
 domain Port {
 
+    function mkPort(id: Int): Port
+
 }
 
-domain Channel {
-
+domain ChannelEnd {
+    function mkChannelEnd(id: Int): ChannelEnd
 }
 
 adt FungibleTokenPacketData {
@@ -286,16 +293,16 @@ adt FungibleTokenPacketData {
 adt Packet {
     _Packet(
         sourcePort: Port,
-        sourceChannel: Channel,
+        sourceChannel: ChannelEnd,
         destPort: Port,
-        destChannel: Channel,
+        destChannel: ChannelEnd,
         data: FungibleTokenPacketData
     )
 }
 
 function mkPacket(
   sourcePort: Port,
-  sourceChannel: Channel,
+  sourceChannel: ChannelEnd,
   data: FungibleTokenPacketData
 ): Packet
   ensures result.sourcePort == sourcePort
@@ -308,7 +315,7 @@ adt FungibleTokenPacketAcknowledgement {
     )
 }
 
-function escrowAddress(bank: Ref, channel: Channel): AccountID
+function escrowAddress(bank: Ref, channel: ChannelEnd): AccountID
 
 method sendFungibleTokens(
     bank: Ref,
@@ -318,16 +325,16 @@ method sendFungibleTokens(
     sender: AccountID,
     receiver: AccountID,
     sourcePort: Port,
-    sourceChannel: Channel,
+    sourceChannel: ChannelEnd,
     ghostPerm: Ref
 ) returns (success: Bool, packet: Packet)
-    requires Bank(bank)
-    requires amount >= 0
-    requires acc(ghostPerm.actionPerm)
-    requires !startsWith(path, sourcePort, sourceChannel) ==> 
-        canTransferOut(ghostPerm.actionPerm, toResourceHolder(sender), toResource(coin), amount)
-    requires startsWith(path, sourcePort, sourceChannel) ==> 
-        canBurn(ghostPerm.actionPerm, toResourceHolder(sender), toResource(coin), amount)
+   requires Bank(bank)
+   requires amount >= 0
+   requires acc(ghostPerm.actionPerm)
+   requires !startsWith(path, sourcePort, sourceChannel) ==> 
+        canTransferOut(ghostPerm.actionPerm, toResourceHolder(bank, sender), toResource(coin), amount)
+   requires startsWith(path, sourcePort, sourceChannel) ==> 
+        canBurn(ghostPerm.actionPerm, toResourceHolder(bank, sender), toResource(coin), amount)
    ensures Bank(bank)
    ensures !success ==> bank.bankBalances == old(bank.bankBalances)
    ensures success ==> (packet == mkPacket(sourcePort, sourceChannel, PacketData(path, coin, sender, receiver, amount)))
@@ -371,9 +378,9 @@ method refundTokens(
     requires packet.data.amount >= 0
     requires acc(ghostPerm.actionPerm)
     requires !startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel) ==> 
-        canTransferOut(ghostPerm.actionPerm, toResourceHolder(escrowAddress(bank, packet.sourceChannel)), toResource(packet.data.coin), packet.data.amount)
+        canTransferOut(ghostPerm.actionPerm, toResourceHolder(bank, escrowAddress(bank, packet.sourceChannel)), toResource(packet.data.coin), packet.data.amount)
     requires startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel) ==> 
-        canMint(ghostPerm.actionPerm, toResourceHolder(packet.data.sender), toResource(packet.data.coin), packet.data.amount)
+        canMint(ghostPerm.actionPerm, toResourceHolder(bank, packet.data.sender), toResource(packet.data.coin), packet.data.amount)
     ensures Bank(bank)
 {
     var success: Bool
@@ -410,9 +417,9 @@ method onRecvPacket(
     requires packet.data.amount >= 0
     requires acc(ghostPerm.actionPerm)
     requires startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel) ==> 
-        canTransferOut(ghostPerm.actionPerm, toResourceHolder(escrowAddress(bank, packet.destChannel)), toResource(packet.data.coin), packet.data.amount)
+        canTransferOut(ghostPerm.actionPerm, toResourceHolder(bank, escrowAddress(bank, packet.destChannel)), toResource(packet.data.coin), packet.data.amount)
     requires !startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel) ==> 
-        canMint(ghostPerm.actionPerm, toResourceHolder(packet.data.receiver), toResource(packet.data.coin), packet.data.amount)
+        canMint(ghostPerm.actionPerm, toResourceHolder(bank, packet.data.receiver), toResource(packet.data.coin), packet.data.amount)
     ensures Bank(bank)
 {
     var success: Bool
@@ -449,9 +456,9 @@ method onAcknowledgePacket(
     requires packet.data.amount >= 0
     requires acc(ghostPerm.actionPerm)
     requires (!ack.success && !startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel)) ==> 
-        canTransferOut(ghostPerm.actionPerm, toResourceHolder(escrowAddress(bank, packet.sourceChannel)), toResource(packet.data.coin), packet.data.amount)
+        canTransferOut(ghostPerm.actionPerm, toResourceHolder(bank, escrowAddress(bank, packet.sourceChannel)), toResource(packet.data.coin), packet.data.amount)
     requires (!ack.success && startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel)) ==> 
-        canMint(ghostPerm.actionPerm, toResourceHolder(packet.data.sender), toResource(packet.data.coin), packet.data.amount)
+        canMint(ghostPerm.actionPerm, toResourceHolder(bank, packet.data.sender), toResource(packet.data.coin), packet.data.amount)
     ensures Bank(bank)
 {
     if(!ack.success) {
@@ -471,9 +478,9 @@ method roundTrip(
     sender: AccountID,
     receiver: AccountID,
     sourcePort: Port,
-    sourceChannel: Channel,
+    sourceChannel: ChannelEnd,
     destPort: Port,
-    destChannel: Channel,
+    destChannel: ChannelEnd,
     ghostPerm1: Ref,
     ghostPerm2: Ref,
     ghostPerm3: Ref,
@@ -483,6 +490,7 @@ method roundTrip(
 ) 
     requires Bank(bank1)
     requires Bank(bank2)
+    requires bank1 != bank2
     requires amount >= 0
     requires !startsWith(path, sourcePort, sourceChannel)
     requires acc(ghostPerm1.actionPerm)
@@ -491,16 +499,16 @@ method roundTrip(
     requires acc(ghostPerm4.actionPerm)
     requires acc(ghostPerm5.actionPerm)
     requires acc(ghostPerm6.actionPerm)
-    requires canTransferOut(ghostPerm1.actionPerm, toResourceHolder(sender), toResource(coin), amount)
-    requires canMint(ghostPerm2.actionPerm, toResourceHolder(receiver), toResource(coin), amount)
-    requires canBurn(ghostPerm4.actionPerm, toResourceHolder(receiver), toResource(coin), amount)
-    requires canTransferOut(ghostPerm5.actionPerm, toResourceHolder(escrowAddress(bank1, sourceChannel)), toResource(coin), amount)
+    requires canTransferOut(ghostPerm1.actionPerm, toResourceHolder(bank1, sender), toResource(coin), amount)
+    requires canMint(ghostPerm2.actionPerm, toResourceHolder(bank2, receiver), toResource(coin), amount)
+    requires canBurn(ghostPerm4.actionPerm, toResourceHolder(bank2, receiver), toResource(coin), amount)
+    requires canTransferOut(ghostPerm5.actionPerm, toResourceHolder(bank1, escrowAddress(bank1, sourceChannel)), toResource(coin), amount)
     requires sourceChannel != destChannel
     ensures Bank(bank1)
     ensures Bank(bank2)
-    ensures ghostBalance(toResourceHolder(sender), toResource(coin)).resourceAmount == old(ghostBalance(toResourceHolder(sender), toResource(coin)).resourceAmount)
-    ensures ghostBalance(toResourceHolder(receiver), toResource(coin)).resourceAmount == old(ghostBalance(toResourceHolder(receiver), toResource(coin)).resourceAmount)
-    // ensures bank1.bankBalances == old(bank1.bankBalances)
+    ensures ghostBalance(toResourceHolder(bank1, sender), toResource(coin)).resourceAmount == old(ghostBalance(toResourceHolder(bank1, sender), toResource(coin)).resourceAmount)
+    ensures ghostBalance(toResourceHolder(bank2, receiver), toResource(coin)).resourceAmount == old(ghostBalance(toResourceHolder(bank2, receiver), toResource(coin)).resourceAmount)
+    ensures bank1.bankBalances == old(bank1.bankBalances)
 {
     var success: Bool
     var packet: Packet
@@ -510,6 +518,7 @@ method roundTrip(
     assume packet.destChannel == destChannel
     var ack: FungibleTokenPacketAcknowledgement 
     assume success
+    assert bankInvariants(bank2)
     ack := onRecvPacket(bank2, packet, ghostPerm2)
     assume ack.success
     onAcknowledgePacket(bank1, ack, packet, ghostPerm3)
