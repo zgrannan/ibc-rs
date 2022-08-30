@@ -106,7 +106,7 @@ domain AccountID {
     function toResourceHolder(bank: Ref, acctId: AccountID): ResourceHolder
 
     axiom injective {
-        forall c1: Ref, c2: Ref,  a1 : AccountID, a2: AccountID :: a1 != a2 ||  c1 != c2 ==> 
+        forall c1: Ref, c2: Ref,  a1 : AccountID, a2: AccountID :: (a1 != a2 ||  c1 != c2) ==> 
             toResourceHolder(c1, a1) != toResourceHolder(c2, a2)
     }
 }
@@ -338,6 +338,7 @@ method sendFungibleTokens(
    ensures Bank(bank)
    ensures !success ==> bank.bankBalances == old(bank.bankBalances)
    ensures success ==> (packet == mkPacket(sourcePort, sourceChannel, PacketData(path, coin, sender, receiver, amount)))
+   ensures success ==> (balanceOf(bank.bankBalances, sender, coin) == old(balanceOf(bank.bankBalances, sender, coin)) - amount)
 {
     if(!startsWith(path, sourcePort, sourceChannel)) {
         success := bankTransferTokens(
@@ -421,6 +422,7 @@ method onRecvPacket(
     requires !startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel) ==> 
         canMint(ghostPerm.actionPerm, toResourceHolder(bank, packet.data.receiver), toResource(packet.data.coin), packet.data.amount)
     ensures Bank(bank)
+    ensures ack.success ==> (balanceOf(bank.bankBalances, packet.data.receiver, packet.data.coin) == old(balanceOf(bank.bankBalances, packet.data.receiver, packet.data.coin)) + packet.data.amount)
 {
     var success: Bool
     if(startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel)) {
@@ -460,6 +462,7 @@ method onAcknowledgePacket(
     requires (!ack.success && startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel)) ==> 
         canMint(ghostPerm.actionPerm, toResourceHolder(bank, packet.data.sender), toResource(packet.data.coin), packet.data.amount)
     ensures Bank(bank)
+    ensures ack.success ==> bank.bankBalances == old(bank.bankBalances)
 {
     if(!ack.success) {
         refundTokens(bank, packet, ghostPerm)
@@ -506,18 +509,18 @@ method roundTrip(
     requires sourceChannel != destChannel
     ensures Bank(bank1)
     ensures Bank(bank2)
-    ensures ghostBalance(toResourceHolder(bank1, sender), toResource(coin)).resourceAmount == old(ghostBalance(toResourceHolder(bank1, sender), toResource(coin)).resourceAmount)
-    ensures ghostBalance(toResourceHolder(bank2, receiver), toResource(coin)).resourceAmount == old(ghostBalance(toResourceHolder(bank2, receiver), toResource(coin)).resourceAmount)
-    ensures bank1.bankBalances == old(bank1.bankBalances)
+    ensures balanceOf(bank1.bankBalances, sender, coin) == old(balanceOf(bank1.bankBalances, sender, coin))
+    ensures balanceOf(bank2.bankBalances, receiver, coin) == old(balanceOf(bank2.bankBalances, receiver, coin))
 {
     var success: Bool
     var packet: Packet
 
     success, packet := sendFungibleTokens(bank1, path, coin, amount, sender, receiver, sourcePort, sourceChannel, ghostPerm1)
+    assume success
+    assert balanceOf(bank1.bankBalances, sender, coin) == old(balanceOf(bank1.bankBalances, sender, coin)) - amount
     assume packet.destPort == destPort
     assume packet.destChannel == destChannel
     var ack: FungibleTokenPacketAcknowledgement 
-    assume success
     assert bankInvariants(bank2)
     ack := onRecvPacket(bank2, packet, ghostPerm2)
     assume ack.success
