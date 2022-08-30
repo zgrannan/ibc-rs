@@ -144,23 +144,22 @@ domain Coin {
     function mkCoin(id: Int): Coin
 }
 
+define updated(bankBalances, acctID, path, coin, amt)(
+       let bb == (acctID in bankBalances ? bankBalances : bankBalances[acctID := Map()])
+    in let coinMap == (coin in bb[acctID] ? bb[acctID] : bb[acctID][coin := Map()])
+    in let pathMap == (path in coinMap[coin] ? coinMap[coin] : coinMap[coin][path := 0])
+    in let newPathMap == (pathMap[path := pathMap[path]+ amt])
+    in let newCoinMap == (coinMap[coin := newPathMap])
+    in bb[acctID := newCoinMap]
+)
 
 define updateBalance(bank, acctID, path, coin, amt){
-    if (!(acctID in bank.bankBalances)) {
-        bank.bankBalances := bank.bankBalances[acctID := Map()]
+    bank.bankBalances := updated(bank.bankBalances, acctID, path, coin, amt)
+    if(acctID in old(bank.bankBalances) && coin in old(bank.bankBalances[acctID])) {
+        assume sumValues(bank.bankBalances[acctID][coin]) == sumValues(old(bank.bankBalances[acctID][coin])) + amt
+    } else {
+        assume sumValues(bank.bankBalances[acctID][coin]) == amt
     }
-    var coinMap : Map[Coin, Map[Path, Int]]:= bank.bankBalances[acctID]
-    if (!(coin in coinMap)) {
-        coinMap := coinMap[coin := Map()]
-    }
-    var pathMap : Map[Path, Int] := coinMap[coin]
-    if (!(path in pathMap)) {
-       pathMap := pathMap[path := 0]
-    }
-    pathMap := pathMap[path := pathMap[path] + amt]
-    assume sumValues(pathMap) == sumValues(coinMap[coin]) + amt
-    coinMap := coinMap[coin := pathMap]
-    bank.bankBalances := bank.bankBalances[acctID := coinMap]
 }
 
 define bankInvariants(bank) (
@@ -189,6 +188,7 @@ method bankMintTokens(
     requires amt >= 0
     requires acc(CanMint(toResourceHolder(bank,to), toResource(coin)), amt / 1)
     ensures Bank(bank)
+    ensures bank.bankBalances == updated(old(bank.bankBalances), to, path, coin, amt)
     ensures balanceOf(bank.bankBalances, to, coin) == old(balanceOf(bank.bankBalances, to, coin) + amt)
 {
     ghostMint(
@@ -211,6 +211,7 @@ method bankBurnTokens(
     requires canBurn(toResourceHolder(bank, from), toResource(coin), amt)
     ensures Bank(bank)
     ensures !success ==> bank.bankBalances == old(bank.bankBalances)
+    ensures success ==> bank.bankBalances == updated(old(bank.bankBalances), from, path, coin, 0 - amt)
     ensures success ==> balanceOf(bank.bankBalances, from, coin) == old(balanceOf(bank.bankBalances, from, coin) - amt)
 {
     if(hasCoin(bank.bankBalances, from, coin) && 
@@ -248,6 +249,11 @@ method bankTransferTokens(
     ensures !success ==> bank.bankBalances == old(bank.bankBalances)
     ensures success ==> balanceOf(bank.bankBalances, from, coin) == old(balanceOf(bank.bankBalances, from, coin) - amt)
     ensures success ==> balanceOf(bank.bankBalances, to, coin) == old(balanceOf(bank.bankBalances, to, coin) + amt)
+    ensures success ==> bank.bankBalances == 
+        updated(
+            updated(old(bank.bankBalances), from, path, coin, 0 - amt),
+            to, path, coin, amt
+        )
 {
     if(from != to && hasCoin(bank.bankBalances, from, coin) && 
        path in bank.bankBalances[from][coin] && 
