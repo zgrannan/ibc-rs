@@ -107,13 +107,13 @@ domain AccountID {
     }
 }
 
-function startsWith(path: Path, port: Port, channel: ChannelEnd): Bool {
-    path.isCons && path.port == port && path.channel == channel
-}
+define startsWith(path, port, channel) (
+    path.isCons && path.headPort == port && path.headChannel == channel
+)
 
-function prependPrefix(path: Path, port: Port, channel: ChannelEnd): Path {
+define prependPrefix(path, port, channel) (
     Cons(port, channel, path)
-}
+)
 
 function dropPrefix(path: Path, port: Port, channel: ChannelEnd): Path 
   requires(startsWith(path, port, channel))
@@ -290,8 +290,8 @@ adt Path {
     Empty()
 
     Cons(
-        port: Port,
-        channel: ChannelEnd,
+        headPort: Port,
+        headChannel: ChannelEnd,
         tail: Path
     )
 }
