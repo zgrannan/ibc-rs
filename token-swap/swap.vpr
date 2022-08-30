@@ -13,9 +13,6 @@ domain ResourceHolder {
 
 }
 
-function total(resources: Set[ResourceHolder], resource: Resource): Int
-    requires forall r : ResourceHolder :: acc(ghostBalance(r, resource).resourceAmount)
-
 domain Resource {
     function mkResource(id: Int): Resource
 }
@@ -110,23 +107,19 @@ domain AccountID {
     }
 }
 
-domain Path {
-    function startsWith(path: Path, port: Port, channel: ChannelEnd): Bool
-
-    axiom startsWithUniq {
-        forall p: Path, port1: Port, port2: Port, ch1: ChannelEnd, ch2: ChannelEnd ::
-            startsWith(p, port1, ch1) && (port1 != port2 || ch1 != ch2) ==> !startsWith(
-                p, port2, ch2
-            )
-    }
+function startsWith(path: Path, port: Port, channel: ChannelEnd): Bool {
+    path.isCons && path.port == port && path.channel == channel
 }
 
-function prependPrefix(path: Path, port: Port, channel: ChannelEnd): Path
-  ensures(startsWith(result, port, channel))
+function prependPrefix(path: Path, port: Port, channel: ChannelEnd): Path {
+    Cons(port, channel, path)
+}
 
-
-function dropPrefix(path: Path, port: Port, channel: ChannelEnd): Path
+function dropPrefix(path: Path, port: Port, channel: ChannelEnd): Path 
   requires(startsWith(path, port, channel))
+{
+    path.tail
+}
 
 // Monomorphised
 function sumValues(map: Map[Path, Int]): Int
@@ -293,6 +286,16 @@ domain ChannelEnd {
     function mkChannelEnd(id: Int): ChannelEnd
 }
 
+adt Path {
+    Empty()
+
+    Cons(
+        port: Port,
+        channel: ChannelEnd,
+        tail: Path
+    )
+}
+
 adt FungibleTokenPacketData {
     PacketData(
         path: Path,
@@ -339,13 +342,7 @@ define coinBalanceChangesBy(
     balanceOf(bank.bankBalances, acctID, coin) == old(balanceOf(bank.bankBalances, acctID, coin)) + amt
 )
 
-define pathBalanceChangesBy(
-    bank,
-    acctID,
-    path,
-    coin,
-    amt
-) (
+define pathBalanceChangesBy(bank, acctID, path, coin, amt) (
     bank.bankBalances == updated(old(bank.bankBalances), acctID, path, coin, amt)
 )
 
@@ -466,15 +463,15 @@ method onRecvPacket(
     ensures ack.success ==> coinBalanceChangesBy(bank, packet.data.receiver, packet.data.coin, packet.data.amount)
     ensures (ack.success && startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel)) ==> 
         coinBalanceChangesBy(bank, escrowAddress(bank, packet.destChannel), packet.data.coin, 0 - packet.data.amount)
-    // ensures (ack.success && startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel)) ==> 
-    //     transferBalancePost(
-    //         bank, 
-    //         escrowAddress(bank, packet.destChannel), 
-    //         packet.data.receiver, 
-    //         dropPrefix(packet.data.path, packet.sourcePort, packet.sourceChannel), 
-    //         packet.data.coin, 
-    //         packet.data.amount
-    //     )
+    ensures (ack.success && startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel)) ==> 
+        transferBalancePost(
+            bank, 
+            escrowAddress(bank, packet.destChannel), 
+            packet.data.receiver, 
+            packet.data.path.tail,
+            packet.data.coin, 
+            packet.data.amount
+        )
 {
     var success: Bool
     if(startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel)) {
@@ -558,9 +555,12 @@ method roundTrip(
         amount)
     ensures Bank(bank1)
     ensures Bank(bank2)
-    ensures balanceOf(bank1.bankBalances, sender, coin) == old(balanceOf(bank1.bankBalances, sender, coin))
-    ensures balanceOf(bank1.bankBalances, escrowAddress(bank1, sourceChannel), coin) == old(balanceOf(bank1.bankBalances, escrowAddress(bank1, sourceChannel), coin))
-    ensures balanceOf(bank2.bankBalances, receiver, coin) == old(balanceOf(bank2.bankBalances, receiver, coin))
+    // ensures balanceOf(bank1.bankBalances, sender, coin) == old(balanceOf(bank1.bankBalances, sender, coin))
+    // ensures balanceOf(bank1.bankBalances, escrowAddress(bank1, sourceChannel), coin) == old(balanceOf(bank1.bankBalances, escrowAddress(bank1, sourceChannel), coin))
+    // ensures balanceOf(bank2.bankBalances, receiver, coin) == old(balanceOf(bank2.bankBalances, receiver, coin))
+    // ensures bank1.bankBalances == old(bank1.bankBalances)
+    ensures bank2.bankBalances == old(bank2.bankBalances)
+    ensures false
 {
     var success: Bool
     var packet: Packet
