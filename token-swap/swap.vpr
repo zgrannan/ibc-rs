@@ -229,6 +229,21 @@ method bankBurnTokens(
     }
 }
 
+define transferBalancePost(
+    bank,
+    from,
+    to,
+    path,
+    coin,
+    amt
+) (
+    bank.bankBalances == 
+        updated(
+            updated(old(bank.bankBalances), from, path, coin, 0 - amt),
+            to, path, coin, amt
+        )
+)
+
 method bankTransferTokens(
     bank: Ref,
     from: AccountID,
@@ -249,11 +264,7 @@ method bankTransferTokens(
     ensures !success ==> bank.bankBalances == old(bank.bankBalances)
     ensures success ==> balanceOf(bank.bankBalances, from, coin) == old(balanceOf(bank.bankBalances, from, coin) - amt)
     ensures success ==> balanceOf(bank.bankBalances, to, coin) == old(balanceOf(bank.bankBalances, to, coin) + amt)
-    ensures success ==> bank.bankBalances == 
-        updated(
-            updated(old(bank.bankBalances), from, path, coin, 0 - amt),
-            to, path, coin, amt
-        )
+    ensures success ==> transferBalancePost(bank, from, to, path, coin, amt)
 {
     if(from != to && hasCoin(bank.bankBalances, from, coin) && 
        path in bank.bankBalances[from][coin] && 
@@ -319,6 +330,25 @@ adt FungibleTokenPacketAcknowledgement {
 
 function escrowAddress(bank: Ref, channel: ChannelEnd): AccountID
 
+define coinBalanceChangesBy(
+    bank,
+    acctID,
+    coin,
+    amt
+) (
+    balanceOf(bank.bankBalances, acctID, coin) == old(balanceOf(bank.bankBalances, acctID, coin)) + amt
+)
+
+define pathBalanceChangesBy(
+    bank,
+    acctID,
+    path,
+    coin,
+    amt
+) (
+    bank.bankBalances == updated(old(bank.bankBalances), acctID, path, coin, amt)
+)
+
 method sendFungibleTokens(
     bank: Ref,
     path: Path,
@@ -343,10 +373,11 @@ method sendFungibleTokens(
    ensures Bank(bank)
    ensures !success ==> bank.bankBalances == old(bank.bankBalances)
    ensures success ==> (packet == mkPacket(sourcePort, sourceChannel, PacketData(path, coin, sender, receiver, amount)))
-   ensures success ==> (balanceOf(bank.bankBalances, sender, coin) == old(balanceOf(bank.bankBalances, sender, coin)) - amount)
-   ensures (success && !startsWith(path, sourcePort, sourceChannel)) ==> (
-            balanceOf(bank.bankBalances, escrowAddress(bank, sourceChannel), coin) == 
-        old(balanceOf(bank.bankBalances, escrowAddress(bank, sourceChannel), coin)) + amount)
+   ensures success ==> coinBalanceChangesBy(bank, sender, coin, 0 - amount)
+   ensures (success && !startsWith(path, sourcePort, sourceChannel)) ==> 
+     coinBalanceChangesBy(bank, escrowAddress(bank, sourceChannel), coin, amount)
+   ensures (success && !startsWith(path, sourcePort, sourceChannel)) ==> 
+     transferBalancePost(bank, sender, escrowAddress(bank, sourceChannel), path, coin, amount)
 {
     if(!startsWith(path, sourcePort, sourceChannel)) {
         success := bankTransferTokens(
@@ -432,10 +463,18 @@ method onRecvPacket(
     requires !startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel) ==> 
         canMint(toResourceHolder(bank, packet.data.receiver), toResource(packet.data.coin), packet.data.amount)
     ensures Bank(bank)
-    ensures ack.success ==> (balanceOf(bank.bankBalances, packet.data.receiver, packet.data.coin) == old(balanceOf(bank.bankBalances, packet.data.receiver, packet.data.coin)) + packet.data.amount)
-    ensures (ack.success && startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel)) ==> (
-            balanceOf(bank.bankBalances, escrowAddress(bank, packet.destChannel), packet.data.coin) == 
-        old(balanceOf(bank.bankBalances, escrowAddress(bank, packet.destChannel), packet.data.coin)) - packet.data.amount)
+    ensures ack.success ==> coinBalanceChangesBy(bank, packet.data.receiver, packet.data.coin, packet.data.amount)
+    ensures (ack.success && startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel)) ==> 
+        coinBalanceChangesBy(bank, escrowAddress(bank, packet.destChannel), packet.data.coin, 0 - packet.data.amount)
+    // ensures (ack.success && startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel)) ==> 
+    //     transferBalancePost(
+    //         bank, 
+    //         escrowAddress(bank, packet.destChannel), 
+    //         packet.data.receiver, 
+    //         dropPrefix(packet.data.path, packet.sourcePort, packet.sourceChannel), 
+    //         packet.data.coin, 
+    //         packet.data.amount
+    //     )
 {
     var success: Bool
     if(startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel)) {
