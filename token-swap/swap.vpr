@@ -237,6 +237,12 @@ define transferBalancePost(
         )
 )
 
+define bankTransferTokensPre(bank, from, to, path, coin, amt) (
+    from != to && hasCoin(bank.bankBalances, from, coin) && 
+        path in bank.bankBalances[from][coin] && 
+        bank.bankBalances[from][coin][path] >= amt
+)
+
 method bankTransferTokens(
     bank: Ref,
     from: AccountID,
@@ -259,9 +265,7 @@ method bankTransferTokens(
     ensures success ==> balanceOf(bank.bankBalances, to, coin) == old(balanceOf(bank.bankBalances, to, coin) + amt)
     ensures success ==> transferBalancePost(bank, from, to, path, coin, amt)
 {
-    if(from != to && hasCoin(bank.bankBalances, from, coin) && 
-       path in bank.bankBalances[from][coin] && 
-       bank.bankBalances[from][coin][path] >= amt) {
+    if(bankTransferTokensPre(bank, from, to, path, coin, amt)) {
        ghostTransfer(
             toResourceHolder(bank, from),
             toResourceHolder(bank, to),
@@ -555,12 +559,12 @@ method roundTrip(
         amount)
     ensures Bank(bank1)
     ensures Bank(bank2)
-    // ensures balanceOf(bank1.bankBalances, sender, coin) == old(balanceOf(bank1.bankBalances, sender, coin))
-    // ensures balanceOf(bank1.bankBalances, escrowAddress(bank1, sourceChannel), coin) == old(balanceOf(bank1.bankBalances, escrowAddress(bank1, sourceChannel), coin))
-    // ensures balanceOf(bank2.bankBalances, receiver, coin) == old(balanceOf(bank2.bankBalances, receiver, coin))
+    ensures balanceOf(bank1.bankBalances, sender, coin) == old(balanceOf(bank1.bankBalances, sender, coin))
+    ensures balanceOf(bank1.bankBalances, escrowAddress(bank1, sourceChannel), coin) == old(balanceOf(bank1.bankBalances, escrowAddress(bank1, sourceChannel), coin))
+    ensures balanceOf(bank2.bankBalances, receiver, coin) == old(balanceOf(bank2.bankBalances, receiver, coin))
     // ensures bank1.bankBalances == old(bank1.bankBalances)
-    ensures bank2.bankBalances == old(bank2.bankBalances)
-    ensures false
+    // ensures bank2.bankBalances == old(bank2.bankBalances)
+    // ensures false
 {
     var success: Bool
     var packet: Packet
