@@ -2,12 +2,13 @@
 
 domain ResourceHolder {
     // Accounts 
-    function ghostBalance(rh: ResourceHolder, resource: Resource): Ref
 
-    axiom balanceInjective {
-        forall owner1: ResourceHolder, owner2: ResourceHolder, resource1: Resource, resource2: Resource :: 
-        owner1 != owner2 || resource1 != resource2 ==> ghostBalance(owner1, resource1) != ghostBalance(owner2, resource2)
-    }
+    // function ghostBalance(rh: ResourceHolder, resource: Resource): Ref
+
+    // axiom balanceInjective {
+    //     forall owner1: ResourceHolder, owner2: ResourceHolder, resource1: Resource, resource2: Resource :: 
+    //     owner1 != owner2 || resource1 != resource2 ==> ghostBalance(owner1, resource1) != ghostBalance(owner2, resource2)
+    // }
 
     function mkResourceHolder(id: Int): ResourceHolder
 
@@ -17,6 +18,7 @@ domain Resource {
     function mkResource(id: Int): Resource
 }
 
+predicate Owns(holder: ResourceHolder, resource: Resource)
 predicate CanTransfer(from: ResourceHolder, to: ResourceHolder, resource: Resource)
 predicate CanMint(to: ResourceHolder, resource: Resource)
 predicate CanBurn(to: ResourceHolder, resource: Resource)
@@ -33,6 +35,24 @@ define canBurn(to, resource, amount) (
     acc(CanBurn(to, resource), amount / 1)
 )
 
+define gb(holder, resource) (
+    perm(Owns(holder, resource))
+    // ghostBalance(to, resource).resourceAmount
+)
+
+define ghostBalanceAcc(holder, resource) (
+    true // acc(ghostBalance(to, resource).resourceAmount
+)
+
+define ghostBalanceAtLeast(holder, resource, amt) (
+    [perm(Owns(holder, resource)) >= (amt / 1), true]
+)
+
+define ghostBalanceIncreased(holder, resource, amt) (
+    [true, perm(Owns(holder, resource)) == old(perm(Owns(holder, resource))) + amt / 1]
+    // ghostBalance(to, resource).resourceAmount == old(ghostBalance(to, resource).resourceAmount) + amount
+)
+
 // Field of returned ref from `balance`
 field resourceAmount: Int
 
@@ -41,13 +61,13 @@ method ghostMint(
     resource: Resource,
     amount: Int
 ) 
-   requires acc(ghostBalance(to, resource).resourceAmount)
-   requires(ghostBalance(to, resource).resourceAmount + amount >= 0)
-   ensures acc(ghostBalance(to, resource).resourceAmount)
-   ensures ghostBalance(to, resource).resourceAmount == old(ghostBalance(to, resource).resourceAmount) + amount
-{
-    ghostBalance(to, resource).resourceAmount := ghostBalance(to, resource).resourceAmount + amount
-}
+   requires ghostBalanceAcc(to, resource)
+   // requires(ghostBalance(to, resource).resourceAmount + amount >= 0)
+   ensures ghostBalanceAcc(to, resource)
+   ensures ghostBalanceIncreased(to, resource, amount) // ghostBalance(to, resource).resourceAmount == old(ghostBalance(to, resource).resourceAmount) + amount
+// {
+//     ghostBalance(to, resource).resourceAmount := ghostBalance(to, resource).resourceAmount + amount
+// }
 
 method ghostTransfer(
     from: ResourceHolder, 
@@ -55,24 +75,23 @@ method ghostTransfer(
     resource: Resource,
     amount: Int
 )
-   requires acc(ghostBalance(from, resource).resourceAmount)
-   requires acc(ghostBalance(to, resource).resourceAmount)
+   requires ghostBalanceAcc(from, resource)
+   requires ghostBalanceAcc(to, resource)
    requires(amount >= 0)
-   requires(ghostBalance(from, resource).resourceAmount >= amount)
+   requires(ghostBalanceAtLeast(from, resource, amount))
    requires canTransfer(from, to, resource, amount)
-   ensures acc(ghostBalance(from, resource).resourceAmount)
-   ensures acc(ghostBalance(to, resource).resourceAmount)
-   ensures ghostBalance(from, resource).resourceAmount == old(ghostBalance(from, resource).resourceAmount) - amount
-   ensures ghostBalance(to, resource).resourceAmount == old(ghostBalance(to, resource).resourceAmount) + amount
-
+   ensures ghostBalanceAcc(from, resource)
+   ensures ghostBalanceAcc(to, resource)
+   ensures ghostBalanceIncreased(from, resource, 0 - amount)
+   ensures ghostBalanceIncreased(to, resource, amount)
    // Sanity check: total sum of resource unchanged
-   ensures (ghostBalance(from, resource).resourceAmount + ghostBalance(to, resource).resourceAmount) ==
-           old(ghostBalance(from, resource).resourceAmount + ghostBalance(to, resource).resourceAmount)
+//    ensures (ghostBalance(from, resource).resourceAmount + ghostBalance(to, resource).resourceAmount) ==
+//            old(ghostBalance(from, resource).resourceAmount + ghostBalance(to, resource).resourceAmount)
 
-{
-    ghostBalance(from, resource).resourceAmount := ghostBalance(from, resource).resourceAmount - amount
-    ghostBalance(to, resource).resourceAmount := ghostBalance(to, resource).resourceAmount + amount
-}
+// {
+//     ghostBalance(from, resource).resourceAmount := ghostBalance(from, resource).resourceAmount - amount
+//     ghostBalance(to, resource).resourceAmount := ghostBalance(to, resource).resourceAmount + amount
+// }
 
 
 // NONGHOST
@@ -170,12 +189,12 @@ define updateBalance(bank, acctID, path, coin, amt){
 define bankInvariants(bank) (
     balancesPositive(bank.bankBalances) &&
     (forall acctID : AccountID, c : Coin :: 
-            balanceOf(bank.bankBalances, acctID, c) == 
-            ghostBalance(toResourceHolder(bank, acctID), toResource(c)).resourceAmount
+            balanceOf(bank.bankBalances, acctID, c) / 1 == 
+            gb(toResourceHolder(bank, acctID), toResource(c))
     )
 )
 define bankResourcesAcc(bank) (
-    forall acctID: AccountID, c : Coin :: acc(ghostBalance(toResourceHolder(bank, acctID), toResource(c)).resourceAmount)
+    true // forall acctID: AccountID, c : Coin :: ghostBalanceAcc(toResourceHolder(bank, acctID), toResource(c))
 )
 
 define Bank(bank) (
