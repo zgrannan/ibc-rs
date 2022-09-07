@@ -592,6 +592,8 @@ method onAcknowledgePacket(
 
 }
 
+function unused(acctID: AccountID, path: Path, c: Coin): Int
+
 method roundTrip(
     bank1: Ref,
     bank2: Ref,
@@ -633,12 +635,10 @@ method roundTrip(
     )
     ensures Bank(bank1)
     ensures Bank(bank2)
-    ensures balanceOf(bank1.bankBalances, sender, coin) == old(balanceOf(bank1.bankBalances, sender, coin))
-    ensures balanceOf(bank1.bankBalances, escrowAddress(bank1, sourceChannel), coin) == old(balanceOf(bank1.bankBalances, escrowAddress(bank1, sourceChannel), coin))
-    ensures balanceOf(bank2.bankBalances, receiver, coin) == old(balanceOf(bank2.bankBalances, receiver, coin))
-    // ensures bank1.bankBalances == old(bank1.bankBalances)
-    // ensures bank2.bankBalances == old(bank2.bankBalances)
-    // ensures false
+    ensures forall acctID: AccountID, c: Coin, p: Path :: {unused(acctID, p, c)}
+        balanceOfP(bank1.bankBalances, acctID, c, p) == balanceOfP(old(bank1.bankBalances), acctID, c, p)
+    ensures forall acctID: AccountID, c: Coin, p: Path :: {unused(acctID, p, c)}
+        balanceOfP(bank2.bankBalances, acctID, c, p) == balanceOfP(old(bank2.bankBalances), acctID, c, p)
 {
     var success: Bool
     var packet: Packet
