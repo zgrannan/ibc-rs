@@ -33,20 +33,21 @@ define gb(holder, resource) (
     perm(Owns(holder, resource))
 )
 
-define ghostBalanceAtLeast(holder, resource, amt) (
-    [true, perm(Owns(holder, resource)) >= (amt / 1)]
-)
-
-define ghostBalanceIncreased(holder, resource, amt) (
-    [true, perm(Owns(holder, resource)) == old(perm(Owns(holder, resource))) + amt / 1]
-)
-
 method ghostMint(
     to: ResourceHolder, 
     resource: Resource,
     amount: Int
 ) 
-   ensures ghostBalanceIncreased(to, resource, amount)
+   requires amount >= 0
+   ensures owns(to, resource, amount)
+
+method ghostBurn(
+    holder: ResourceHolder, 
+    resource: Resource,
+    amount: Int
+) 
+   requires amount >= 0
+   requires owns(holder, resource, amount)
 
 method ghostTransfer(
     from: ResourceHolder, 
@@ -54,11 +55,10 @@ method ghostTransfer(
     resource: Resource,
     amount: Int
 )
-   requires(amount >= 0)
-   requires(ghostBalanceAtLeast(from, resource, amount))
+   requires amount >= 0
+   requires owns(from, resource, amount)
    requires canTransfer(from, to, resource, amount)
-   ensures ghostBalanceIncreased(from, resource, 0 - amount)
-   ensures ghostBalanceIncreased(to, resource, amount)
+   ensures owns(to, resource, amount)
 
 
 // NONGHOST
@@ -189,7 +189,7 @@ method bankMintTokens(
 ) returns (success: Bool)
     requires BankPre(bank)
     requires amt >= 0
-    requires acc(CanMint(toResourceHolder(bank,to), toResource(coin)), amt / 1)
+    requires canMint(toResourceHolder(bank,to), toResource(coin), amt)
     ensures BankPost(bank)
     ensures bank.bankBalances == updated(old(bank.bankBalances), to, path, coin, amt)
     ensures balanceOf(bank.bankBalances, to, coin) == old(balanceOf(bank.bankBalances, to, coin) + amt)
@@ -230,7 +230,6 @@ method bankBurnTokens(
     ensures !success ==> canBurn(toResourceHolder(bank, from), toResource(coin), amt)
 {
     if(bankBurnTokensPre(bank.bankBalances, from, path, coin, amt)) {
-        assert(balanceOf(bank.bankBalances, from, coin) / 1 == gb(toResourceHolder(bank, from), toResource(coin)))
         ghostMint(
             toResourceHolder(bank, from),
             toResource(coin),
@@ -251,8 +250,6 @@ define transferBalancePost(
     coin,
     amt
 ) (
-    // pathBalanceChangesBy(bank, from, coin, path, (0 - amt)) &&
-    // pathBalanceChangesBy(bank, to, coin, path, amt)
     bank.bankBalances == 
         updated(
             updated(old(bank.bankBalances), from, path, coin, 0 - amt),
