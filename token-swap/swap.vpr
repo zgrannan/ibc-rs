@@ -270,6 +270,12 @@ method bankTransferTokens(
     ensures Bank(bank)
     ensures success == bankTransferTokensPre(old(bank.bankBalances), from, to, path, coin, amt)
     ensures !success ==> bank.bankBalances == old(bank.bankBalances)
+    ensures !success ==> canTransfer(
+        toResourceHolder(bank, from), 
+        toResourceHolder(bank, to), 
+        toResource(coin), 
+        amt
+    )
     ensures success ==> balanceOf(bank.bankBalances, from, coin) == old(balanceOf(bank.bankBalances, from, coin) - amt)
     ensures success ==> balanceOf(bank.bankBalances, to, coin) == old(balanceOf(bank.bankBalances, to, coin) + amt)
     ensures success ==> transferBalancePost(bank, from, to, path, coin, amt)
