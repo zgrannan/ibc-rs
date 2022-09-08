@@ -141,7 +141,7 @@ define updated(bankBalances, acctID, path, coin, amt)(
        let bb == (acctID in bankBalances ? bankBalances : bankBalances[acctID := Map()])
     in let coinMap == (coin in bb[acctID] ? bb[acctID] : bb[acctID][coin := Map()])
     in let pathMap == (path in coinMap[coin] ? coinMap[coin] : coinMap[coin][path := 0])
-    in let newPathMap == (pathMap[path := pathMap[path]+ amt])
+    in let newPathMap == (pathMap[path := pathMap[path] + amt])
     in let newCoinMap == (coinMap[coin := newPathMap])
     in bb[acctID := newCoinMap]
 )
@@ -290,9 +290,7 @@ method bankTransferTokens(
 }
 
 domain Port {
-
     function mkPort(id: Int): Port
-
 }
 
 domain ChannelEnd {
@@ -346,20 +344,6 @@ adt FungibleTokenPacketAcknowledgement {
 
 function escrowAddress(bank: Ref, channel: ChannelEnd): AccountID
 
-define coinBalanceChangesBy(
-    bank,
-    acctID,
-    coin,
-    amt
-) (
-    balanceOf(bank.bankBalances, acctID, coin) == old(balanceOf(bank.bankBalances, acctID, coin)) + amt
-)
-
-define pathBalanceChangesBy(bank, acctID, coin, path, amt) (
-    balanceOfP(bank.bankBalances, acctID, coin, path) ==
-    balanceOfP(old(bank.bankBalances), acctID, coin, path) + amt
-)
-
 method sendFungibleTokens(
     bank: Ref,
     path: Path,
@@ -401,10 +385,6 @@ method sendFungibleTokens(
    ensures Bank(bank)
    ensures !success ==> bank.bankBalances == old(bank.bankBalances)
    ensures success ==> (packet == mkPacket(sourcePort, sourceChannel, PacketData(path, coin, sender, receiver, amount)))
-   ensures success ==> path == packet.data.path
-   ensures success ==> coinBalanceChangesBy(bank, sender, coin, 0 - amount)
-   ensures (success && !startsWith(path, sourcePort, sourceChannel)) ==> 
-     coinBalanceChangesBy(bank, escrowAddress(bank, sourceChannel), coin, amount)
    ensures (success && !startsWith(path, sourcePort, sourceChannel)) ==> 
      transferBalancePost(bank, sender, escrowAddress(bank, sourceChannel), path, coin, amount)
    ensures (success && startsWith(path, sourcePort, sourceChannel)) ==> 
@@ -505,9 +485,6 @@ method onRecvPacket(
             packet.data.amount)) ==> ack.success
     )
     ensures(!startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel) ==> ack.success)
-    // ensures ack.success ==> coinBalanceChangesBy(bank, packet.data.receiver, packet.data.coin, packet.data.amount)
-    // ensures (ack.success && startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel)) ==> 
-    //     coinBalanceChangesBy(bank, escrowAddress(bank, packet.destChannel), packet.data.coin, 0 - packet.data.amount)
     ensures (ack.success && startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel)) ==> 
         transferBalancePost(
             bank, 
