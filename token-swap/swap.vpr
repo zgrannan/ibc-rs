@@ -39,6 +39,7 @@ method ghostMint(
     amount: Int
 ) 
    requires amount >= 0
+   requires canMint(to, resource, amount)
    ensures owns(to, resource, amount)
 
 method ghostBurn(
@@ -47,6 +48,7 @@ method ghostBurn(
     amount: Int
 ) 
    requires amount >= 0
+   requires canBurn(holder, resource, amount)
    requires owns(holder, resource, amount)
 
 method ghostTransfer(
@@ -153,7 +155,7 @@ define updateBalance(bank, acctID, path, coin, amt){
     }
 }
 
-define bankInvariantsPre(bank) (
+define bankInvariants(bank) (
     balancesPositive(bank.bankBalances) &&
     [(forall acctID : AccountID, c : Coin :: 
             balanceOf(bank.bankBalances, acctID, c) / 1 == 
@@ -164,20 +166,8 @@ define bankInvariantsPre(bank) (
     )]
 )
 
-define bankInvariantsPost(bank) (
-    balancesPositive(bank.bankBalances) &&
-    [(forall acctID : AccountID, c : Coin :: 
-            balanceOf(bank.bankBalances, acctID, c) / 1 == 
-            gb(toResourceHolder(bank, acctID), toResource(c))
-    ), true]
-)
-
-define BankPre(bank) (
-    acc(bank.bankBalances) && bankInvariantsPre(bank)
-)
-
-define BankPost(bank) (
-    acc(bank.bankBalances) && bankInvariantsPost(bank)
+define Bank(bank) (
+    acc(bank.bankBalances) && bankInvariants(bank)
 )
 
 method bankMintTokens(
@@ -187,10 +177,10 @@ method bankMintTokens(
     coin: Coin,
     amt: Int
 ) returns (success: Bool)
-    requires BankPre(bank)
+    requires Bank(bank)
     requires amt >= 0
     requires canMint(toResourceHolder(bank,to), toResource(coin), amt)
-    ensures BankPost(bank)
+    ensures Bank(bank)
     ensures bank.bankBalances == updated(old(bank.bankBalances), to, path, coin, amt)
     ensures balanceOf(bank.bankBalances, to, coin) == old(balanceOf(bank.bankBalances, to, coin) + amt)
     ensures success
@@ -219,10 +209,10 @@ method bankBurnTokens(
     coin: Coin,
     amt: Int
 ) returns (success: Bool)
-    requires BankPre(bank)
+    requires Bank(bank)
     requires amt >= 0
     requires canBurn(toResourceHolder(bank, from), toResource(coin), amt)
-    ensures BankPost(bank)
+    ensures Bank(bank)
     ensures success == bankBurnTokensPre(old(bank.bankBalances), from, path, coin, amt)
     ensures !success ==> bank.bankBalances == old(bank.bankBalances)
     ensures success ==> burnPost(bank, from, path, coin, amt)
@@ -269,7 +259,7 @@ method bankTransferTokens(
     coin: Coin,
     amt: Int
 ) returns (success: Bool)
-    requires BankPre(bank)
+    requires Bank(bank)
     requires amt >= 0
     requires canTransfer(
         toResourceHolder(bank, from), 
@@ -277,7 +267,7 @@ method bankTransferTokens(
         toResource(coin), 
         amt
     )
-    ensures BankPost(bank)
+    ensures Bank(bank)
     ensures success == bankTransferTokensPre(old(bank.bankBalances), from, to, path, coin, amt)
     ensures !success ==> bank.bankBalances == old(bank.bankBalances)
     ensures success ==> balanceOf(bank.bankBalances, from, coin) == old(balanceOf(bank.bankBalances, from, coin) - amt)
@@ -380,7 +370,7 @@ method sendFungibleTokens(
     sourcePort: Port,
     sourceChannel: ChannelEnd
 ) returns (success: Bool, packet: Packet)
-   requires BankPre(bank)
+   requires Bank(bank)
    requires amount >= 0
    requires !startsWith(path, sourcePort, sourceChannel) ==> 
         canTransfer(
@@ -408,7 +398,7 @@ method sendFungibleTokens(
         coin,
         amount
      )) ==> success)
-   ensures BankPost(bank)
+   ensures Bank(bank)
    ensures !success ==> bank.bankBalances == old(bank.bankBalances)
    ensures success ==> (packet == mkPacket(sourcePort, sourceChannel, PacketData(path, coin, sender, receiver, amount)))
    ensures success ==> path == packet.data.path
@@ -452,7 +442,7 @@ method refundTokens(
     bank: Ref,
     packet: Packet
 ) 
-    requires BankPre(bank)
+    requires Bank(bank)
     requires packet.data.amount >= 0
     requires !startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel) ==> 
         canTransfer(
@@ -463,7 +453,7 @@ method refundTokens(
         )
     requires startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel) ==> 
         canMint(toResourceHolder(bank, packet.data.sender), toResource(packet.data.coin), packet.data.amount)
-    ensures BankPost(bank)
+    ensures Bank(bank)
 {
     var success: Bool
 
@@ -492,7 +482,7 @@ method onRecvPacket(
     bank: Ref,
     packet: Packet
 ) returns (ack: FungibleTokenPacketAcknowledgement) 
-    requires BankPre(bank)
+    requires Bank(bank)
     requires packet.data.amount >= 0
     requires startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel) ==> 
         canTransfer(
@@ -503,7 +493,7 @@ method onRecvPacket(
         )
     requires !startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel) ==> 
         canMint(toResourceHolder(bank, packet.data.receiver), toResource(packet.data.coin), packet.data.amount)
-    ensures BankPost(bank)
+    ensures Bank(bank)
     ensures(
         (startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel) &&
         bankTransferTokensPre(
@@ -515,9 +505,9 @@ method onRecvPacket(
             packet.data.amount)) ==> ack.success
     )
     ensures(!startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel) ==> ack.success)
-    ensures ack.success ==> coinBalanceChangesBy(bank, packet.data.receiver, packet.data.coin, packet.data.amount)
-    ensures (ack.success && startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel)) ==> 
-        coinBalanceChangesBy(bank, escrowAddress(bank, packet.destChannel), packet.data.coin, 0 - packet.data.amount)
+    // ensures ack.success ==> coinBalanceChangesBy(bank, packet.data.receiver, packet.data.coin, packet.data.amount)
+    // ensures (ack.success && startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel)) ==> 
+    //     coinBalanceChangesBy(bank, escrowAddress(bank, packet.destChannel), packet.data.coin, 0 - packet.data.amount)
     ensures (ack.success && startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel)) ==> 
         transferBalancePost(
             bank, 
@@ -564,7 +554,7 @@ method onAcknowledgePacket(
     ack: FungibleTokenPacketAcknowledgement,
     packet: Packet
 ) 
-    requires BankPre(bank)
+    requires Bank(bank)
     requires packet.data.amount >= 0
     requires (!ack.success && !startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel)) ==> 
         canTransfer(
@@ -575,7 +565,7 @@ method onAcknowledgePacket(
         )
     requires (!ack.success && startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel)) ==> 
         canMint(toResourceHolder(bank, packet.data.sender), toResource(packet.data.coin), packet.data.amount)
-    ensures BankPost(bank)
+    ensures Bank(bank)
     ensures ack.success ==> bank.bankBalances == old(bank.bankBalances)
 {
     if(!ack.success) {
@@ -601,8 +591,8 @@ method roundTrip(
     destPort: Port,
     destChannel: ChannelEnd
 ) 
-    requires BankPre(bank1)
-    requires BankPre(bank2)
+    requires Bank(bank1)
+    requires Bank(bank2)
     requires bank1 != bank2
     requires amount >= 0
     requires !startsWith(path, sourcePort, sourceChannel)
@@ -627,8 +617,8 @@ method roundTrip(
         coin,
         amount
     )
-    ensures BankPost(bank1)
-    ensures BankPost(bank2)
+    ensures Bank(bank1)
+    ensures Bank(bank2)
     ensures forall acctID: AccountID, c: Coin, p: Path :: {unused(acctID, p, c)}
         balanceOfP(bank1.bankBalances, acctID, c, p) == balanceOfP(old(bank1.bankBalances), acctID, c, p)
     ensures forall acctID: AccountID, c: Coin, p: Path :: {unused(acctID, p, c)}
