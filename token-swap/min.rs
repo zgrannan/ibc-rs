@@ -1,16 +1,10 @@
-use prusti_contracts::*;
-
-#[derive(Clone, Copy)]
-struct Inner(u32);
-
-#[derive(Clone, Copy)]
-struct Outer {
-    inner: Inner,
+#[derive(PartialEq)]
+enum Path {
+    Empty(),
+    Cons {
+        port: u32,
+        channel_end: u32
+    }
 }
-
-#[ensures(out.inner === out.inner)]
-fn go(out: Outer) {
-}
-
 
 fn main(){}
