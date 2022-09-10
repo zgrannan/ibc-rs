@@ -157,13 +157,16 @@ define updateBalance(bank, acctID, path, coin, amt){
 
 define bankInvariants(bank) (
     balancesPositive(bank.bankBalances) &&
-    [(forall acctID : AccountID, c : Coin :: 
-            balanceOf(bank.bankBalances, acctID, c) / 1 == 
-            gb(toResourceHolder(bank, acctID), toResource(c))
-    ), (forall acctID : AccountID, c : Coin :: 
-            balanceOf(bank.bankBalances, acctID, c) / 1 == 
-            gb(toResourceHolder(bank, acctID), toResource(c))
-    )]
+    forall acctID : AccountID, c : Coin :: {balanceOf(bank.bankBalances, acctID, c)} acc(Owns(toResourceHolder(bank, acctID), toResource(c)), 
+        balanceOf(bank.bankBalances, acctID, c) / 1
+    )
+    // [(forall acctID : AccountID, c : Coin :: 
+    //         balanceOf(bank.bankBalances, acctID, c) / 1 == 
+    //         gb(toResourceHolder(bank, acctID), toResource(c))
+    // ), (forall acctID : AccountID, c : Coin :: 
+    //         balanceOf(bank.bankBalances, acctID, c) / 1 == 
+    //         gb(toResourceHolder(bank, acctID), toResource(c))
+    // )]
 )
 
 define Bank(bank) (
@@ -220,10 +223,10 @@ method bankBurnTokens(
     ensures !success ==> canBurn(toResourceHolder(bank, from), toResource(coin), amt)
 {
     if(bankBurnTokensPre(bank.bankBalances, from, path, coin, amt)) {
-        ghostMint(
+        ghostBurn(
             toResourceHolder(bank, from),
             toResource(coin),
-            0 - amt
+            amt
         )
         updateBalance(bank, from, path, coin, 0 - amt)
         success := true
