@@ -1,0 +1,23 @@
+domain Holder {
+
+}
+
+predicate Owns(holder: Holder)
+
+method preTest(foo: Int) 
+   requires [foo == 1, foo == 2]
+{
+    assert foo == 1
+}
+
+method amountAtLeast(map: Map[Holder, Int], holder: Holder, amt: Int) 
+  requires [forall h : Holder :: {map[h], Owns(h)} h in map ==> perm(Owns(h)) == map[h] / 1, true]
+  // requires [perm(Owns(holder)) >= amt / 1, true]
+  requires holder in map
+  requires map[holder] >= amt
+  requires amt >= 0
+  // requires [perm(Owns(holder)) >= amt / 1 ==> map[holder] >= amt, true]
+{
+    assert perm(Owns(holder)) >= amt / 1
+    exhale acc(Owns(holder), amt / 1)
+}
