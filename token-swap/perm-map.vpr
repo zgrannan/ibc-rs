@@ -10,14 +10,58 @@ method preTest(foo: Int)
     assert foo == 1
 }
 
-method amountAtLeast(map: Map[Holder, Int], holder: Holder, amt: Int) 
-  requires [forall h : Holder :: {map[h], Owns(h)} h in map ==> perm(Owns(h)) == map[h] / 1, true]
-  // requires [perm(Owns(holder)) >= amt / 1, true]
-  requires holder in map
-  requires map[holder] >= amt
-  requires amt >= 0
-  // requires [perm(Owns(holder)) >= amt / 1 ==> map[holder] >= amt, true]
+method postTest() returns (foo: Int)
+   ensures [foo == 1, foo == 2]
 {
-    assert perm(Owns(holder)) >= amt / 1
+  foo := 2
+}
+
+define allPos(map) (
+  forall h : Holder :: {map[h]} h in map ==> map[h] >= 0
+)
+
+// TODO: Find appropriate triggers 
+define allPerm(map) (
+  forall h : Holder :: h in map ==> perm(Owns(h)) == map[h] / 1
+)
+
+method increaseAmt(map: Map[Holder, Int], holder: Holder, amt: Int)
+  returns (newMap: Map[Holder, Int])
+  requires allPos(map)
+  requires holder in map
+  requires amt >= 0
+  requires [allPerm(map), true]
+  ensures [true, allPerm(newMap)]
+  ensures newMap == map[holder := map[holder] + amt]
+  ensures acc(Owns(holder), amt / 1)
+  {
+    inhale acc(Owns(holder), amt / 1)
+    newMap := map[holder := map[holder] + amt]
+  }
+
+method decreaseAmt(map: Map[Holder, Int], holder: Holder, amt: Int)
+  returns (newMap: Map[Holder, Int])
+  requires holder in map
+  requires amt >= 0
+  requires allPos(map)
+  requires acc(Owns(holder), amt / 1)
+  requires [allPerm(map), true]
+  ensures newMap == map[holder := map[holder] - amt]
+  ensures [true, allPerm(newMap)]
+  {
     exhale acc(Owns(holder), amt / 1)
+    newMap := map[holder := map[holder] - amt]
+  }
+
+
+method client(map: Map[Holder, Int], holder: Holder) 
+  returns (newMap: Map[Holder, Int])
+  requires allPos(map)
+  requires [allPerm(map), true]
+  requires holder in map
+  ensures [true, allPerm(newMap)]
+{
+  newMap := increaseAmt(map, holder, 3)
+  newMap := decreaseAmt(newMap, holder, 3)
+  assert map == newMap
 }
