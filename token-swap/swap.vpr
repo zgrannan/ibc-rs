@@ -1,111 +1,81 @@
 // GHOST 
 
-domain ResourceHolder {
-    function mkResourceHolder(id: Int): ResourceHolder
-}
-
 domain Resource {
     function mkResource(id: Int): Resource
+    function toResource(bank: Ref, acctID: AccountID, coin: Coin, path: Path): Resource
 }
 
-predicate Owns(holder: ResourceHolder, resource: Resource)
-predicate CanTransfer(from: ResourceHolder, to: ResourceHolder, resource: Resource)
-predicate CanMint(to: ResourceHolder, resource: Resource)
-predicate CanBurn(to: ResourceHolder, resource: Resource)
 
-define canTransfer(from, to, resource, amt) (
-    acc(CanTransfer(from, to, resource), amt / 1)
+
+predicate Owns(resource: Resource)
+
+define updated(bankBalances, acctID, coin, path, amt) (
+    adjustAmount(bankBalances, acctID, coin, path, amt)
 )
 
-define canMint(to, resource, amt) (
-    acc(CanMint(to, resource), amt / 1)
+define owns(resource, amount) (
+    acc(Owns(resource), amount / 1)
 )
 
-define canBurn(to, resource, amount) (
-    acc(CanBurn(to, resource), amount / 1)
-)
-
-define owns(holder, resource, amount) (
-    acc(Owns(holder, resource), amount / 1)
-)
-
-define gb(holder, resource) (
+define bal(holder, resource) (
     perm(Owns(holder, resource))
 )
 
 method ghostMint(
-    to: ResourceHolder, 
     resource: Resource,
     amount: Int
 ) 
    requires amount >= 0
-   requires canMint(to, resource, amount)
-   ensures owns(to, resource, amount)
+   ensures owns(resource, amount)
 
 method ghostBurn(
-    holder: ResourceHolder, 
     resource: Resource,
     amount: Int
 ) 
    requires amount >= 0
-   requires canBurn(holder, resource, amount)
-   requires owns(holder, resource, amount)
-
-method ghostTransfer(
-    from: ResourceHolder, 
-    to: ResourceHolder, 
-    resource: Resource,
-    amount: Int
-)
-   requires amount >= 0
-   requires owns(from, resource, amount)
-   requires canTransfer(from, to, resource, amount)
-   ensures owns(to, resource, amount)
+   requires owns(resource, amount)
 
 
 // NONGHOST
 
-field bankBalances: Map[AccountID, Map[Coin, Map[Path, Int]]]
+domain Coin {}
 
-define isTotal(map) (
-    forall acctID : AccountID, c: Coin, p: Path :: hasPath(map, acctID, c, p)
-)
+domain BankBalances {
+    function balanceOf(
+        bank: BankBalances,
+        acctID: AccountID,
+        coin: Coin,
+        path: Path
+    ): Int
 
-define hasPath(map, acctID, c, p) (
-    hasCoin(map, acctID, c) && p in map[acctID][c]
-)
+    function adjustAmount(
+        bank: BankBalances,
+        acctID: AccountID,
+        coin: Coin,
+        path: Path,
+        amt: Int
+    ): BankBalances
 
-define hasCoin(map, acctID, c) (
-    acctID in map && c in map[acctID]
-)
+    axiom balancesPositive {
+        forall bank: BankBalances, acctID: AccountID, coin: Coin, path: Path ::
+            balanceOf(bank, acctID, coin, path) >= 0
+    }
 
-define balancesPositive(map) (
-    (forall acctID: AccountID, c: Coin, p: Path :: {map[acctID][c][p]}
-        (hasPath(map, acctID, c, p)) ==> map[acctID][c][p] >= 0)
-)
-
-define balanceOfP(map, acctID, c, p) (
-    hasPath(map, acctID, c, p) ? map[acctID][c][p] : 0
-)
-
-define balanceOfM(map, acctID, c) (
-    sumValues(map[acctID][c])
-)
-
-function balanceOf(map: Map[AccountID, Map[Coin, Map[Path, Int]]], acctID: AccountID, c: Coin): Int
-    requires balancesPositive(map)
- {
-    hasCoin(map, acctID, c) ? balanceOfM(map, acctID, c) : 0
- }
-
-domain AccountID {
-    function toResourceHolder(bank: Ref, acctId: AccountID): ResourceHolder
-
-    axiom injective {
-        forall c1: Ref, c2: Ref,  a1 : AccountID, a2: AccountID :: (a1 != a2 ||  c1 != c2) ==> 
-            toResourceHolder(c1, a1) != toResourceHolder(c2, a2)
+    axiom axiomAdjustAmount {
+        forall bank: BankBalances, acctID: AccountID, coin: Coin, path: Path, amt: Int ::
+            let newBank == (adjustAmount(bank, acctID, coin, path, amt))
+            in forall acctID2: AccountID, coin2: Coin, path2: Path :: (
+                balanceOf(newBank, acctID2, coin2, path2) ==
+                ((acctID == acctID2 && coin == coin2 && path == path2) ?
+                balanceOf(bank, acctID2, coin2, path2) + amt :
+                balanceOf(bank, acctID2, coin2, path2))
+            )
     }
 }
+
+field bankBalances: BankBalances
+
+domain AccountID { }
 
 define startsWith(path, port, channel) (
     path.isCons && path.headPort == port && path.headChannel == channel
@@ -121,56 +91,30 @@ function dropPrefix(path: Path, port: Port, channel: ChannelEnd): Path
     path.tail
 }
 
-// Monomorphised
-function sumValues(map: Map[Path, Int]): Int
-    requires forall p : Path :: {map[p]} p in map ==> map[p] >= 0
-    ensures forall p : Path :: {map[p]} p in map ==> map[p] <= result
-    ensures map == Map() ==> result == 0
-
-domain Coin {
-    function toResource(coin: Coin): Resource
-
-    axiom toResourceInjective {
-        forall c1 : Coin, c2: Coin :: c1 != c2 ==> toResource(c1) != toResource(c2)
-    }
-
-    function mkCoin(id: Int): Coin
-}
-
-define updated(bankBalances, acctID, path, coin, amt)(
-       let bb == (acctID in bankBalances ? bankBalances : bankBalances[acctID := Map()])
-    in let coinMap == (coin in bb[acctID] ? bb[acctID] : bb[acctID][coin := Map()])
-    in let pathMap == (path in coinMap[coin] ? coinMap[coin] : coinMap[coin][path := 0])
-    in let newPathMap == (pathMap[path := pathMap[path] + amt])
-    in let newCoinMap == (coinMap[coin := newPathMap])
-    in bb[acctID := newCoinMap]
-)
-
 define updateBalance(bank, acctID, path, coin, amt){
-    bank.bankBalances := updated(bank.bankBalances, acctID, path, coin, amt)
-    if(acctID in old(bank.bankBalances) && coin in old(bank.bankBalances[acctID])) {
-        assume sumValues(bank.bankBalances[acctID][coin]) == sumValues(old(bank.bankBalances[acctID][coin])) + amt
-    } else {
-        assume sumValues(bank.bankBalances[acctID][coin]) == amt
-    }
+    bank.bankBalances := updated(bank.bankBalances, acctID, coin, path, amt)
+    // if(acctID in old(bank.bankBalances) && coin in old(bank.bankBalances[acctID])) {
+    //     assume sumValues(bank.bankBalances[acctID][coin]) == sumValues(old(bank.bankBalances[acctID][coin])) + amt
+    // } else {
+    //     assume sumValues(bank.bankBalances[acctID][coin]) == amt
+    // }
 }
 
-define bankInvariants(bank) (
-    balancesPositive(bank.bankBalances) &&
-    forall acctID : AccountID, c : Coin :: {balanceOf(bank.bankBalances, acctID, c)} acc(Owns(toResourceHolder(bank, acctID), toResource(c)), 
-        balanceOf(bank.bankBalances, acctID, c) / 1
-    )
-    // [(forall acctID : AccountID, c : Coin :: 
-    //         balanceOf(bank.bankBalances, acctID, c) / 1 == 
-    //         gb(toResourceHolder(bank, acctID), toResource(c))
-    // ), (forall acctID : AccountID, c : Coin :: 
-    //         balanceOf(bank.bankBalances, acctID, c) / 1 == 
-    //         gb(toResourceHolder(bank, acctID), toResource(c))
-    // )]
+define BankPre(bank) (
+    true
 )
 
-define Bank(bank) (
-    acc(bank.bankBalances) && bankInvariants(bank)
+define bankPost(bank) (
+forall acctID: AccountID, c: Coin, p : Path :: 
+  (balanceOf(bank.bankBalances, acctID, c, p) - 
+   balanceOf(old(bank.bankBalances), acctID, c, p)) / 1
+      == perm(Owns(toResource(bank, acctID, c, p))) 
+      - old(perm(Owns(toResource(bank, acctID, c, p))))
+
+)
+
+define BankPost(bank) (
+    [bankPost(bank), bankPost(bank)]
 )
 
 method bankMintTokens(
@@ -180,25 +124,21 @@ method bankMintTokens(
     coin: Coin,
     amt: Int
 ) returns (success: Bool)
-    requires Bank(bank)
+    requires acc(bank.bankBalances)
     requires amt >= 0
-    requires canMint(toResourceHolder(bank,to), toResource(coin), amt)
-    ensures Bank(bank)
-    ensures bank.bankBalances == updated(old(bank.bankBalances), to, path, coin, amt)
-    ensures balanceOf(bank.bankBalances, to, coin) == old(balanceOf(bank.bankBalances, to, coin) + amt)
+    ensures acc(bank.bankBalances)
+    // ensures BankPost(bank)
+    ensures owns(toResource(bank, to, coin, path), amt)
+    ensures bank.bankBalances == updated(old(bank.bankBalances), to, coin, path, amt)
     ensures success
 {
-    ghostMint(
-        toResourceHolder(bank,to),
-        toResource(coin),
-        amt
-    )
+    ghostMint(toResource(bank, to, coin, path), amt)
     updateBalance(bank, to, path, coin, amt)
     success := true
 }
 
 define bankBurnTokensPre(bankBalances, from, path, coin, amt) (
-    balanceOfP(bankBalances, from, coin, path) >= amt
+    balanceOf(bankBalances, from, coin, path) >= amt
 )
 
 define burnPost(bank, from, path, coin, amt) (
@@ -212,20 +152,19 @@ method bankBurnTokens(
     coin: Coin,
     amt: Int
 ) returns (success: Bool)
-    requires Bank(bank)
+    requires acc(bank.bankBalances)
     requires amt >= 0
-    requires canBurn(toResourceHolder(bank, from), toResource(coin), amt)
-    ensures Bank(bank)
+    requires bankBurnTokensPre(bank.bankBalances, from, path, coin, amt) ==> owns(toResource(bank, from, coin, path), amt)
+    requires BankPre(bank)
+    ensures acc(bank.bankBalances)
     ensures success == bankBurnTokensPre(old(bank.bankBalances), from, path, coin, amt)
     ensures !success ==> bank.bankBalances == old(bank.bankBalances)
-    ensures success ==> burnPost(bank, from, path, coin, amt)
-    ensures success ==> balanceOf(bank.bankBalances, from, coin) == old(balanceOf(bank.bankBalances, from, coin) - amt)
-    ensures !success ==> canBurn(toResourceHolder(bank, from), toResource(coin), amt)
+    ensures success ==> burnPost(bank, from, coin, path, amt)
+    // ensures BankPost(bank)
 {
     if(bankBurnTokensPre(bank.bankBalances, from, path, coin, amt)) {
         ghostBurn(
-            toResourceHolder(bank, from),
-            toResource(coin),
+            toResource(bank, from, coin, path),
             amt
         )
         updateBalance(bank, from, path, coin, 0 - amt)
@@ -245,13 +184,13 @@ define transferBalancePost(
 ) (
     bank.bankBalances == 
         updated(
-            updated(old(bank.bankBalances), from, path, coin, 0 - amt),
-            to, path, coin, amt
+            updated(old(bank.bankBalances), from, coin, path, 0 - amt),
+            to, coin, path, amt
         )
 )
 
 define bankTransferTokensPre(bankBalances, from, to, path, coin, amt) (
-    from != to && balanceOfP(bankBalances, from, coin, path) >= amt
+    from != to && balanceOf(bankBalances, from, coin, path) >= amt
 )
 
 method bankTransferTokens(
@@ -262,37 +201,26 @@ method bankTransferTokens(
     coin: Coin,
     amt: Int
 ) returns (success: Bool)
-    requires Bank(bank)
     requires amt >= 0
-    requires canTransfer(
-        toResourceHolder(bank, from), 
-        toResourceHolder(bank, to), 
-        toResource(coin), 
+    requires acc(bank.bankBalances)
+    requires bankTransferTokensPre(bank.bankBalances, from, to, path, coin, amt) ==> owns(
+        toResource(bank, from, coin, path),
         amt
     )
-    ensures Bank(bank)
+    requires BankPre(bank)
+    ensures acc(bank.bankBalances)
+    // ensures BankPost(bank)
     ensures success == bankTransferTokensPre(old(bank.bankBalances), from, to, path, coin, amt)
     ensures !success ==> bank.bankBalances == old(bank.bankBalances)
-    ensures !success ==> canTransfer(
-        toResourceHolder(bank, from), 
-        toResourceHolder(bank, to), 
-        toResource(coin), 
-        amt
-    )
-    ensures success ==> balanceOf(bank.bankBalances, from, coin) == old(balanceOf(bank.bankBalances, from, coin) - amt)
-    ensures success ==> balanceOf(bank.bankBalances, to, coin) == old(balanceOf(bank.bankBalances, to, coin) + amt)
     ensures success ==> transferBalancePost(bank, from, to, path, coin, amt)
+    ensures success ==> owns(toResource(bank, to, coin, path), amt)
 {
     if(bankTransferTokensPre(bank.bankBalances, from, to, path, coin, amt)) {
-       ghostTransfer(
-            toResourceHolder(bank, from),
-            toResourceHolder(bank, to),
-            toResource(coin),
-            amt
-        )
-        updateBalance(bank, from, path, coin, (0 - amt))
-        updateBalance(bank, to, path, coin, amt)
-        success := true
+       ghostMint(toResource(bank, to, coin, path), amt)
+       ghostBurn(toResource(bank, from, coin, path), amt)
+       updateBalance(bank, from, path, coin, (0 - amt))
+       updateBalance(bank, to, path, coin, amt)
+       success := true
     } else {
         success := false
     }
@@ -353,6 +281,46 @@ adt FungibleTokenPacketAcknowledgement {
 
 function escrowAddress(bank: Ref, channel: ChannelEnd): AccountID
 
+define sendWillBurn(
+    path, 
+    sourcePort, 
+    sourceChannel, 
+    bankBalances, 
+    sender, 
+    coin, 
+    amount) 
+(
+  startsWith(path, sourcePort, sourceChannel) && 
+     bankBurnTokensPre(
+        bankBalances,
+        sender,
+        path,
+        coin,
+        amount
+     )
+)
+
+define sendWillTransfer(
+    path,
+    sourcePort,
+    sourceChannel,
+    bankBalances,
+    sender,
+    eAddress,
+    coin,
+    amount
+) (
+  !startsWith(path, sourcePort, sourceChannel) && 
+     bankTransferTokensPre(
+        bankBalances,
+        sender,
+        eAddress,
+        path,
+        coin,
+        amount
+     )
+)
+
 method sendFungibleTokens(
     bank: Ref,
     path: Path,
@@ -363,41 +331,47 @@ method sendFungibleTokens(
     sourcePort: Port,
     sourceChannel: ChannelEnd
 ) returns (success: Bool, packet: Packet)
-   requires Bank(bank)
+   requires acc(bank.bankBalances)
+   requires BankPre(bank)
    requires amount >= 0
-   requires !startsWith(path, sourcePort, sourceChannel) ==> 
-        canTransfer(
-            toResourceHolder(bank, sender), 
-            toResourceHolder(bank, escrowAddress(bank, sourceChannel)), 
-            toResource(coin), 
-            amount
-        )
-   requires startsWith(path, sourcePort, sourceChannel) ==> 
-        canBurn(toResourceHolder(bank, sender), toResource(coin), amount)
-   ensures((!startsWith(path, sourcePort, sourceChannel) && 
-     bankTransferTokensPre(
-        old(bank.bankBalances),
-        sender,
-        escrowAddress(bank, sourceChannel),
-        path,
-        coin,
+   requires(
+    sendWillBurn(path, sourcePort, sourceChannel, bank.bankBalances, sender, coin, amount) ==> 
+        owns(toResource(bank, sender, coin, path), amount)
+   )
+   requires(
+    sendWillTransfer(
+        path, 
+        sourcePort, 
+        sourceChannel, 
+        bank.bankBalances, 
+        sender, 
+        escrowAddress(bank, sourceChannel), 
+        coin, 
         amount
-     )) ==> success)
-   ensures((startsWith(path, sourcePort, sourceChannel) && 
-     bankBurnTokensPre(
-        old(bank.bankBalances),
-        sender,
-        path,
-        coin,
+    ) ==> owns(toResource(bank, sender, coin, path), amount)
+   )
+   ensures acc(bank.bankBalances)
+   ensures(
+    sendWillTransfer(
+        path, 
+        sourcePort, 
+        sourceChannel, 
+        old(bank.bankBalances), 
+        sender, 
+        escrowAddress(bank, sourceChannel), 
+        coin, 
         amount
-     )) ==> success)
-   ensures Bank(bank)
+    ) ==> owns(toResource(bank, escrowAddress(bank, sourceChannel), coin, path), amount) && success)
+   ensures(
+    sendWillBurn(path, sourcePort, sourceChannel, old(bank.bankBalances), sender, coin, amount) ==> success
+   )
+   // ensures BankPost(bank)
    ensures !success ==> bank.bankBalances == old(bank.bankBalances)
    ensures success ==> (packet == mkPacket(sourcePort, sourceChannel, PacketData(path, coin, sender, receiver, amount)))
    ensures (success && !startsWith(path, sourcePort, sourceChannel)) ==> 
      transferBalancePost(bank, sender, escrowAddress(bank, sourceChannel), path, coin, amount)
    ensures (success && startsWith(path, sourcePort, sourceChannel)) ==> 
-     burnPost(bank, sender, path, coin, amount)
+     burnPost(bank, sender, coin, path, amount)
 {
     if(!startsWith(path, sourcePort, sourceChannel)) {
         success := bankTransferTokens(
@@ -431,18 +405,22 @@ method refundTokens(
     bank: Ref,
     packet: Packet
 ) 
-    requires Bank(bank)
+    requires acc(bank.bankBalances)
+    requires BankPre(bank)
     requires packet.data.amount >= 0
-    requires !startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel) ==> 
-        canTransfer(
-            toResourceHolder(bank, escrowAddress(bank, packet.sourceChannel)),
-            toResourceHolder(bank, packet.data.sender),
-            toResource(packet.data.coin), 
-            packet.data.amount
+    requires (
+        !startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel) ==>
+        owns(
+            toResource(
+                bank, 
+                escrowAddress(bank, packet.sourceChannel), 
+                packet.data.coin, 
+                packet.data.path
+            ), packet.data.amount
         )
-    requires startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel) ==> 
-        canMint(toResourceHolder(bank, packet.data.sender), toResource(packet.data.coin), packet.data.amount)
-    ensures Bank(bank)
+    )
+    ensures acc(bank.bankBalances)
+    // ensures BankPost(bank)
 {
     var success: Bool
 
@@ -467,34 +445,49 @@ method refundTokens(
     }
 }
 
+define packetIsSource(packet) (
+    startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel)
+)
+
 method onRecvPacket(
     bank: Ref,
     packet: Packet
 ) returns (ack: FungibleTokenPacketAcknowledgement) 
-    requires Bank(bank)
+    requires acc(bank.bankBalances)
+    requires BankPre(bank)
     requires packet.data.amount >= 0
-    requires startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel) ==> 
-        canTransfer(
-            toResourceHolder(bank, escrowAddress(bank, packet.destChannel)),
-            toResourceHolder(bank, packet.data.receiver),
-            toResource(packet.data.coin),
-            packet.data.amount
-        )
-    requires !startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel) ==> 
-        canMint(toResourceHolder(bank, packet.data.receiver), toResource(packet.data.coin), packet.data.amount)
-    ensures Bank(bank)
+    requires(
+        packetIsSource(packet) &&
+        bankTransferTokensPre(
+            bank.bankBalances,
+            escrowAddress(bank, packet.destChannel),
+            packet.data.receiver,
+            dropPrefix(packet.data.path, packet.sourcePort, packet.sourceChannel),
+            packet.data.coin,
+            packet.data.amount) ==> owns(
+                toResource(
+                    bank,
+                    escrowAddress(bank, packet.destChannel),
+                    packet.data.coin,
+                    dropPrefix(packet.data.path, packet.sourcePort, packet.sourceChannel)
+                ),
+                packet.data.amount
+            )
+    )
+    ensures acc(bank.bankBalances)
+    // ensures BankPost(bank)
     ensures(
-        (startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel) &&
+        packetIsSource(packet) &&
         bankTransferTokensPre(
             old(bank.bankBalances),
             escrowAddress(bank, packet.destChannel),
             packet.data.receiver,
             dropPrefix(packet.data.path, packet.sourcePort, packet.sourceChannel),
             packet.data.coin,
-            packet.data.amount)) ==> ack.success
+            packet.data.amount) ==> ack.success
     )
-    ensures(!startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel) ==> ack.success)
-    ensures (ack.success && startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel)) ==> 
+    ensures !packetIsSource(packet) ==> ack.success
+    ensures (ack.success && packetIsSource(packet)) ==> 
         transferBalancePost(
             bank, 
             escrowAddress(bank, packet.destChannel), 
@@ -503,18 +496,27 @@ method onRecvPacket(
             packet.data.coin, 
             packet.data.amount
         )
-    ensures(!startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel) ==> 
+    ensures(!packetIsSource(packet) ==> 
         bank.bankBalances == updated(
             old(bank.bankBalances), 
             packet.data.receiver,
-            prependPrefix(packet.data.path, packet.destPort, packet.destChannel),
             packet.data.coin,
+            prependPrefix(packet.data.path, packet.destPort, packet.destChannel),
             packet.data.amount
         )
     )
+    ensures(!packetIsSource(packet) ==> owns(
+        toResource(
+            bank,
+            packet.data.receiver,
+            packet.data.coin,
+            prependPrefix(packet.data.path, packet.destPort, packet.destChannel)
+        ),
+        packet.data.amount
+    ))
 {
     var success: Bool
-    if(startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel)) {
+    if(packetIsSource(packet)) {
         success := bankTransferTokens(
             bank,
             escrowAddress(bank, packet.destChannel),
@@ -540,18 +542,19 @@ method onAcknowledgePacket(
     ack: FungibleTokenPacketAcknowledgement,
     packet: Packet
 ) 
-    requires Bank(bank)
+    requires acc(bank.bankBalances)
+    requires BankPre(bank)
     requires packet.data.amount >= 0
-    requires (!ack.success && !startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel)) ==> 
-        canTransfer(
-            toResourceHolder(bank, escrowAddress(bank, packet.sourceChannel)), 
-            toResourceHolder(bank, packet.data.sender), 
-            toResource(packet.data.coin), 
-            packet.data.amount
-        )
-    requires (!ack.success && startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel)) ==> 
-        canMint(toResourceHolder(bank, packet.data.sender), toResource(packet.data.coin), packet.data.amount)
-    ensures Bank(bank)
+    requires !ack.success ==> owns(
+        toResource(
+            bank, 
+            escrowAddress(bank, packet.sourceChannel), 
+            packet.data.coin, 
+            packet.data.path
+        ), packet.data.amount
+    )
+    ensures acc(bank.bankBalances)
+    // ensures BankPost(bank)
     ensures ack.success ==> bank.bankBalances == old(bank.bankBalances)
 {
     if(!ack.success) {
@@ -577,24 +580,13 @@ method roundTrip(
     destPort: Port,
     destChannel: ChannelEnd
 ) 
-    requires Bank(bank1)
-    requires Bank(bank2)
+    requires acc(bank1.bankBalances)
+    requires acc(bank2.bankBalances)
+    requires BankPre(bank1)
+    requires BankPre(bank2)
     requires bank1 != bank2
     requires amount >= 0
     requires !startsWith(path, sourcePort, sourceChannel)
-    requires canTransfer(
-        toResourceHolder(bank1, sender), 
-        toResourceHolder(bank1, escrowAddress(bank1, sourceChannel)), 
-        toResource(coin), 
-        amount
-    )
-    requires canMint(toResourceHolder(bank2, receiver), toResource(coin), amount)
-    requires canBurn(toResourceHolder(bank2, receiver), toResource(coin), amount)
-    requires canTransfer(
-        toResourceHolder(bank1, escrowAddress(bank1, sourceChannel)), 
-        toResourceHolder(bank1, sender), 
-        toResource(coin), 
-        amount)
     requires bankTransferTokensPre(
         bank1.bankBalances,
         sender,
@@ -603,22 +595,27 @@ method roundTrip(
         coin,
         amount
     )
-    ensures Bank(bank1)
-    ensures Bank(bank2)
+    requires owns(toResource(bank1, sender, coin, path), amount)
+    ensures acc(bank1.bankBalances)
+    ensures acc(bank2.bankBalances)
+    // ensures BankPost(bank1)
+    // ensures BankPost(bank2)
     ensures forall acctID: AccountID, c: Coin, p: Path :: {unused(acctID, p, c)}
-        balanceOfP(bank1.bankBalances, acctID, c, p) == balanceOfP(old(bank1.bankBalances), acctID, c, p)
+        balanceOf(bank1.bankBalances, acctID, c, p) == balanceOf(old(bank1.bankBalances), acctID, c, p)
     ensures forall acctID: AccountID, c: Coin, p: Path :: {unused(acctID, p, c)}
-        balanceOfP(bank2.bankBalances, acctID, c, p) == balanceOfP(old(bank2.bankBalances), acctID, c, p)
+        balanceOf(bank2.bankBalances, acctID, c, p) == balanceOf(old(bank2.bankBalances), acctID, c, p)
 {
     var success: Bool
     var packet: Packet
 
     success, packet := sendFungibleTokens(bank1, path, coin, amount, sender, receiver, sourcePort, sourceChannel)
+    assert success
     assume packet.destPort == destPort
     assume packet.destChannel == destChannel
 
     var ack: FungibleTokenPacketAcknowledgement 
     ack := onRecvPacket(bank2, packet)
+    assert ack.success
     onAcknowledgePacket(bank1, ack, packet)
 
     success, packet := sendFungibleTokens(
