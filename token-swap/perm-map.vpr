@@ -25,15 +25,27 @@ define allPerm(map) (
   forall h : Holder :: h in map ==> perm(Owns(h)) == map[h] / 1
 )
 
+function foo2(x: Int): Ref
+  ensures forall y: Int :: {foo2(y)} foo_inv(foo2(y)) == y
+
+function foo_inv(x: Ref): Int
+
+
 method increaseAmt(map: Map[Holder, Int], holder: Holder, amt: Int)
   returns (newMap: Map[Holder, Int])
   requires allPos(map)
   requires holder in map
   requires amt >= 0
-  requires [allPerm(map), true]
-  ensures [true, allPerm(newMap)]
-  ensures newMap == map[holder := map[holder] + amt]
+  ensures forall h : Holder :: {h in newMap} h in map == h in newMap
+  ensures [
+    true,
+    forall h : Holder :: h in map ==> (newMap[h] - map[h]) / 1 == perm(Owns(h)) - old(perm(Owns(h)))
+  ]
   ensures acc(Owns(holder), amt / 1)
+  ensures [
+    forall h : Holder :: h in map ==> (newMap[h] - map[h]) / 1 == perm(Owns(h)) - old(perm(Owns(h))),
+    true
+  ]
   {
     inhale acc(Owns(holder), amt / 1)
     newMap := map[holder := map[holder] + amt]
@@ -45,9 +57,11 @@ method decreaseAmt(map: Map[Holder, Int], holder: Holder, amt: Int)
   requires amt >= 0
   requires allPos(map)
   requires acc(Owns(holder), amt / 1)
-  requires [allPerm(map), true]
-  ensures newMap == map[holder := map[holder] - amt]
-  ensures [true, allPerm(newMap)]
+  ensures forall h : Holder :: {h in newMap} h in map == h in newMap
+  ensures [
+    forall h : Holder :: h in map ==> (newMap[h] - map[h]) / 1 == perm(Owns(h)) - old(perm(Owns(h))),
+    forall h : Holder :: h in map ==> (newMap[h] - map[h]) / 1 == perm(Owns(h)) - old(perm(Owns(h)))
+  ]
   {
     exhale acc(Owns(holder), amt / 1)
     newMap := map[holder := map[holder] - amt]
@@ -57,11 +71,18 @@ method decreaseAmt(map: Map[Holder, Int], holder: Holder, amt: Int)
 method client(map: Map[Holder, Int], holder: Holder) 
   returns (newMap: Map[Holder, Int])
   requires allPos(map)
-  requires [allPerm(map), true]
   requires holder in map
-  ensures [true, allPerm(newMap)]
+  ensures forall h : Holder :: {h in newMap} h in map == h in newMap
+  ensures [
+    forall h : Holder :: h in map ==> (newMap[h] - map[h]) / 1 == perm(Owns(h)) - old(perm(Owns(h))),
+    forall h : Holder :: h in map ==> (newMap[h] - map[h]) / 1 == perm(Owns(h)) - old(perm(Owns(h)))
+  ]
 {
   newMap := increaseAmt(map, holder, 3)
   newMap := decreaseAmt(newMap, holder, 3)
-  assert map == newMap
+  newMap := increaseAmt(newMap, holder, 3)
+  newMap := increaseAmt(newMap, holder, 3)
+  newMap := decreaseAmt(newMap, holder, 3)
+  newMap := decreaseAmt(newMap, holder, 3)
+  assert newMap == map
 }
