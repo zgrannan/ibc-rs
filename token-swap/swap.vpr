@@ -3,6 +3,22 @@
 domain Resource {
     function mkResource(id: Int): Resource
     function toResource(bank: Ref, acctID: AccountID, coin: Coin, path: Path): Resource
+
+    axiom toResourceInv {
+        forall 
+            bank1 : Ref, 
+            bank2: Ref, 
+            acctID1: AccountID, 
+            acctID2: AccountID, 
+            coin1: Coin, 
+            coin2: Coin, 
+            path1: Path, 
+            path2: Path ::
+            
+            (bank1 != bank2 || acctID1 != acctID2 || coin1 != coin2 || path1 != path2) ==>
+            toResource(bank1, acctID1, coin1, path1) != toResource(bank2, acctID2, coin2, path2)
+
+    }
 }
 
 
@@ -113,8 +129,12 @@ forall acctID: AccountID, c: Coin, p : Path ::
 
 )
 
-define BankPost(bank) (
-    [bankPost(bank), bankPost(bank)]
+define bankPostPreExhale(bank) (
+    [true, bankPost(bank)]
+)
+
+define bankPostPostExhale(bank) (
+    [bankPost(bank), true]
 )
 
 method bankMintTokens(
@@ -127,14 +147,17 @@ method bankMintTokens(
     requires acc(bank.bankBalances)
     requires amt >= 0
     ensures acc(bank.bankBalances)
-    // ensures BankPost(bank)
-    ensures owns(toResource(bank, to, coin, path), amt)
     ensures bank.bankBalances == updated(old(bank.bankBalances), to, coin, path, amt)
+    ensures bankPostPreExhale(bank)
+    ensures owns(toResource(bank, to, coin, path), amt)
+    ensures bankPostPostExhale(bank)
     ensures success
 {
     ghostMint(toResource(bank, to, coin, path), amt)
     updateBalance(bank, to, path, coin, amt)
     success := true
+    assert bankPost(bank)
+
 }
 
 define bankBurnTokensPre(bankBalances, from, path, coin, amt) (
@@ -160,7 +183,8 @@ method bankBurnTokens(
     ensures success == bankBurnTokensPre(old(bank.bankBalances), from, path, coin, amt)
     ensures !success ==> bank.bankBalances == old(bank.bankBalances)
     ensures success ==> burnPost(bank, from, coin, path, amt)
-    // ensures BankPost(bank)
+    ensures bankPostPreExhale(bank)
+    ensures bankPostPostExhale(bank)
 {
     if(bankBurnTokensPre(bank.bankBalances, from, path, coin, amt)) {
         ghostBurn(
@@ -209,7 +233,8 @@ method bankTransferTokens(
     )
     requires BankPre(bank)
     ensures acc(bank.bankBalances)
-    // ensures BankPost(bank)
+    ensures bankPostPreExhale(bank)
+    ensures bankPostPostExhale(bank)
     ensures success == bankTransferTokensPre(old(bank.bankBalances), from, to, path, coin, amt)
     ensures !success ==> bank.bankBalances == old(bank.bankBalances)
     ensures success ==> transferBalancePost(bank, from, to, path, coin, amt)
@@ -365,7 +390,8 @@ method sendFungibleTokens(
    ensures(
     sendWillBurn(path, sourcePort, sourceChannel, old(bank.bankBalances), sender, coin, amount) ==> success
    )
-   // ensures BankPost(bank)
+   ensures bankPostPreExhale(bank)
+   ensures bankPostPostExhale(bank)
    ensures !success ==> bank.bankBalances == old(bank.bankBalances)
    ensures success ==> (packet == mkPacket(sourcePort, sourceChannel, PacketData(path, coin, sender, receiver, amount)))
    ensures (success && !startsWith(path, sourcePort, sourceChannel)) ==> 
@@ -420,7 +446,8 @@ method refundTokens(
         )
     )
     ensures acc(bank.bankBalances)
-    // ensures BankPost(bank)
+    ensures bankPostPreExhale(bank)
+    ensures bankPostPostExhale(bank)
 {
     var success: Bool
 
@@ -475,7 +502,7 @@ method onRecvPacket(
             )
     )
     ensures acc(bank.bankBalances)
-    // ensures BankPost(bank)
+    ensures bankPostPreExhale(bank)
     ensures(
         packetIsSource(packet) &&
         bankTransferTokensPre(
@@ -514,6 +541,7 @@ method onRecvPacket(
         ),
         packet.data.amount
     ))
+    ensures bankPostPostExhale(bank)
 {
     var success: Bool
     if(packetIsSource(packet)) {
@@ -554,8 +582,9 @@ method onAcknowledgePacket(
         ), packet.data.amount
     )
     ensures acc(bank.bankBalances)
-    // ensures BankPost(bank)
+    ensures bankPostPreExhale(bank)
     ensures ack.success ==> bank.bankBalances == old(bank.bankBalances)
+    ensures bankPostPostExhale(bank)
 {
     if(!ack.success) {
         refundTokens(bank, packet)
@@ -598,8 +627,10 @@ method roundTrip(
     requires owns(toResource(bank1, sender, coin, path), amount)
     ensures acc(bank1.bankBalances)
     ensures acc(bank2.bankBalances)
-    // ensures BankPost(bank1)
-    // ensures BankPost(bank2)
+    ensures bankPostPreExhale(bank1)
+    ensures bankPostPostExhale(bank1)
+    ensures bankPostPreExhale(bank2)
+    ensures bankPostPostExhale(bank2)
     ensures forall acctID: AccountID, c: Coin, p: Path :: {unused(acctID, p, c)}
         balanceOf(bank1.bankBalances, acctID, c, p) == balanceOf(old(bank1.bankBalances), acctID, c, p)
     ensures forall acctID: AccountID, c: Coin, p: Path :: {unused(acctID, p, c)}
