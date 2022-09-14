@@ -21,20 +21,10 @@ domain Resource {
     }
 }
 
-
-
 predicate Owns(resource: Resource)
-
-define updated(bankBalances, acctID, coin, path, amt) (
-    adjustAmount(bankBalances, acctID, coin, path, amt)
-)
 
 define owns(resource, amount) (
     acc(Owns(resource), amount / 1)
-)
-
-define bal(holder, resource) (
-    perm(Owns(holder, resource))
 )
 
 method ghostMint(
@@ -72,6 +62,17 @@ domain BankBalances {
         amt: Int
     ): BankBalances
 
+    function bbEq(
+        bank1: BankBalances,
+        bank2: BankBalances
+    ): Bool
+
+    axiom extEq {
+        forall bank1: BankBalances, bank2: BankBalances ::
+          bbEq(bank1, bank2) == (forall acctID : AccountID, coin: Coin, path: Path ::
+            balanceOf(bank1, acctID, coin, path) == balanceOf(bank2, acctID, coin, path))
+    }
+
     axiom balancesPositive {
         forall bank: BankBalances, acctID: AccountID, coin: Coin, path: Path ::
             balanceOf(bank, acctID, coin, path) >= 0
@@ -93,6 +94,16 @@ field bankBalances: BankBalances
 
 domain AccountID { }
 
+adt Path {
+    Empty()
+
+    Cons(
+        headPort: Port,
+        headChannel: ChannelEnd,
+        tail: Path
+    )
+}
+
 define startsWith(path, port, channel) (
     path.isCons && path.headPort == port && path.headChannel == channel
 )
@@ -108,17 +119,8 @@ function dropPrefix(path: Path, port: Port, channel: ChannelEnd): Path
 }
 
 define updateBalance(bank, acctID, path, coin, amt){
-    bank.bankBalances := updated(bank.bankBalances, acctID, coin, path, amt)
-    // if(acctID in old(bank.bankBalances) && coin in old(bank.bankBalances[acctID])) {
-    //     assume sumValues(bank.bankBalances[acctID][coin]) == sumValues(old(bank.bankBalances[acctID][coin])) + amt
-    // } else {
-    //     assume sumValues(bank.bankBalances[acctID][coin]) == amt
-    // }
+    bank.bankBalances := adjustAmount(bank.bankBalances, acctID, coin, path, amt)
 }
-
-define BankPre(bank) (
-    true
-)
 
 define bankPost(bank) (
 forall acctID: AccountID, c: Coin, p : Path :: 
@@ -147,7 +149,6 @@ method bankMintTokens(
     requires acc(bank.bankBalances)
     requires amt >= 0
     ensures acc(bank.bankBalances)
-    ensures bank.bankBalances == updated(old(bank.bankBalances), to, coin, path, amt)
     ensures bankPostPreExhale(bank)
     ensures owns(toResource(bank, to, coin, path), amt)
     ensures bankPostPostExhale(bank)
@@ -156,16 +157,10 @@ method bankMintTokens(
     ghostMint(toResource(bank, to, coin, path), amt)
     updateBalance(bank, to, path, coin, amt)
     success := true
-    assert bankPost(bank)
-
 }
 
 define bankBurnTokensPre(bankBalances, from, path, coin, amt) (
     balanceOf(bankBalances, from, coin, path) >= amt
-)
-
-define burnPost(bank, from, path, coin, amt) (
-    bank.bankBalances == updated(old(bank.bankBalances), from, path, coin, 0 - amt)
 )
 
 method bankBurnTokens(
@@ -178,11 +173,8 @@ method bankBurnTokens(
     requires acc(bank.bankBalances)
     requires amt >= 0
     requires bankBurnTokensPre(bank.bankBalances, from, path, coin, amt) ==> owns(toResource(bank, from, coin, path), amt)
-    requires BankPre(bank)
     ensures acc(bank.bankBalances)
     ensures success == bankBurnTokensPre(old(bank.bankBalances), from, path, coin, amt)
-    ensures !success ==> bank.bankBalances == old(bank.bankBalances)
-    ensures success ==> burnPost(bank, from, coin, path, amt)
     ensures bankPostPreExhale(bank)
     ensures bankPostPostExhale(bank)
 {
@@ -197,21 +189,6 @@ method bankBurnTokens(
         success := false
     }
 }
-
-define transferBalancePost(
-    bank,
-    from,
-    to,
-    path,
-    coin,
-    amt
-) (
-    bank.bankBalances == 
-        updated(
-            updated(old(bank.bankBalances), from, coin, path, 0 - amt),
-            to, coin, path, amt
-        )
-)
 
 define bankTransferTokensPre(bankBalances, from, to, path, coin, amt) (
     from != to && balanceOf(bankBalances, from, coin, path) >= amt
@@ -231,14 +208,11 @@ method bankTransferTokens(
         toResource(bank, from, coin, path),
         amt
     )
-    requires BankPre(bank)
     ensures acc(bank.bankBalances)
     ensures bankPostPreExhale(bank)
+    ensures success ==> owns(toResource(bank, to, coin, path), amt)
     ensures bankPostPostExhale(bank)
     ensures success == bankTransferTokensPre(old(bank.bankBalances), from, to, path, coin, amt)
-    ensures !success ==> bank.bankBalances == old(bank.bankBalances)
-    ensures success ==> transferBalancePost(bank, from, to, path, coin, amt)
-    ensures success ==> owns(toResource(bank, to, coin, path), amt)
 {
     if(bankTransferTokensPre(bank.bankBalances, from, to, path, coin, amt)) {
        ghostMint(toResource(bank, to, coin, path), amt)
@@ -259,15 +233,6 @@ domain ChannelEnd {
     function mkChannelEnd(id: Int): ChannelEnd
 }
 
-adt Path {
-    Empty()
-
-    Cons(
-        headPort: Port,
-        headChannel: ChannelEnd,
-        tail: Path
-    )
-}
 
 adt FungibleTokenPacketData {
     PacketData(
@@ -357,15 +322,10 @@ method sendFungibleTokens(
     sourceChannel: ChannelEnd
 ) returns (success: Bool, packet: Packet)
    requires acc(bank.bankBalances)
-   requires BankPre(bank)
    requires amount >= 0
    requires(
-    sendWillBurn(path, sourcePort, sourceChannel, bank.bankBalances, sender, coin, amount) ==> 
-        owns(toResource(bank, sender, coin, path), amount)
-   )
-   requires(
-    sendWillTransfer(
-        path, 
+    sendWillBurn(path, sourcePort, sourceChannel, bank.bankBalances, sender, coin, amount) ||
+    sendWillTransfer(path, 
         sourcePort, 
         sourceChannel, 
         bank.bankBalances, 
@@ -373,9 +333,9 @@ method sendFungibleTokens(
         escrowAddress(bank, sourceChannel), 
         coin, 
         amount
-    ) ==> owns(toResource(bank, sender, coin, path), amount)
-   )
+    ) ==> owns(toResource(bank, sender, coin, path), amount))
    ensures acc(bank.bankBalances)
+   ensures bankPostPreExhale(bank)
    ensures(
     sendWillTransfer(
         path, 
@@ -387,17 +347,9 @@ method sendFungibleTokens(
         coin, 
         amount
     ) ==> owns(toResource(bank, escrowAddress(bank, sourceChannel), coin, path), amount) && success)
-   ensures(
-    sendWillBurn(path, sourcePort, sourceChannel, old(bank.bankBalances), sender, coin, amount) ==> success
-   )
-   ensures bankPostPreExhale(bank)
+   ensures(sendWillBurn(path, sourcePort, sourceChannel, old(bank.bankBalances), sender, coin, amount) ==> success)
    ensures bankPostPostExhale(bank)
-   ensures !success ==> bank.bankBalances == old(bank.bankBalances)
    ensures success ==> (packet == mkPacket(sourcePort, sourceChannel, PacketData(path, coin, sender, receiver, amount)))
-   ensures (success && !startsWith(path, sourcePort, sourceChannel)) ==> 
-     transferBalancePost(bank, sender, escrowAddress(bank, sourceChannel), path, coin, amount)
-   ensures (success && startsWith(path, sourcePort, sourceChannel)) ==> 
-     burnPost(bank, sender, coin, path, amount)
 {
     if(!startsWith(path, sourcePort, sourceChannel)) {
         success := bankTransferTokens(
@@ -432,7 +384,6 @@ method refundTokens(
     packet: Packet
 ) 
     requires acc(bank.bankBalances)
-    requires BankPre(bank)
     requires packet.data.amount >= 0
     requires (
         !startsWith(packet.data.path, packet.sourcePort, packet.sourceChannel) ==>
@@ -481,7 +432,6 @@ method onRecvPacket(
     packet: Packet
 ) returns (ack: FungibleTokenPacketAcknowledgement) 
     requires acc(bank.bankBalances)
-    requires BankPre(bank)
     requires packet.data.amount >= 0
     requires(
         packetIsSource(packet) &&
@@ -511,28 +461,18 @@ method onRecvPacket(
             packet.data.receiver,
             dropPrefix(packet.data.path, packet.sourcePort, packet.sourceChannel),
             packet.data.coin,
-            packet.data.amount) ==> ack.success
+            packet.data.amount) ==> 
+            ack.success && owns(
+                    toResource(
+                        bank, 
+                        packet.data.receiver, 
+                        packet.data.coin,
+                        packet.data.path.tail
+                    ),
+                    packet.data.amount
+                )
     )
-    ensures !packetIsSource(packet) ==> ack.success
-    ensures (ack.success && packetIsSource(packet)) ==> 
-        transferBalancePost(
-            bank, 
-            escrowAddress(bank, packet.destChannel), 
-            packet.data.receiver, 
-            packet.data.path.tail,
-            packet.data.coin, 
-            packet.data.amount
-        )
-    ensures(!packetIsSource(packet) ==> 
-        bank.bankBalances == updated(
-            old(bank.bankBalances), 
-            packet.data.receiver,
-            packet.data.coin,
-            prependPrefix(packet.data.path, packet.destPort, packet.destChannel),
-            packet.data.amount
-        )
-    )
-    ensures(!packetIsSource(packet) ==> owns(
+    ensures(!packetIsSource(packet) ==> ack.success && owns(
         toResource(
             bank,
             packet.data.receiver,
@@ -571,7 +511,6 @@ method onAcknowledgePacket(
     packet: Packet
 ) 
     requires acc(bank.bankBalances)
-    requires BankPre(bank)
     requires packet.data.amount >= 0
     requires !ack.success ==> owns(
         toResource(
@@ -583,7 +522,6 @@ method onAcknowledgePacket(
     )
     ensures acc(bank.bankBalances)
     ensures bankPostPreExhale(bank)
-    ensures ack.success ==> bank.bankBalances == old(bank.bankBalances)
     ensures bankPostPostExhale(bank)
 {
     if(!ack.success) {
@@ -593,8 +531,6 @@ method onAcknowledgePacket(
     }
 
 }
-
-function unused(acctID: AccountID, path: Path, c: Coin): Int
 
 method roundTrip(
     bank1: Ref,
@@ -611,8 +547,6 @@ method roundTrip(
 ) 
     requires acc(bank1.bankBalances)
     requires acc(bank2.bankBalances)
-    requires BankPre(bank1)
-    requires BankPre(bank2)
     requires bank1 != bank2
     requires amount >= 0
     requires !startsWith(path, sourcePort, sourceChannel)
@@ -631,10 +565,8 @@ method roundTrip(
     ensures bankPostPostExhale(bank1)
     ensures bankPostPreExhale(bank2)
     ensures bankPostPostExhale(bank2)
-    ensures forall acctID: AccountID, c: Coin, p: Path :: {unused(acctID, p, c)}
-        balanceOf(bank1.bankBalances, acctID, c, p) == balanceOf(old(bank1.bankBalances), acctID, c, p)
-    ensures forall acctID: AccountID, c: Coin, p: Path :: {unused(acctID, p, c)}
-        balanceOf(bank2.bankBalances, acctID, c, p) == balanceOf(old(bank2.bankBalances), acctID, c, p)
+    ensures bbEq(bank1.bankBalances, old(bank1.bankBalances))
+    ensures bbEq(bank2.bankBalances, old(bank2.bankBalances))
 {
     var success: Bool
     var packet: Packet
