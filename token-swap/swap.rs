@@ -1,78 +1,111 @@
+#![feature(box_patterns)]
 #![allow(dead_code, unused)]
-use std::collections::HashMap;
 use std::convert::TryInto;
 use prusti_contracts::*;
 
-#[derive(Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash)]
 struct AccountID(u32);
-#[derive(Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash)]
 struct Coin(u32);
-#[derive(Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash)]
 struct ChannelEnd(u32);
-#[derive(Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash)]
 struct Port(u32);
 
-#[derive(Eq, Hash)]
+// #[extern_spec]
+// impl std::boxed::Box {
+//     #[pure]
+//     fn new<T>(t: T) -> Box<T>;
+// }
+
+#[derive(Clone, Eq, Hash)]
 enum Path {
     Empty(),
     Cons {
-        port: Port,
-        channel_end: ChannelEnd,
+        head_port: Port,
+        head_channel: ChannelEnd,
         tail: Box<Path>
     }
 }
 
+impl Path {
+    #[pure]
+    #[trusted]
+    fn prepend_prefix(&self, port: Port, channel: ChannelEnd) -> &Path {
+        unimplemented!()
+    }
+
+    #[pure]
+    fn starts_with(&self, port: &Port, channel: &ChannelEnd) -> bool {
+        match self {
+            Path::Empty() => false,
+            Path::Cons{ head_port, head_channel, .. } => port == head_port && channel == head_channel
+        }
+    }
+
+    #[pure]
+    #[requires(self.starts_with(port, channel))]
+    #[trusted]
+    fn drop_prefix(&self, port: &Port, channel: &ChannelEnd) -> &Path {
+        match self {
+            Path::Empty() => unreachable!(),
+            Path::Cons{ box tail, .. } => tail
+        }
+    }
+}
+
+
+
 // Prusti does not like derived PartialEQ
 impl PartialEq for Path {
     #[trusted]
+    #[pure]
     fn eq(&self, other: &Path) -> bool {
         unimplemented!()
     }
 
 }
 
-
-struct Bank {
-    balances: HashMap<AccountID, HashMap<Coin,HashMap<Path, u32>>>
-}
-
 trait Bank {
 
     #[pure]
-    #[trusted]
-    fn balance(&self, acct_id: &AccountID, path: &Path, coin: &Coin) -> u32 {
-        let acct_map = match self.balances.get(&acct_id) {
-            Some(m) => m,
-            None => return 0
-        };
-        let coin_map = match acct_map.get(&coin) {
-            Some(m) => m,
-            None => return 0
-        };
-        match coin_map.get(&path) {
-            Some(amt) => *amt,
-            None => 0
-        }
-    }
+    fn balance_of(&self, acct_id: &AccountID, path: &Path, coin: &Coin) -> u32;
 
-    #[requires(amt >= -4294967295)]
-    #[requires(amt <= 4294967295)]
-    fn update_balance(&mut self, acct_id: AccountID, path: Path, coin: Coin, amt: i64) -> bool {
-        let mut acct_map = self.balances.remove(&acct_id).unwrap_or(HashMap::new());
-        let mut coin_map = acct_map.remove(&coin).unwrap_or(HashMap::new());
-        let old_value = coin_map.remove(&path).unwrap_or(0);
-        let (success, new_value) = match ((old_value as i64) + amt).try_into() {
-           Ok(nv) => (true, nv),
-           Err(_) => (false, old_value)
-        };
-        coin_map.insert(path, new_value);
-        acct_map.insert(coin, coin_map);
-        self.balances.insert(acct_id, acct_map);
-        success
-    }
+    #[requires(amt >= 0 ==> u32::MAX - self.balance_of(acct_id, path, coin) >= (amt as u32))]
+    #[requires(amt < 0 ==> ((0 - amt) as u32) <= self.balance_of(acct_id, path, coin))]
+    #[ensures(
+        forall(|acct_id2: &AccountID, coin2: &Coin, path2: &Path|
+          self.balance_of(acct_id2, path2, coin2) ==
+          if(acct_id == acct_id2 && coin == coin2 && path === path2) {
+            if(amt >= 0) {
+                old(self.balance_of(acct_id, path, coin)) + (amt as u32)
+            } else {
+                old(self.balance_of(acct_id, path, coin)) - ((0 - amt) as u32)
+            }
+          } else {
+            old(self.balance_of(acct_id2, path2, coin2))
+          }
+        )
+    )]
+    fn adjust_amount(&mut self, acct_id: &AccountID, path: &Path, coin: &Coin, amt: i32) -> u32;
 
-    fn mint_tokens(&mut self, to: AccountID, path: Path, coin: Coin, amt: u32) -> bool {
-        self.update_balance(to, path, coin, amt as i64)
+}
+
+#[requires(amt < i32::MAX as u32)]
+#[ensures(result)]
+fn mint_tokens(bank: &mut dyn Bank, to: &AccountID, path: &Path, coin: &Coin, amt: u32) -> bool {
+    bank.adjust_amount(to, path, coin, amt as i32);
+    true
+}
+
+#[requires(amt < i32::MAX as u32)]
+#[ensures(result == (bank.balance_of(to, path, coin) >= amt))]
+fn burn_tokens(bank: &mut dyn Bank, to: &AccountID, path: &Path, coin: &Coin, amt: u32) -> bool {
+    if(bank.balance_of(to, path, coin) >= amt) {
+        bank.adjust_amount(to, path, coin, (0 - amt as i32));
+        true
+    } else {
+        false
     }
 }
 

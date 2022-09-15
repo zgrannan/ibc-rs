@@ -168,7 +168,7 @@ method bankBurnTokens(
 ) returns (success: Bool)
     requires acc(bank.bankBalances)
     requires amt >= 0
-    requires bankBurnTokensPre(bank.bankBalances, from, path, coin, amt) ==> owns(toResource(bank, from, coin, path), amt)
+    requires (balanceOf(bank.bankBalances, from, coin, path) >= amt) ==> owns(toResource(bank, from, coin, path), amt)
     ensures acc(bank.bankBalances)
     ensures success == bankBurnTokensPre(old(bank.bankBalances), from, path, coin, amt)
     ensures bankPostPreExhale(bank)
