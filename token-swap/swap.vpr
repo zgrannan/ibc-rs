@@ -46,6 +46,13 @@ method ghostBurn(
 
 domain Coin {}
 
+function bbEq(
+    bank1: BankBalances,
+    bank2: BankBalances
+): Bool {
+    forall acctID : AccountID, coin: Coin, path: Path ::
+            balanceOf(bank1, acctID, coin, path) == balanceOf(bank2, acctID, coin, path)
+}
 domain BankBalances {
     function balanceOf(
         bank: BankBalances,
@@ -61,17 +68,6 @@ domain BankBalances {
         path: Path,
         amt: Int
     ): BankBalances
-
-    function bbEq(
-        bank1: BankBalances,
-        bank2: BankBalances
-    ): Bool
-
-    axiom extEq {
-        forall bank1: BankBalances, bank2: BankBalances ::
-          bbEq(bank1, bank2) == (forall acctID : AccountID, coin: Coin, path: Path ::
-            balanceOf(bank1, acctID, coin, path) == balanceOf(bank2, acctID, coin, path))
-    }
 
     axiom balancesPositive {
         forall bank: BankBalances, acctID: AccountID, coin: Coin, path: Path ::
