@@ -89,9 +89,26 @@ trait Bank {
     )]
     fn adjust_amount(&mut self, acct_id: &AccountID, path: &Path, coin: &Coin, amt: i32) -> u32;
 
+    #[pure]
+    fn bank_transfer_tokens_pre(&self, from: &AccountID, to: &AccountID, path: &Path, coin: &Coin, amt: u32) -> bool {
+        from != to && self.balance_of(from, path, coin) >= amt
+    }
+
+    #[requires(from != to)]
+    fn transfer_tokens(&mut self, from: &AccountID, to: &AccountID, path: &Path, coin: &Coin, amt: u32) -> bool {
+        if(self.bank_transfer_tokens_pre(from, to, path, coin, amt)) {
+            self.adjust_amount(from, path, coin, 0 - (amt as i32));
+            self.adjust_amount(to, path, coin, amt as i32);
+            true
+        } else {
+            false
+        }
+    }
+
 }
 
-#[requires(amt < i32::MAX as u32)]
+#[requires(amt <= i32::MAX as u32)]
+#[requires(u32::MAX - bank.balance_of(to, path, coin) >= amt)]
 #[ensures(result)]
 fn mint_tokens(bank: &mut dyn Bank, to: &AccountID, path: &Path, coin: &Coin, amt: u32) -> bool {
     bank.adjust_amount(to, path, coin, amt as i32);
@@ -99,7 +116,7 @@ fn mint_tokens(bank: &mut dyn Bank, to: &AccountID, path: &Path, coin: &Coin, am
 }
 
 #[requires(amt < i32::MAX as u32)]
-#[ensures(result == (bank.balance_of(to, path, coin) >= amt))]
+#[ensures(result == (old(bank.balance_of(to, path, coin)) >= amt))]
 fn burn_tokens(bank: &mut dyn Bank, to: &AccountID, path: &Path, coin: &Coin, amt: u32) -> bool {
     if(bank.balance_of(to, path, coin) >= amt) {
         bank.adjust_amount(to, path, coin, (0 - amt as i32));
@@ -108,5 +125,6 @@ fn burn_tokens(bank: &mut dyn Bank, to: &AccountID, path: &Path, coin: &Coin, am
         false
     }
 }
+
 
 pub fn main(){}
