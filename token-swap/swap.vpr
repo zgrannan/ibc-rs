@@ -13,7 +13,7 @@ domain Resource {
             coin1: Coin, 
             coin2: Coin, 
             path1: Path, 
-            path2: Path ::
+            path2: Path :: {toResource(bank1, acctID1, coin1, path1), toResource(bank2, acctID2, coin2, path2)}
             
             (bank1 != bank2 || acctID1 != acctID2 || coin1 != coin2 || path1 != path2) ==>
             toResource(bank1, acctID1, coin1, path1) != toResource(bank2, acctID2, coin2, path2)
@@ -50,7 +50,7 @@ function bbEq(
     bank1: BankBalances,
     bank2: BankBalances
 ): Bool {
-    forall acctID : AccountID, coin: Coin, path: Path ::
+    forall acctID : AccountID, coin: Coin, path: Path :: {balanceOf(bank1, acctID, coin, path)}
             balanceOf(bank1, acctID, coin, path) == balanceOf(bank2, acctID, coin, path)
 }
 domain BankBalances {
@@ -61,30 +61,26 @@ domain BankBalances {
         path: Path
     ): Int
 
-    function adjustAmount(
-        bank: BankBalances,
-        acctID: AccountID,
-        coin: Coin,
-        path: Path,
-        amt: Int
-    ): BankBalances
 
     axiom balancesPositive {
-        forall bank: BankBalances, acctID: AccountID, coin: Coin, path: Path ::
+        forall bank: BankBalances, acctID: AccountID, coin: Coin, path: Path :: {balanceOf(bank, acctID, coin, path)}
             balanceOf(bank, acctID, coin, path) >= 0
     }
-
-    axiom axiomAdjustAmount {
-        forall bank: BankBalances, acctID: AccountID, coin: Coin, path: Path, amt: Int ::
-            let newBank == (adjustAmount(bank, acctID, coin, path, amt))
-            in forall acctID2: AccountID, coin2: Coin, path2: Path :: (
-                balanceOf(newBank, acctID2, coin2, path2) ==
-                ((acctID == acctID2 && coin == coin2 && path == path2) ?
-                balanceOf(bank, acctID2, coin2, path2) + amt :
-                balanceOf(bank, acctID2, coin2, path2))
-            )
-    }
 }
+
+function adjustAmount(
+    bank: BankBalances,
+    acctID: AccountID,
+    coin: Coin,
+    path: Path,
+    amt: Int
+): BankBalances
+    requires balanceOf(bank, acctID, coin, path) + amt >= 0
+    ensures forall acctID2: AccountID, coin2: Coin, path2: Path :: {balanceOf(result, acctID2, coin2, path2)}
+        balanceOf(result, acctID2, coin2, path2) ==
+        ((acctID == acctID2 && coin == coin2 && path == path2) ?
+        balanceOf(bank, acctID2, coin2, path2) + amt :
+        balanceOf(bank, acctID2, coin2, path2))
 
 field bankBalances: BankBalances
 
@@ -119,7 +115,7 @@ define updateBalance(bank, acctID, path, coin, amt){
 }
 
 define bankPost(bank) (
-forall acctID: AccountID, c: Coin, p : Path :: 
+forall acctID: AccountID, c: Coin, p : Path ::  {balanceOf(bank.bankBalances, acctID, c, p)}
   (balanceOf(bank.bankBalances, acctID, c, p) - 
    balanceOf(old(bank.bankBalances), acctID, c, p)) / 1
       == perm(Owns(toResource(bank, acctID, c, p))) 
