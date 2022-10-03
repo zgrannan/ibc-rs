@@ -90,7 +90,7 @@ version = "=0.23.7"
 default-features = false
 
 [dependencies.tendermint-proto]
-version = "=0.23.7"
+version = "=0.25.0"
 
 [dev-dependencies]
 ibc = { version = "0.16.0", path = "../modules", features = ["mocks"] }
