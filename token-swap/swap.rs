@@ -14,6 +14,20 @@ struct ChannelEnd(u32);
 #[derive(Copy, Clone, Eq, PartialEq, Hash)]
 struct Port(u32);
 
+#[extern_spec]
+impl<T> std::option::Option<T> {
+    #[pure]
+    #[ensures(matches!(*self, Some(_)) == result)]
+    pub fn is_some(&self) -> bool;
+
+    #[pure]
+    #[ensures(self.is_some() == !result)]
+    pub fn is_none(&self) -> bool;
+
+    #[requires(self.is_some())]
+    pub fn unwrap(self) -> T;
+}
+
 #[derive(Eq, PartialEq, Hash)]
 #[invariant(self.amount <= i32::MAX as u32)]
 struct FungibleTokenPacketData {
@@ -122,7 +136,15 @@ trait Bank {
     #[requires(amt <= i32::MAX as u32)]
     #[requires(u32::MAX - self.balance_of(to, path, coin) >= amt)]
     #[requires(from != to)]
-    fn transfer_tokens(&mut self, from: AccountID, to: AccountID, path: &Path, coin: &Coin, amt: u32) -> bool {
+    #[ensures(result == old(self.bank_transfer_tokens_pre(from, to, path, coin, amt)))]
+    fn transfer_tokens(
+        &mut self,
+        from: AccountID,
+        to: AccountID,
+        path: &Path,
+        coin: &Coin,
+        amt: u32
+    ) -> bool {
         if(self.bank_transfer_tokens_pre(from, to, path, coin, amt)) {
             self.adjust_amount(from, path, coin, 0 - (amt as i32));
             self.adjust_amount(to, path, coin, amt as i32);
@@ -152,12 +174,36 @@ trait Bank {
     }
 }
 
+#[pure]
+fn send_will_transfer<B: Bank>(
+    bank: &B,
+    path: &Path,
+    source_port: Port,
+    source_channel: ChannelEnd,
+    sender: AccountID,
+    escrow_address: AccountID,
+    coin: &Coin,
+    amount: u32
+) -> bool {
+    !path.starts_with(source_port, source_channel) &&
+    bank.bank_transfer_tokens_pre(sender, escrow_address, path, coin, amount)
+}
 
 #[requires(amount < i32::MAX as u32)]
 #[requires(u32::MAX - bank.balance_of(bank.escrow_address(source_channel), path, coin) >= amount)]
 #[requires(sender != bank.escrow_address(source_channel))]
-fn send_fungible_tokens(
-    bank: &mut dyn Bank,
+#[ensures(
+    old(send_will_transfer(
+       bank,
+       path,
+       source_port,
+       source_channel,
+       sender,
+       bank.escrow_address(source_channel),
+       coin,
+       amount)) ==> result.is_some())]
+fn send_fungible_tokens<B: Bank>(
+    bank: &mut B,
     path: &Path,
     coin: &Coin,
     amount: u32,
@@ -227,6 +273,11 @@ struct FungibleTokenPacketAcknowledgement {
     success: bool
 }
 
+#[pure]
+fn packet_is_source(packet: &Packet) -> bool {
+    packet.data.path.starts_with(packet.source_port, packet.source_channel)
+}
+
 #[requires(
     packet.data.path.starts_with(packet.source_port, packet.source_channel) ==>
     u32::MAX - bank.balance_of(
@@ -242,9 +293,18 @@ struct FungibleTokenPacketAcknowledgement {
         &packet.data.path.prepend_prefix(packet.dest_port, packet.dest_channel),
         &packet.data.coin
     ) >= packet.data.amount)]
-fn on_recv_packet(bank: &mut dyn Bank, packet: Packet) {
+#[ensures(!packet_is_source(&packet) ==> result.success)]
+#[ensures(packet_is_source(&packet) &&
+          old(bank.bank_transfer_tokens_pre(
+              bank.escrow_address(packet.dest_channel),
+              packet.data.receiver,
+              &packet.data.path.drop_prefix(packet.source_port, packet.source_channel),
+              &packet.data.coin,
+              packet.data.amount))
+              ==> result.success)]
+fn on_recv_packet<B: Bank>(bank: &mut B, packet: Packet) -> FungibleTokenPacketAcknowledgement {
     let FungibleTokenPacketData{ path, coin, receiver, amount, ..} = packet.data;
-    if path.starts_with(packet.source_port, packet.source_channel) {
+    let success = if packet_is_source(&packet) {
         let escrow_address = bank.escrow_address(packet.dest_channel);
         bank.transfer_tokens(
             escrow_address,
@@ -252,15 +312,17 @@ fn on_recv_packet(bank: &mut dyn Bank, packet: Packet) {
             &path.drop_prefix(packet.source_port, packet.source_channel),
             &coin,
             amount
-        );
+        )
     } else {
         bank.mint_tokens(
             receiver,
             &path.prepend_prefix(packet.dest_port, packet.dest_channel),
             &coin,
             amount
-        );
-    }
+        )
+    };
+
+    FungibleTokenPacketAcknowledgement { success }
 }
 
 #[requires(
@@ -274,6 +336,42 @@ fn on_acknowledge_packet<B: Bank>(
     if(!ack.success) {
         refund_tokens(bank, packet);
     }
+}
+
+#[requires(amount < i32::MAX as u32)]
+#[requires(u32::MAX -
+           bank1.balance_of(bank1.escrow_address(source_channel), &path, &coin) >= amount)]
+#[requires(!path.starts_with(source_port, source_channel))]
+#[requires(bank1.bank_transfer_tokens_pre(sender, bank1.escrow_address(source_channel), &path, &coin, amount))]
+fn round_trip<B: Bank>(
+    bank1: &mut B,
+    bank2: &mut B,
+    path: Path,
+    coin: Coin,
+    amount: u32,
+    sender: AccountID,
+    receiver: AccountID,
+    source_port: Port,
+    source_channel: ChannelEnd,
+    dest_port: Port,
+    dest_channel: ChannelEnd
+) {
+    let packet = send_fungible_tokens(
+        bank1,
+        &path,
+        &coin,
+        amount,
+        sender,
+        receiver,
+        source_port,
+        source_channel
+    );
+    prusti_assert!(packet.is_some());
+    let packet = packet.unwrap();
+    prusti_assume!(packet.dest_port == dest_port);
+    prusti_assume!(packet.dest_channel == dest_channel);
+
+    let ack = on_recv_packet(bank2, packet);
 }
 
 
