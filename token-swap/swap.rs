@@ -42,44 +42,37 @@ fn mk_packet(
     unimplemented!()
 }
 
-// #[extern_spec]
-// impl std::boxed::Box {
-//     #[pure   ]
-//     fn new<T>(t: T) -> Box<T>;
-// }
+#[derive(Copy, Clone, Eq, Hash)]
+struct Path(u32);
 
-#[derive(Clone, Eq, Hash)]
-enum Path {
-    Empty(),
-    Cons {
-        head_port: Port,
-        head_channel: ChannelEnd,
-        tail: Box<Path>
-    }
-}
+// #[derive(Clone, Eq, Hash)]
+// enum Path {
+//     Empty(),
+//     Cons {
+//         head_port: Port,
+//         head_channel: ChannelEnd,
+//         tail: Box<Path>
+//     }
+// }
 
 impl Path {
     #[pure]
     #[trusted]
-    fn prepend_prefix(&self, port: Port, channel: ChannelEnd) -> &Path {
+    fn prepend_prefix(self, port: Port, channel: ChannelEnd) -> Path {
         unimplemented!()
     }
 
     #[pure]
+    #[trusted]
     fn starts_with(&self, port: Port, channel: ChannelEnd) -> bool {
-        match self {
-            Path::Empty() => false,
-            Path::Cons{ head_port, head_channel, .. } => port == *head_port && channel == *head_channel
-        }
+        unimplemented!()
     }
 
     #[pure]
     #[requires(self.starts_with(port, channel))]
-    fn drop_prefix(&self, port: Port, channel: ChannelEnd) -> &Path {
-        match self {
-            Path::Empty() => unreachable!(),
-            Path::Cons{ box tail, .. } => tail
-        }
+    #[trusted]
+    fn drop_prefix(&self, port: Port, channel: ChannelEnd) -> Path {
+        unimplemented!()
     }
 }
 
@@ -209,7 +202,7 @@ fn send_fungible_tokens(
     u32::MAX - bank.balance_of(packet.data.sender, &packet.data.path, &packet.data.coin) >= packet.data.amount)
 ]
 #[requires(bank.escrow_address(packet.source_channel) != packet.data.sender)]
-fn refund_tokens(bank: &mut dyn Bank, packet: Packet) {
+fn refund_tokens<B: Bank>(bank: &mut B, packet: Packet) {
     let FungibleTokenPacketData{ path, coin, sender, amount, ..} = packet.data;
     if !path.starts_with(packet.source_port, packet.source_channel) {
         let escrow_address = bank.escrow_address(packet.source_channel);
@@ -230,25 +223,57 @@ fn refund_tokens(bank: &mut dyn Bank, packet: Packet) {
     }
 }
 
+struct FungibleTokenPacketAcknowledgement {
+    success: bool
+}
+
+#[requires(
+    packet.data.path.starts_with(packet.source_port, packet.source_channel) ==>
+    u32::MAX - bank.balance_of(
+        packet.data.receiver,
+        &packet.data.path.drop_prefix(packet.source_port, packet.source_channel),
+        &packet.data.coin
+    ) >= packet.data.amount)]
+#[requires(bank.escrow_address(packet.dest_channel) != packet.data.receiver)]
+#[requires(
+    !packet.data.path.starts_with(packet.source_port, packet.source_channel) ==>
+    u32::MAX - bank.balance_of(
+        packet.data.receiver,
+        &packet.data.path.prepend_prefix(packet.dest_port, packet.dest_channel),
+        &packet.data.coin
+    ) >= packet.data.amount)]
 fn on_recv_packet(bank: &mut dyn Bank, packet: Packet) {
     let FungibleTokenPacketData{ path, coin, receiver, amount, ..} = packet.data;
-    match path {
-        Path::Cons { head_port, head_channel, tail } if true => {},
-        _ => {}
+    if path.starts_with(packet.source_port, packet.source_channel) {
+        let escrow_address = bank.escrow_address(packet.dest_channel);
+        bank.transfer_tokens(
+            escrow_address,
+            receiver,
+            &path.drop_prefix(packet.source_port, packet.source_channel),
+            &coin,
+            amount
+        );
+    } else {
+        bank.mint_tokens(
+            receiver,
+            &path.prepend_prefix(packet.dest_port, packet.dest_channel),
+            &coin,
+            amount
+        );
     }
-    // if path.starts_with(packet.source_port, packet.source_channel) {
-    //     let escrow_address = bank.escrow_address(packet.dest_channel);
-    //     bank.transfer_tokens(
-    //         escrow_address,
-    //         receiver,
-    //         path.drop_prefix(packet.source_port, packet.source_channel),
-    //         &coin,
-    //         amount
-    //     );
-    // } else {
+}
 
-    // }
-
+#[requires(
+    u32::MAX - bank.balance_of(packet.data.sender, &packet.data.path, &packet.data.coin) >= packet.data.amount)
+]
+#[requires(bank.escrow_address(packet.source_channel) != packet.data.sender)]
+fn on_acknowledge_packet<B: Bank>(
+    bank: &mut B,
+    ack: FungibleTokenPacketAcknowledgement,
+    packet: Packet) {
+    if(!ack.success) {
+        refund_tokens(bank, packet);
+    }
 }
 
 
