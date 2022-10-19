@@ -285,64 +285,48 @@ fn send_will_transfer<B: Bank>(
 
 #[requires(amount < i32::MAX as u32)]
 #[ensures(
-    old(send_will_burn(
-       bank,
-       path,
-       source_port,
-       source_channel,
-       sender,
-       coin,
-       amount)) ==> (result == Some(
-mk_packet(
-            source_port,
-            source_channel,
-            FungibleTokenPacketData {
-                path,
-                coin,
-                sender,
-                receiver,
-                amount
-            })
-    ) &&
-        forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
+    old(send_will_burn(bank, path, source_port, source_channel, sender, coin, amount)) ==>
+        (result.is_some() && forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
                 bank.balance_of(acct_id2, path2, coin2) ==
                     if(acct_id2 == sender && coin == coin2 && path === path2) {
                         old(bank).balance_of(sender, path, coin) - amount
                     } else {
                         old(bank).balance_of(acct_id2, path2, coin2)
                     }
-                )
-))]
+)))]
 #[ensures(
-    old(send_will_transfer(
-       bank,
-       path,
-       source_port,
-       source_channel,
-       sender,
-       ctx.escrow_address(source_channel),
-       coin,
-       amount)) ==> result == Some(
-mk_packet(
+    old(
+        send_will_transfer(
+            bank,
+            path,
             source_port,
             source_channel,
-            FungibleTokenPacketData {
-                path,
-                coin,
-                sender,
-                receiver,
-                amount
-            })
-    ) && transfer_post(
-        bank,
-        old(bank),
-        sender,
-        old(ctx.escrow_address(source_channel)),
-        path,
-        coin,
-        amount
+            sender,
+            ctx.escrow_address(source_channel),
+            coin,
+    amount)) ==> result.is_some() &&
+        transfer_post(
+            bank,
+            old(bank),
+            sender,
+            old(ctx.escrow_address(source_channel)),
+            path,
+            coin,
+            amount
     )
 )]
+#[ensures(
+    result.is_some() ==>
+    result == Some(mk_packet(
+        source_port,
+        source_channel,
+        FungibleTokenPacketData {
+            path,
+            coin,
+            sender,
+            receiver,
+            amount
+})))]
 fn send_fungible_tokens<B: Bank>(
     ctx: &Ctx,
     bank: &mut B,
@@ -486,7 +470,9 @@ fn on_acknowledge_packet<B: Bank>(
 
 #[requires(amount < i32::MAX as u32)]
 #[requires(!path.starts_with(source_port, source_channel))]
-#[requires(bank1.transfer_tokens_pre(sender, ctx1.escrow_address(source_channel), path, coin, amount))]
+#[requires(
+    bank1.transfer_tokens_pre(sender, ctx1.escrow_address(source_channel), path, coin, amount))
+]
 #[ensures(
     forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
         bank1.balance_of(acct_id2, path2, coin2) ==
