@@ -24,12 +24,14 @@ impl<T> std::option::Option<T> {
     #[ensures(self.is_some() == !result)]
     pub fn is_none(&self) -> bool;
 
+    #[pure]
     #[requires(self.is_some())]
+    #[ensures(self === Some(result))]
     pub fn unwrap(self) -> T;
 }
 
-#[derive(Eq, PartialEq, Hash)]
-#[invariant(self.amount <= i32::MAX as u32)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash)]
+// #[invariant(self.amount <= i32::MAX as u32)]
 struct FungibleTokenPacketData {
     path: Path,
     coin: Coin,
@@ -38,7 +40,7 @@ struct FungibleTokenPacketData {
     amount: u32
 }
 
-#[derive(Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash)]
 struct Packet {
     source_port: Port,
     source_channel: ChannelEnd,
@@ -47,7 +49,11 @@ struct Packet {
     data: FungibleTokenPacketData
 }
 
+#[pure]
 #[trusted]
+#[ensures(result.source_port == source_port)]
+#[ensures(result.source_channel == source_channel)]
+#[ensures(result.data == data)]
 fn mk_packet(
     source_port: Port,
     source_channel: ChannelEnd,
@@ -59,19 +65,10 @@ fn mk_packet(
 #[derive(Copy, Clone, Eq, Hash)]
 struct Path(u32);
 
-// #[derive(Clone, Eq, Hash)]
-// enum Path {
-//     Empty(),
-//     Cons {
-//         head_port: Port,
-//         head_channel: ChannelEnd,
-//         tail: Box<Path>
-//     }
-// }
-
 impl Path {
     #[pure]
     #[trusted]
+    #[ensures(result.starts_with(port, channel))]
     fn prepend_prefix(self, port: Port, channel: ChannelEnd) -> Path {
         unimplemented!()
     }
@@ -88,6 +85,12 @@ impl Path {
     fn drop_prefix(&self, port: Port, channel: ChannelEnd) -> Path {
         unimplemented!()
     }
+
+    #[pure]
+    #[trusted]
+    fn tail(&self) -> Path {
+       unimplemented!()
+    }
 }
 
 
@@ -102,6 +105,30 @@ impl PartialEq for Path {
 
 }
 
+predicate! {
+    fn adjusted<B: Bank>(
+        new_bank: &B,
+        old_bank: &B,
+        acct_id: AccountID,
+        path: &Path,
+        coin: &Coin,
+        amt: i32
+    ) -> bool {
+        forall(|acct_id2: AccountID, coin2: &Coin, path2: &Path|
+          new_bank.balance_of(acct_id2, path2, coin2) ==
+          if(acct_id == acct_id2 && coin == coin2 && path === path2) {
+            if(amt >= 0) {
+                old_bank.balance_of(acct_id, path, coin) + (amt as u32)
+            } else {
+                old_bank.balance_of(acct_id, path, coin) - ((0 - amt) as u32)
+            }
+          } else {
+            old_bank.balance_of(acct_id2, path2, coin2)
+          }
+        )
+    }
+}
+
 trait Bank {
 
     #[pure]
@@ -110,7 +137,6 @@ trait Bank {
     #[pure]
     fn escrow_address(&self, channel: ChannelEnd) -> AccountID;
 
-    #[requires(amt >= 0 ==> u32::MAX - self.balance_of(acct_id, path, coin) >= (amt as u32))]
     #[requires(amt < 0 ==> ((0 - amt) as u32) <= self.balance_of(acct_id, path, coin))]
     #[ensures(
         forall(|acct_id2: AccountID, coin2: &Coin, path2: &Path|
@@ -129,13 +155,16 @@ trait Bank {
     fn adjust_amount(&mut self, acct_id: AccountID, path: &Path, coin: &Coin, amt: i32) -> u32;
 
     #[pure]
+    fn burn_tokens_pre(&self, from: AccountID, path: &Path, coin: &Coin, amt: u32) -> bool {
+        self.balance_of(from, path, coin) >= amt
+    }
+
+    #[pure]
     fn bank_transfer_tokens_pre(&self, from: AccountID, to: AccountID, path: &Path, coin: &Coin, amt: u32) -> bool {
         from != to && self.balance_of(from, path, coin) >= amt
     }
 
     #[requires(amt <= i32::MAX as u32)]
-    #[requires(u32::MAX - self.balance_of(to, path, coin) >= amt)]
-    #[requires(from != to)]
     #[ensures(result == old(self.bank_transfer_tokens_pre(from, to, path, coin, amt)))]
     fn transfer_tokens(
         &mut self,
@@ -166,12 +195,25 @@ trait Bank {
     }
 
     #[requires(amt <= i32::MAX as u32)]
-    #[requires(u32::MAX - self.balance_of(to, path, coin) >= amt)]
     #[ensures(result)]
     fn mint_tokens(&mut self, to: AccountID, path: &Path, coin: &Coin, amt: u32) -> bool {
         self.adjust_amount(to, path, coin, amt as i32);
         true
     }
+}
+
+#[pure]
+fn send_will_burn<B: Bank>(
+    bank: &B,
+    path: &Path,
+    source_port: Port,
+    source_channel: ChannelEnd,
+    sender: AccountID,
+    coin: &Coin,
+    amount: u32
+) -> bool {
+    path.starts_with(source_port, source_channel) &&
+    bank.burn_tokens_pre(sender, path, coin, amount)
 }
 
 #[pure]
@@ -190,8 +232,26 @@ fn send_will_transfer<B: Bank>(
 }
 
 #[requires(amount < i32::MAX as u32)]
-#[requires(u32::MAX - bank.balance_of(bank.escrow_address(source_channel), path, coin) >= amount)]
-#[requires(sender != bank.escrow_address(source_channel))]
+#[ensures(
+    old(send_will_burn(
+       bank,
+       path,
+       source_port,
+       source_channel,
+       sender,
+       coin,
+       amount)) ==> result == Some(
+mk_packet(
+            source_port,
+            source_channel,
+            FungibleTokenPacketData {
+                path: *path,
+                coin: *coin,
+                sender,
+                receiver,
+                amount
+            })
+    ))]
 #[ensures(
     old(send_will_transfer(
        bank,
@@ -201,7 +261,18 @@ fn send_will_transfer<B: Bank>(
        sender,
        bank.escrow_address(source_channel),
        coin,
-       amount)) ==> result.is_some())]
+       amount)) ==> result == Some(
+mk_packet(
+            source_port,
+            source_channel,
+            FungibleTokenPacketData {
+                path: *path,
+                coin: *coin,
+                sender,
+                receiver,
+                amount
+            })
+    ))]
 fn send_fungible_tokens<B: Bank>(
     bank: &mut B,
     path: &Path,
@@ -232,26 +303,24 @@ fn send_fungible_tokens<B: Bank>(
 
     if success {
         let data = FungibleTokenPacketData {
-            path: path.clone(),
+            path: *path,
             coin: *coin,
             sender,
             receiver,
             amount
         };
+        prusti_assert!(amount <= i32::MAX as u32);
         Some(mk_packet(source_port, source_channel, data))
     } else {
         None
     }
 }
 
-#[requires(
-    u32::MAX - bank.balance_of(packet.data.sender, &packet.data.path, &packet.data.coin) >= packet.data.amount)
-]
-#[requires(bank.escrow_address(packet.source_channel) != packet.data.sender)]
 fn refund_tokens<B: Bank>(bank: &mut B, packet: Packet) {
     let FungibleTokenPacketData{ path, coin, sender, amount, ..} = packet.data;
     if !path.starts_with(packet.source_port, packet.source_channel) {
         let escrow_address = bank.escrow_address(packet.source_channel);
+        prusti_assume!(amount <= i32::MAX as u32);
         bank.transfer_tokens(
             escrow_address,
             sender,
@@ -260,6 +329,7 @@ fn refund_tokens<B: Bank>(bank: &mut B, packet: Packet) {
             amount
         );
     } else {
+        prusti_assume!(amount <= i32::MAX as u32);
         bank.mint_tokens(
             sender,
             &path,
@@ -285,14 +355,6 @@ fn packet_is_source(packet: &Packet) -> bool {
         &packet.data.path.drop_prefix(packet.source_port, packet.source_channel),
         &packet.data.coin
     ) >= packet.data.amount)]
-#[requires(bank.escrow_address(packet.dest_channel) != packet.data.receiver)]
-#[requires(
-    !packet.data.path.starts_with(packet.source_port, packet.source_channel) ==>
-    u32::MAX - bank.balance_of(
-        packet.data.receiver,
-        &packet.data.path.prepend_prefix(packet.dest_port, packet.dest_channel),
-        &packet.data.coin
-    ) >= packet.data.amount)]
 #[ensures(!packet_is_source(&packet) ==> result.success)]
 #[ensures(packet_is_source(&packet) &&
           old(bank.bank_transfer_tokens_pre(
@@ -304,6 +366,7 @@ fn packet_is_source(packet: &Packet) -> bool {
               ==> result.success)]
 fn on_recv_packet<B: Bank>(bank: &mut B, packet: Packet) -> FungibleTokenPacketAcknowledgement {
     let FungibleTokenPacketData{ path, coin, receiver, amount, ..} = packet.data;
+    prusti_assume!(amount <= i32::MAX as u32);
     let success = if packet_is_source(&packet) {
         let escrow_address = bank.escrow_address(packet.dest_channel);
         bank.transfer_tokens(
@@ -314,6 +377,12 @@ fn on_recv_packet<B: Bank>(bank: &mut B, packet: Packet) -> FungibleTokenPacketA
             amount
         )
     } else {
+        prusti_assume!(u32::MAX -
+            bank.balance_of(
+                receiver,
+                &path.prepend_prefix(packet.dest_port, packet.dest_channel),
+                &coin
+            ) >= amount);
         bank.mint_tokens(
             receiver,
             &path.prepend_prefix(packet.dest_port, packet.dest_channel),
@@ -325,10 +394,7 @@ fn on_recv_packet<B: Bank>(bank: &mut B, packet: Packet) -> FungibleTokenPacketA
     FungibleTokenPacketAcknowledgement { success }
 }
 
-#[requires(
-    u32::MAX - bank.balance_of(packet.data.sender, &packet.data.path, &packet.data.coin) >= packet.data.amount)
-]
-#[requires(bank.escrow_address(packet.source_channel) != packet.data.sender)]
+#[ensures(ack.success ==> snap(bank) === old(snap(bank)))]
 fn on_acknowledge_packet<B: Bank>(
     bank: &mut B,
     ack: FungibleTokenPacketAcknowledgement,
@@ -370,8 +436,44 @@ fn round_trip<B: Bank>(
     let packet = packet.unwrap();
     prusti_assume!(packet.dest_port == dest_port);
     prusti_assume!(packet.dest_channel == dest_channel);
+    prusti_assert!(!packet_is_source(&packet));
 
+    prusti_assume!(
+packet.data.path.starts_with(packet.source_port, packet.source_channel) ==>
+        u32::MAX - bank2.balance_of(
+            packet.data.receiver,
+            &packet.data.path.drop_prefix(packet.source_port, packet.source_channel),
+            &packet.data.coin
+        ) >= packet.data.amount);
     let ack = on_recv_packet(bank2, packet);
+    prusti_assert!(ack.success);
+    on_acknowledge_packet(bank1, ack, packet);
+
+    prusti_assert!(
+        send_will_burn(
+            bank2,
+            &path.prepend_prefix(dest_port, dest_channel),
+            dest_port,
+            dest_channel,
+            receiver,
+            &coin,
+            amount
+        )
+    );
+    let packet = send_fungible_tokens(
+        bank2,
+        &path.prepend_prefix(dest_port, dest_channel),
+        &coin,
+        amount,
+        sender,
+        receiver,
+        dest_port,
+        dest_channel
+    );
+    prusti_assert!(packet.is_some());
+    let packet = packet.unwrap();
+    prusti_assume!(packet.dest_port == source_port);
+    prusti_assume!(packet.dest_channel == source_channel);
 }
 
 
