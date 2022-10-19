@@ -140,16 +140,12 @@ predicate! {
         acct_id: AccountID,
         path: Path,
         coin: Coin,
-        amt: i32
+        amt: u32
     ) -> bool {
         forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
           new_bank.balance_of(acct_id2, path2, coin2) ==
           if(acct_id == acct_id2 && coin == coin2 && path === path2) {
-            if(amt >= 0) {
-                old_bank.balance_of(acct_id, path, coin) + (amt as u32)
-            } else {
-                old_bank.balance_of(acct_id, path, coin) - ((0 - amt) as u32)
-            }
+            old_bank.balance_of(acct_id, path, coin) + (amt as u32)
           } else {
             old_bank.balance_of(acct_id2, path2, coin2)
           }
@@ -162,29 +158,18 @@ trait Bank {
     #[pure]
     fn balance_of(&self, acct_id: AccountID, path: Path, coin: Coin) -> u32;
 
-    #[requires(amt < 0 ==> ((0 - amt) as u32) <= self.balance_of(acct_id, path, coin))]
-    #[ensures(
-        forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
-          self.balance_of(acct_id2, path2, coin2) ==
-          if(acct_id == acct_id2 && coin == coin2 && path === path2) {
-            if(amt >= 0) {
-                old(self.balance_of(acct_id, path, coin)) + (amt as u32)
-            } else {
-                old(self.balance_of(acct_id, path, coin)) - ((0 - amt) as u32)
-            }
-          } else {
-            old(self.balance_of(acct_id2, path2, coin2))
-          }
-        )
-    )]
-    fn adjust_amount(&mut self, acct_id: AccountID, path: Path, coin: Coin, amt: i32) -> u32;
-
     #[pure]
-    fn transfer_tokens_pre(&self, from: AccountID, to: AccountID, path: Path, coin: Coin, amt: u32) -> bool {
+    fn transfer_tokens_pre(
+        &self,
+        from: AccountID,
+        to: AccountID,
+        path: Path,
+        coin: Coin,
+        amt: u32
+    ) -> bool {
         from != to && self.balance_of(from, path, coin) >= amt
     }
 
-    #[requires(amt <= i32::MAX as u32)]
     #[ensures(result == old(self.transfer_tokens_pre(from, to, path, coin, amt)))]
     #[ensures(result ==>
         forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
@@ -207,8 +192,8 @@ trait Bank {
         amt: u32
     ) -> bool {
         if(self.transfer_tokens_pre(from, to, path, coin, amt)) {
-            self.adjust_amount(from, path, coin, 0 - (amt as i32));
-            self.adjust_amount(to, path, coin, amt as i32);
+            self.burn_tokens(from, path, coin, amt);
+            self.mint_tokens(to, path, coin, amt);
             true
         } else {
             false
@@ -225,17 +210,8 @@ trait Bank {
             }
         )
     )]
-    fn burn_tokens(&mut self, to: AccountID, path: Path, coin: Coin, amt: u32) -> bool {
-        if(self.balance_of(to, path, coin) >= amt) {
-            prusti_assume!(amt <= i32::MAX as u32);
-            self.adjust_amount(to, path, coin, (0 - amt as i32));
-            true
-        } else {
-            false
-        }
-    }
+    fn burn_tokens(&mut self, to: AccountID, path: Path, coin: Coin, amt: u32) -> bool;
 
-    #[requires(amt <= i32::MAX as u32)]
     #[ensures(result)]
     #[ensures(forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
           self.balance_of(acct_id2, path2, coin2) ==
@@ -246,10 +222,7 @@ trait Bank {
             }
         )
     )]
-    fn mint_tokens(&mut self, to: AccountID, path: Path, coin: Coin, amt: u32) -> bool {
-        self.adjust_amount(to, path, coin, amt as i32);
-        true
-    }
+    fn mint_tokens(&mut self, to: AccountID, path: Path, coin: Coin, amt: u32) -> bool;
 }
 
 #[pure]
@@ -336,7 +309,6 @@ fn send_fungible_tokens<B: Bank>(
     source_channel: ChannelEnd
 ) -> Option<Packet> {
     let success = if(!path.starts_with(source_port, source_channel)) {
-        prusti_assume!(amount <= i32::MAX as u32);
         bank.transfer_tokens(
             sender,
             ctx.escrow_address(source_channel),
@@ -369,7 +341,6 @@ fn send_fungible_tokens<B: Bank>(
 
 fn refund_tokens<B: Bank>(ctx: &Ctx, bank: &mut B, packet: Packet) {
     let FungibleTokenPacketData{ path, coin, sender, amount, ..} = packet.data;
-    prusti_assume!(amount <= i32::MAX as u32);
     if !path.starts_with(packet.source_port, packet.source_channel) {
         bank.transfer_tokens(
             ctx.escrow_address(packet.source_channel),
@@ -397,7 +368,6 @@ fn packet_is_source(packet: Packet) -> bool {
     packet.data.path.starts_with(packet.source_port, packet.source_channel)
 }
 
-#[requires(packet.data.amount <= i32::MAX as u32)]
 #[ensures(
     !packet_is_source(packet) ==>
         result.success && adjusted(
@@ -406,7 +376,7 @@ fn packet_is_source(packet: Packet) -> bool {
             old(packet.data.receiver),
             old(packet.data.path.prepend_prefix(packet.dest_port, packet.dest_channel)),
             old(packet.data.coin),
-            old(packet.data.amount) as i32
+            old(packet.data.amount)
         )
 )]
 #[ensures(
@@ -433,7 +403,6 @@ fn packet_is_source(packet: Packet) -> bool {
 )]
 fn on_recv_packet<B: Bank>(ctx: &Ctx, bank: &mut B, packet: Packet) -> FungibleTokenPacketAcknowledgement {
     let FungibleTokenPacketData{ path, coin, receiver, amount, ..} = packet.data;
-    prusti_assume!(amount <= i32::MAX as u32);
     let success = if packet_is_source(packet) {
         bank.transfer_tokens(
             ctx.escrow_address(packet.dest_channel),
@@ -525,9 +494,6 @@ fn round_trip<B: Bank>(
     // (I think this would be done by some routing module?)
     prusti_assume!(packet.dest_port == dest_port);
     prusti_assume!(packet.dest_channel == dest_channel);
-
-    // Assume no overflow
-    prusti_assume!(packet.data.amount <= i32::MAX as u32);
 
     let ack = on_recv_packet(ctx2, bank2, packet);
     prusti_assert!(ack.success);
