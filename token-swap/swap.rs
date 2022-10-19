@@ -233,6 +233,15 @@ trait Bank {
 
     #[requires(amt <= i32::MAX as u32)]
     #[ensures(result)]
+    #[ensures(forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
+          self.balance_of(acct_id2, path2, coin2) ==
+            if(acct_id2 == to && coin == coin2 && path === path2) {
+                old(self).balance_of(to, path, coin) + amt
+            } else {
+                old(self).balance_of(acct_id2, path2, coin2)
+            }
+        )
+    )]
     fn mint_tokens(&mut self, to: AccountID, path: Path, coin: Coin, amt: u32) -> bool {
         self.adjust_amount(to, path, coin, amt as i32);
         true
@@ -309,7 +318,16 @@ mk_packet(
                 receiver,
                 amount
             })
-    ))]
+    ) && transfer_post(
+        bank,
+        old(bank),
+        sender,
+        old(bank.escrow_address(source_channel)),
+        path,
+        coin,
+        amount
+    )
+)]
 fn send_fungible_tokens<B: Bank>(
     bank: &mut B,
     path: Path,
@@ -392,7 +410,17 @@ fn packet_is_source(packet: Packet) -> bool {
         packet.data.path.drop_prefix(packet.source_port, packet.source_channel),
         packet.data.coin
     ) >= packet.data.amount)]
-#[ensures(!packet_is_source(packet) ==> result.success)]
+#[ensures(
+    !packet_is_source(packet) ==>
+        result.success && adjusted(
+            bank,
+            old(bank),
+            old(packet.data.receiver),
+            old(packet.data.path.prepend_prefix(packet.dest_port, packet.dest_channel)),
+            old(packet.data.coin),
+            old(packet.data.amount) as i32
+        )
+)]
 #[ensures(
     (packet_is_source(packet) && old(bank.bank_transfer_tokens_pre(
               bank.escrow_address(packet.dest_channel),
@@ -401,25 +429,15 @@ fn packet_is_source(packet: Packet) -> bool {
               packet.data.coin,
               packet.data.amount)))
               ==> (result.success &&
-                   bank.balance_of(
-                    old(packet.data.receiver),
-                    old(packet.data.path.tail()),
-                    old(packet.data.coin)
-                   ) == old(bank).balance_of(
-                    old(packet.data.receiver),
-                    old(packet.data.path.tail()),
-                    old(packet.data.coin)
-                   ) + packet.data.amount
-
-          // transfer_post(
-          //     bank,
-          //     old(bank),
-          //     old(bank.escrow_address(packet.dest_channel)),
-          //     old(packet.data.receiver),
-          //     old(packet.data.path.tail()),
-          //     old(packet.data.coin),
-          //     old(packet.data.amount)
-          // )
+          transfer_post(
+              bank,
+              old(bank),
+              old(bank.escrow_address(packet.dest_channel)),
+              old(packet.data.receiver),
+              old(packet.data.path.tail()),
+              old(packet.data.coin),
+              old(packet.data.amount)
+          )
         )
 )]
 fn on_recv_packet<B: Bank>(bank: &mut B, packet: Packet) -> FungibleTokenPacketAcknowledgement {
@@ -523,8 +541,8 @@ packet.data.path.starts_with(packet.source_port, packet.source_channel) ==>
         path.prepend_prefix(dest_port, dest_channel),
         coin,
         amount,
-        sender,
         receiver,
+        sender,
         dest_port,
         dest_channel
     );
