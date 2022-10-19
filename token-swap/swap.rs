@@ -110,53 +110,35 @@ impl PartialEq for Path {
 
 }
 
-predicate! {
-    fn transfer_post<B: Bank>(
-        new_bank: &B,
-        old_bank: &B,
-        from: AccountID,
-        to: AccountID,
-        path: Path,
-        coin: Coin,
-        amt: u32
-    ) -> bool {
-        forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
-          new_bank.balance_of(acct_id2, path2, coin2) ==
-            if(acct_id2 == from && coin == coin2 && path === path2) {
-                old_bank.balance_of(from, path, coin) - amt
-            } else if (acct_id2 == to && coin == coin2 && path === path2){
-                old_bank.balance_of(to, path, coin) + amt
-            } else {
-                old_bank.balance_of(acct_id2, path2, coin2)
-            }
-        )
-    }
-}
 
-predicate! {
-    fn adjusted<B: Bank>(
-        new_bank: &B,
-        old_bank: &B,
-        acct_id: AccountID,
-        path: Path,
-        coin: Coin,
-        amt: u32
-    ) -> bool {
-        forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
-          new_bank.balance_of(acct_id2, path2, coin2) ==
-          if(acct_id == acct_id2 && coin == coin2 && path === path2) {
-            old_bank.balance_of(acct_id, path, coin) + (amt as u32)
-          } else {
-            old_bank.balance_of(acct_id2, path2, coin2)
-          }
-        )
-    }
-}
 
 trait Bank {
 
     #[pure]
     fn balance_of(&self, acct_id: AccountID, path: Path, coin: Coin) -> u32;
+
+    predicate! {
+        fn transfer_tokens_post(
+            &self,
+            old_bank: &Self,
+            from: AccountID,
+            to: AccountID,
+            path: Path,
+            coin: Coin,
+            amt: u32
+        ) -> bool {
+            forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
+            self.balance_of(acct_id2, path2, coin2) ==
+                if(acct_id2 == from && coin == coin2 && path === path2) {
+                    old_bank.balance_of(from, path, coin) - amt
+                } else if (acct_id2 == to && coin == coin2 && path === path2){
+                    old_bank.balance_of(to, path, coin) + amt
+                } else {
+                    old_bank.balance_of(acct_id2, path2, coin2)
+                }
+            )
+        }
+    }
 
     #[pure]
     fn transfer_tokens_pre(
@@ -171,18 +153,14 @@ trait Bank {
     }
 
     #[ensures(result == old(self.transfer_tokens_pre(from, to, path, coin, amt)))]
-    #[ensures(result ==>
-        forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
-          self.balance_of(acct_id2, path2, coin2) ==
-            if(acct_id2 == from && coin == coin2 && path === path2) {
-                old(self).balance_of(from, path, coin) - amt
-            } else if (acct_id2 == to && coin == coin2 && path === path2){
-                old(self).balance_of(to, path, coin) + amt
-            } else {
-                old(self).balance_of(acct_id2, path2, coin2)
-            }
-        )
-    )]
+    #[ensures(result ==> self.transfer_tokens_post(
+        old(self),
+        from,
+        to,
+        path,
+        coin,
+        amt
+    ))]
     fn transfer_tokens(
         &mut self,
         from: AccountID,
@@ -200,28 +178,52 @@ trait Bank {
         }
     }
 
+    predicate! {
+        fn burn_tokens_post(
+            &self,
+            old_bank: &Self,
+            acct_id: AccountID,
+            path: Path,
+            coin: Coin,
+            amt: u32
+        ) -> bool {
+            forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
+            self.balance_of(acct_id2, path2, coin2) ==
+                if(acct_id == acct_id2 && coin == coin2 && path === path2) {
+                    old_bank.balance_of(acct_id, path, coin) - amt
+                } else {
+                    old_bank.balance_of(acct_id2, path2, coin2)
+                }
+            )
+        }
+    }
+
     #[ensures(result == (old(self.balance_of(to, path, coin)) >= amt))]
-    #[ensures(result ==> forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
-          self.balance_of(acct_id2, path2, coin2) ==
-            if(acct_id2 == to && coin == coin2 && path === path2) {
-                old(self).balance_of(to, path, coin) - amt
-            } else {
-                old(self).balance_of(acct_id2, path2, coin2)
-            }
-        )
-    )]
+    #[ensures(result ==> self.burn_tokens_post(old(self), to, path, coin, amt))]
     fn burn_tokens(&mut self, to: AccountID, path: Path, coin: Coin, amt: u32) -> bool;
 
-    #[ensures(result)]
-    #[ensures(forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
-          self.balance_of(acct_id2, path2, coin2) ==
-            if(acct_id2 == to && coin == coin2 && path === path2) {
-                old(self).balance_of(to, path, coin) + amt
+    predicate! {
+        fn mint_tokens_post(
+            &self,
+            old_bank: &Self,
+            acct_id: AccountID,
+            path: Path,
+            coin: Coin,
+            amt: u32
+        ) -> bool {
+            forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
+            self.balance_of(acct_id2, path2, coin2) ==
+            if(acct_id == acct_id2 && coin == coin2 && path === path2) {
+                old_bank.balance_of(acct_id, path, coin) + amt
             } else {
-                old(self).balance_of(acct_id2, path2, coin2)
+                old_bank.balance_of(acct_id2, path2, coin2)
             }
-        )
-    )]
+            )
+        }
+    }
+
+    #[ensures(result)]
+    #[ensures(self.mint_tokens_post(old(self), to, path, coin, amt))]
     fn mint_tokens(&mut self, to: AccountID, path: Path, coin: Coin, amt: u32) -> bool;
 }
 
@@ -256,14 +258,8 @@ fn send_will_transfer<B: Bank>(
 
 #[ensures(
     old(send_will_burn(bank, path, source_port, source_channel, sender, coin, amount)) ==>
-        (result.is_some() && forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
-                bank.balance_of(acct_id2, path2, coin2) ==
-                    if(acct_id2 == sender && coin == coin2 && path === path2) {
-                        old(bank).balance_of(sender, path, coin) - amount
-                    } else {
-                        old(bank).balance_of(acct_id2, path2, coin2)
-                    }
-)))]
+        (result.is_some() && bank.burn_tokens_post(old(bank), sender, path, coin, amount)
+))]
 #[ensures(
     old(
         send_will_transfer(
@@ -275,8 +271,7 @@ fn send_will_transfer<B: Bank>(
             ctx.escrow_address(source_channel),
             coin,
     amount)) ==> result.is_some() &&
-        transfer_post(
-            bank,
+        bank.transfer_tokens_post(
             old(bank),
             sender,
             old(ctx.escrow_address(source_channel)),
@@ -290,13 +285,9 @@ fn send_will_transfer<B: Bank>(
     result == Some(mk_packet(
         source_port,
         source_channel,
-        FungibleTokenPacketData {
-            path,
-            coin,
-            sender,
-            receiver,
-            amount
-})))]
+        FungibleTokenPacketData {path, coin, sender, receiver, amount}
+    )
+))]
 fn send_fungible_tokens<B: Bank>(
     ctx: &Ctx,
     bank: &mut B,
@@ -370,8 +361,7 @@ fn packet_is_source(packet: Packet) -> bool {
 
 #[ensures(
     !packet_is_source(packet) ==>
-        result.success && adjusted(
-            bank,
+        result.success && bank.mint_tokens_post(
             old(bank),
             old(packet.data.receiver),
             old(packet.data.path.prepend_prefix(packet.dest_port, packet.dest_channel)),
@@ -388,10 +378,8 @@ fn packet_is_source(packet: Packet) -> bool {
             packet.data.path.drop_prefix(packet.source_port, packet.source_channel),
             packet.data.coin,
             packet.data.amount
-        )))
-              ==> (result.success &&
-          transfer_post(
-              bank,
+        ))) ==> (result.success &&
+          bank.transfer_tokens_post(
               old(bank),
               old(ctx.escrow_address(packet.dest_channel)),
               old(packet.data.receiver),
