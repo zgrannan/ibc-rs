@@ -343,11 +343,6 @@ mk_packet(
         amount
     )
 )]
-#[ensures(
-    forall(
-        |channel: ChannelEnd|
-           ctx.escrow_address(channel) == old(ctx.escrow_address(channel))
-))]
 fn send_fungible_tokens<B: Bank>(
     ctx: &Ctx,
     bank: &mut B,
@@ -360,10 +355,9 @@ fn send_fungible_tokens<B: Bank>(
     source_channel: ChannelEnd
 ) -> Option<Packet> {
     let success = if(!path.starts_with(source_port, source_channel)) {
-        let escrow_address = ctx.escrow_address(source_channel);
         bank.transfer_tokens(
             sender,
-            escrow_address,
+            ctx.escrow_address(source_channel),
             path,
             coin,
             amount
@@ -395,10 +389,9 @@ fn send_fungible_tokens<B: Bank>(
 fn refund_tokens<B: Bank>(ctx: &Ctx, bank: &mut B, packet: Packet) {
     let FungibleTokenPacketData{ path, coin, sender, amount, ..} = packet.data;
     if !path.starts_with(packet.source_port, packet.source_channel) {
-        let escrow_address = ctx.escrow_address(packet.source_channel);
         prusti_assume!(amount <= i32::MAX as u32);
         bank.transfer_tokens(
-            escrow_address,
+            ctx.escrow_address(packet.source_channel),
             sender,
             path,
             coin,
@@ -461,21 +454,14 @@ fn on_recv_packet<B: Bank>(ctx: &Ctx, bank: &mut B, packet: Packet) -> FungibleT
     let FungibleTokenPacketData{ path, coin, receiver, amount, ..} = packet.data;
     prusti_assume!(amount <= i32::MAX as u32);
     let success = if packet_is_source(packet) {
-        let escrow_address = ctx.escrow_address(packet.dest_channel);
         bank.transfer_tokens(
-            escrow_address,
+            ctx.escrow_address(packet.dest_channel),
             receiver,
             path.drop_prefix(packet.source_port, packet.source_channel),
             coin,
             amount
         )
     } else {
-        prusti_assume!(u32::MAX -
-            bank.balance_of(
-                receiver,
-                path.prepend_prefix(packet.dest_port, packet.dest_channel),
-                coin
-            ) >= amount);
         bank.mint_tokens(
             receiver,
             path.prepend_prefix(packet.dest_port, packet.dest_channel),
