@@ -504,6 +504,8 @@ fn round_trip<B: Bank>(
     dest_port: Port,
     dest_channel: ChannelEnd
 ) {
+    // Send tokens A --> B
+
     let packet = send_fungible_tokens(
         ctx1,
         bank1,
@@ -515,15 +517,23 @@ fn round_trip<B: Bank>(
         source_port,
         source_channel
     );
+    // packet.is_some() means that this call did not fail
     prusti_assert!(packet.is_some());
     let packet = packet.unwrap();
+
+    // Assume that the destination port and channel have been set correctly
+    // (I think this would be done by some routing module?)
     prusti_assume!(packet.dest_port == dest_port);
     prusti_assume!(packet.dest_channel == dest_channel);
+
+    // Assume no overflow
     prusti_assume!(packet.data.amount <= i32::MAX as u32);
 
     let ack = on_recv_packet(ctx2, bank2, packet);
     prusti_assert!(ack.success);
     on_acknowledge_packet(ctx1, bank1, ack, packet);
+
+    // Send tokens B --> A
 
     let packet = send_fungible_tokens(
         ctx2,
