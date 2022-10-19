@@ -573,6 +573,15 @@ method roundTrip(
     assert ack.success
     onAcknowledgePacket(bank1, ack, packet)
 
+    assert sendWillBurn(
+        prependPrefix(path, destPort, destChannel), 
+        destPort,
+        destChannel,
+        bank2.bankBalances,
+        receiver,
+        coin,
+        amount
+    )
     success, packet := sendFungibleTokens(
         bank2, 
         prependPrefix(path, destPort, destChannel), 
@@ -583,8 +592,10 @@ method roundTrip(
         destPort, 
         destChannel
     )
+    assert success
     assume packet.destChannel == sourceChannel
     assume packet.destPort == sourcePort
+    assert packetIsSource(packet)
     ack := onRecvPacket(bank1, packet)
     onAcknowledgePacket(bank2, ack, packet)
 }
