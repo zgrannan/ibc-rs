@@ -2,8 +2,6 @@
 use std::convert::TryInto;
 use prusti_contracts::*;
 
-// type AccountID = u32;
-
 #[derive(Copy, Clone, Eq, PartialEq)]
 struct AccountID(u32);
 #[derive(Copy, Clone, Eq, PartialEq)]
@@ -217,7 +215,6 @@ trait Bank {
         }
     }
 
-    #[requires(amt < i32::MAX as u32)]
     #[ensures(result == (old(self.balance_of(to, path, coin)) >= amt))]
     #[ensures(result ==> forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
           self.balance_of(acct_id2, path2, coin2) ==
@@ -230,6 +227,7 @@ trait Bank {
     )]
     fn burn_tokens(&mut self, to: AccountID, path: Path, coin: Coin, amt: u32) -> bool {
         if(self.balance_of(to, path, coin) >= amt) {
+            prusti_assume!(amt <= i32::MAX as u32);
             self.adjust_amount(to, path, coin, (0 - amt as i32));
             true
         } else {
@@ -283,7 +281,6 @@ fn send_will_transfer<B: Bank>(
     bank.transfer_tokens_pre(sender, escrow_address, path, coin, amount)
 }
 
-#[requires(amount < i32::MAX as u32)]
 #[ensures(
     old(send_will_burn(bank, path, source_port, source_channel, sender, coin, amount)) ==>
         (result.is_some() && forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
@@ -339,6 +336,7 @@ fn send_fungible_tokens<B: Bank>(
     source_channel: ChannelEnd
 ) -> Option<Packet> {
     let success = if(!path.starts_with(source_port, source_channel)) {
+        prusti_assume!(amount <= i32::MAX as u32);
         bank.transfer_tokens(
             sender,
             ctx.escrow_address(source_channel),
@@ -363,7 +361,6 @@ fn send_fungible_tokens<B: Bank>(
             receiver,
             amount
         };
-        prusti_assert!(amount <= i32::MAX as u32);
         Some(mk_packet(source_port, source_channel, data))
     } else {
         None
@@ -372,8 +369,8 @@ fn send_fungible_tokens<B: Bank>(
 
 fn refund_tokens<B: Bank>(ctx: &Ctx, bank: &mut B, packet: Packet) {
     let FungibleTokenPacketData{ path, coin, sender, amount, ..} = packet.data;
+    prusti_assume!(amount <= i32::MAX as u32);
     if !path.starts_with(packet.source_port, packet.source_channel) {
-        prusti_assume!(amount <= i32::MAX as u32);
         bank.transfer_tokens(
             ctx.escrow_address(packet.source_channel),
             sender,
@@ -382,7 +379,6 @@ fn refund_tokens<B: Bank>(ctx: &Ctx, bank: &mut B, packet: Packet) {
             amount
         );
     } else {
-        prusti_assume!(amount <= i32::MAX as u32);
         bank.mint_tokens(
             sender,
             path,
@@ -401,6 +397,7 @@ fn packet_is_source(packet: Packet) -> bool {
     packet.data.path.starts_with(packet.source_port, packet.source_channel)
 }
 
+#[requires(packet.data.amount <= i32::MAX as u32)]
 #[ensures(
     !packet_is_source(packet) ==>
         result.success && adjusted(
@@ -468,11 +465,22 @@ fn on_acknowledge_packet<B: Bank>(
     }
 }
 
-#[requires(amount < i32::MAX as u32)]
-#[requires(!path.starts_with(source_port, source_channel))]
+/*
+ * This method performs a round trip of a token from chain A --> B --> A,
+ * The specification ensures that the resulting balances on both banks are the
+ * same as they were initially.
+ */
+
+// Assume the sender's address is distinct from the escrow address for the source channel,
+// and that they have sufficient funds to send to `receiver`
 #[requires(
     bank1.transfer_tokens_pre(sender, ctx1.escrow_address(source_channel), path, coin, amount))
 ]
+
+// Assume that the sender is the source chain
+#[requires(!path.starts_with(source_port, source_channel))]
+
+// Ensure that the resulting balance of both bank accounts are unchanged after the round-trip
 #[ensures(
     forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
         bank1.balance_of(acct_id2, path2, coin2) ==
@@ -511,6 +519,7 @@ fn round_trip<B: Bank>(
     let packet = packet.unwrap();
     prusti_assume!(packet.dest_port == dest_port);
     prusti_assume!(packet.dest_channel == dest_channel);
+    prusti_assume!(packet.data.amount <= i32::MAX as u32);
 
     let ack = on_recv_packet(ctx2, bank2, packet);
     prusti_assert!(ack.success);
