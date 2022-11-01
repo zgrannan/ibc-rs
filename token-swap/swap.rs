@@ -445,6 +445,7 @@ fn on_recv_packet<B: Bank>(ctx: &Ctx, bank: &mut B, packet: Packet) -> FungibleT
 }
 
 #[ensures(ack.success ==> snap(bank) === old(snap(bank)))]
+#[ensures(!ack.success ==> refund_tokens_post(ctx, bank, old(bank), packet))]
 fn on_acknowledge_packet<B: Bank>(
     ctx: &Ctx,
     bank: &mut B,
@@ -587,6 +588,57 @@ fn timeout<B: Bank>(
     prusti_assume!(packet.dest_channel == dest_channel);
 
     on_timeout_packet(ctx1, bank1, packet);
+}
+
+#[requires(
+    bank1.transfer_tokens_pre(sender, ctx1.escrow_address(source_channel), path, coin, amount))
+]
+#[requires(!path.starts_with(source_port, source_channel))]
+#[ensures(
+    forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
+        bank1.balance_of(acct_id2, path2, coin2) ==
+           old(bank1).balance_of(acct_id2, path2, coin2)))]
+fn ack_fail<B: Bank>(
+    ctx1: &Ctx,
+    ctx2: &Ctx,
+    bank1: &mut B,
+    path: Path,
+    coin: Coin,
+    amount: u32,
+    sender: AccountID,
+    receiver: AccountID,
+    source_port: Port,
+    source_channel: ChannelEnd,
+    dest_port: Port,
+    dest_channel: ChannelEnd
+) {
+    // Send tokens A --> B
+    let packet = send_fungible_tokens(
+        ctx1,
+        bank1,
+        path,
+        coin,
+        amount,
+        sender,
+        receiver,
+        source_port,
+        source_channel
+    );
+    // packet.is_some() means that this call did not fail
+    prusti_assert!(packet.is_some());
+    let packet = packet.unwrap();
+
+    // Assume that the destination port and channel have been set correctly
+    // (I think this would be done by some routing module?)
+    prusti_assume!(packet.dest_port == dest_port);
+    prusti_assume!(packet.dest_channel == dest_channel);
+
+    on_acknowledge_packet(
+        ctx1,
+        bank1,
+        FungibleTokenPacketAcknowledgement { success: false },
+        packet
+    );
 }
 
 
