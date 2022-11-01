@@ -330,8 +330,34 @@ fn send_fungible_tokens<B: Bank>(
     }
 }
 
+#[ensures(
+    (!old(packet.data.path).starts_with(old(packet.source_port), old(packet.source_channel)) &&
+        old(bank.transfer_tokens_pre(
+            ctx.escrow_address(packet.source_channel),
+            packet.data.sender,
+            packet.data.path,
+            packet.data.coin,
+            packet.data.amount
+        ))) ==> bank.transfer_tokens_post(
+    old(bank),
+    ctx.escrow_address(old(packet.source_channel)),
+    old(packet.data.sender),
+    old(packet.data.path),
+    old(packet.data.coin),
+    old(packet.data.amount))
+)]
+#[ensures(
+    old(packet.data.path).starts_with(old(packet.source_port), old(packet.source_channel)) ==>
+        bank.mint_tokens_post(
+            old(bank),
+            old(packet.data.sender),
+            old(packet.data.path),
+            old(packet.data.coin),
+            old(packet.data.amount)
+        )
+)]
 fn on_timeout_packet<B: Bank>(ctx: &Ctx, bank: &mut B, packet: Packet) {
-    // refund_tokens(ctx, bank, packet);
+    refund_tokens(ctx, bank, packet);
 }
 
 #[ensures(
@@ -350,9 +376,19 @@ fn on_timeout_packet<B: Bank>(ctx: &Ctx, bank: &mut B, packet: Packet) {
     old(packet.data.coin),
     old(packet.data.amount))
 )]
+#[ensures(
+    old(packet.data.path).starts_with(old(packet.source_port), old(packet.source_channel)) ==>
+        bank.mint_tokens_post(
+            old(bank),
+            old(packet.data.sender),
+            old(packet.data.path),
+            old(packet.data.coin),
+            old(packet.data.amount)
+        )
+)]
 fn refund_tokens<B: Bank>(ctx: &Ctx, bank: &mut B, packet: Packet) {
     let FungibleTokenPacketData{ path, coin, sender, amount, ..} = packet.data;
-    //if !path.starts_with(packet.source_port, packet.source_channel) {
+    if !path.starts_with(packet.source_port, packet.source_channel) {
         bank.transfer_tokens(
             ctx.escrow_address(packet.source_channel),
             sender,
@@ -360,14 +396,14 @@ fn refund_tokens<B: Bank>(ctx: &Ctx, bank: &mut B, packet: Packet) {
             coin,
             amount
         );
-    // } else {
-    //     bank.mint_tokens(
-    //         sender,
-    //         path,
-    //         coin,
-    //         amount
-    //     );
-    // }
+    } else {
+        bank.mint_tokens(
+            sender,
+            path,
+            coin,
+            amount
+        );
+    }
 }
 
 struct FungibleTokenPacketAcknowledgement {
