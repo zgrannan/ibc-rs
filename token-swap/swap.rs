@@ -212,12 +212,12 @@ trait Bank {
             amt: u32
         ) -> bool {
             forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
-            self.balance_of(acct_id2, path2, coin2) ==
-            if(acct_id == acct_id2 && coin == coin2 && path === path2) {
-                old_bank.balance_of(acct_id, path, coin) + amt
-            } else {
-                old_bank.balance_of(acct_id2, path2, coin2)
-            }
+                self.balance_of(acct_id2, path2, coin2) ==
+                    if(acct_id == acct_id2 && coin == coin2 && path === path2) {
+                        old_bank.balance_of(acct_id, path, coin) + amt
+                    } else {
+                        old_bank.balance_of(acct_id2, path2, coin2)
+                    }
             )
         }
     }
@@ -330,6 +330,26 @@ fn send_fungible_tokens<B: Bank>(
     }
 }
 
+fn on_timeout_packet<B: Bank>(ctx: &Ctx, bank: &mut B, packet: Packet) {
+    // refund_tokens(ctx, bank, packet);
+}
+
+#[ensures(
+    !old(packet.data.path).starts_with(old(packet.source_port), old(packet.source_channel)) &&
+        bank.transfer_tokens_pre(
+            ctx.escrow_address(old(packet.source_channel)),
+            old(packet.data.sender),
+            old(packet.data.path),
+            old(packet.data.coin),
+            packet.data.amount
+        ) ==> bank.transfer_tokens_post(
+    old(bank),
+    ctx.escrow_address(old(packet.source_channel)),
+    old(packet.data.sender),
+    old(packet.data.path),
+    old(packet.data.coin),
+    old(packet.data.amount))
+)]
 fn refund_tokens<B: Bank>(ctx: &Ctx, bank: &mut B, packet: Packet) {
     let FungibleTokenPacketData{ path, coin, sender, amount, ..} = packet.data;
     if !path.starts_with(packet.source_port, packet.source_channel) {
@@ -508,6 +528,52 @@ fn round_trip<B: Bank>(
     let ack = on_recv_packet(ctx1, bank1, packet);
     prusti_assert!(ack.success);
     on_acknowledge_packet(ctx2, bank2, ack, packet);
+}
+
+#[requires(
+    bank1.transfer_tokens_pre(sender, ctx1.escrow_address(source_channel), path, coin, amount))
+]
+#[requires(!path.starts_with(source_port, source_channel))]
+#[ensures(
+    forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
+        bank1.balance_of(acct_id2, path2, coin2) ==
+           old(bank1).balance_of(acct_id2, path2, coin2)))]
+fn timeout<B: Bank>(
+    ctx1: &Ctx,
+    ctx2: &Ctx,
+    bank1: &mut B,
+    path: Path,
+    coin: Coin,
+    amount: u32,
+    sender: AccountID,
+    receiver: AccountID,
+    source_port: Port,
+    source_channel: ChannelEnd,
+    dest_port: Port,
+    dest_channel: ChannelEnd
+) {
+    // Send tokens A --> B
+    let packet = send_fungible_tokens(
+        ctx1,
+        bank1,
+        path,
+        coin,
+        amount,
+        sender,
+        receiver,
+        source_port,
+        source_channel
+    );
+    // packet.is_some() means that this call did not fail
+    prusti_assert!(packet.is_some());
+    let packet = packet.unwrap();
+
+    // Assume that the destination port and channel have been set correctly
+    // (I think this would be done by some routing module?)
+    prusti_assume!(packet.dest_port == dest_port);
+    prusti_assume!(packet.dest_channel == dest_channel);
+
+    on_timeout_packet(ctx1, bank1, packet);
 }
 
 
