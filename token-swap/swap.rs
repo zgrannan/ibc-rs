@@ -335,14 +335,14 @@ fn on_timeout_packet<B: Bank>(ctx: &Ctx, bank: &mut B, packet: Packet) {
 }
 
 #[ensures(
-    !old(packet.data.path).starts_with(old(packet.source_port), old(packet.source_channel)) &&
-        bank.transfer_tokens_pre(
-            ctx.escrow_address(old(packet.source_channel)),
-            old(packet.data.sender),
-            old(packet.data.path),
-            old(packet.data.coin),
+    (!old(packet.data.path).starts_with(old(packet.source_port), old(packet.source_channel)) &&
+        old(bank.transfer_tokens_pre(
+            ctx.escrow_address(packet.source_channel),
+            packet.data.sender,
+            packet.data.path,
+            packet.data.coin,
             packet.data.amount
-        ) ==> bank.transfer_tokens_post(
+        ))) ==> bank.transfer_tokens_post(
     old(bank),
     ctx.escrow_address(old(packet.source_channel)),
     old(packet.data.sender),
@@ -352,7 +352,7 @@ fn on_timeout_packet<B: Bank>(ctx: &Ctx, bank: &mut B, packet: Packet) {
 )]
 fn refund_tokens<B: Bank>(ctx: &Ctx, bank: &mut B, packet: Packet) {
     let FungibleTokenPacketData{ path, coin, sender, amount, ..} = packet.data;
-    if !path.starts_with(packet.source_port, packet.source_channel) {
+    //if !path.starts_with(packet.source_port, packet.source_channel) {
         bank.transfer_tokens(
             ctx.escrow_address(packet.source_channel),
             sender,
@@ -360,14 +360,14 @@ fn refund_tokens<B: Bank>(ctx: &Ctx, bank: &mut B, packet: Packet) {
             coin,
             amount
         );
-    } else {
-        bank.mint_tokens(
-            sender,
-            path,
-            coin,
-            amount
-        );
-    }
+    // } else {
+    //     bank.mint_tokens(
+    //         sender,
+    //         path,
+    //         coin,
+    //         amount
+    //     );
+    // }
 }
 
 struct FungibleTokenPacketAcknowledgement {
