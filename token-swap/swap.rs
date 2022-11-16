@@ -79,21 +79,22 @@ impl Path {
 
     #[pure]
     #[trusted]
-    fn starts_with(&self, port: Port, channel: ChannelEnd) -> bool {
+    fn starts_with(self, port: Port, channel: ChannelEnd) -> bool {
         unimplemented!()
     }
 
     #[pure]
     #[requires(self.starts_with(port, channel))]
     #[ensures(result === self.tail())]
+    #[ensures(result.prepend_prefix(port, channel) === self)]
     #[trusted]
-    fn drop_prefix(&self, port: Port, channel: ChannelEnd) -> Path {
+    fn drop_prefix(self, port: Port, channel: ChannelEnd) -> Path {
         unimplemented!()
     }
 
     #[pure]
     #[trusted]
-    fn tail(&self) -> Path {
+    fn tail(self) -> Path {
        unimplemented!()
     }
 }
@@ -299,7 +300,7 @@ fn send_fungible_tokens<B: Bank>(
     source_port: Port,
     source_channel: ChannelEnd
 ) -> Option<Packet> {
-    let success = if(!path.starts_with(source_port, source_channel)) {
+    let success = if !path.starts_with(source_port, source_channel) {
         bank.transfer_tokens(
             sender,
             ctx.escrow_address(source_channel),
@@ -640,6 +641,146 @@ fn ack_fail<B: Bank>(
         packet
     );
 }
+
+/*
+ * This method performs a round trip of a token from chain A --> B --> A,
+ * The specification ensures that the resulting balances on both banks are the
+ * same as they were initially.
+ */
+
+// Assume the sender has sufficient funds to send to receiver
+#[requires(bank1.balance_of(sender, path, coin) >= amount)]
+
+// Assume the receiver is not the escrow address
+#[requires(receiver != ctx2.escrow_address(dest_channel))]
+
+// Assume that the sender is the sink chain
+#[requires(path.starts_with(source_port, source_channel))]
+
+// Assume the path is well-formed.
+//
+// To understand this requirement, suppose, on the contrary that
+// path.tail().starts_with(dest_port, dest_channel)). Then, when the receiver
+// chain sends back the token denominated with path.tail() to the sender,
+// it would see that the token *originated* on that chain, thus burning its native
+// tokens. More problematically, the receiver would then percieve the tokens as originating
+// from its own chain and attempt to unescrow them, which could presumably fail.
+//
+// Note that it should not be possible to create such an ill-formed path.
+// Consider an ill-formed path P1/C1/P2/C2/$, where P1/C1 and P2/C2 are port
+// channel pairs, and $ corresponds to the rest of the path. Assume chain A
+// communicates to chain B via P1/C1 and chain B communicates to chain A via
+// P2/C2. The building of the P2/C2 segment must be created from a transfer of $
+// from A to B, and the P1/C1 segment must be created from a transfer of P2/C2/$
+// from B to A. However, since the the path of the transfer from B to A would
+// have already have prefix P2/C2 corresponding to B's connection to A, the
+// token swap would strip the P2/C2 prefix rather than appending the P1/C1
+// prefix.
+#[requires(!path.tail().starts_with(dest_port, dest_channel))]
+
+// Assume the escrow has the corresponding locked tokens
+#[requires(
+    bank2.balance_of(
+        ctx2.escrow_address(dest_channel),
+        path.drop_prefix(source_port, source_channel),
+        coin
+    ) >= amount
+)]
+
+// Ensure that the resulting balance of both bank accounts are unchanged after the round-trip
+#[ensures(
+    forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
+        bank1.balance_of(acct_id2, path2, coin2) ==
+           old(bank1).balance_of(acct_id2, path2, coin2)))]
+#[ensures(
+    forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
+        bank2.balance_of(acct_id2, path2, coin2) ==
+           old(bank2).balance_of(acct_id2, path2, coin2)))]
+fn round_trip_sink<B: Bank>(
+    ctx1: &Ctx,
+    ctx2: &Ctx,
+    bank1: &mut B,
+    bank2: &mut B,
+    path: Path,
+    coin: Coin,
+    amount: u32,
+    sender: AccountID,
+    receiver: AccountID,
+    source_port: Port,
+    source_channel: ChannelEnd,
+    dest_port: Port,
+    dest_channel: ChannelEnd
+) {
+    // Send tokens A --> B
+
+    let packet = send_fungible_tokens(
+        ctx1,
+        bank1,
+        path,
+        coin,
+        amount,
+        sender,
+        receiver,
+        source_port,
+        source_channel
+    );
+    // packet.is_some() means that this call did not fail
+    prusti_assert!(packet.is_some());
+    let packet = packet.unwrap();
+
+    // Assume that the destination port and channel have been set correctly
+    // (I think this would be done by some routing module?)
+    prusti_assume!(packet.dest_port == dest_port);
+    prusti_assume!(packet.dest_channel == dest_channel);
+
+    prusti_assert!(
+            ctx2.escrow_address(packet.dest_channel) !=
+            packet.data.receiver
+    );
+    prusti_assert!(
+        bank2.transfer_tokens_pre(
+            ctx2.escrow_address(packet.dest_channel),
+            packet.data.receiver,
+            packet.data.path.drop_prefix(packet.source_port, packet.source_channel),
+            packet.data.coin,
+            packet.data.amount
+        )
+    );
+    let ack = on_recv_packet(ctx2, bank2, packet);
+    prusti_assert!(ack.success);
+    on_acknowledge_packet(ctx1, bank1, ack, packet);
+
+    // Send tokens B --> A
+
+    let packet = send_fungible_tokens(
+        ctx2,
+        bank2,
+        path.drop_prefix(packet.source_port, packet.source_channel),
+        coin,
+        amount,
+        receiver,
+        sender,
+        dest_port,
+        dest_channel
+    );
+    prusti_assert!(packet.is_some());
+    let packet = packet.unwrap();
+    prusti_assume!(packet.dest_port == source_port);
+    prusti_assume!(packet.dest_channel == source_channel);
+
+    let ack = on_recv_packet(ctx1, bank1, packet);
+    on_acknowledge_packet(ctx2, bank2, ack, packet);
+}
+
+/*
+ * A (B' refers to B)         B(A' refers to A)
+ *
+ * A (S: B'/N/$)       B: E_A (S: N/$)
+ * --> P.SC = B'     (B: P.path.startsWith(B'))
+ * A: 0               B: E_A: 0, R: N/$
+ * <-- Needs (!P.path.startsWith(A'), i.e. N != A')
+ * This would never happen. Because the original path B'/A'/$ could not exist
+ * */
 
 
 pub fn main(){}
