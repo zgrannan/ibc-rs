@@ -20,6 +20,7 @@ struct Port(u32);
 
 struct Ctx(u32);
 
+
 impl Ctx {
     #[pure]
     #[trusted]
@@ -85,6 +86,18 @@ impl Path {
 
     #[pure]
     #[trusted]
+    fn head_port(self) -> Port {
+        unimplemented!()
+    }
+
+    #[pure]
+    #[trusted]
+    fn head_channel(self) -> ChannelEnd {
+        unimplemented!()
+    }
+
+    #[pure]
+    #[trusted]
     #[ensures(!(result === Path::empty()))]
     #[ensures(result.starts_with(port, channel))]
     #[ensures(result.tail() === self)]
@@ -115,6 +128,36 @@ impl Path {
     }
 }
 
+struct Topology(u32);
+
+impl Topology {
+    #[pure]
+    #[trusted]
+    fn ctx_at(&self, from: &Ctx, port: Port, channel: ChannelEnd) -> &Ctx {
+        unimplemented!()
+    }
+}
+
+predicate! {
+    fn is_well_formed(path: Path, ctx: &Ctx, topology: &Topology) -> bool {
+        if (path === Path::empty())  {
+            true
+        } else {
+            let path_tail = path.tail();
+            if (path_tail === Path::empty()) {
+                true
+            } else {
+                let port1 = path.head_port();
+                let channel1 = path.head_channel();
+                let ctx1 = topology.ctx_at(ctx, port1, channel1);
+                let port2 = path_tail.head_port();
+                let channel2 = path_tail.head_channel();
+                let ctx2 = topology.ctx_at(ctx1, port2, channel2);
+                !(ctx1 === ctx2) && is_well_formed(path_tail, ctx, topology)
+            }
+        }
+    }
+}
 
 
 // Prusti does not like derived PartialEQ
@@ -781,6 +824,7 @@ fn ack_fail<B: Bank>(
         packet
     );
 }
+
 
 /*
  * This method performs a round trip of a token from chain A --> B --> A,
