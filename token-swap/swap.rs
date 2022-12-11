@@ -4,6 +4,13 @@ use prusti_contracts::*;
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 struct AccountID(u32);
+
+#[pure]
+#[trusted]
+fn is_escrow_account(acct_id: AccountID) -> bool {
+    unimplemented!()
+}
+
 #[derive(Copy, Clone, Eq, PartialEq)]
 struct Coin(u32);
 #[derive(Copy, Clone, Eq, PartialEq)]
@@ -16,6 +23,7 @@ struct Ctx(u32);
 impl Ctx {
     #[pure]
     #[trusted]
+    #[ensures(is_escrow_account(result))]
     fn escrow_address(&self, channel_end: ChannelEnd) -> AccountID {
         unimplemented!()
     }
@@ -68,8 +76,16 @@ fn mk_packet(
 struct Path(u32);
 
 impl Path {
+
     #[pure]
     #[trusted]
+    fn empty() -> Path {
+        unimplemented!();
+    }
+
+    #[pure]
+    #[trusted]
+    #[ensures(!(result === Path::empty()))]
     #[ensures(result.starts_with(port, channel))]
     #[ensures(result.tail() === self)]
     #[ensures(result.drop_prefix(port, channel) === self)]
@@ -116,6 +132,9 @@ impl PartialEq for Path {
 trait Bank {
 
     #[pure]
+    fn unescrowed_coin_balance(&self, coin: Coin) -> u32;
+
+    #[pure]
     fn balance_of(&self, acct_id: AccountID, path: Path, coin: Coin) -> u32;
 
     predicate! {
@@ -128,7 +147,16 @@ trait Bank {
             coin: Coin,
             amt: u32
         ) -> bool {
-            forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
+        ((is_escrow_account(to) && !is_escrow_account(from)) ==>
+              self.unescrowed_coin_balance(coin) ==
+                old_bank.unescrowed_coin_balance(coin) - amt) &&
+        ((!is_escrow_account(to) && is_escrow_account(from)) ==>
+              self.unescrowed_coin_balance(coin) ==
+                old_bank.unescrowed_coin_balance(coin) + amt) &&
+        ((is_escrow_account(to) == is_escrow_account(from)) ==>
+              self.unescrowed_coin_balance(coin) ==
+                old_bank.unescrowed_coin_balance(coin)) &&
+        forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
             self.balance_of(acct_id2, path2, coin2) ==
                 if(acct_id2 == from && coin == coin2 && path === path2) {
                     old_bank.balance_of(from, path, coin) - amt
@@ -188,6 +216,12 @@ trait Bank {
             coin: Coin,
             amt: u32
         ) -> bool {
+        (!is_escrow_account(acct_id) ==>
+              self.unescrowed_coin_balance(coin) ==
+                old_bank.unescrowed_coin_balance(coin) - amt) &&
+        (is_escrow_account(acct_id) ==>
+              self.unescrowed_coin_balance(coin) ==
+                old_bank.unescrowed_coin_balance(coin)) &&
             forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
             self.balance_of(acct_id2, path2, coin2) ==
                 if(acct_id == acct_id2 && coin == coin2 && path === path2) {
@@ -201,6 +235,8 @@ trait Bank {
 
     #[ensures(result == (old(self.balance_of(to, path, coin)) >= amt))]
     #[ensures(result ==> self.burn_tokens_post(old(self), to, path, coin, amt))]
+    #[ensures(!result ==>
+        self.unescrowed_coin_balance(coin) == old(self.unescrowed_coin_balance(coin)))]
     fn burn_tokens(&mut self, to: AccountID, path: Path, coin: Coin, amt: u32) -> bool;
 
     predicate! {
@@ -212,6 +248,12 @@ trait Bank {
             coin: Coin,
             amt: u32
         ) -> bool {
+        (!is_escrow_account(acct_id) ==>
+              self.unescrowed_coin_balance(coin) ==
+                old_bank.unescrowed_coin_balance(coin) + amt) &&
+        (is_escrow_account(acct_id) ==>
+              self.unescrowed_coin_balance(coin) ==
+                old_bank.unescrowed_coin_balance(coin)) &&
             forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
                 self.balance_of(acct_id2, path2, coin2) ==
                     if(acct_id == acct_id2 && coin == coin2 && path === path2) {
@@ -257,6 +299,8 @@ fn send_will_transfer<B: Bank>(
     bank.transfer_tokens_pre(sender, escrow_address, path, coin, amount)
 }
 
+// Sanity check: The sender cannot be an escrow account
+#[requires(!is_escrow_account(sender))]
 #[ensures(
     old(send_will_burn(bank, path, source_port, source_channel, sender, coin, amount)) ==>
         (result.is_some() && bank.burn_tokens_post(old(bank), sender, path, coin, amount)
@@ -458,6 +502,92 @@ fn on_acknowledge_packet<B: Bank>(
 }
 
 /*
+ * This method performs a transfer chain A --> B
+ * The specification ensures that the total amount of tokens does not change
+ */
+
+// // Assume the sender's address is distinct from the escrow address for the source channel,
+// // and that they have sufficient funds to send to `receiver`
+// #[requires(
+//     bank1.transfer_tokens_pre(sender, ctx1.escrow_address(source_channel), path, coin, amount))
+// ]
+
+// // Assume that the sender is the source chain
+// #[requires(!path.starts_with(source_port, source_channel))]
+
+// // Sanity check: The sender cannot be an escrow account
+// #[requires(!is_escrow_account(sender))]
+
+// #[ensures(
+//     !is_escrow_account(receiver) ==>
+//     (bank1.unescrowed_coin_balance(coin) + bank2.unescrowed_coin_balance(coin) ==
+//     old(bank1.unescrowed_coin_balance(coin) + bank2.unescrowed_coin_balance(coin)))
+// )]
+// fn send_preserves<B: Bank>(
+//     ctx1: &Ctx,
+//     ctx2: &Ctx,
+//     bank1: &mut B,
+//     bank2: &mut B,
+//     path: Path,
+//     coin: Coin,
+//     amount: u32,
+//     sender: AccountID,
+//     receiver: AccountID,
+//     source_port: Port,
+//     source_channel: ChannelEnd,
+//     dest_port: Port,
+//     dest_channel: ChannelEnd
+// ) {
+
+//     prusti_assert!(
+//         send_will_transfer(
+//             bank1,
+//             path,
+//             source_port,
+//             source_channel,
+//             sender,
+//             ctx1.escrow_address(source_channel),
+//             coin,
+//     amount));
+//     let packet = send_fungible_tokens(
+//         ctx1,
+//         bank1,
+//         path,
+//         coin,
+//         amount,
+//         sender,
+//         receiver,
+//         source_port,
+//         source_channel
+//     );
+//     // packet.is_some() means that this call did not fail
+//     prusti_assert!(packet.is_some());
+//     prusti_assert!(
+//         bank1.unescrowed_coin_balance(coin) ==
+//         old(bank1.unescrowed_coin_balance(coin)) - amount
+//     );
+//     let packet = packet.unwrap();
+
+//     // Assume that the destination port and channel have been set correctly
+//     // (I think this would be done by some routing module?)
+//     prusti_assume!(packet.dest_port == dest_port);
+//     prusti_assume!(packet.dest_channel == dest_channel);
+
+//     let ack = on_recv_packet(ctx2, bank2, packet);
+//     prusti_assert!(
+//     !is_escrow_account(receiver) ==>
+//         (bank2.unescrowed_coin_balance(coin) ==
+//         old(bank2.unescrowed_coin_balance(coin)) + amount)
+//     );
+//     prusti_assert!(ack.success);
+//     on_acknowledge_packet(ctx1, bank1, ack, packet);
+//     prusti_assert!(
+//         bank1.unescrowed_coin_balance(coin) ==
+//         old(bank1.unescrowed_coin_balance(coin)) - amount
+//     );
+// }
+
+/*
  * This method performs a round trip of a token from chain A --> B --> A,
  * The specification ensures that the resulting balances on both banks are the
  * same as they were initially.
@@ -471,6 +601,12 @@ fn on_acknowledge_packet<B: Bank>(
 
 // Assume that the sender is the source chain
 #[requires(!path.starts_with(source_port, source_channel))]
+
+// Sanity check: The sender cannot be an escrow account
+#[requires(!is_escrow_account(sender))]
+// Sanity check: Because this is a round-trip, the receiver cannot be an escrow
+// account
+#[requires(!is_escrow_account(receiver))]
 
 // Ensure that the resulting balance of both bank accounts are unchanged after the round-trip
 #[ensures(
@@ -549,6 +685,8 @@ fn round_trip<B: Bank>(
     bank1.transfer_tokens_pre(sender, ctx1.escrow_address(source_channel), path, coin, amount))
 ]
 #[requires(!path.starts_with(source_port, source_channel))]
+// Sanity check: The sender cannot be an escrow account
+#[requires(!is_escrow_account(sender))]
 #[ensures(
     forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
         bank1.balance_of(acct_id2, path2, coin2) ==
@@ -591,6 +729,8 @@ fn timeout<B: Bank>(
     on_timeout_packet(ctx1, bank1, packet);
 }
 
+// Sanity check: The sender cannot be an escrow account
+#[requires(!is_escrow_account(sender))]
 #[requires(
     bank1.transfer_tokens_pre(sender, ctx1.escrow_address(source_channel), path, coin, amount))
 ]
@@ -687,6 +827,13 @@ fn ack_fail<B: Bank>(
     ) >= amount
 )]
 
+// Sanity check: The sender cannot be an escrow account
+#[requires(!is_escrow_account(sender))]
+
+// Sanity check: Because this is a round-trip, the receiver cannot be an escrow
+// account
+#[requires(!is_escrow_account(receiver))]
+
 // Ensure that the resulting balance of both bank accounts are unchanged after the round-trip
 #[ensures(
     forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
@@ -771,16 +918,5 @@ fn round_trip_sink<B: Bank>(
     let ack = on_recv_packet(ctx1, bank1, packet);
     on_acknowledge_packet(ctx2, bank2, ack, packet);
 }
-
-/*
- * A (B' refers to B)         B(A' refers to A)
- *
- * A (S: B'/N/$)       B: E_A (S: N/$)
- * --> P.SC = B'     (B: P.path.startsWith(B'))
- * A: 0               B: E_A: 0, R: N/$
- * <-- Needs (!P.path.startsWith(A'), i.e. N != A')
- * This would never happen. Because the original path B'/A'/$ could not exist
- * */
-
 
 pub fn main(){}
