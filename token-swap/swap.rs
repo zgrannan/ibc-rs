@@ -116,14 +116,14 @@ impl Path {
 
     #[pure]
     #[trusted]
-    #[requires(!(self === Path::empty()))]
+    #[requires(!self.is_empty())]
     fn head_port(self) -> Port {
         unimplemented!()
     }
 
     #[pure]
     #[trusted]
-    #[requires(!(self === Path::empty()))]
+    #[requires(!self.is_empty())]
     fn head_channel(self) -> ChannelEnd {
         unimplemented!()
     }
@@ -806,28 +806,6 @@ fn round_trip<B: Bank>(
     prusti_assume!(packet.dest_port == dest_port);
     prusti_assume!(packet.dest_channel == dest_channel);
 
-    if(!path.is_empty()) {
-        prusti_assert!(
-            ctx2.has_channel(
-                packet.dest_port,
-                packet.dest_channel,
-                source_port,
-                source_channel
-            )
-        );
-        prusti_assert!(
-            source_port != path.head_port() || 
-            source_channel != path.head_channel()
-        );
-        prusti_assert!(
-            !(ctx2.has_channel(
-                packet.dest_port,
-                packet.dest_channel,
-                path.head_port(),
-                path.head_channel(),
-            ))
-        );
-    }
     let ack = on_recv_packet(ctx2, bank2, packet, topology);
     prusti_assert!(ack.success);
     on_acknowledge_packet(ctx1, bank1, ack, packet);
