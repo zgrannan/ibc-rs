@@ -22,6 +22,14 @@ struct Ctx(u32);
 
 
 impl Ctx {
+
+    #[pure]
+    #[trusted]
+    #[ensures(result == (self === other))]
+    fn is_same_ctx_as(&self, other: &Ctx) -> bool {
+        unimplemented!()
+    }
+
     #[pure]
     #[trusted]
     #[ensures(is_escrow_account(result))]
@@ -86,12 +94,21 @@ impl Path {
 
     #[pure]
     #[trusted]
+    #[ensures(result == (self === Path::empty()))]
+    fn is_empty(self) -> bool {
+        unimplemented!();
+    }
+
+    #[pure]
+    #[trusted]
+    #[requires(!(self === Path::empty()))]
     fn head_port(self) -> Port {
         unimplemented!()
     }
 
     #[pure]
     #[trusted]
+    #[requires(!(self === Path::empty()))]
     fn head_channel(self) -> ChannelEnd {
         unimplemented!()
     }
@@ -108,6 +125,9 @@ impl Path {
 
     #[pure]
     #[trusted]
+    #[ensures(result ==> !self.is_empty())]
+    #[ensures(result ==> (port === self.head_port()))]
+    #[ensures(result ==> (channel === self.head_channel()))]
     fn starts_with(self, port: Port, channel: ChannelEnd) -> bool {
         unimplemented!()
     }
@@ -140,21 +160,15 @@ impl Topology {
 
 predicate! {
     fn is_well_formed(path: Path, ctx: &Ctx, topology: &Topology) -> bool {
-        if (path === Path::empty())  {
-            true
-        } else {
+        path.is_empty() || path.tail().is_empty() || {
             let path_tail = path.tail();
-            if (path_tail === Path::empty()) {
-                true
-            } else {
-                let port1 = path.head_port();
-                let channel1 = path.head_channel();
-                let ctx1 = topology.ctx_at(ctx, port1, channel1);
-                let port2 = path_tail.head_port();
-                let channel2 = path_tail.head_channel();
-                let ctx2 = topology.ctx_at(ctx1, port2, channel2);
-                !(ctx1 === ctx2) && is_well_formed(path_tail, ctx, topology)
-            }
+            let port1 = path.head_port();
+            let channel1 = path.head_channel();
+            let ctx1 = topology.ctx_at(ctx, port1, channel1);
+            let port2 = path_tail.head_port();
+            let channel2 = path_tail.head_channel();
+            let ctx2 = topology.ctx_at(ctx1, port2, channel2);
+            !(ctx === ctx2) && is_well_formed(path_tail, ctx1, topology)
         }
     }
 }
@@ -510,7 +524,12 @@ fn packet_is_source(packet: Packet) -> bool {
           )
         )
 )]
-fn on_recv_packet<B: Bank>(ctx: &Ctx, bank: &mut B, packet: Packet) -> FungibleTokenPacketAcknowledgement {
+fn on_recv_packet<B: Bank>(
+    ctx: &Ctx, 
+    bank: &mut B, 
+    packet: Packet,
+    // topology: &Topology
+) -> FungibleTokenPacketAcknowledgement {
     let FungibleTokenPacketData{ path, coin, receiver, amount, ..} = packet.data;
     let success = if packet_is_source(packet) {
         bank.transfer_tokens(
@@ -860,7 +879,8 @@ fn ack_fail<B: Bank>(
 // have already have prefix P2/C2 corresponding to B's connection to A, the
 // token swap would strip the P2/C2 prefix rather than appending the P1/C1
 // prefix.
-#[requires(!path.tail().starts_with(dest_port, dest_channel))]
+// #[requires(!path.tail().starts_with(dest_port, dest_channel))]
+#[requires(is_well_formed(path, ctx1, topology))]
 
 // Assume the escrow has the corresponding locked tokens
 #[requires(
@@ -877,6 +897,8 @@ fn ack_fail<B: Bank>(
 // Sanity check: Because this is a round-trip, the receiver cannot be an escrow
 // account
 #[requires(!is_escrow_account(receiver))]
+#[requires(topology.ctx_at(ctx1, source_port, source_channel) === ctx2)]
+#[requires(topology.ctx_at(ctx2, dest_port, dest_channel) === ctx1)]
 
 // Ensure that the resulting balance of both bank accounts are unchanged after the round-trip
 #[ensures(
@@ -900,7 +922,8 @@ fn round_trip_sink<B: Bank>(
     source_port: Port,
     source_channel: ChannelEnd,
     dest_port: Port,
-    dest_channel: ChannelEnd
+    dest_channel: ChannelEnd,
+    topology: &Topology
 ) {
     // Send tokens A --> B
 
