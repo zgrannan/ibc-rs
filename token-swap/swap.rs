@@ -25,9 +25,24 @@ impl Ctx {
 
     #[pure]
     #[trusted]
-    #[ensures(result == (self === other))]
-    fn is_same_ctx_as(&self, other: &Ctx) -> bool {
+    fn counterparty_port(&self, source_port: Port, source_channel: ChannelEnd) -> Port {
         unimplemented!()
+    }
+
+    #[pure]
+    #[trusted]
+    fn counterparty_channel(&self, source_port: Port, source_channel: ChannelEnd) -> ChannelEnd {
+        unimplemented!()
+    }
+
+    predicate! {
+        fn has_channel(&self, 
+            source_port: Port, source_channel: ChannelEnd,
+            dest_port: Port, dest_channel: ChannelEnd
+        ) -> bool {
+            self.counterparty_port(source_port, source_channel) === dest_port && 
+            self.counterparty_channel(source_port, source_channel) === dest_channel
+        }
     }
 
     #[pure]
@@ -124,12 +139,10 @@ impl Path {
     }
 
     #[pure]
-    #[trusted]
-    #[ensures(result ==> !self.is_empty())]
-    #[ensures(result ==> (port === self.head_port()))]
-    #[ensures(result ==> (channel === self.head_channel()))]
     fn starts_with(self, port: Port, channel: ChannelEnd) -> bool {
-        unimplemented!()
+        !self.is_empty() && 
+        port == self.head_port() && 
+        channel == self.head_channel()
     }
 
     #[pure]
@@ -151,6 +164,24 @@ impl Path {
 struct Topology(u32);
 
 impl Topology {
+
+    predicate! {
+        fn connects(
+            &self,
+            ctx1: &Ctx,
+            port12: Port,
+            channel12: ChannelEnd,
+            ctx2: &Ctx,
+            port21: Port,
+            channel21: ChannelEnd
+        ) -> bool {
+            self.ctx_at(ctx1, port12, channel12) === ctx2 && 
+            self.ctx_at(ctx2, port21, channel21) === ctx1 && 
+            ctx1.has_channel(port12, channel12, port21, channel21) && 
+            ctx2.has_channel(port21, channel21, port12, channel12)
+        }
+    }
+
     #[pure]
     #[trusted]
     fn ctx_at(&self, from: &Ctx, port: Port, channel: ChannelEnd) -> &Ctx {
@@ -158,17 +189,41 @@ impl Topology {
     }
 }
 
+/**
+ * A path `P` is well-formed with respect to a chain `C` and network topology `T`
+ * iff P has less than two segments, or if P has at least two segments then:
+ * 
+ * Let P1/H1 be the port/channel pair in first segment of the path, and
+ * and P2/H2 be the second segment.
+ * Let C' be the chain on the end of P1/H1.
+ * 
+ * Then, P is well-formed with respect to chain C and topology T if:
+ * 1. P1/H1 and P2/H2 do not descibre a channel between C and C', and
+ * 2. The tail of P (after removing P1/H1) is well-formed with respect to 
+ *    chain C' and topology T
+ * 
+ * Informally, the well-formedness requirements corresponds to the path not having
+ * any cycles of length 2. It shouldn't be possible to create such a path, because 
+ * if a transfer C -> C' adds an additional segment to the path, the subsequent 
+ * transfer C' -> C should remove it. However, this well-formedness property does
+ * not rule out longer cycles, i.e., C1 -> C2 -> C3 -> C1; it is possible to create paths
+ * forming such cycles in the protocol.
+ */
 predicate! {
     fn is_well_formed(path: Path, ctx: &Ctx, topology: &Topology) -> bool {
         path.is_empty() || path.tail().is_empty() || {
             let path_tail = path.tail();
             let port1 = path.head_port();
             let channel1 = path.head_channel();
-            let ctx1 = topology.ctx_at(ctx, port1, channel1);
             let port2 = path_tail.head_port();
             let channel2 = path_tail.head_channel();
-            let ctx2 = topology.ctx_at(ctx1, port2, channel2);
-            !(ctx === ctx2) && is_well_formed(path_tail, ctx1, topology)
+            let ctx2 = topology.ctx_at(ctx, port1, channel1);
+            !ctx.has_channel(
+                port1,
+                channel1,
+                port2,
+                channel2,
+            ) && is_well_formed(path_tail, ctx2, topology)
         }
     }
 }
@@ -494,6 +549,24 @@ fn packet_is_source(packet: Packet) -> bool {
     packet.data.path.starts_with(packet.source_port, packet.source_channel)
 }
 
+#[requires(
+    is_well_formed(
+        packet.data.path, 
+        topology.ctx_at(
+            ctx, 
+            packet.dest_port,
+            packet.dest_channel
+        ),
+        topology
+    )
+)]
+#[requires(!packet_is_source(packet) && !packet.data.path.is_empty() ==> 
+    !ctx.has_channel(
+      packet.dest_port,
+      packet.dest_channel,
+      packet.data.path.head_port(),
+      packet.data.path.head_channel(),
+))]
 #[ensures(
     !packet_is_source(packet) ==>
         result.success && bank.mint_tokens_post(
@@ -503,6 +576,17 @@ fn packet_is_source(packet: Packet) -> bool {
             old(packet.data.coin),
             old(packet.data.amount)
         )
+)]
+#[ensures(
+    !packet_is_source(packet) ==>
+        is_well_formed(
+            old(
+                packet.data.path.prepend_prefix(
+                    packet.dest_port, 
+                    packet.dest_channel)
+            ),
+            ctx,
+            topology)
 )]
 #[ensures(
     (packet_is_source(packet) &&
@@ -528,7 +612,7 @@ fn on_recv_packet<B: Bank>(
     ctx: &Ctx, 
     bank: &mut B, 
     packet: Packet,
-    // topology: &Topology
+    topology: &Topology
 ) -> FungibleTokenPacketAcknowledgement {
     let FungibleTokenPacketData{ path, coin, receiver, amount, ..} = packet.data;
     let success = if packet_is_source(packet) {
@@ -670,6 +754,11 @@ fn on_acknowledge_packet<B: Bank>(
 // account
 #[requires(!is_escrow_account(receiver))]
 
+// Assume the path is well-formed.
+// See the definition of `is_well_formed` for details
+#[requires(topology.connects(ctx1, source_port, source_channel, ctx2, dest_port, dest_channel))]
+#[requires(is_well_formed(path, ctx1, topology))]
+
 // Ensure that the resulting balance of both bank accounts are unchanged after the round-trip
 #[ensures(
     forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
@@ -692,7 +781,8 @@ fn round_trip<B: Bank>(
     source_port: Port,
     source_channel: ChannelEnd,
     dest_port: Port,
-    dest_channel: ChannelEnd
+    dest_channel: ChannelEnd,
+    topology: &Topology
 ) {
     // Send tokens A --> B
 
@@ -716,7 +806,29 @@ fn round_trip<B: Bank>(
     prusti_assume!(packet.dest_port == dest_port);
     prusti_assume!(packet.dest_channel == dest_channel);
 
-    let ack = on_recv_packet(ctx2, bank2, packet);
+    if(!path.is_empty()) {
+        prusti_assert!(
+            ctx2.has_channel(
+                packet.dest_port,
+                packet.dest_channel,
+                source_port,
+                source_channel
+            )
+        );
+        prusti_assert!(
+            source_port != path.head_port() || 
+            source_channel != path.head_channel()
+        );
+        prusti_assert!(
+            !(ctx2.has_channel(
+                packet.dest_port,
+                packet.dest_channel,
+                path.head_port(),
+                path.head_channel(),
+            ))
+        );
+    }
+    let ack = on_recv_packet(ctx2, bank2, packet, topology);
     prusti_assert!(ack.success);
     on_acknowledge_packet(ctx1, bank1, ack, packet);
 
@@ -738,7 +850,7 @@ fn round_trip<B: Bank>(
     prusti_assume!(packet.dest_port == source_port);
     prusti_assume!(packet.dest_channel == source_channel);
 
-    let ack = on_recv_packet(ctx1, bank1, packet);
+    let ack = on_recv_packet(ctx1, bank1, packet, topology);
     prusti_assert!(ack.success);
     on_acknowledge_packet(ctx2, bank2, ack, packet);
 }
@@ -861,25 +973,8 @@ fn ack_fail<B: Bank>(
 #[requires(path.starts_with(source_port, source_channel))]
 
 // Assume the path is well-formed.
-//
-// To understand this requirement, suppose, on the contrary that
-// path.tail().starts_with(dest_port, dest_channel)). Then, when the receiver
-// chain sends back the token denominated with path.tail() to the sender,
-// it would see that the token *originated* on that chain, thus burning its native
-// tokens. More problematically, the receiver would then percieve the tokens as originating
-// from its own chain and attempt to unescrow them, which could presumably fail.
-//
-// Note that it should not be possible to create such an ill-formed path.
-// Consider an ill-formed path P1/C1/P2/C2/$, where P1/C1 and P2/C2 are port
-// channel pairs, and $ corresponds to the rest of the path. Assume chain A
-// communicates to chain B via P1/C1 and chain B communicates to chain A via
-// P2/C2. The building of the P2/C2 segment must be created from a transfer of $
-// from A to B, and the P1/C1 segment must be created from a transfer of P2/C2/$
-// from B to A. However, since the the path of the transfer from B to A would
-// have already have prefix P2/C2 corresponding to B's connection to A, the
-// token swap would strip the P2/C2 prefix rather than appending the P1/C1
-// prefix.
-// #[requires(!path.tail().starts_with(dest_port, dest_channel))]
+// See the definition of `is_well_formed` for details
+#[requires(topology.connects(ctx1, source_port, source_channel, ctx2, dest_port, dest_channel))]
 #[requires(is_well_formed(path, ctx1, topology))]
 
 // Assume the escrow has the corresponding locked tokens
@@ -897,8 +992,6 @@ fn ack_fail<B: Bank>(
 // Sanity check: Because this is a round-trip, the receiver cannot be an escrow
 // account
 #[requires(!is_escrow_account(receiver))]
-#[requires(topology.ctx_at(ctx1, source_port, source_channel) === ctx2)]
-#[requires(topology.ctx_at(ctx2, dest_port, dest_channel) === ctx1)]
 
 // Ensure that the resulting balance of both bank accounts are unchanged after the round-trip
 #[ensures(
@@ -960,7 +1053,7 @@ fn round_trip_sink<B: Bank>(
             packet.data.amount
         )
     );
-    let ack = on_recv_packet(ctx2, bank2, packet);
+    let ack = on_recv_packet(ctx2, bank2, packet, topology);
     prusti_assert!(ack.success);
     on_acknowledge_packet(ctx1, bank1, ack, packet);
 
@@ -982,7 +1075,7 @@ fn round_trip_sink<B: Bank>(
     prusti_assume!(packet.dest_port == source_port);
     prusti_assume!(packet.dest_channel == source_channel);
 
-    let ack = on_recv_packet(ctx1, bank1, packet);
+    let ack = on_recv_packet(ctx1, bank1, packet, topology);
     on_acknowledge_packet(ctx2, bank2, ack, packet);
 }
 
