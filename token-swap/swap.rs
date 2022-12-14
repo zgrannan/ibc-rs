@@ -413,6 +413,7 @@ fn send_will_transfer<B: Bank>(
 
 // Sanity check: The sender cannot be an escrow account
 #[requires(!is_escrow_account(sender))]
+#[requires(is_well_formed(path, ctx, topology))]
 #[ensures(
     old(send_will_burn(bank, path, source_port, source_channel, sender, coin, amount)) ==>
         (result.is_some() && bank.burn_tokens_post(old(bank), sender, path, coin, amount)
@@ -454,7 +455,8 @@ fn send_fungible_tokens<B: Bank>(
     sender: AccountID,
     receiver: AccountID,
     source_port: Port,
-    source_channel: ChannelEnd
+    source_channel: ChannelEnd,
+    topology: &Topology
 ) -> Option<Packet> {
     let success = if !path.starts_with(source_port, source_channel) {
         bank.transfer_tokens(
@@ -795,7 +797,8 @@ fn round_trip<B: Bank>(
         sender,
         receiver,
         source_port,
-        source_channel
+        source_channel,
+        topology
     );
     // packet.is_some() means that this call did not fail
     prusti_assert!(packet.is_some());
@@ -821,7 +824,8 @@ fn round_trip<B: Bank>(
         receiver,
         sender,
         dest_port,
-        dest_channel
+        dest_channel,
+        topology
     );
     prusti_assert!(packet.is_some());
     let packet = packet.unwrap();
@@ -839,6 +843,7 @@ fn round_trip<B: Bank>(
 #[requires(!path.starts_with(source_port, source_channel))]
 // Sanity check: The sender cannot be an escrow account
 #[requires(!is_escrow_account(sender))]
+#[requires(is_well_formed(path, ctx1, topology))]
 #[ensures(
     forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
         bank1.balance_of(acct_id2, path2, coin2) ==
@@ -855,7 +860,8 @@ fn timeout<B: Bank>(
     source_port: Port,
     source_channel: ChannelEnd,
     dest_port: Port,
-    dest_channel: ChannelEnd
+    dest_channel: ChannelEnd,
+    topology: &Topology
 ) {
     // Send tokens A --> B
     let packet = send_fungible_tokens(
@@ -867,7 +873,8 @@ fn timeout<B: Bank>(
         sender,
         receiver,
         source_port,
-        source_channel
+        source_channel,
+        topology
     );
     // packet.is_some() means that this call did not fail
     prusti_assert!(packet.is_some());
@@ -887,6 +894,7 @@ fn timeout<B: Bank>(
     bank1.transfer_tokens_pre(sender, ctx1.escrow_address(source_channel), path, coin, amount))
 ]
 #[requires(!path.starts_with(source_port, source_channel))]
+#[requires(is_well_formed(path, ctx1, topology))]
 #[ensures(
     forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
         bank1.balance_of(acct_id2, path2, coin2) ==
@@ -903,7 +911,8 @@ fn ack_fail<B: Bank>(
     source_port: Port,
     source_channel: ChannelEnd,
     dest_port: Port,
-    dest_channel: ChannelEnd
+    dest_channel: ChannelEnd,
+    topology: &Topology
 ) {
     // Send tokens A --> B
     let packet = send_fungible_tokens(
@@ -915,7 +924,8 @@ fn ack_fail<B: Bank>(
         sender,
         receiver,
         source_port,
-        source_channel
+        source_channel,
+        topology
     );
     // packet.is_some() means that this call did not fail
     prusti_assert!(packet.is_some());
@@ -1007,7 +1017,8 @@ fn round_trip_sink<B: Bank>(
         sender,
         receiver,
         source_port,
-        source_channel
+        source_channel,
+        topology
     );
     // packet.is_some() means that this call did not fail
     prusti_assert!(packet.is_some());
@@ -1046,7 +1057,8 @@ fn round_trip_sink<B: Bank>(
         receiver,
         sender,
         dest_port,
-        dest_channel
+        dest_channel,
+        topology
     );
     prusti_assert!(packet.is_some());
     let packet = packet.unwrap();
