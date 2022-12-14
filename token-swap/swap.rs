@@ -84,16 +84,19 @@ struct Packet {
 }
 
 #[pure]
-#[trusted]
-#[ensures(result.source_port == source_port)]
-#[ensures(result.source_channel == source_channel)]
-#[ensures(result.data == data)]
 fn mk_packet(
+    ctx: &Ctx,
     source_port: Port,
     source_channel: ChannelEnd,
     data: FungibleTokenPacketData
 ) -> Packet {
-    unimplemented!()
+    Packet {
+        source_port,
+        source_channel,
+        data,
+        dest_port: ctx.counterparty_port(source_port, source_channel),
+        dest_channel: ctx.counterparty_channel(source_port, source_channel)
+    }
 }
 
 #[derive(Copy, Clone, Eq, Hash)]
@@ -133,7 +136,7 @@ impl Path {
     #[ensures(!(result === Path::empty()))]
     #[ensures(result.starts_with(port, channel))]
     #[ensures(result.tail() === self)]
-    #[ensures(result.drop_prefix(port, channel) === self)]
+    // #[ensures(result.drop_prefix(port, channel) === self)]
     fn prepend_prefix(self, port: Port, channel: ChannelEnd) -> Path {
         unimplemented!()
     }
@@ -441,6 +444,7 @@ fn send_will_transfer<B: Bank>(
 #[ensures(
     result.is_some() ==>
     result == Some(mk_packet(
+        ctx,
         source_port,
         source_channel,
         FungibleTokenPacketData {path, coin, sender, receiver, amount}
@@ -483,7 +487,7 @@ fn send_fungible_tokens<B: Bank>(
             receiver,
             amount
         };
-        Some(mk_packet(source_port, source_channel, data))
+        Some(mk_packet(ctx, source_port, source_channel, data))
     } else {
         None
     }
@@ -654,86 +658,85 @@ fn on_acknowledge_packet<B: Bank>(
  * The specification ensures that the total amount of tokens does not change
  */
 
-// // Assume the sender's address is distinct from the escrow address for the source channel,
-// // and that they have sufficient funds to send to `receiver`
-// #[requires(
-//     bank1.transfer_tokens_pre(sender, ctx1.escrow_address(source_channel), path, coin, amount))
-// ]
+// Assume the sender's address is distinct from the escrow address for the source channel,
+// and that they have sufficient funds to send to `receiver`
+#[requires(
+    bank1.transfer_tokens_pre(sender, ctx1.escrow_address(source_channel), path, coin, amount))
+]
 
-// // Assume that the sender is the source chain
-// #[requires(!path.starts_with(source_port, source_channel))]
+// Assume that the sender is the source chain
+#[requires(!path.starts_with(source_port, source_channel))]
 
-// // Sanity check: The sender cannot be an escrow account
-// #[requires(!is_escrow_account(sender))]
+// Sanity check: The sender cannot be an escrow account
+#[requires(!is_escrow_account(sender))]
 
+#[requires(topology.connects(ctx1, source_port, source_channel, ctx2, dest_port, dest_channel))]
+#[requires(is_well_formed(path, ctx1, topology))]
 // #[ensures(
 //     !is_escrow_account(receiver) ==>
 //     (bank1.unescrowed_coin_balance(coin) + bank2.unescrowed_coin_balance(coin) ==
 //     old(bank1.unescrowed_coin_balance(coin) + bank2.unescrowed_coin_balance(coin)))
 // )]
-// fn send_preserves<B: Bank>(
-//     ctx1: &Ctx,
-//     ctx2: &Ctx,
-//     bank1: &mut B,
-//     bank2: &mut B,
-//     path: Path,
-//     coin: Coin,
-//     amount: u32,
-//     sender: AccountID,
-//     receiver: AccountID,
-//     source_port: Port,
-//     source_channel: ChannelEnd,
-//     dest_port: Port,
-//     dest_channel: ChannelEnd
-// ) {
+fn send_preserves<B: Bank>(
+    ctx1: &Ctx,
+    ctx2: &Ctx,
+    bank1: &mut B,
+    bank2: &mut B,
+    path: Path,
+    coin: Coin,
+    amount: u32,
+    sender: AccountID,
+    receiver: AccountID,
+    source_port: Port,
+    source_channel: ChannelEnd,
+    dest_port: Port,
+    dest_channel: ChannelEnd,
+    topology: &Topology
+) {
 
-//     prusti_assert!(
-//         send_will_transfer(
-//             bank1,
-//             path,
-//             source_port,
-//             source_channel,
-//             sender,
-//             ctx1.escrow_address(source_channel),
-//             coin,
-//     amount));
-//     let packet = send_fungible_tokens(
-//         ctx1,
-//         bank1,
-//         path,
-//         coin,
-//         amount,
-//         sender,
-//         receiver,
-//         source_port,
-//         source_channel
-//     );
-//     // packet.is_some() means that this call did not fail
-//     prusti_assert!(packet.is_some());
-//     prusti_assert!(
-//         bank1.unescrowed_coin_balance(coin) ==
-//         old(bank1.unescrowed_coin_balance(coin)) - amount
-//     );
-//     let packet = packet.unwrap();
+    prusti_assert!(
+        send_will_transfer(
+            bank1,
+            path,
+            source_port,
+            source_channel,
+            sender,
+            ctx1.escrow_address(source_channel),
+            coin,
+    amount));
+    let packet = send_fungible_tokens(
+        ctx1,
+        bank1,
+        path,
+        coin,
+        amount,
+        sender,
+        receiver,
+        source_port,
+        source_channel,
+        topology
+    );
+    // packet.is_some() means that this call did not fail
+    prusti_assert!(packet.is_some());
+    prusti_assert!(
+        bank1.unescrowed_coin_balance(coin) ==
+        old(bank1.unescrowed_coin_balance(coin)) - amount
+    );
+    let packet = packet.unwrap();
 
-//     // Assume that the destination port and channel have been set correctly
-//     // (I think this would be done by some routing module?)
-//     prusti_assume!(packet.dest_port == dest_port);
-//     prusti_assume!(packet.dest_channel == dest_channel);
-
-//     let ack = on_recv_packet(ctx2, bank2, packet);
-//     prusti_assert!(
-//     !is_escrow_account(receiver) ==>
-//         (bank2.unescrowed_coin_balance(coin) ==
-//         old(bank2.unescrowed_coin_balance(coin)) + amount)
-//     );
-//     prusti_assert!(ack.success);
-//     on_acknowledge_packet(ctx1, bank1, ack, packet);
-//     prusti_assert!(
-//         bank1.unescrowed_coin_balance(coin) ==
-//         old(bank1.unescrowed_coin_balance(coin)) - amount
-//     );
-// }
+    let ack = on_recv_packet(ctx2, bank2, packet, topology);
+    prusti_assert!(
+    !is_escrow_account(receiver) ==>
+        (bank2.unescrowed_coin_balance(coin) ==
+        old(bank2.unescrowed_coin_balance(coin)) + amount)
+    );
+    prusti_assert!(ack.success);
+    on_acknowledge_packet(ctx1, bank1, ack, packet);
+    prusti_assert!(
+        bank1.unescrowed_coin_balance(coin) ==
+        old(bank1.unescrowed_coin_balance(coin)) - amount
+    );
+}
 
 /*
  * This method performs a round trip of a token from chain A --> B --> A,
@@ -804,11 +807,6 @@ fn round_trip<B: Bank>(
     prusti_assert!(packet.is_some());
     let packet = packet.unwrap();
 
-    // Assume that the destination port and channel have been set correctly
-    // (I think this would be done by some routing module?)
-    prusti_assume!(packet.dest_port == dest_port);
-    prusti_assume!(packet.dest_channel == dest_channel);
-
     let ack = on_recv_packet(ctx2, bank2, packet, topology);
     prusti_assert!(ack.success);
     on_acknowledge_packet(ctx1, bank1, ack, packet);
@@ -829,8 +827,6 @@ fn round_trip<B: Bank>(
     );
     prusti_assert!(packet.is_some());
     let packet = packet.unwrap();
-    prusti_assume!(packet.dest_port == source_port);
-    prusti_assume!(packet.dest_channel == source_channel);
 
     let ack = on_recv_packet(ctx1, bank1, packet, topology);
     prusti_assert!(ack.success);
@@ -880,11 +876,6 @@ fn timeout<B: Bank>(
     prusti_assert!(packet.is_some());
     let packet = packet.unwrap();
 
-    // Assume that the destination port and channel have been set correctly
-    // (I think this would be done by some routing module?)
-    prusti_assume!(packet.dest_port == dest_port);
-    prusti_assume!(packet.dest_channel == dest_channel);
-
     on_timeout_packet(ctx1, bank1, packet);
 }
 
@@ -930,11 +921,6 @@ fn ack_fail<B: Bank>(
     // packet.is_some() means that this call did not fail
     prusti_assert!(packet.is_some());
     let packet = packet.unwrap();
-
-    // Assume that the destination port and channel have been set correctly
-    // (I think this would be done by some routing module?)
-    prusti_assume!(packet.dest_port == dest_port);
-    prusti_assume!(packet.dest_channel == dest_channel);
 
     on_acknowledge_packet(
         ctx1,
@@ -1024,11 +1010,6 @@ fn round_trip_sink<B: Bank>(
     prusti_assert!(packet.is_some());
     let packet = packet.unwrap();
 
-    // Assume that the destination port and channel have been set correctly
-    // (I think this would be done by some routing module?)
-    prusti_assume!(packet.dest_port == dest_port);
-    prusti_assume!(packet.dest_channel == dest_channel);
-
     prusti_assert!(
             ctx2.escrow_address(packet.dest_channel) !=
             packet.data.receiver
@@ -1062,8 +1043,6 @@ fn round_trip_sink<B: Bank>(
     );
     prusti_assert!(packet.is_some());
     let packet = packet.unwrap();
-    prusti_assume!(packet.dest_port == source_port);
-    prusti_assume!(packet.dest_channel == source_channel);
 
     let ack = on_recv_packet(ctx1, bank1, packet, topology);
     on_acknowledge_packet(ctx2, bank2, ack, packet);
