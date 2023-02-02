@@ -6,6 +6,14 @@ use prusti_contracts::*;
 struct AccountID(u32);
 
 #[invariant_twostate(self.id() === old(self.id()))]
+#[invariant_twostate(
+    forall(|acct_id: AccountID, path: Path, coin: Coin|
+        perm(Money(self.id(), acct_id, path, coin)) - 
+        old(perm(Money(self.id(), acct_id, path, coin))) ==
+        PermAmount::from(self.balance_of(acct_id, path, coin)) - 
+            PermAmount::from(old(self.balance_of(acct_id, path, coin)))
+    ))
+]
 struct Bank(u32);
 
 #[derive(Copy, Clone)]
@@ -329,6 +337,13 @@ impl Bank {
         amt
     ))]
     #[ensures(transfers(Money(self.id(), to, path, coin), amt))]
+    #[ensures(
+    forall(|acct_id: AccountID, path: Path, coin: Coin|
+        perm(Money(self.id(), acct_id, path, coin)) - 
+        old(perm(Money(self.id(), acct_id, path, coin))) ==
+        PermAmount::from(self.balance_of(acct_id, path, coin)) - 
+            PermAmount::from(old(self.balance_of(acct_id, path, coin)))
+    ))]
     fn transfer_tokens(
         &mut self,
         from: AccountID,
@@ -496,6 +511,13 @@ fn send_will_transfer(
         FungibleTokenPacketData {path, coin, sender, receiver, amount}
     )
 )]
+#[ensures(
+forall(|acct_id: AccountID, path: Path, coin: Coin|
+    perm(Money(bank.id(), acct_id, path, coin)) - 
+    old(perm(Money(bank.id(), acct_id, path, coin))) ==
+    PermAmount::from(bank.balance_of(acct_id, path, coin)) - 
+        PermAmount::from(old(bank.balance_of(acct_id, path, coin)))
+))]
 fn send_fungible_tokens(
     ctx: &Ctx,
     bank: &mut Bank,
@@ -551,6 +573,23 @@ fn send_fungible_tokens(
     ), packet.data.amount)
 )]
 #[ensures(refund_tokens_post(ctx, bank, old(bank), packet))]
+#[ensures(
+    transfers(
+        Money(
+            old(bank.id()), 
+            old(packet.data.sender), 
+            old(packet.data.path), 
+            old(packet.data.coin)
+        ), old(packet.data.amount)
+    )
+)]
+#[ensures(
+forall(|acct_id: AccountID, path: Path, coin: Coin|
+    perm(Money(bank.id(), acct_id, path, coin)) - 
+    old(perm(Money(bank.id(), acct_id, path, coin))) ==
+    PermAmount::from(bank.balance_of(acct_id, path, coin)) - 
+        PermAmount::from(old(bank.balance_of(acct_id, path, coin)))
+))]
 fn on_timeout_packet(ctx: &Ctx, bank: &mut Bank, packet: Packet) {
     refund_tokens(ctx, bank, packet);
 }
@@ -608,6 +647,13 @@ predicate! {
         ), old(packet.data.amount)
     )
 )]
+#[ensures(
+forall(|acct_id: AccountID, path: Path, coin: Coin|
+    perm(Money(bank.id(), acct_id, path, coin)) - 
+    old(perm(Money(bank.id(), acct_id, path, coin))) ==
+    PermAmount::from(bank.balance_of(acct_id, path, coin)) - 
+        PermAmount::from(old(bank.balance_of(acct_id, path, coin)))
+))]
 fn refund_tokens(ctx: &Ctx, bank: &mut Bank, packet: Packet) {
     let FungibleTokenPacketData{ path, coin, sender, amount, ..} = packet.data;
     if !path.starts_with(packet.source_port, packet.source_channel) {
@@ -719,6 +765,13 @@ fn packet_is_source(packet: Packet) -> bool {
         ), old(packet.data.amount))
     ))
 ]
+#[ensures(
+forall(|acct_id: AccountID, path: Path, coin: Coin|
+    perm(Money(bank.id(), acct_id, path, coin)) - 
+    old(perm(Money(bank.id(), acct_id, path, coin))) ==
+    PermAmount::from(bank.balance_of(acct_id, path, coin)) - 
+        PermAmount::from(old(bank.balance_of(acct_id, path, coin)))
+))]
 fn on_recv_packet(
     ctx: &Ctx, 
     bank: &mut Bank, 
@@ -774,6 +827,13 @@ fn on_recv_packet(
         ), old(packet.data.amount)
     )
 )]
+#[ensures(
+forall(|acct_id: AccountID, path: Path, coin: Coin|
+    perm(Money(bank.id(), acct_id, path, coin)) - 
+    old(perm(Money(bank.id(), acct_id, path, coin))) ==
+    PermAmount::from(bank.balance_of(acct_id, path, coin)) - 
+        PermAmount::from(old(bank.balance_of(acct_id, path, coin)))
+))]
 fn on_acknowledge_packet(
     ctx: &Ctx,
     bank: &mut Bank,
@@ -789,6 +849,7 @@ fn on_acknowledge_packet(
  * The specification ensures that the total amount of tokens does not change
  */
 
+#[requires(!(bank1.id() === bank2.id()))]
 // Assume the sender's address is distinct from the escrow address for the source channel,
 // and that they have sufficient funds to send to `receiver`
 #[requires(
@@ -809,6 +870,24 @@ fn on_acknowledge_packet(
 //     (bank1.unescrowed_coin_balance(coin) + bank2.unescrowed_coin_balance(coin) ==
 //     old(bank1.unescrowed_coin_balance(coin) + bank2.unescrowed_coin_balance(coin)))
 // )]
+#[ensures(
+    transfers(
+        Money(
+            bank1.id(), 
+            ctx1.escrow_address(source_channel), 
+            path, 
+            coin), amount
+        )
+    )]
+#[ensures(
+    transfers(
+        Money(
+            bank2.id(), 
+            receiver, 
+            path.prepend_prefix(dest_port, dest_channel), 
+            coin
+        ), amount))
+]
 fn send_preserves(
     ctx1: &Ctx,
     ctx2: &Ctx,
@@ -826,16 +905,6 @@ fn send_preserves(
     topology: &Topology
 ) {
 
-    prusti_assert!(
-        send_will_transfer(
-            bank1,
-            path,
-            source_port,
-            source_channel,
-            sender,
-            ctx1.escrow_address(source_channel),
-            coin,
-    amount));
     let packet = send_fungible_tokens(
         ctx1,
         bank1,
@@ -849,6 +918,13 @@ fn send_preserves(
         topology
     );
     prusti_assert!(
+    forall(|acct_id: AccountID, path: Path, coin: Coin|
+        perm(Money(bank1.id(), acct_id, path, coin)) - 
+        old(perm(Money(bank1.id(), acct_id, path, coin))) ==
+        PermAmount::from(bank1.balance_of(acct_id, path, coin)) - 
+            PermAmount::from(old(bank1.balance_of(acct_id, path, coin)))
+    ));
+    prusti_assert!(
         bank1.unescrowed_coin_balance(coin) ==
         old(bank1.unescrowed_coin_balance(coin)) - amount
     );
@@ -860,11 +936,25 @@ fn send_preserves(
         old(bank2.unescrowed_coin_balance(coin)) + amount)
     );
     prusti_assert!(ack.success);
+    prusti_assert!(
+    forall(|acct_id: AccountID, path: Path, coin: Coin|
+        perm(Money(bank1.id(), acct_id, path, coin)) - 
+        old(perm(Money(bank1.id(), acct_id, path, coin))) ==
+        PermAmount::from(bank1.balance_of(acct_id, path, coin)) - 
+            PermAmount::from(old(bank1.balance_of(acct_id, path, coin)))
+    ));
     on_acknowledge_packet(ctx1, bank1, ack, packet);
     prusti_assert!(
         bank1.unescrowed_coin_balance(coin) ==
         old(bank1.unescrowed_coin_balance(coin)) - amount
     );
+    prusti_assert!(
+    forall(|acct_id: AccountID, path: Path, coin: Coin|
+        perm(Money(bank1.id(), acct_id, path, coin)) - 
+        old(perm(Money(bank1.id(), acct_id, path, coin))) ==
+        PermAmount::from(bank1.balance_of(acct_id, path, coin)) - 
+            PermAmount::from(old(bank1.balance_of(acct_id, path, coin)))
+    ));
 }
 
 /*
@@ -873,6 +963,7 @@ fn send_preserves(
  * same as they were initially.
  */
 
+#[requires(!(bank1.id() === bank2.id()))]
 // Assume the sender's address is distinct from the escrow address for the source channel,
 // and that they have sufficient funds to send to `receiver`
 #[requires(
@@ -904,6 +995,7 @@ fn send_preserves(
     forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
         bank2.balance_of(acct_id2, path2, coin2) ==
            old(bank2).balance_of(acct_id2, path2, coin2)))]
+#[ensures(transfers(Money(bank1.id(), sender, path, coin), amount))]
 fn round_trip(
     ctx1: &Ctx,
     ctx2: &Ctx,
@@ -971,6 +1063,7 @@ fn round_trip(
     forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
         bank1.balance_of(acct_id2, path2, coin2) ==
            old(bank1).balance_of(acct_id2, path2, coin2)))]
+#[ensures(transfers(Money(bank1.id(), sender, path, coin), amount))]
 fn timeout(
     ctx1: &Ctx,
     ctx2: &Ctx,
@@ -1011,6 +1104,7 @@ fn timeout(
 #[requires(transfers(Money(bank1.id(), sender, path, coin), amount))]
 #[requires(!path.starts_with(source_port, source_channel))]
 #[requires(is_well_formed(path, ctx1, topology))]
+#[ensures(transfers(Money(bank1.id(), sender, path, coin), amount))]
 #[ensures(
     forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
         bank1.balance_of(acct_id2, path2, coin2) ==
@@ -1059,6 +1153,7 @@ fn ack_fail(
  * same as they were initially.
  */
 
+#[requires(!(bank1.id() === bank2.id()))]
 // Assume the sender has sufficient funds to send to receiver
 #[requires(bank1.balance_of(sender, path, coin) >= amount)]
 #[requires(transfers(Money(bank1.id(), sender, path, coin), amount))]
@@ -1095,6 +1190,12 @@ fn ack_fail(
 // account
 #[requires(!is_escrow_account(receiver))]
 
+#[ensures(transfers(Money(
+    bank2.id(),
+    ctx2.escrow_address(dest_channel),
+    path.drop_prefix(source_port, source_channel),
+    coin), amount))]
+#[ensures(transfers(Money(bank1.id(), sender, path, coin), amount))]
 // Ensure that the resulting balance of both bank accounts are unchanged after the round-trip
 #[ensures(
     forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
