@@ -81,18 +81,6 @@ impl Ctx {
     }
 }
 
-#[extern_spec]
-impl<T> std::option::Option<T> {
-    #[pure]
-    #[ensures(matches!(*self, Some(_)) == result)]
-    pub fn is_some(&self) -> bool;
-
-    #[pure]
-    #[requires(self.is_some())]
-    #[ensures(self === Some(result))]
-    pub fn unwrap(self) -> T;
-}
-
 #[derive(Copy, Clone, Eq, PartialEq)]
 struct FungibleTokenPacketData {
     path: Path,
@@ -291,6 +279,7 @@ impl Bank {
         unimplemented!()
     }
 
+    #[requires(from != to)]
     #[requires(!is_escrow_account(from) ==> transfers(UnescrowedBalance(self.id(), coin), amt))]
     #[requires(transfers(Money(self.id(), from, path, coin), amt))]
     #[ensures(transfers(Money(self.id(), to, path, coin), amt))]
@@ -316,10 +305,9 @@ impl Bank {
     }
 
     #[trusted]
-    #[ensures(result)]
     #[ensures(transfers(Money(self.id(), to, path, coin), amt))]
     #[ensures(!is_escrow_account(to) ==> transfers(UnescrowedBalance(self.id(), coin), amt))]
-    fn mint_tokens(&mut self, to: AccountID, path: Path, coin: Coin, amt: u32) -> bool {
+    fn mint_tokens(&mut self, to: AccountID, path: Path, coin: Coin, amt: u32) {
         unimplemented!()
     }
 }
@@ -401,6 +389,7 @@ fn send_fungible_tokens(
     mk_packet(ctx, source_port, source_channel, data)
 }
 
+#[requires(packet.data.sender != ctx.escrow_address(packet.source_channel))]
 #[requires(
     !packet.data.path.starts_with(packet.source_port, packet.source_channel) ==> 
     transfers(Money(
@@ -427,6 +416,7 @@ fn on_timeout_packet(ctx: &Ctx, bank: &mut Bank, packet: Packet) {
     refund_tokens(ctx, bank, packet);
 }
 
+#[requires(packet.data.sender != ctx.escrow_address(packet.source_channel))]
 #[requires(
     !packet.data.path.starts_with(packet.source_port, packet.source_channel) ==> 
     transfers(Money(
@@ -478,6 +468,7 @@ fn packet_is_source(packet: Packet) -> bool {
     packet.data.path.starts_with(packet.source_port, packet.source_channel)
 }
 
+#[requires(packet.data.receiver != ctx.escrow_address(packet.dest_channel))]
 #[requires(
     is_well_formed(
         packet.data.path, 
@@ -565,6 +556,7 @@ fn on_recv_packet(
     FungibleTokenPacketAcknowledgement { success: true }
 }
 
+#[requires(packet.data.sender != ctx.escrow_address(packet.source_channel))]
 #[requires(
     (!ack.success && 
     !packet.data.path.starts_with(packet.source_port, packet.source_channel)) ==> 
@@ -605,6 +597,7 @@ fn on_acknowledge_packet(
  */
 
 #[requires(!(bank1.id() === bank2.id()))]
+#[requires(receiver != ctx2.escrow_address(dest_channel))]
 #[requires(transfers(Money(bank1.id(), sender, path, coin), amount))]
 #[requires(transfers(UnescrowedBalance(bank1.id(), coin), amount))]
 

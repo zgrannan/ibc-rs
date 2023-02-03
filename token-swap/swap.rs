@@ -53,18 +53,6 @@ impl Ctx {
     }
 }
 
-#[extern_spec]
-impl<T> std::option::Option<T> {
-    #[pure]
-    #[ensures(matches!(*self, Some(_)) == result)]
-    pub fn is_some(&self) -> bool;
-
-    #[pure]
-    #[requires(self.is_some())]
-    #[ensures(self === Some(result))]
-    pub fn unwrap(self) -> T;
-}
-
 #[derive(Copy, Clone, Eq, PartialEq)]
 struct FungibleTokenPacketData {
     path: Path,
@@ -136,7 +124,6 @@ impl Path {
     #[ensures(!(result === Path::empty()))]
     #[ensures(result.starts_with(port, channel))]
     #[ensures(result.tail() === self)]
-    // #[ensures(result.drop_prefix(port, channel) === self)]
     fn prepend_prefix(self, port: Port, channel: ChannelEnd) -> Path {
         unimplemented!()
     }
@@ -296,8 +283,8 @@ trait Bank {
         from != to && self.balance_of(from, path, coin) >= amt
     }
 
-    #[ensures(result == old(self.transfer_tokens_pre(from, to, path, coin, amt)))]
-    #[ensures(result ==> self.transfer_tokens_post(
+    #[requires(self.transfer_tokens_pre(from, to, path, coin, amt))]
+    #[ensures(self.transfer_tokens_post(
         old(self),
         from,
         to,
@@ -312,14 +299,9 @@ trait Bank {
         path: Path,
         coin: Coin,
         amt: u32
-    ) -> bool {
-        if(self.transfer_tokens_pre(from, to, path, coin, amt)) {
-            self.burn_tokens(from, path, coin, amt);
-            self.mint_tokens(to, path, coin, amt);
-            true
-        } else {
-            false
-        }
+    ) {
+        self.burn_tokens(from, path, coin, amt);
+        self.mint_tokens(to, path, coin, amt);
     }
 
     predicate! {
@@ -348,11 +330,9 @@ trait Bank {
         }
     }
 
-    #[ensures(result == (old(self.balance_of(to, path, coin)) >= amt))]
-    #[ensures(result ==> self.burn_tokens_post(old(self), to, path, coin, amt))]
-    #[ensures(!result ==>
-        self.unescrowed_coin_balance(coin) == old(self.unescrowed_coin_balance(coin)))]
-    fn burn_tokens(&mut self, to: AccountID, path: Path, coin: Coin, amt: u32) -> bool;
+    #[requires(self.balance_of(to, path, coin) >= amt)]
+    #[ensures(self.burn_tokens_post(old(self), to, path, coin, amt))]
+    fn burn_tokens(&mut self, to: AccountID, path: Path, coin: Coin, amt: u32);
 
     predicate! {
         fn mint_tokens_post(
@@ -417,9 +397,21 @@ fn send_will_transfer<B: Bank>(
 // Sanity check: The sender cannot be an escrow account
 #[requires(!is_escrow_account(sender))]
 #[requires(is_well_formed(path, ctx, topology))]
+#[requires(
+       send_will_burn(bank, path, source_port, source_channel, sender, coin, amount)
+    || send_will_transfer(
+            bank,
+            path,
+            source_port,
+            source_channel,
+            sender,
+            ctx.escrow_address(source_channel),
+            coin,
+    amount)
+)]
 #[ensures(
     old(send_will_burn(bank, path, source_port, source_channel, sender, coin, amount)) ==>
-        (result.is_some() && bank.burn_tokens_post(old(bank), sender, path, coin, amount)
+        (bank.burn_tokens_post(old(bank), sender, path, coin, amount)
 ))]
 #[ensures(
     old(
@@ -431,7 +423,7 @@ fn send_will_transfer<B: Bank>(
             sender,
             ctx.escrow_address(source_channel),
             coin,
-    amount)) ==> result.is_some() &&
+    amount)) ==> 
         bank.transfer_tokens_post(
             old(bank),
             sender,
@@ -442,14 +434,13 @@ fn send_will_transfer<B: Bank>(
     )
 )]
 #[ensures(
-    result.is_some() ==>
-    result == Some(mk_packet(
+    result == mk_packet(
         ctx,
         source_port,
         source_channel,
         FungibleTokenPacketData {path, coin, sender, receiver, amount}
     )
-))]
+)]
 fn send_fungible_tokens<B: Bank>(
     ctx: &Ctx,
     bank: &mut B,
@@ -461,38 +452,44 @@ fn send_fungible_tokens<B: Bank>(
     source_port: Port,
     source_channel: ChannelEnd,
     topology: &Topology
-) -> Option<Packet> {
-    let success = if !path.starts_with(source_port, source_channel) {
+) -> Packet {
+    if !path.starts_with(source_port, source_channel) {
         bank.transfer_tokens(
             sender,
             ctx.escrow_address(source_channel),
             path,
             coin,
             amount
-        )
+        );
     } else {
         bank.burn_tokens(
             sender,
             path,
             coin,
             amount
-        )
+        );
     };
 
-    if success {
-        let data = FungibleTokenPacketData {
-            path,
-            coin,
-            sender,
-            receiver,
-            amount
-        };
-        Some(mk_packet(ctx, source_port, source_channel, data))
-    } else {
-        None
-    }
+    let data = FungibleTokenPacketData {
+        path,
+        coin,
+        sender,
+        receiver,
+        amount
+    };
+    mk_packet(ctx, source_port, source_channel, data)
 }
 
+#[requires(
+    !packet.data.path.starts_with(packet.source_port, packet.source_channel) ==>
+      bank.transfer_tokens_pre(
+        ctx.escrow_address(packet.source_channel), 
+        packet.data.sender, 
+        packet.data.path, 
+        packet.data.coin, 
+        packet.data.amount
+    )
+)]
 #[ensures(refund_tokens_post(ctx, bank, old(bank), packet))]
 fn on_timeout_packet<B: Bank>(ctx: &Ctx, bank: &mut B, packet: Packet) {
     refund_tokens(ctx, bank, packet);
@@ -525,6 +522,16 @@ predicate! {
     }
 }
 
+#[requires(
+    !packet.data.path.starts_with(packet.source_port, packet.source_channel) ==>
+      bank.transfer_tokens_pre(
+        ctx.escrow_address(packet.source_channel), 
+        packet.data.sender, 
+        packet.data.path, 
+        packet.data.coin, 
+        packet.data.amount
+    )
+)]
 #[ensures(refund_tokens_post(ctx, bank, old(bank), packet))]
 fn refund_tokens<B: Bank>(ctx: &Ctx, bank: &mut B, packet: Packet) {
     let FungibleTokenPacketData{ path, coin, sender, amount, ..} = packet.data;
@@ -566,6 +573,15 @@ fn packet_is_source(packet: Packet) -> bool {
         topology
     )
 )]
+#[requires(packet_is_source(packet) ==> 
+    bank.transfer_tokens_pre(
+                ctx.escrow_address(packet.dest_channel),
+                packet.data.receiver,
+                packet.data.path.drop_prefix(packet.source_port, packet.source_channel),
+                packet.data.coin,
+                packet.data.amount
+            )
+)]
 #[requires(!packet_is_source(packet) && !packet.data.path.is_empty() ==> 
     !ctx.has_channel(
       packet.dest_port,
@@ -594,16 +610,9 @@ fn packet_is_source(packet: Packet) -> bool {
             ctx,
             topology)
 )]
+
 #[ensures(
-    (packet_is_source(packet) &&
-     old(
-         bank.transfer_tokens_pre(
-            ctx.escrow_address(packet.dest_channel),
-            packet.data.receiver,
-            packet.data.path.drop_prefix(packet.source_port, packet.source_channel),
-            packet.data.coin,
-            packet.data.amount
-        ))) ==> (result.success &&
+    (packet_is_source(packet)) ==> (result.success &&
           bank.transfer_tokens_post(
               old(bank),
               old(ctx.escrow_address(packet.dest_channel)),
@@ -628,7 +637,8 @@ fn on_recv_packet<B: Bank>(
             path.drop_prefix(packet.source_port, packet.source_channel),
             coin,
             amount
-        )
+        );
+        true
     } else {
         bank.mint_tokens(
             receiver,
@@ -641,6 +651,16 @@ fn on_recv_packet<B: Bank>(
     FungibleTokenPacketAcknowledgement { success }
 }
 
+#[requires(
+    !packet.data.path.starts_with(packet.source_port, packet.source_channel) ==>
+      bank.transfer_tokens_pre(
+        ctx.escrow_address(packet.source_channel), 
+        packet.data.sender, 
+        packet.data.path, 
+        packet.data.coin, 
+        packet.data.amount
+    )
+)]
 #[ensures(ack.success ==> snap(bank) === old(snap(bank)))]
 #[ensures(!ack.success ==> refund_tokens_post(ctx, bank, old(bank), packet))]
 fn on_acknowledge_packet<B: Bank>(
@@ -716,26 +736,10 @@ fn send_preserves<B: Bank>(
         source_channel,
         topology
     );
-    // packet.is_some() means that this call did not fail
-    prusti_assert!(packet.is_some());
-    prusti_assert!(
-        bank1.unescrowed_coin_balance(coin) ==
-        old(bank1.unescrowed_coin_balance(coin)) - amount
-    );
-    let packet = packet.unwrap();
 
     let ack = on_recv_packet(ctx2, bank2, packet, topology);
-    prusti_assert!(
-    !is_escrow_account(receiver) ==>
-        (bank2.unescrowed_coin_balance(coin) ==
-        old(bank2.unescrowed_coin_balance(coin)) + amount)
-    );
     prusti_assert!(ack.success);
     on_acknowledge_packet(ctx1, bank1, ack, packet);
-    prusti_assert!(
-        bank1.unescrowed_coin_balance(coin) ==
-        old(bank1.unescrowed_coin_balance(coin)) - amount
-    );
 }
 
 /*
@@ -803,9 +807,6 @@ fn round_trip<B: Bank>(
         source_channel,
         topology
     );
-    // packet.is_some() means that this call did not fail
-    prusti_assert!(packet.is_some());
-    let packet = packet.unwrap();
 
     let ack = on_recv_packet(ctx2, bank2, packet, topology);
     prusti_assert!(ack.success);
@@ -825,8 +826,6 @@ fn round_trip<B: Bank>(
         dest_channel,
         topology
     );
-    prusti_assert!(packet.is_some());
-    let packet = packet.unwrap();
 
     let ack = on_recv_packet(ctx1, bank1, packet, topology);
     prusti_assert!(ack.success);
@@ -872,9 +871,6 @@ fn timeout<B: Bank>(
         source_channel,
         topology
     );
-    // packet.is_some() means that this call did not fail
-    prusti_assert!(packet.is_some());
-    let packet = packet.unwrap();
 
     on_timeout_packet(ctx1, bank1, packet);
 }
@@ -918,9 +914,6 @@ fn ack_fail<B: Bank>(
         source_channel,
         topology
     );
-    // packet.is_some() means that this call did not fail
-    prusti_assert!(packet.is_some());
-    let packet = packet.unwrap();
 
     on_acknowledge_packet(
         ctx1,
@@ -1006,23 +999,7 @@ fn round_trip_sink<B: Bank>(
         source_channel,
         topology
     );
-    // packet.is_some() means that this call did not fail
-    prusti_assert!(packet.is_some());
-    let packet = packet.unwrap();
 
-    prusti_assert!(
-            ctx2.escrow_address(packet.dest_channel) !=
-            packet.data.receiver
-    );
-    prusti_assert!(
-        bank2.transfer_tokens_pre(
-            ctx2.escrow_address(packet.dest_channel),
-            packet.data.receiver,
-            packet.data.path.drop_prefix(packet.source_port, packet.source_channel),
-            packet.data.coin,
-            packet.data.amount
-        )
-    );
     let ack = on_recv_packet(ctx2, bank2, packet, topology);
     prusti_assert!(ack.success);
     on_acknowledge_packet(ctx1, bank1, ack, packet);
@@ -1041,8 +1018,6 @@ fn round_trip_sink<B: Bank>(
         dest_channel,
         topology
     );
-    prusti_assert!(packet.is_some());
-    let packet = packet.unwrap();
 
     let ack = on_recv_packet(ctx1, bank1, packet, topology);
     on_acknowledge_packet(ctx2, bank2, ack, packet);
