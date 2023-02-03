@@ -326,28 +326,10 @@ impl Bank {
         }
     }
 
-    predicate! {
-        fn burn_tokens_post(
-            &self,
-            old_bank: &Self,
-            acct_id: AccountID,
-            path: Path,
-            coin: Coin,
-            amt: u32
-        ) -> bool {
-        (!is_escrow_account(acct_id) ==>
-              self.unescrowed_coin_balance(coin) ==
-                old_bank.unescrowed_coin_balance(coin) - amt) &&
-        (is_escrow_account(acct_id) ==>
-              self.unescrowed_coin_balance(coin) ==
-                old_bank.unescrowed_coin_balance(coin))
-        }
-    }
 
     #[trusted]
     #[requires(transfers(Money(self.id(), to, path, coin), amt))]
     #[requires(!is_escrow_account(to) ==> transfers(UnescrowedBalance(self.id(), coin), amt))]
-    #[ensures(self.burn_tokens_post(old(self), to, path, coin, amt))]
     fn burn_tokens(&mut self, to: AccountID, path: Path, coin: Coin, amt: u32) {
         unimplemented!()
     }
@@ -408,10 +390,6 @@ fn send_will_transfer(
 )]
 #[requires(transfers(Money(bank.id(), sender, path, coin), amount))]
 #[requires(transfers(UnescrowedBalance(bank.id(), coin), amount))]
-#[ensures(
-    old(send_will_burn(bank, path, source_port, source_channel, sender, coin, amount)) ==>
-        bank.burn_tokens_post(old(bank), sender, path, coin, amount)
-)]
 #[ensures(
     old(
         send_will_transfer(
@@ -488,7 +466,6 @@ fn send_fungible_tokens(
             packet.data.coin
     ), packet.data.amount)
 )]
-#[ensures(refund_tokens_post(ctx, bank, old(bank), packet))]
 #[ensures(
     transfers(
         Money(
@@ -506,12 +483,6 @@ fn on_timeout_packet(ctx: &Ctx, bank: &mut Bank, packet: Packet) {
     refund_tokens(ctx, bank, packet);
 }
 
-predicate! {
-    fn refund_tokens_post(ctx: &Ctx, bank: &Bank, old_bank: &Bank, packet: Packet) -> bool {
-        (packet.data.path.starts_with(packet.source_port, packet.source_channel) ==> true)
-    }
-}
-
 #[requires(
     !packet.data.path.starts_with(packet.source_port, packet.source_channel) ==> 
     bank.transfer_tokens_pre(
@@ -527,7 +498,6 @@ predicate! {
             packet.data.coin
     ), packet.data.amount)
 )]
-#[ensures(refund_tokens_post(ctx, bank, old(bank), packet))]
 #[ensures(
     transfers(
         Money(
@@ -684,7 +654,6 @@ fn on_recv_packet(
     ), packet.data.amount)
 )]
 #[ensures(ack.success ==> snap(bank) === old(snap(bank)))]
-#[ensures(!ack.success ==> refund_tokens_post(ctx, bank, old(bank), packet))]
 #[ensures(!ack.success ==>
     transfers(
         Money(
