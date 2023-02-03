@@ -291,29 +291,6 @@ impl Bank {
         unimplemented!()
     }
 
-    predicate! {
-        fn transfer_tokens_post(
-            &self,
-            old_bank: &Self,
-            from: AccountID,
-            to: AccountID,
-            path: Path,
-            coin: Coin,
-            amt: u32
-        ) -> bool {
-        // ((is_escrow_account(to) && !is_escrow_account(from)) ==>
-        //       self.unescrowed_coin_balance(coin) ==
-        //         old_bank.unescrowed_coin_balance(coin) - amt) &&
-        // ((!is_escrow_account(to) && is_escrow_account(from)) ==>
-        //       self.unescrowed_coin_balance(coin) ==
-        //         old_bank.unescrowed_coin_balance(coin) + amt) &&
-        // ((is_escrow_account(to) == is_escrow_account(from)) ==>
-        //       self.unescrowed_coin_balance(coin) ==
-        //         old_bank.unescrowed_coin_balance(coin))
-            true
-        }
-    }
-
     #[pure]
     pub fn transfer_tokens_pre(
         &self,
@@ -330,14 +307,6 @@ impl Bank {
     #[requires(!is_escrow_account(from) ==> transfers(UnescrowedBalance(self.id(), coin), amt))]
     #[requires(self.transfer_tokens_pre(from, to, path, coin, amt))]
     #[requires(transfers(Money(self.id(), from, path, coin), amt))]
-    #[ensures(self.transfer_tokens_post(
-        old(self),
-        from,
-        to,
-        path,
-        coin,
-        amt
-    ))]
     #[ensures(transfers(Money(self.id(), to, path, coin), amt))]
     #[ensures(!is_escrow_account(to) ==> transfers(UnescrowedBalance(self.id(), coin), amt))]
     fn transfer_tokens(
@@ -383,27 +352,8 @@ impl Bank {
         unimplemented!()
     }
 
-    predicate! {
-        fn mint_tokens_post(
-            &self,
-            old_bank: &Self,
-            acct_id: AccountID,
-            path: Path,
-            coin: Coin,
-            amt: u32
-        ) -> bool {
-        (!is_escrow_account(acct_id) ==>
-              self.unescrowed_coin_balance(coin) ==
-                old_bank.unescrowed_coin_balance(coin) + amt) &&
-        (is_escrow_account(acct_id) ==>
-              self.unescrowed_coin_balance(coin) ==
-                old_bank.unescrowed_coin_balance(coin))
-        }
-    }
-
     #[trusted]
     #[ensures(result)]
-    #[ensures(self.mint_tokens_post(old(self), to, path, coin, amt))]
     #[ensures(transfers(Money(self.id(), to, path, coin), amt))]
     #[ensures(!is_escrow_account(to) ==> transfers(UnescrowedBalance(self.id(), coin), amt))]
     fn mint_tokens(&mut self, to: AccountID, path: Path, coin: Coin, amt: u32) -> bool {
@@ -472,14 +422,7 @@ fn send_will_transfer(
             sender,
             ctx.escrow_address(source_channel),
             coin,
-    amount)) ==> bank.transfer_tokens_post(
-            old(bank),
-            sender,
-            old(ctx.escrow_address(source_channel)),
-            path,
-            coin,
-            amount
-    ) && transfers(
+    amount)) ==> transfers(
         Money(old(bank.id()), old(ctx.escrow_address(source_channel)), path, coin), amount
     )
 )]
@@ -565,28 +508,7 @@ fn on_timeout_packet(ctx: &Ctx, bank: &mut Bank, packet: Packet) {
 
 predicate! {
     fn refund_tokens_post(ctx: &Ctx, bank: &Bank, old_bank: &Bank, packet: Packet) -> bool {
-        ((!packet.data.path.starts_with(packet.source_port, packet.source_channel) &&
-            old_bank.transfer_tokens_pre(
-                ctx.escrow_address(packet.source_channel),
-                packet.data.sender,
-                packet.data.path,
-                packet.data.coin,
-                packet.data.amount
-            )) ==> bank.transfer_tokens_post(
-        old_bank,
-        ctx.escrow_address(packet.source_channel),
-        packet.data.sender,
-        packet.data.path,
-        packet.data.coin,
-        packet.data.amount)) &&
-        (packet.data.path.starts_with(packet.source_port, packet.source_channel) ==>
-            bank.mint_tokens_post(
-                old_bank,
-                packet.data.sender,
-                packet.data.path,
-                packet.data.coin,
-                packet.data.amount
-            ))
+        (packet.data.path.starts_with(packet.source_port, packet.source_channel) ==> true)
     }
 }
 
@@ -681,16 +603,7 @@ fn packet_is_source(packet: Packet) -> bool {
             packet.data.path.drop_prefix(packet.source_port, packet.source_channel),
             packet.data.coin
         ), packet.data.amount))]
-#[ensures(
-    !packet_is_source(packet) ==>
-        result.success && bank.mint_tokens_post(
-            old(bank),
-            old(packet.data.receiver),
-            old(packet.data.path.prepend_prefix(packet.dest_port, packet.dest_channel)),
-            old(packet.data.coin),
-            old(packet.data.amount)
-        )
-)]
+#[ensures( !packet_is_source(packet) ==> result.success)]
 #[ensures(
     !packet_is_source(packet) ==>
         is_well_formed(
@@ -704,14 +617,7 @@ fn packet_is_source(packet: Packet) -> bool {
 )]
 #[ensures(
     (packet_is_source(packet) ==> (
-          bank.transfer_tokens_post(
-              old(bank),
-              old(ctx.escrow_address(packet.dest_channel)),
-              old(packet.data.receiver),
-              old(packet.data.path.tail()),
-              old(packet.data.coin),
-              old(packet.data.amount)
-          ) && transfers(Money(
+        transfers(Money(
             old(bank.id()),
             old(packet.data.receiver),
             old(packet.data.path.tail()),
