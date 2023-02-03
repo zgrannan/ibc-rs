@@ -327,6 +327,7 @@ impl Bank {
     }
 
 
+    #[requires(!is_escrow_account(from) ==> transfers(UnescrowedBalance(self.id(), coin), amt))]
     #[requires(self.transfer_tokens_pre(from, to, path, coin, amt))]
     #[requires(transfers(Money(self.id(), from, path, coin), amt))]
     #[ensures(self.transfer_tokens_post(
@@ -376,6 +377,7 @@ impl Bank {
 
     #[trusted]
     #[requires(transfers(Money(self.id(), to, path, coin), amt))]
+    #[requires(!is_escrow_account(to) ==> transfers(UnescrowedBalance(self.id(), coin), amt))]
     #[ensures(self.burn_tokens_post(old(self), to, path, coin, amt))]
     fn burn_tokens(&mut self, to: AccountID, path: Path, coin: Coin, amt: u32) {
         unimplemented!()
@@ -455,6 +457,7 @@ fn send_will_transfer(
     )
 )]
 #[requires(transfers(Money(bank.id(), sender, path, coin), amount))]
+#[requires(transfers(UnescrowedBalance(bank.id(), coin), amount))]
 #[ensures(
     old(send_will_burn(bank, path, source_port, source_channel, sender, coin, amount)) ==>
         bank.burn_tokens_post(old(bank), sender, path, coin, amount)
@@ -811,6 +814,7 @@ fn on_acknowledge_packet(
     bank1.transfer_tokens_pre(sender, ctx1.escrow_address(source_channel), path, coin, amount))
 ]
 #[requires(transfers(Money(bank1.id(), sender, path, coin), amount))]
+#[requires(transfers(UnescrowedBalance(bank1.id(), coin), amount))]
 
 // Assume that the sender is the source chain
 #[requires(!path.starts_with(source_port, source_channel))]
@@ -843,6 +847,9 @@ fn on_acknowledge_packet(
             coin
         ), amount))
 ]
+#[ensures(
+    !(is_escrow_account(receiver)) ==>
+    transfers(UnescrowedBalance(bank2.id(), coin), amount))]
 fn send_preserves(
     ctx1: &Ctx,
     ctx2: &Ctx,
@@ -905,6 +912,7 @@ fn send_preserves(
 ]
 
 #[requires(transfers(Money(bank1.id(), sender, path, coin), amount))]
+#[requires(transfers(UnescrowedBalance(bank1.id(), coin), amount))]
 
 // Assume that the sender is the source chain
 #[requires(!path.starts_with(source_port, source_channel))]
@@ -920,6 +928,9 @@ fn send_preserves(
 #[requires(topology.connects(ctx1, source_port, source_channel, ctx2, dest_port, dest_channel))]
 #[requires(is_well_formed(path, ctx1, topology))]
 
+#[ensures(transfers(Money(bank1.id(), sender, path, coin), amount))]
+#[ensures(transfers(UnescrowedBalance(bank1.id(), coin), amount))]
+
 // Ensure that the resulting balance of both bank accounts are unchanged after the round-trip
 #[ensures(
     forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
@@ -929,7 +940,6 @@ fn send_preserves(
     forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
         bank2.balance_of(acct_id2, path2, coin2) ==
            old(bank2).balance_of(acct_id2, path2, coin2)))]
-#[ensures(transfers(Money(bank1.id(), sender, path, coin), amount))]
 fn round_trip(
     ctx1: &Ctx,
     ctx2: &Ctx,
@@ -993,11 +1003,13 @@ fn round_trip(
 // Sanity check: The sender cannot be an escrow account
 #[requires(!is_escrow_account(sender))]
 #[requires(is_well_formed(path, ctx1, topology))]
+#[requires(transfers(UnescrowedBalance(bank1.id(), coin), amount))]
 #[ensures(
     forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
         bank1.balance_of(acct_id2, path2, coin2) ==
            old(bank1).balance_of(acct_id2, path2, coin2)))]
 #[ensures(transfers(Money(bank1.id(), sender, path, coin), amount))]
+#[ensures(transfers(UnescrowedBalance(bank1.id(), coin), amount))]
 fn timeout(
     ctx1: &Ctx,
     ctx2: &Ctx,
@@ -1036,9 +1048,11 @@ fn timeout(
     bank1.transfer_tokens_pre(sender, ctx1.escrow_address(source_channel), path, coin, amount))
 ]
 #[requires(transfers(Money(bank1.id(), sender, path, coin), amount))]
+#[requires(transfers(UnescrowedBalance(bank1.id(), coin), amount))]
 #[requires(!path.starts_with(source_port, source_channel))]
 #[requires(is_well_formed(path, ctx1, topology))]
 #[ensures(transfers(Money(bank1.id(), sender, path, coin), amount))]
+#[ensures(transfers(UnescrowedBalance(bank1.id(), coin), amount))]
 #[ensures(
     forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
         bank1.balance_of(acct_id2, path2, coin2) ==
@@ -1091,6 +1105,7 @@ fn ack_fail(
 // Assume the sender has sufficient funds to send to receiver
 #[requires(bank1.balance_of(sender, path, coin) >= amount)]
 #[requires(transfers(Money(bank1.id(), sender, path, coin), amount))]
+#[requires(transfers(UnescrowedBalance(bank1.id(), coin), amount))]
 
 // Assume the receiver is not the escrow address
 #[requires(receiver != ctx2.escrow_address(dest_channel))]
@@ -1130,6 +1145,7 @@ fn ack_fail(
     path.drop_prefix(source_port, source_channel),
     coin), amount))]
 #[ensures(transfers(Money(bank1.id(), sender, path, coin), amount))]
+#[ensures(transfers(UnescrowedBalance(bank1.id(), coin), amount))]
 // Ensure that the resulting balance of both bank accounts are unchanged after the round-trip
 #[ensures(
     forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
