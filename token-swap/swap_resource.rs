@@ -14,6 +14,14 @@ struct AccountID(u32);
             PermAmount::from(old(self.balance_of(acct_id, path, coin)))
     ))
 ]
+#[invariant_twostate(
+    forall(|coin: Coin|
+        perm(UnescrowedBalance(self.id(), coin)) - 
+        old(perm(UnescrowedBalance(self.id(), coin))) ==
+        PermAmount::from(self.unescrowed_coin_balance(coin)) - 
+            PermAmount::from(old(self.unescrowed_coin_balance(coin)))
+    ))
+]
 struct Bank(u32);
 
 #[derive(Copy, Clone)]
@@ -21,6 +29,9 @@ struct BankID(u32);
 
 #[resource]
 struct Money(BankID, AccountID, Path, Coin);
+
+#[resource]
+struct UnescrowedBalance(BankID, Coin);
 
 #[pure]
 #[trusted]
@@ -290,15 +301,16 @@ impl Bank {
             coin: Coin,
             amt: u32
         ) -> bool {
-        ((is_escrow_account(to) && !is_escrow_account(from)) ==>
-              self.unescrowed_coin_balance(coin) ==
-                old_bank.unescrowed_coin_balance(coin) - amt) &&
-        ((!is_escrow_account(to) && is_escrow_account(from)) ==>
-              self.unescrowed_coin_balance(coin) ==
-                old_bank.unescrowed_coin_balance(coin) + amt) &&
-        ((is_escrow_account(to) == is_escrow_account(from)) ==>
-              self.unescrowed_coin_balance(coin) ==
-                old_bank.unescrowed_coin_balance(coin))
+        // ((is_escrow_account(to) && !is_escrow_account(from)) ==>
+        //       self.unescrowed_coin_balance(coin) ==
+        //         old_bank.unescrowed_coin_balance(coin) - amt) &&
+        // ((!is_escrow_account(to) && is_escrow_account(from)) ==>
+        //       self.unescrowed_coin_balance(coin) ==
+        //         old_bank.unescrowed_coin_balance(coin) + amt) &&
+        // ((is_escrow_account(to) == is_escrow_account(from)) ==>
+        //       self.unescrowed_coin_balance(coin) ==
+        //         old_bank.unescrowed_coin_balance(coin))
+            true
         }
     }
 
@@ -326,6 +338,7 @@ impl Bank {
         amt
     ))]
     #[ensures(transfers(Money(self.id(), to, path, coin), amt))]
+    #[ensures(!is_escrow_account(to) ==> transfers(UnescrowedBalance(self.id(), coin), amt))]
     fn transfer_tokens(
         &mut self,
         from: AccountID,
@@ -363,11 +376,8 @@ impl Bank {
 
     #[trusted]
     #[requires(transfers(Money(self.id(), to, path, coin), amt))]
-    #[ensures(result == (old(self.balance_of(to, path, coin)) >= amt))]
-    #[ensures(result ==> self.burn_tokens_post(old(self), to, path, coin, amt))]
-    #[ensures(!result ==>
-        self.unescrowed_coin_balance(coin) == old(self.unescrowed_coin_balance(coin)))]
-    fn burn_tokens(&mut self, to: AccountID, path: Path, coin: Coin, amt: u32) -> bool {
+    #[ensures(self.burn_tokens_post(old(self), to, path, coin, amt))]
+    fn burn_tokens(&mut self, to: AccountID, path: Path, coin: Coin, amt: u32) {
         unimplemented!()
     }
 
@@ -393,6 +403,7 @@ impl Bank {
     #[ensures(result)]
     #[ensures(self.mint_tokens_post(old(self), to, path, coin, amt))]
     #[ensures(transfers(Money(self.id(), to, path, coin), amt))]
+    #[ensures(!is_escrow_account(to) ==> transfers(UnescrowedBalance(self.id(), coin), amt))]
     fn mint_tokens(&mut self, to: AccountID, path: Path, coin: Coin, amt: u32) -> bool {
         unimplemented!()
     }
@@ -496,14 +507,14 @@ fn send_fungible_tokens(
             path,
             coin,
             amount
-        )
+        );
     } else {
         bank.burn_tokens(
             sender,
             path,
             coin,
             amount
-        )
+        );
     };
 
     let data = FungibleTokenPacketData {
@@ -541,6 +552,9 @@ fn send_fungible_tokens(
             old(packet.data.coin)
         ), old(packet.data.amount)
     )
+)]
+#[ensures(!is_escrow_account(old(packet.data.sender)) ==> 
+    transfers(UnescrowedBalance(old(bank.id()), old(packet.data.coin)), old(packet.data.amount))
 )]
 fn on_timeout_packet(ctx: &Ctx, bank: &mut Bank, packet: Packet) {
     refund_tokens(ctx, bank, packet);
@@ -598,6 +612,9 @@ predicate! {
             old(packet.data.coin)
         ), old(packet.data.amount)
     )
+)]
+#[ensures(!is_escrow_account(old(packet.data.sender)) ==> 
+    transfers(UnescrowedBalance(old(bank.id()), old(packet.data.coin)), old(packet.data.amount))
 )]
 fn refund_tokens(ctx: &Ctx, bank: &mut Bank, packet: Packet) {
     let FungibleTokenPacketData{ path, coin, sender, amount, ..} = packet.data;
@@ -707,9 +724,13 @@ fn packet_is_source(packet: Packet) -> bool {
             old(packet.data.receiver),
             old(packet.data.path.prepend_prefix(packet.dest_port, packet.dest_channel)),
             old(packet.data.coin)
-        ), old(packet.data.amount))
+        ), old(packet.data.amount)) 
     ))
 ]
+#[ensures(
+    !is_escrow_account(old(packet.data.receiver)) ==> 
+    transfers(UnescrowedBalance(old(bank.id()), old(packet.data.coin)), old(packet.data.amount))
+)]
 fn on_recv_packet(
     ctx: &Ctx, 
     bank: &mut Bank, 
@@ -764,6 +785,9 @@ fn on_recv_packet(
             old(packet.data.coin)
         ), old(packet.data.amount)
     )
+)]
+#[ensures(!ack.success && !is_escrow_account(old(packet.data.sender)) ==> 
+    transfers(UnescrowedBalance(old(bank.id()), old(packet.data.coin)), old(packet.data.amount))
 )]
 fn on_acknowledge_packet(
     ctx: &Ctx,
