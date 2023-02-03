@@ -291,21 +291,7 @@ impl Bank {
         unimplemented!()
     }
 
-    #[pure]
-    pub fn transfer_tokens_pre(
-        &self,
-        from: AccountID,
-        to: AccountID,
-        path: Path,
-        coin: Coin,
-        amt: u32
-    ) -> bool {
-        from != to && self.balance_of(from, path, coin) >= amt
-    }
-
-
     #[requires(!is_escrow_account(from) ==> transfers(UnescrowedBalance(self.id(), coin), amt))]
-    #[requires(self.transfer_tokens_pre(from, to, path, coin, amt))]
     #[requires(transfers(Money(self.id(), from, path, coin), amt))]
     #[ensures(transfers(Money(self.id(), to, path, coin), amt))]
     #[ensures(!is_escrow_account(to) ==> transfers(UnescrowedBalance(self.id(), coin), amt))]
@@ -316,14 +302,9 @@ impl Bank {
         path: Path,
         coin: Coin,
         amt: u32
-    ) -> bool {
-        if(self.transfer_tokens_pre(from, to, path, coin, amt)) {
-            self.burn_tokens(from, path, coin, amt);
-            self.mint_tokens(to, path, coin, amt);
-            true
-        } else {
-            false
-        }
+    ) {
+        self.burn_tokens(from, path, coin, amt);
+        self.mint_tokens(to, path, coin, amt);
     }
 
 
@@ -344,64 +325,33 @@ impl Bank {
 }
 
 #[pure]
-fn send_will_burn(
-    bank: &Bank,
-    path: Path,
-    source_port: Port,
-    source_channel: ChannelEnd,
-    sender: AccountID,
-    coin: Coin,
-    amount: u32
-) -> bool {
-    path.starts_with(source_port, source_channel) &&
-    bank.balance_of(sender, path, coin) >= amount
-}
-
-#[pure]
 fn send_will_transfer(
-    bank: &Bank,
     path: Path,
     source_port: Port,
     source_channel: ChannelEnd,
-    sender: AccountID,
-    escrow_address: AccountID,
-    coin: Coin,
-    amount: u32
 ) -> bool {
-    !path.starts_with(source_port, source_channel) &&
-    bank.transfer_tokens_pre(sender, escrow_address, path, coin, amount)
+    !path.starts_with(source_port, source_channel)
 }
 
 // Sanity check: The sender cannot be an escrow account
 #[requires(!is_escrow_account(sender))]
 #[requires(is_well_formed(path, ctx, topology))]
-#[requires(
-    send_will_burn(bank, path, source_port, source_channel, sender, coin, amount) ||
-    send_will_transfer(
-        bank,
-        path,
-        source_port,
-        source_channel,
-        sender,
-        ctx.escrow_address(source_channel),
-        coin,
-        amount
-    )
-)]
 #[requires(transfers(Money(bank.id(), sender, path, coin), amount))]
 #[requires(transfers(UnescrowedBalance(bank.id(), coin), amount))]
 #[ensures(
     old(
         send_will_transfer(
-            bank,
             path,
             source_port,
             source_channel,
-            sender,
-            ctx.escrow_address(source_channel),
-            coin,
-    amount)) ==> transfers(
-        Money(old(bank.id()), old(ctx.escrow_address(source_channel)), path, coin), amount
+        )
+    ) ==> transfers(
+        Money(
+            old(bank.id()), 
+            old(ctx.escrow_address(source_channel)),
+            path,
+            coin
+        ), amount
     )
 )]
 #[ensures(
@@ -453,13 +403,7 @@ fn send_fungible_tokens(
 
 #[requires(
     !packet.data.path.starts_with(packet.source_port, packet.source_channel) ==> 
-    bank.transfer_tokens_pre(
-        ctx.escrow_address(packet.source_channel),
-        packet.data.sender,
-        packet.data.path,
-        packet.data.coin,
-        packet.data.amount
-    ) && transfers(Money(
+    transfers(Money(
             bank.id(),
             ctx.escrow_address(packet.source_channel),
             packet.data.path,
@@ -485,13 +429,7 @@ fn on_timeout_packet(ctx: &Ctx, bank: &mut Bank, packet: Packet) {
 
 #[requires(
     !packet.data.path.starts_with(packet.source_port, packet.source_channel) ==> 
-    bank.transfer_tokens_pre(
-        ctx.escrow_address(packet.source_channel),
-        packet.data.sender,
-        packet.data.path,
-        packet.data.coin,
-        packet.data.amount
-    ) && transfers(Money(
+    transfers(Money(
             bank.id(),
             ctx.escrow_address(packet.source_channel),
             packet.data.path,
@@ -559,13 +497,6 @@ fn packet_is_source(packet: Packet) -> bool {
       packet.data.path.head_channel(),
 ))]
 #[requires(packet_is_source(packet) ==> 
-    bank.transfer_tokens_pre(
-        ctx.escrow_address(packet.dest_channel),
-        packet.data.receiver,
-        packet.data.path.drop_prefix(packet.source_port, packet.source_channel),
-        packet.data.coin,
-        packet.data.amount
-    ) &&
     transfers(
         Money(
             bank.id(),
@@ -573,7 +504,6 @@ fn packet_is_source(packet: Packet) -> bool {
             packet.data.path.drop_prefix(packet.source_port, packet.source_channel),
             packet.data.coin
         ), packet.data.amount))]
-#[ensures( !packet_is_source(packet) ==> result.success)]
 #[ensures(
     !packet_is_source(packet) ==>
         is_well_formed(
@@ -585,26 +515,24 @@ fn packet_is_source(packet: Packet) -> bool {
             ctx,
             topology)
 )]
-#[ensures(
-    (packet_is_source(packet) ==> (
-        transfers(Money(
-            old(bank.id()),
-            old(packet.data.receiver),
-            old(packet.data.path.tail()),
-            old(packet.data.coin)
-          ), old(packet.data.amount))
-        )))
-    ]
 #[ensures(result.success)]
 #[ensures(
-    (!packet_is_source(packet) ==> transfers(
+    transfers(
         Money(
             old(bank.id()),
             old(packet.data.receiver),
-            old(packet.data.path.prepend_prefix(packet.dest_port, packet.dest_channel)),
+            if packet_is_source(packet) {
+                old(packet.data.path.tail())
+            } else {
+                old(
+                    packet.data.path.prepend_prefix(
+                        packet.dest_port, packet.dest_channel
+                    )
+                )
+            },
             old(packet.data.coin)
-        ), old(packet.data.amount)) 
-    ))
+        ), old(packet.data.amount))
+    )
 ]
 #[ensures(
     !is_escrow_account(old(packet.data.receiver)) ==> 
@@ -624,14 +552,14 @@ fn on_recv_packet(
             path.drop_prefix(packet.source_port, packet.source_channel),
             coin,
             amount
-        )
+        );
     } else {
         bank.mint_tokens(
             receiver,
             path.prepend_prefix(packet.dest_port, packet.dest_channel),
             coin,
             amount
-        )
+        );
     };
 
     FungibleTokenPacketAcknowledgement { success: true }
@@ -640,13 +568,7 @@ fn on_recv_packet(
 #[requires(
     (!ack.success && 
     !packet.data.path.starts_with(packet.source_port, packet.source_channel)) ==> 
-    bank.transfer_tokens_pre(
-        ctx.escrow_address(packet.source_channel),
-        packet.data.sender,
-        packet.data.path,
-        packet.data.coin,
-        packet.data.amount
-    ) && transfers(Money(
+    transfers(Money(
             bank.id(),
             ctx.escrow_address(packet.source_channel),
             packet.data.path,
@@ -683,11 +605,6 @@ fn on_acknowledge_packet(
  */
 
 #[requires(!(bank1.id() === bank2.id()))]
-// Assume the sender's address is distinct from the escrow address for the source channel,
-// and that they have sufficient funds to send to `receiver`
-#[requires(
-    bank1.transfer_tokens_pre(sender, ctx1.escrow_address(source_channel), path, coin, amount))
-]
 #[requires(transfers(Money(bank1.id(), sender, path, coin), amount))]
 #[requires(transfers(UnescrowedBalance(bank1.id(), coin), amount))]
 
@@ -754,23 +671,9 @@ fn send_preserves(
         source_channel,
         topology
     );
-    prusti_assert!(
-        bank1.unescrowed_coin_balance(coin) ==
-        old(bank1.unescrowed_coin_balance(coin)) - amount
-    );
-
     let ack = on_recv_packet(ctx2, bank2, packet, topology);
-    prusti_assert!(
-    !is_escrow_account(receiver) ==>
-        (bank2.unescrowed_coin_balance(coin) ==
-        old(bank2.unescrowed_coin_balance(coin)) + amount)
-    );
     prusti_assert!(ack.success);
     on_acknowledge_packet(ctx1, bank1, ack, packet);
-    prusti_assert!(
-        bank1.unescrowed_coin_balance(coin) ==
-        old(bank1.unescrowed_coin_balance(coin)) - amount
-    );
 }
 
 /*
@@ -780,11 +683,6 @@ fn send_preserves(
  */
 
 #[requires(!(bank1.id() === bank2.id()))]
-// Assume the sender's address is distinct from the escrow address for the source channel,
-// and that they have sufficient funds to send to `receiver`
-#[requires(
-    bank1.transfer_tokens_pre(sender, ctx1.escrow_address(source_channel), path, coin, amount))
-]
 
 #[requires(transfers(Money(bank1.id(), sender, path, coin), amount))]
 #[requires(transfers(UnescrowedBalance(bank1.id(), coin), amount))]
@@ -870,9 +768,6 @@ fn round_trip(
     on_acknowledge_packet(ctx2, bank2, ack, packet);
 }
 
-#[requires(
-    bank1.transfer_tokens_pre(sender, ctx1.escrow_address(source_channel), path, coin, amount))
-]
 #[requires(transfers(Money(bank1.id(), sender, path, coin), amount))]
 #[requires(!path.starts_with(source_port, source_channel))]
 // Sanity check: The sender cannot be an escrow account
@@ -919,9 +814,6 @@ fn timeout(
 
 // Sanity check: The sender cannot be an escrow account
 #[requires(!is_escrow_account(sender))]
-#[requires(
-    bank1.transfer_tokens_pre(sender, ctx1.escrow_address(source_channel), path, coin, amount))
-]
 #[requires(transfers(Money(bank1.id(), sender, path, coin), amount))]
 #[requires(transfers(UnescrowedBalance(bank1.id(), coin), amount))]
 #[requires(!path.starts_with(source_port, source_channel))]
@@ -978,7 +870,6 @@ fn ack_fail(
 
 #[requires(!(bank1.id() === bank2.id()))]
 // Assume the sender has sufficient funds to send to receiver
-#[requires(bank1.balance_of(sender, path, coin) >= amount)]
 #[requires(transfers(Money(bank1.id(), sender, path, coin), amount))]
 #[requires(transfers(UnescrowedBalance(bank1.id(), coin), amount))]
 
@@ -994,13 +885,6 @@ fn ack_fail(
 #[requires(is_well_formed(path, ctx1, topology))]
 
 // Assume the escrow has the corresponding locked tokens
-#[requires(
-    bank2.balance_of(
-        ctx2.escrow_address(dest_channel),
-        path.drop_prefix(source_port, source_channel),
-        coin
-    ) >= amount
-)]
 #[requires(transfers(Money(
     bank2.id(),
     ctx2.escrow_address(dest_channel),
@@ -1061,19 +945,6 @@ fn round_trip_sink(
         topology
     );
 
-    prusti_assert!(
-            ctx2.escrow_address(packet.dest_channel) !=
-            packet.data.receiver
-    );
-    prusti_assert!(
-        bank2.transfer_tokens_pre(
-            ctx2.escrow_address(packet.dest_channel),
-            packet.data.receiver,
-            packet.data.path.drop_prefix(packet.source_port, packet.source_channel),
-            packet.data.coin,
-            packet.data.amount
-        )
-    );
     let ack = on_recv_packet(ctx2, bank2, packet, topology);
     prusti_assert!(ack.success);
     on_acknowledge_packet(ctx1, bank1, ack, packet);
