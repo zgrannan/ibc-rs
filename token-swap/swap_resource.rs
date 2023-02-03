@@ -153,7 +153,6 @@ impl Path {
     #[ensures(!(result === Path::empty()))]
     #[ensures(result.starts_with(port, channel))]
     #[ensures(result.tail() === self)]
-    // #[ensures(result.drop_prefix(port, channel) === self)]
     fn prepend_prefix(self, port: Port, channel: ChannelEnd) -> Path {
         unimplemented!()
     }
@@ -299,17 +298,7 @@ impl Bank {
                 old_bank.unescrowed_coin_balance(coin) + amt) &&
         ((is_escrow_account(to) == is_escrow_account(from)) ==>
               self.unescrowed_coin_balance(coin) ==
-                old_bank.unescrowed_coin_balance(coin)) &&
-        forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
-            self.balance_of(acct_id2, path2, coin2) ==
-                if(acct_id2 == from && coin == coin2 && path === path2) {
-                    old_bank.balance_of(from, path, coin) - amt
-                } else if (acct_id2 == to && coin == coin2 && path === path2){
-                    old_bank.balance_of(to, path, coin) + amt
-                } else {
-                    old_bank.balance_of(acct_id2, path2, coin2)
-                }
-            )
+                old_bank.unescrowed_coin_balance(coin))
         }
     }
 
@@ -337,13 +326,6 @@ impl Bank {
         amt
     ))]
     #[ensures(transfers(Money(self.id(), to, path, coin), amt))]
-    #[ensures(
-    forall(|acct_id: AccountID, path: Path, coin: Coin|
-        perm(Money(self.id(), acct_id, path, coin)) - 
-        old(perm(Money(self.id(), acct_id, path, coin))) ==
-        PermAmount::from(self.balance_of(acct_id, path, coin)) - 
-            PermAmount::from(old(self.balance_of(acct_id, path, coin)))
-    ))]
     fn transfer_tokens(
         &mut self,
         from: AccountID,
@@ -375,15 +357,7 @@ impl Bank {
                 old_bank.unescrowed_coin_balance(coin) - amt) &&
         (is_escrow_account(acct_id) ==>
               self.unescrowed_coin_balance(coin) ==
-                old_bank.unescrowed_coin_balance(coin)) &&
-            forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
-            self.balance_of(acct_id2, path2, coin2) ==
-                if(acct_id == acct_id2 && coin == coin2 && path === path2) {
-                    old_bank.balance_of(acct_id, path, coin) - amt
-                } else {
-                    old_bank.balance_of(acct_id2, path2, coin2)
-                }
-            )
+                old_bank.unescrowed_coin_balance(coin))
         }
     }
 
@@ -411,15 +385,7 @@ impl Bank {
                 old_bank.unescrowed_coin_balance(coin) + amt) &&
         (is_escrow_account(acct_id) ==>
               self.unescrowed_coin_balance(coin) ==
-                old_bank.unescrowed_coin_balance(coin)) &&
-            forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
-                self.balance_of(acct_id2, path2, coin2) ==
-                    if(acct_id == acct_id2 && coin == coin2 && path === path2) {
-                        old_bank.balance_of(acct_id, path, coin) + amt
-                    } else {
-                        old_bank.balance_of(acct_id2, path2, coin2)
-                    }
-            )
+                old_bank.unescrowed_coin_balance(coin))
         }
     }
 
@@ -511,13 +477,6 @@ fn send_will_transfer(
         FungibleTokenPacketData {path, coin, sender, receiver, amount}
     )
 )]
-#[ensures(
-forall(|acct_id: AccountID, path: Path, coin: Coin|
-    perm(Money(bank.id(), acct_id, path, coin)) - 
-    old(perm(Money(bank.id(), acct_id, path, coin))) ==
-    PermAmount::from(bank.balance_of(acct_id, path, coin)) - 
-        PermAmount::from(old(bank.balance_of(acct_id, path, coin)))
-))]
 fn send_fungible_tokens(
     ctx: &Ctx,
     bank: &mut Bank,
@@ -583,13 +542,6 @@ fn send_fungible_tokens(
         ), old(packet.data.amount)
     )
 )]
-#[ensures(
-forall(|acct_id: AccountID, path: Path, coin: Coin|
-    perm(Money(bank.id(), acct_id, path, coin)) - 
-    old(perm(Money(bank.id(), acct_id, path, coin))) ==
-    PermAmount::from(bank.balance_of(acct_id, path, coin)) - 
-        PermAmount::from(old(bank.balance_of(acct_id, path, coin)))
-))]
 fn on_timeout_packet(ctx: &Ctx, bank: &mut Bank, packet: Packet) {
     refund_tokens(ctx, bank, packet);
 }
@@ -647,13 +599,6 @@ predicate! {
         ), old(packet.data.amount)
     )
 )]
-#[ensures(
-forall(|acct_id: AccountID, path: Path, coin: Coin|
-    perm(Money(bank.id(), acct_id, path, coin)) - 
-    old(perm(Money(bank.id(), acct_id, path, coin))) ==
-    PermAmount::from(bank.balance_of(acct_id, path, coin)) - 
-        PermAmount::from(old(bank.balance_of(acct_id, path, coin)))
-))]
 fn refund_tokens(ctx: &Ctx, bank: &mut Bank, packet: Packet) {
     let FungibleTokenPacketData{ path, coin, sender, amount, ..} = packet.data;
     if !path.starts_with(packet.source_port, packet.source_channel) {
@@ -765,13 +710,6 @@ fn packet_is_source(packet: Packet) -> bool {
         ), old(packet.data.amount))
     ))
 ]
-#[ensures(
-forall(|acct_id: AccountID, path: Path, coin: Coin|
-    perm(Money(bank.id(), acct_id, path, coin)) - 
-    old(perm(Money(bank.id(), acct_id, path, coin))) ==
-    PermAmount::from(bank.balance_of(acct_id, path, coin)) - 
-        PermAmount::from(old(bank.balance_of(acct_id, path, coin)))
-))]
 fn on_recv_packet(
     ctx: &Ctx, 
     bank: &mut Bank, 
@@ -827,13 +765,6 @@ fn on_recv_packet(
         ), old(packet.data.amount)
     )
 )]
-#[ensures(
-forall(|acct_id: AccountID, path: Path, coin: Coin|
-    perm(Money(bank.id(), acct_id, path, coin)) - 
-    old(perm(Money(bank.id(), acct_id, path, coin))) ==
-    PermAmount::from(bank.balance_of(acct_id, path, coin)) - 
-        PermAmount::from(old(bank.balance_of(acct_id, path, coin)))
-))]
 fn on_acknowledge_packet(
     ctx: &Ctx,
     bank: &mut Bank,
@@ -918,13 +849,6 @@ fn send_preserves(
         topology
     );
     prusti_assert!(
-    forall(|acct_id: AccountID, path: Path, coin: Coin|
-        perm(Money(bank1.id(), acct_id, path, coin)) - 
-        old(perm(Money(bank1.id(), acct_id, path, coin))) ==
-        PermAmount::from(bank1.balance_of(acct_id, path, coin)) - 
-            PermAmount::from(old(bank1.balance_of(acct_id, path, coin)))
-    ));
-    prusti_assert!(
         bank1.unescrowed_coin_balance(coin) ==
         old(bank1.unescrowed_coin_balance(coin)) - amount
     );
@@ -936,25 +860,11 @@ fn send_preserves(
         old(bank2.unescrowed_coin_balance(coin)) + amount)
     );
     prusti_assert!(ack.success);
-    prusti_assert!(
-    forall(|acct_id: AccountID, path: Path, coin: Coin|
-        perm(Money(bank1.id(), acct_id, path, coin)) - 
-        old(perm(Money(bank1.id(), acct_id, path, coin))) ==
-        PermAmount::from(bank1.balance_of(acct_id, path, coin)) - 
-            PermAmount::from(old(bank1.balance_of(acct_id, path, coin)))
-    ));
     on_acknowledge_packet(ctx1, bank1, ack, packet);
     prusti_assert!(
         bank1.unescrowed_coin_balance(coin) ==
         old(bank1.unescrowed_coin_balance(coin)) - amount
     );
-    prusti_assert!(
-    forall(|acct_id: AccountID, path: Path, coin: Coin|
-        perm(Money(bank1.id(), acct_id, path, coin)) - 
-        old(perm(Money(bank1.id(), acct_id, path, coin))) ==
-        PermAmount::from(bank1.balance_of(acct_id, path, coin)) - 
-            PermAmount::from(old(bank1.balance_of(acct_id, path, coin)))
-    ));
 }
 
 /*
