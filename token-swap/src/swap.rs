@@ -3,13 +3,21 @@ use prusti_contracts::*;
 
 use crate::types::*;
 
-trait Bank {
+struct Bank(u32);
+
+impl Bank {
 
     #[pure]
-    fn unescrowed_coin_balance(&self, coin: Coin) -> u32;
+    #[trusted]
+    fn unescrowed_coin_balance(&self, coin: Coin) -> u32 {
+        unimplemented!()
+    }
 
     #[pure]
-    fn balance_of(&self, acct_id: AccountID, path: Path, coin: Coin) -> u32;
+    #[trusted]
+    fn balance_of(&self, acct_id: AccountID, path: Path, coin: Coin) -> u32 {
+        unimplemented!()
+    }
 
     predicate! {
         fn transfer_tokens_post(
@@ -104,7 +112,10 @@ trait Bank {
 
     #[requires(self.balance_of(to, path, coin) >= amt)]
     #[ensures(self.burn_tokens_post(old(self), to, path, coin, amt))]
-    fn burn_tokens(&mut self, to: AccountID, path: Path, coin: Coin, amt: u32);
+    #[trusted]
+    fn burn_tokens(&mut self, to: AccountID, path: Path, coin: Coin, amt: u32) {
+        unimplemented!()
+    }
 
     predicate! {
         fn mint_tokens_post(
@@ -134,12 +145,15 @@ trait Bank {
 
     #[ensures(result)]
     #[ensures(self.mint_tokens_post(old(self), to, path, coin, amt))]
-    fn mint_tokens(&mut self, to: AccountID, path: Path, coin: Coin, amt: u32) -> bool;
+    #[trusted]
+    fn mint_tokens(&mut self, to: AccountID, path: Path, coin: Coin, amt: u32) -> bool {
+        unimplemented!()
+    }
 }
 
 #[pure]
-fn send_will_burn<B: Bank>(
-    bank: &B,
+fn send_will_burn(
+    bank: &Bank,
     path: Path,
     source_port: Port,
     source_channel: ChannelEnd,
@@ -152,8 +166,8 @@ fn send_will_burn<B: Bank>(
 }
 
 #[pure]
-fn send_will_transfer<B: Bank>(
-    bank: &B,
+fn send_will_transfer(
+    bank: &Bank,
     path: Path,
     source_port: Port,
     source_channel: ChannelEnd,
@@ -213,9 +227,9 @@ fn send_will_transfer<B: Bank>(
         FungibleTokenPacketData {path, coin, sender, receiver, amount}
     )
 )]
-fn send_fungible_tokens<B: Bank>(
+fn send_fungible_tokens(
     ctx: &Ctx,
-    bank: &mut B,
+    bank: &mut Bank,
     path: Path,
     coin: Coin,
     amount: u32,
@@ -263,12 +277,12 @@ fn send_fungible_tokens<B: Bank>(
     )
 )]
 #[ensures(refund_tokens_post(ctx, bank, old(bank), packet))]
-fn on_timeout_packet<B: Bank>(ctx: &Ctx, bank: &mut B, packet: Packet) {
+fn on_timeout_packet(ctx: &Ctx, bank: &mut Bank, packet: Packet) {
     refund_tokens(ctx, bank, packet);
 }
 
 predicate! {
-    fn refund_tokens_post<B: Bank>(ctx: &Ctx, bank: &B, old_bank: &B, packet: Packet) -> bool {
+    fn refund_tokens_post(ctx: &Ctx, bank: &Bank, old_bank: &Bank, packet: Packet) -> bool {
         ((!packet.data.path.starts_with(packet.source_port, packet.source_channel) &&
             old_bank.transfer_tokens_pre(
                 ctx.escrow_address(packet.source_channel),
@@ -305,7 +319,7 @@ predicate! {
     )
 )]
 #[ensures(refund_tokens_post(ctx, bank, old(bank), packet))]
-fn refund_tokens<B: Bank>(ctx: &Ctx, bank: &mut B, packet: Packet) {
+fn refund_tokens(ctx: &Ctx, bank: &mut Bank, packet: Packet) {
     let FungibleTokenPacketData{ path, coin, sender, amount, ..} = packet.data;
     if !path.starts_with(packet.source_port, packet.source_channel) {
         bank.transfer_tokens(
@@ -395,9 +409,9 @@ fn packet_is_source(packet: Packet) -> bool {
             old(packet.data.amount)
         )
 )]
-fn on_recv_packet<B: Bank>(
+fn on_recv_packet(
     ctx: &Ctx,
-    bank: &mut B,
+    bank: &mut Bank,
     packet: Packet,
     topology: &Topology
 ) -> FungibleTokenPacketAcknowledgement {
@@ -435,9 +449,9 @@ fn on_recv_packet<B: Bank>(
 )]
 #[ensures(ack.success ==> snap(bank) === old(snap(bank)))]
 #[ensures(!ack.success ==> refund_tokens_post(ctx, bank, old(bank), packet))]
-fn on_acknowledge_packet<B: Bank>(
+fn on_acknowledge_packet(
     ctx: &Ctx,
-    bank: &mut B,
+    bank: &mut Bank,
     ack: FungibleTokenPacketAcknowledgement,
     packet: Packet) {
     if(!ack.success) {
@@ -469,11 +483,11 @@ fn on_acknowledge_packet<B: Bank>(
 //     (bank1.unescrowed_coin_balance(coin) + bank2.unescrowed_coin_balance(coin) ==
 //     old(bank1.unescrowed_coin_balance(coin) + bank2.unescrowed_coin_balance(coin)))
 // )]
-fn send_preserves<B: Bank>(
+fn send_preserves(
     ctx1: &Ctx,
     ctx2: &Ctx,
-    bank1: &mut B,
-    bank2: &mut B,
+    bank1: &mut Bank,
+    bank2: &mut Bank,
     path: Path,
     coin: Coin,
     amount: u32,
@@ -549,11 +563,11 @@ fn send_preserves<B: Bank>(
     forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
         bank2.balance_of(acct_id2, path2, coin2) ==
            old(bank2).balance_of(acct_id2, path2, coin2)))]
-fn round_trip<B: Bank>(
+fn round_trip(
     ctx1: &Ctx,
     ctx2: &Ctx,
-    bank1: &mut B,
-    bank2: &mut B,
+    bank1: &mut Bank,
+    bank2: &mut Bank,
     path: Path,
     coin: Coin,
     amount: u32,
@@ -615,10 +629,10 @@ fn round_trip<B: Bank>(
     forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
         bank1.balance_of(acct_id2, path2, coin2) ==
            old(bank1).balance_of(acct_id2, path2, coin2)))]
-fn timeout<B: Bank>(
+fn timeout(
     ctx1: &Ctx,
     ctx2: &Ctx,
-    bank1: &mut B,
+    bank1: &mut Bank,
     path: Path,
     coin: Coin,
     amount: u32,
@@ -658,10 +672,10 @@ fn timeout<B: Bank>(
     forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
         bank1.balance_of(acct_id2, path2, coin2) ==
            old(bank1).balance_of(acct_id2, path2, coin2)))]
-fn ack_fail<B: Bank>(
+fn ack_fail(
     ctx1: &Ctx,
     ctx2: &Ctx,
-    bank1: &mut B,
+    bank1: &mut Bank,
     path: Path,
     coin: Coin,
     amount: u32,
@@ -741,11 +755,11 @@ fn ack_fail<B: Bank>(
     forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
         bank2.balance_of(acct_id2, path2, coin2) ==
            old(bank2).balance_of(acct_id2, path2, coin2)))]
-fn round_trip_sink<B: Bank>(
+fn round_trip_sink(
     ctx1: &Ctx,
     ctx2: &Ctx,
-    bank1: &mut B,
-    bank2: &mut B,
+    bank1: &mut Bank,
+    bank2: &mut Bank,
     path: Path,
     coin: Coin,
     amount: u32,
