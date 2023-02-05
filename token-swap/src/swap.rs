@@ -1,235 +1,7 @@
 #![allow(dead_code, unused)]
-use std::convert::TryInto;
 use prusti_contracts::*;
 
-#[derive(Copy, Clone, Eq, PartialEq)]
-struct AccountID(u32);
-
-#[pure]
-#[trusted]
-fn is_escrow_account(acct_id: AccountID) -> bool {
-    unimplemented!()
-}
-
-#[derive(Copy, Clone, Eq, PartialEq)]
-struct Coin(u32);
-#[derive(Copy, Clone, Eq, PartialEq)]
-struct ChannelEnd(u32);
-#[derive(Copy, Clone, Eq, PartialEq)]
-struct Port(u32);
-
-struct Ctx(u32);
-
-
-impl Ctx {
-
-    #[pure]
-    #[trusted]
-    fn counterparty_port(&self, source_port: Port, source_channel: ChannelEnd) -> Port {
-        unimplemented!()
-    }
-
-    #[pure]
-    #[trusted]
-    fn counterparty_channel(&self, source_port: Port, source_channel: ChannelEnd) -> ChannelEnd {
-        unimplemented!()
-    }
-
-    predicate! {
-        fn has_channel(&self, 
-            source_port: Port, source_channel: ChannelEnd,
-            dest_port: Port, dest_channel: ChannelEnd
-        ) -> bool {
-            self.counterparty_port(source_port, source_channel) === dest_port && 
-            self.counterparty_channel(source_port, source_channel) === dest_channel
-        }
-    }
-
-    #[pure]
-    #[trusted]
-    #[ensures(is_escrow_account(result))]
-    fn escrow_address(&self, channel_end: ChannelEnd) -> AccountID {
-        unimplemented!()
-    }
-}
-
-#[derive(Copy, Clone, Eq, PartialEq)]
-struct FungibleTokenPacketData {
-    path: Path,
-    coin: Coin,
-    sender: AccountID,
-    receiver: AccountID,
-    amount: u32
-}
-
-#[derive(Copy, Clone, Eq, PartialEq)]
-struct Packet {
-    source_port: Port,
-    source_channel: ChannelEnd,
-    dest_port: Port,
-    dest_channel: ChannelEnd,
-    data: FungibleTokenPacketData
-}
-
-#[pure]
-fn mk_packet(
-    ctx: &Ctx,
-    source_port: Port,
-    source_channel: ChannelEnd,
-    data: FungibleTokenPacketData
-) -> Packet {
-    Packet {
-        source_port,
-        source_channel,
-        data,
-        dest_port: ctx.counterparty_port(source_port, source_channel),
-        dest_channel: ctx.counterparty_channel(source_port, source_channel)
-    }
-}
-
-#[derive(Copy, Clone, Eq, Hash)]
-struct Path(u32);
-
-impl Path {
-
-    #[pure]
-    #[trusted]
-    fn empty() -> Path {
-        unimplemented!();
-    }
-
-    #[pure]
-    #[trusted]
-    #[ensures(result == (self === Path::empty()))]
-    fn is_empty(self) -> bool {
-        unimplemented!();
-    }
-
-    #[pure]
-    #[trusted]
-    #[requires(!self.is_empty())]
-    fn head_port(self) -> Port {
-        unimplemented!()
-    }
-
-    #[pure]
-    #[trusted]
-    #[requires(!self.is_empty())]
-    fn head_channel(self) -> ChannelEnd {
-        unimplemented!()
-    }
-
-    #[pure]
-    #[trusted]
-    #[ensures(!(result === Path::empty()))]
-    #[ensures(result.starts_with(port, channel))]
-    #[ensures(result.tail() === self)]
-    fn prepend_prefix(self, port: Port, channel: ChannelEnd) -> Path {
-        unimplemented!()
-    }
-
-    #[pure]
-    fn starts_with(self, port: Port, channel: ChannelEnd) -> bool {
-        !self.is_empty() && 
-        port == self.head_port() && 
-        channel == self.head_channel()
-    }
-
-    #[pure]
-    #[requires(self.starts_with(port, channel))]
-    #[ensures(result === self.tail())]
-    #[ensures(result.prepend_prefix(port, channel) === self)]
-    #[trusted]
-    fn drop_prefix(self, port: Port, channel: ChannelEnd) -> Path {
-        unimplemented!()
-    }
-
-    #[pure]
-    #[trusted]
-    fn tail(self) -> Path {
-       unimplemented!()
-    }
-}
-
-struct Topology(u32);
-
-impl Topology {
-
-    predicate! {
-        fn connects(
-            &self,
-            ctx1: &Ctx,
-            port12: Port,
-            channel12: ChannelEnd,
-            ctx2: &Ctx,
-            port21: Port,
-            channel21: ChannelEnd
-        ) -> bool {
-            self.ctx_at(ctx1, port12, channel12) === ctx2 && 
-            self.ctx_at(ctx2, port21, channel21) === ctx1 && 
-            ctx1.has_channel(port12, channel12, port21, channel21) && 
-            ctx2.has_channel(port21, channel21, port12, channel12)
-        }
-    }
-
-    #[pure]
-    #[trusted]
-    fn ctx_at(&self, from: &Ctx, port: Port, channel: ChannelEnd) -> &Ctx {
-        unimplemented!()
-    }
-}
-
-/**
- * A path `P` is well-formed with respect to a chain `C` and network topology `T`
- * iff P has less than two segments, or if P has at least two segments then:
- * 
- * Let P1/H1 be the port/channel pair in first segment of the path, and
- * and P2/H2 be the second segment.
- * Let C' be the chain on the end of P1/H1.
- * 
- * Then, P is well-formed with respect to chain C and topology T if:
- * 1. P1/H1 and P2/H2 do not descibre a channel between C and C', and
- * 2. The tail of P (after removing P1/H1) is well-formed with respect to 
- *    chain C' and topology T
- * 
- * Informally, the well-formedness requirements corresponds to the path not having
- * any cycles of length 2. It shouldn't be possible to create such a path, because 
- * if a transfer C -> C' adds an additional segment to the path, the subsequent 
- * transfer C' -> C should remove it. However, this well-formedness property does
- * not rule out longer cycles, i.e., C1 -> C2 -> C3 -> C1; it is possible to create paths
- * forming such cycles in the protocol.
- */
-predicate! {
-    fn is_well_formed(path: Path, ctx: &Ctx, topology: &Topology) -> bool {
-        path.is_empty() || path.tail().is_empty() || {
-            let path_tail = path.tail();
-            let port1 = path.head_port();
-            let channel1 = path.head_channel();
-            let port2 = path_tail.head_port();
-            let channel2 = path_tail.head_channel();
-            let ctx2 = topology.ctx_at(ctx, port1, channel1);
-            !ctx.has_channel(
-                port1,
-                channel1,
-                port2,
-                channel2,
-            ) && is_well_formed(path_tail, ctx2, topology)
-        }
-    }
-}
-
-
-// Prusti does not like derived PartialEQ
-impl PartialEq for Path {
-    #[trusted]
-    #[pure]
-    fn eq(&self, other: &Path) -> bool {
-        unimplemented!()
-    }
-
-}
-
-
+use crate::types::*;
 
 trait Bank {
 
@@ -423,7 +195,7 @@ fn send_will_transfer<B: Bank>(
             sender,
             ctx.escrow_address(source_channel),
             coin,
-    amount)) ==> 
+    amount)) ==>
         bank.transfer_tokens_post(
             old(bank),
             sender,
@@ -483,10 +255,10 @@ fn send_fungible_tokens<B: Bank>(
 #[requires(
     !packet.data.path.starts_with(packet.source_port, packet.source_channel) ==>
       bank.transfer_tokens_pre(
-        ctx.escrow_address(packet.source_channel), 
-        packet.data.sender, 
-        packet.data.path, 
-        packet.data.coin, 
+        ctx.escrow_address(packet.source_channel),
+        packet.data.sender,
+        packet.data.path,
+        packet.data.coin,
         packet.data.amount
     )
 )]
@@ -525,10 +297,10 @@ predicate! {
 #[requires(
     !packet.data.path.starts_with(packet.source_port, packet.source_channel) ==>
       bank.transfer_tokens_pre(
-        ctx.escrow_address(packet.source_channel), 
-        packet.data.sender, 
-        packet.data.path, 
-        packet.data.coin, 
+        ctx.escrow_address(packet.source_channel),
+        packet.data.sender,
+        packet.data.path,
+        packet.data.coin,
         packet.data.amount
     )
 )]
@@ -564,16 +336,16 @@ fn packet_is_source(packet: Packet) -> bool {
 
 #[requires(
     is_well_formed(
-        packet.data.path, 
+        packet.data.path,
         topology.ctx_at(
-            ctx, 
+            ctx,
             packet.dest_port,
             packet.dest_channel
         ),
         topology
     )
 )]
-#[requires(packet_is_source(packet) ==> 
+#[requires(packet_is_source(packet) ==>
     bank.transfer_tokens_pre(
                 ctx.escrow_address(packet.dest_channel),
                 packet.data.receiver,
@@ -582,16 +354,17 @@ fn packet_is_source(packet: Packet) -> bool {
                 packet.data.amount
             )
 )]
-#[requires(!packet_is_source(packet) && !packet.data.path.is_empty() ==> 
+#[requires(!packet_is_source(packet) && !packet.data.path.is_empty() ==>
     !ctx.has_channel(
       packet.dest_port,
       packet.dest_channel,
       packet.data.path.head_port(),
       packet.data.path.head_channel(),
 ))]
+#[ensures(result.success)]
 #[ensures(
     !packet_is_source(packet) ==>
-        result.success && bank.mint_tokens_post(
+        bank.mint_tokens_post(
             old(bank),
             old(packet.data.receiver),
             old(packet.data.path.prepend_prefix(packet.dest_port, packet.dest_channel)),
@@ -604,7 +377,7 @@ fn packet_is_source(packet: Packet) -> bool {
         is_well_formed(
             old(
                 packet.data.path.prepend_prefix(
-                    packet.dest_port, 
+                    packet.dest_port,
                     packet.dest_channel)
             ),
             ctx,
@@ -612,20 +385,19 @@ fn packet_is_source(packet: Packet) -> bool {
 )]
 
 #[ensures(
-    (packet_is_source(packet)) ==> (result.success &&
-          bank.transfer_tokens_post(
-              old(bank),
-              old(ctx.escrow_address(packet.dest_channel)),
-              old(packet.data.receiver),
-              old(packet.data.path.tail()),
-              old(packet.data.coin),
-              old(packet.data.amount)
-          )
+    (packet_is_source(packet)) ==> 
+        bank.transfer_tokens_post(
+            old(bank),
+            old(ctx.escrow_address(packet.dest_channel)),
+            old(packet.data.receiver),
+            old(packet.data.path.tail()),
+            old(packet.data.coin),
+            old(packet.data.amount)
         )
 )]
 fn on_recv_packet<B: Bank>(
-    ctx: &Ctx, 
-    bank: &mut B, 
+    ctx: &Ctx,
+    bank: &mut B,
     packet: Packet,
     topology: &Topology
 ) -> FungibleTokenPacketAcknowledgement {
@@ -654,10 +426,10 @@ fn on_recv_packet<B: Bank>(
 #[requires(
     !packet.data.path.starts_with(packet.source_port, packet.source_channel) ==>
       bank.transfer_tokens_pre(
-        ctx.escrow_address(packet.source_channel), 
-        packet.data.sender, 
-        packet.data.path, 
-        packet.data.coin, 
+        ctx.escrow_address(packet.source_channel),
+        packet.data.sender,
+        packet.data.path,
+        packet.data.coin,
         packet.data.amount
     )
 )]
@@ -1022,5 +794,3 @@ fn round_trip_sink<B: Bank>(
     let ack = on_recv_packet(ctx1, bank1, packet, topology);
     on_acknowledge_packet(ctx2, bank2, ack, packet);
 }
-
-pub fn main(){}

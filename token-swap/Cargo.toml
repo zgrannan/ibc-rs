@@ -1,0 +1,11 @@
+[package]
+name = "token-swap"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+prusti-contracts = { path = "/Users/zgrannan/prusti-dev/prusti-contracts/prusti-contracts" }
