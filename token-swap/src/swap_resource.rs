@@ -3,19 +3,20 @@ use prusti_contracts::*;
 
 use crate::types::*;
 
+
 #[invariant_twostate(self.id() === old(self.id()))]
 #[invariant_twostate(
     forall(|acct_id: AccountID, path: Path, coin: Coin|
-        perm(Money(self.id(), acct_id, path, coin)) - 
-        old(perm(Money(self.id(), acct_id, path, coin))) ==
+        holds(Money(self.id(), acct_id, path, coin)) - 
+        old(holds(Money(self.id(), acct_id, path, coin))) ==
         PermAmount::from(self.balance_of(acct_id, path, coin)) - 
             PermAmount::from(old(self.balance_of(acct_id, path, coin)))
     ))
 ]
 #[invariant_twostate(
     forall(|coin: Coin|
-        perm(UnescrowedBalance(self.id(), coin)) - 
-        old(perm(UnescrowedBalance(self.id(), coin))) ==
+        holds(UnescrowedBalance(self.id(), coin)) - 
+        old(holds(UnescrowedBalance(self.id(), coin))) ==
         PermAmount::from(self.unescrowed_coin_balance(coin)) - 
             PermAmount::from(old(self.unescrowed_coin_balance(coin)))
     ))
@@ -135,7 +136,7 @@ fn send_fungible_tokens(
     source_channel: ChannelEnd,
     topology: &Topology
 ) -> Packet {
-    let success = if !path.starts_with(source_port, source_channel) {
+    if !path.starts_with(source_port, source_channel) {
         bank.transfer_tokens(
             sender,
             ctx.escrow_address(source_channel),
@@ -162,56 +163,45 @@ fn send_fungible_tokens(
     mk_packet(ctx, source_port, source_channel, data)
 }
 
-#[requires(packet.data.sender != ctx.escrow_address(packet.source_channel))]
-#[requires(
-    !packet.data.path.starts_with(packet.source_port, packet.source_channel) ==> 
-    transfers(Money(
-            bank.id(),
-            ctx.escrow_address(packet.source_channel),
-            packet.data.path,
-            packet.data.coin
-    ), packet.data.amount)
-)]
-#[ensures(
-    transfers(
-        Money(
-            old(bank.id()), 
-            old(packet.data.sender), 
-            old(packet.data.path), 
-            old(packet.data.coin)
-        ), old(packet.data.amount)
-    )
-)]
-#[ensures(!is_escrow_account(old(packet.data.sender)) ==> 
-    transfers(UnescrowedBalance(old(bank.id()), old(packet.data.coin)), old(packet.data.amount))
-)]
-fn on_timeout_packet(ctx: &Ctx, bank: &mut Bank, packet: Packet) {
-    refund_tokens(ctx, bank, packet);
+
+macro_rules! refund_tokens_pre {
+    ($ctx:expr, $bank:expr, $packet:expr) => {
+    $packet.data.sender != $ctx.escrow_address($packet.source_channel) &&
+    if !$packet.data.path.starts_with($packet.source_port, $packet.source_channel) {
+        transfers(Money(
+                $bank.id(),
+                $ctx.escrow_address($packet.source_channel),
+                $packet.data.path,
+                $packet.data.coin
+        ), $packet.data.amount)
+    } else { true }
+    }
 }
 
-#[requires(packet.data.sender != ctx.escrow_address(packet.source_channel))]
-#[requires(
-    !packet.data.path.starts_with(packet.source_port, packet.source_channel) ==> 
-    transfers(Money(
-            bank.id(),
-            ctx.escrow_address(packet.source_channel),
-            packet.data.path,
-            packet.data.coin
-    ), packet.data.amount)
-)]
-#[ensures(
-    transfers(
-        Money(
-            old(bank.id()), 
-            old(packet.data.sender), 
-            old(packet.data.path), 
-            old(packet.data.coin)
-        ), old(packet.data.amount)
-    )
-)]
-#[ensures(!is_escrow_account(old(packet.data.sender)) ==> 
-    transfers(UnescrowedBalance(old(bank.id()), old(packet.data.coin)), old(packet.data.amount))
-)]
+macro_rules! refund_tokens_post {
+    ($bank:expr, $packet:expr) => {
+        transfers(
+            Money(
+                old($bank.id()), 
+                old($packet.data.sender), 
+                old($packet.data.path), 
+                old($packet.data.coin)
+            ), old($packet.data.amount)
+        ) && (
+          if !is_escrow_account(old($packet.data.sender)) {
+            transfers(
+                UnescrowedBalance(
+                    old($bank.id()), 
+                    old($packet.data.coin)
+                ), old($packet.data.amount)
+            )
+        } else { true }
+        )
+    }
+}
+
+#[requires(refund_tokens_pre!(ctx, bank, packet))]
+#[ensures(refund_tokens_post!(bank, packet))]
 fn refund_tokens(ctx: &Ctx, bank: &mut Bank, packet: Packet) {
     let FungibleTokenPacketData{ path, coin, sender, amount, ..} = packet.data;
     if !path.starts_with(packet.source_port, packet.source_channel) {
@@ -230,6 +220,12 @@ fn refund_tokens(ctx: &Ctx, bank: &mut Bank, packet: Packet) {
             amount
         );
     }
+}
+
+#[requires(refund_tokens_pre!(ctx, bank, packet))]
+#[ensures(refund_tokens_post!(bank, packet))]
+fn on_timeout_packet(ctx: &Ctx, bank: &mut Bank, packet: Packet) {
+    refund_tokens(ctx, bank, packet);
 }
 
 struct FungibleTokenPacketAcknowledgement {
@@ -341,19 +337,7 @@ fn on_recv_packet(
     ), packet.data.amount)
 )]
 #[ensures(ack.success ==> snap(bank) === old(snap(bank)))]
-#[ensures(!ack.success ==>
-    transfers(
-        Money(
-            old(bank.id()), 
-            old(packet.data.sender), 
-            old(packet.data.path), 
-            old(packet.data.coin)
-        ), old(packet.data.amount)
-    )
-)]
-#[ensures(!ack.success && !is_escrow_account(old(packet.data.sender)) ==> 
-    transfers(UnescrowedBalance(old(bank.id()), old(packet.data.coin)), old(packet.data.amount))
-)]
+#[ensures(!ack.success ==> refund_tokens_post!(bank, packet))]
 fn on_acknowledge_packet(
     ctx: &Ctx,
     bank: &mut Bank,

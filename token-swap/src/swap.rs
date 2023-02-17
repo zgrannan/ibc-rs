@@ -308,16 +308,20 @@ predicate! {
     }
 }
 
-#[requires(
-    !packet.data.path.starts_with(packet.source_port, packet.source_channel) ==>
-      bank.transfer_tokens_pre(
-        ctx.escrow_address(packet.source_channel),
-        packet.data.sender,
-        packet.data.path,
-        packet.data.coin,
-        packet.data.amount
-    )
-)]
+predicate! {
+    fn refund_tokens_pre(ctx: &Ctx, bank: &Bank, packet: Packet) -> bool {
+        !packet.data.path.starts_with(packet.source_port, packet.source_channel) ==>
+        bank.transfer_tokens_pre(
+            ctx.escrow_address(packet.source_channel),
+            packet.data.sender,
+            packet.data.path,
+            packet.data.coin,
+            packet.data.amount
+        )
+    }
+}
+
+#[requires(refund_tokens_pre(ctx, bank, packet))]
 #[ensures(refund_tokens_post(ctx, bank, old(bank), packet))]
 fn refund_tokens(ctx: &Ctx, bank: &mut Bank, packet: Packet) {
     let FungibleTokenPacketData{ path, coin, sender, amount, ..} = packet.data;
