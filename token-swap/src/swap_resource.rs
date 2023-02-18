@@ -21,11 +21,11 @@ use crate::types::*;
             PermAmount::from(old(self.unescrowed_coin_balance(coin)))
     ))
 ]
-// #[invariant(
-//     forall(|acct_id: AccountID, path: Path, coin: Coin|
-//         holds(Money(self.id(), acct_id, path, coin)) <= 
-//         PermAmount::from(self.balance_of(acct_id, path, coin))
-//     ))]
+#[invariant_twostate(
+    forall(|acct_id: AccountID, path: Path, coin: Coin|
+        PermAmount::from(self.balance_of(acct_id, path, coin)) >=
+        holds(Money(self.id(), acct_id, path, coin)) 
+    ))]
 struct Bank(u32);
 
 #[derive(Copy, Clone)]
@@ -38,13 +38,17 @@ struct Money(BankID, AccountID, Path, Coin);
 #[resource]
 struct UnescrowedBalance(BankID, Coin);
 
+macro_rules! implies {
+     ($lhs:expr => $rhs:expr) => {
+        if $lhs { $rhs } else { true }
+    }
+}
+
 macro_rules! transfer_money {
     ($bank_id:expr, $to:expr, $path:expr, $coin:expr, $amt:expr) => {
-    transfers(Money($bank_id, $to, $path, $coin), $amt) && 
-    if !is_escrow_account($to) {
-        transfers(UnescrowedBalance($bank_id, $coin), $amt)
-    } else { true }
-    }
+    transfers(Money($bank_id, $to, $path, $coin), $amt) && implies!( 
+        !is_escrow_account($to) => transfers(UnescrowedBalance($bank_id, $coin), $amt)
+    )}
 }
 
 
@@ -175,19 +179,18 @@ fn send_fungible_tokens(
 
 
 macro_rules! refund_tokens_pre {
-    ($ctx:expr, $bank:expr, $packet:expr) => {
-    if !$packet.data.path.starts_with($packet.source_port, $packet.source_channel) {
-        $ctx.escrow_address($packet.source_channel) != $packet.data.sender &&
-        transfer_money!(
-            $bank.id(),
-            $ctx.escrow_address($packet.source_channel),
-            $packet.data.path,
-            $packet.data.coin,
-            $packet.data.amount
+    ($ctx:expr, $bank:expr, $packet:expr) => { implies!(
+        !$packet.data.path.starts_with($packet.source_port, $packet.source_channel) => 
+            $ctx.escrow_address($packet.source_channel) != $packet.data.sender &&
+            transfer_money!(
+                $bank.id(),
+                $ctx.escrow_address($packet.source_channel),
+                $packet.data.path,
+                $packet.data.coin,
+                $packet.data.amount
         )
-    } else { true }
-    }
-}
+    )
+}}
 
 macro_rules! refund_tokens_post {
     ($bank:expr, $packet:expr) => {
