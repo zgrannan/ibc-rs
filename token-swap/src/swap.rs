@@ -441,18 +441,9 @@ fn on_recv_packet(
     FungibleTokenPacketAcknowledgement { success }
 }
 
-#[requires(
-    !packet.data.path.starts_with(packet.source_port, packet.source_channel) ==>
-      bank.transfer_tokens_pre(
-        ctx.escrow_address(packet.source_channel),
-        packet.data.sender,
-        packet.data.path,
-        packet.data.coin,
-        packet.data.amount
-    )
-)]
-#[ensures(ack.success ==> snap(bank) === old(snap(bank)))]
+#[requires(!ack.success ==> refund_tokens_pre(ctx, bank, packet))]
 #[ensures(!ack.success ==> refund_tokens_post(ctx, bank, old(bank), packet))]
+#[ensures(ack.success ==> snap(bank) === old(snap(bank)))]
 fn on_acknowledge_packet(
     ctx: &Ctx,
     bank: &mut Bank,

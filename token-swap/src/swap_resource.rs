@@ -29,8 +29,18 @@ struct BankID(u32);
 #[resource]
 struct Money(BankID, AccountID, Path, Coin);
 
+
 #[resource]
 struct UnescrowedBalance(BankID, Coin);
+
+macro_rules! transfer_money {
+    ($bank_id:expr, $to:expr, $path:expr, $coin:expr, $amt:expr) => {
+    transfers(Money($bank_id, $to, $path, $coin), $amt) && 
+    if !is_escrow_account($to) {
+        transfers(UnescrowedBalance($bank_id, $coin), $amt)
+    } else { true }
+    }
+}
 
 
 impl Bank {
@@ -53,11 +63,10 @@ impl Bank {
         unimplemented!()
     }
 
+
     #[requires(from != to)]
-    #[requires(!is_escrow_account(from) ==> transfers(UnescrowedBalance(self.id(), coin), amt))]
-    #[requires(transfers(Money(self.id(), from, path, coin), amt))]
-    #[ensures(transfers(Money(self.id(), to, path, coin), amt))]
-    #[ensures(!is_escrow_account(to) ==> transfers(UnescrowedBalance(self.id(), coin), amt))]
+    #[requires(transfer_money!(self.id(), from, path, coin, amt))]
+    #[ensures(transfer_money!(self.id(), to, path, coin, amt))]
     fn transfer_tokens(
         &mut self,
         from: AccountID,
@@ -72,15 +81,13 @@ impl Bank {
 
 
     #[trusted]
-    #[requires(transfers(Money(self.id(), to, path, coin), amt))]
-    #[requires(!is_escrow_account(to) ==> transfers(UnescrowedBalance(self.id(), coin), amt))]
-    fn burn_tokens(&mut self, to: AccountID, path: Path, coin: Coin, amt: u32) {
+    #[requires(transfer_money!(self.id(), from, path, coin, amt))]
+    fn burn_tokens(&mut self, from: AccountID, path: Path, coin: Coin, amt: u32) {
         unimplemented!()
     }
 
     #[trusted]
-    #[ensures(transfers(Money(self.id(), to, path, coin), amt))]
-    #[ensures(!is_escrow_account(to) ==> transfers(UnescrowedBalance(self.id(), coin), amt))]
+    #[ensures(transfer_money!(self.id(), to, path, coin, amt))]
     fn mint_tokens(&mut self, to: AccountID, path: Path, coin: Coin, amt: u32) {
         unimplemented!()
     }
@@ -98,8 +105,7 @@ fn send_will_transfer(
 // Sanity check: The sender cannot be an escrow account
 #[requires(!is_escrow_account(sender))]
 #[requires(is_well_formed(path, ctx, topology))]
-#[requires(transfers(Money(bank.id(), sender, path, coin), amount))]
-#[requires(transfers(UnescrowedBalance(bank.id(), coin), amount))]
+#[requires(transfer_money!(bank.id(), sender, path, coin, amount))]
 #[ensures(
     old(
         send_will_transfer(
@@ -107,14 +113,12 @@ fn send_will_transfer(
             source_port,
             source_channel,
         )
-    ) ==> transfers(
-        Money(
+    ) ==> transfer_money!(
             old(bank.id()), 
             old(ctx.escrow_address(source_channel)),
             path,
-            coin
-        ), amount
-    )
+            coin,
+            amount)
 )]
 #[ensures(
     result == mk_packet(
@@ -166,36 +170,27 @@ fn send_fungible_tokens(
 
 macro_rules! refund_tokens_pre {
     ($ctx:expr, $bank:expr, $packet:expr) => {
-    $packet.data.sender != $ctx.escrow_address($packet.source_channel) &&
     if !$packet.data.path.starts_with($packet.source_port, $packet.source_channel) {
-        transfers(Money(
-                $bank.id(),
-                $ctx.escrow_address($packet.source_channel),
-                $packet.data.path,
-                $packet.data.coin
-        ), $packet.data.amount)
+        $ctx.escrow_address($packet.source_channel) != $packet.data.sender &&
+        transfer_money!(
+            $bank.id(),
+            $ctx.escrow_address($packet.source_channel),
+            $packet.data.path,
+            $packet.data.coin,
+            $packet.data.amount
+        )
     } else { true }
     }
 }
 
 macro_rules! refund_tokens_post {
     ($bank:expr, $packet:expr) => {
-        transfers(
-            Money(
-                old($bank.id()), 
-                old($packet.data.sender), 
-                old($packet.data.path), 
-                old($packet.data.coin)
-            ), old($packet.data.amount)
-        ) && (
-          if !is_escrow_account(old($packet.data.sender)) {
-            transfers(
-                UnescrowedBalance(
-                    old($bank.id()), 
-                    old($packet.data.coin)
-                ), old($packet.data.amount)
-            )
-        } else { true }
+        transfer_money!(
+            old($bank.id()), 
+            old($packet.data.sender), 
+            old($packet.data.path), 
+            old($packet.data.coin),
+            old($packet.data.amount)
         )
     }
 }
@@ -257,13 +252,12 @@ fn packet_is_source(packet: Packet) -> bool {
       packet.data.path.head_channel(),
 ))]
 #[requires(packet_is_source(packet) ==> 
-    transfers(
-        Money(
+    transfer_money!(
             bank.id(),
             ctx.escrow_address(packet.dest_channel), 
             packet.data.path.drop_prefix(packet.source_port, packet.source_channel),
-            packet.data.coin
-        ), packet.data.amount))]
+            packet.data.coin,
+            packet.data.amount))]
 #[ensures(
     !packet_is_source(packet) ==>
         is_well_formed(
@@ -277,8 +271,7 @@ fn packet_is_source(packet: Packet) -> bool {
 )]
 #[ensures(result.success)]
 #[ensures(
-    transfers(
-        Money(
+    transfer_money!(
             old(bank.id()),
             old(packet.data.receiver),
             if packet_is_source(packet) {
@@ -290,14 +283,10 @@ fn packet_is_source(packet: Packet) -> bool {
                     )
                 )
             },
-            old(packet.data.coin)
-        ), old(packet.data.amount))
+            old(packet.data.coin), 
+            old(packet.data.amount))
     )
 ]
-#[ensures(
-    !is_escrow_account(old(packet.data.receiver)) ==> 
-    transfers(UnescrowedBalance(old(bank.id()), old(packet.data.coin)), old(packet.data.amount))
-)]
 fn on_recv_packet(
     ctx: &Ctx, 
     bank: &mut Bank, 
@@ -325,18 +314,7 @@ fn on_recv_packet(
     FungibleTokenPacketAcknowledgement { success: true }
 }
 
-#[requires(packet.data.sender != ctx.escrow_address(packet.source_channel))]
-#[requires(
-    (!ack.success && 
-    !packet.data.path.starts_with(packet.source_port, packet.source_channel)) ==> 
-    transfers(Money(
-            bank.id(),
-            ctx.escrow_address(packet.source_channel),
-            packet.data.path,
-            packet.data.coin
-    ), packet.data.amount)
-)]
-#[ensures(ack.success ==> snap(bank) === old(snap(bank)))]
+#[requires(!ack.success ==> refund_tokens_pre!(ctx, bank, packet))]
 #[ensures(!ack.success ==> refund_tokens_post!(bank, packet))]
 fn on_acknowledge_packet(
     ctx: &Ctx,
