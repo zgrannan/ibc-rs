@@ -47,7 +47,9 @@ impl Bank {
                 } else {
                     old_bank.balance_of(acct_id2, path2, coin2)
                 }
-            )
+        ) && forall(|c: Coin| c != coin ==> 
+            self.unescrowed_coin_balance(c) == old_bank.unescrowed_coin_balance(c)
+        )
         }
     }
 
@@ -93,19 +95,21 @@ impl Bank {
             coin: Coin,
             amt: u32
         ) -> bool {
-        (!is_escrow_account(acct_id) ==>
+            if is_escrow_account(acct_id) {
               self.unescrowed_coin_balance(coin) ==
-                old_bank.unescrowed_coin_balance(coin) - amt) &&
-        (is_escrow_account(acct_id) ==>
+                old_bank.unescrowed_coin_balance(coin)
+            } else {
               self.unescrowed_coin_balance(coin) ==
-                old_bank.unescrowed_coin_balance(coin)) &&
-            forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
+                old_bank.unescrowed_coin_balance(coin) - amt
+            } && forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
             self.balance_of(acct_id2, path2, coin2) ==
                 if(acct_id == acct_id2 && coin == coin2 && path === path2) {
                     old_bank.balance_of(acct_id, path, coin) - amt
                 } else {
                     old_bank.balance_of(acct_id2, path2, coin2)
                 }
+            ) && forall(|c: Coin| c != coin ==> 
+                self.unescrowed_coin_balance(c) == old_bank.unescrowed_coin_balance(c)
             )
         }
     }
@@ -126,20 +130,23 @@ impl Bank {
             coin: Coin,
             amt: u32
         ) -> bool {
-        (!is_escrow_account(acct_id) ==>
+            if is_escrow_account(acct_id) {
               self.unescrowed_coin_balance(coin) ==
-                old_bank.unescrowed_coin_balance(coin) + amt) &&
-        (is_escrow_account(acct_id) ==>
+                old_bank.unescrowed_coin_balance(coin)
+            } else {
               self.unescrowed_coin_balance(coin) ==
-                old_bank.unescrowed_coin_balance(coin)) &&
-            forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
+                old_bank.unescrowed_coin_balance(coin) + amt
+            } && forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
                 self.balance_of(acct_id2, path2, coin2) ==
                     if(acct_id == acct_id2 && coin == coin2 && path === path2) {
                         old_bank.balance_of(acct_id, path, coin) + amt
                     } else {
                         old_bank.balance_of(acct_id2, path2, coin2)
                     }
+            ) && forall(|c: Coin| c != coin ==> 
+                self.unescrowed_coin_balance(c) == old_bank.unescrowed_coin_balance(c)
             )
+
         }
     }
 
@@ -283,14 +290,7 @@ fn on_timeout_packet(ctx: &Ctx, bank: &mut Bank, packet: Packet) {
 
 predicate! {
     fn refund_tokens_post(ctx: &Ctx, bank: &Bank, old_bank: &Bank, packet: Packet) -> bool {
-        ((!packet.data.path.starts_with(packet.source_port, packet.source_channel) &&
-            old_bank.transfer_tokens_pre(
-                ctx.escrow_address(packet.source_channel),
-                packet.data.sender,
-                packet.data.path,
-                packet.data.coin,
-                packet.data.amount
-            )) ==> bank.transfer_tokens_post(
+        (!packet.data.path.starts_with(packet.source_port, packet.source_channel) ==> bank.transfer_tokens_post(
         old_bank,
         ctx.escrow_address(packet.source_channel),
         packet.data.sender,
@@ -468,16 +468,18 @@ fn on_acknowledge_packet(
 // Assume that the sender is the source chain
 #[requires(!path.starts_with(source_port, source_channel))]
 
-// Sanity check: The sender cannot be an escrow account
+// Sanity check: Neither account is escrow
 #[requires(!is_escrow_account(sender))]
+#[requires(!is_escrow_account(receiver))]
 
 #[requires(topology.connects(ctx1, source_port, source_channel, ctx2, dest_port, dest_channel))]
 #[requires(is_well_formed(path, ctx1, topology))]
-// #[ensures(
-//     !is_escrow_account(receiver) ==>
-//     (bank1.unescrowed_coin_balance(coin) + bank2.unescrowed_coin_balance(coin) ==
-//     old(bank1.unescrowed_coin_balance(coin) + bank2.unescrowed_coin_balance(coin)))
-// )]
+#[ensures(
+    forall(|c: Coin|
+        (PermAmount::from(bank1.unescrowed_coin_balance(c)) + PermAmount::from(bank2.unescrowed_coin_balance(c)) ==
+        old(PermAmount::from(bank1.unescrowed_coin_balance(c)) + PermAmount::from(bank2.unescrowed_coin_balance(c))))
+    )
+)]
 fn send_preserves(
     ctx1: &Ctx,
     ctx2: &Ctx,
