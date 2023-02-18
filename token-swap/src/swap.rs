@@ -476,8 +476,8 @@ fn on_acknowledge_packet(
 #[requires(is_well_formed(path, ctx1, topology))]
 #[ensures(
     forall(|c: Coin|
-        (PermAmount::from(bank1.unescrowed_coin_balance(c)) + PermAmount::from(bank2.unescrowed_coin_balance(c)) ==
-        old(PermAmount::from(bank1.unescrowed_coin_balance(c)) + PermAmount::from(bank2.unescrowed_coin_balance(c))))
+        (Int::new(bank1.unescrowed_coin_balance(c) as i64) + Int::new(bank2.unescrowed_coin_balance(c) as i64) ==
+        old(Int::new(bank1.unescrowed_coin_balance(c) as i64) + Int::new(bank2.unescrowed_coin_balance(c) as i64)))
     )
 )]
 fn send_preserves(

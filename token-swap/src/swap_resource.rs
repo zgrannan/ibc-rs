@@ -21,6 +21,11 @@ use crate::types::*;
             PermAmount::from(old(self.unescrowed_coin_balance(coin)))
     ))
 ]
+// #[invariant(
+//     forall(|acct_id: AccountID, path: Path, coin: Coin|
+//         holds(Money(self.id(), acct_id, path, coin)) <= 
+//         PermAmount::from(self.balance_of(acct_id, path, coin))
+//     ))]
 struct Bank(u32);
 
 #[derive(Copy, Clone)]
@@ -82,6 +87,7 @@ impl Bank {
 
     #[trusted]
     #[requires(transfer_money!(self.id(), from, path, coin, amt))]
+    #[requires(self.balance_of(from, path, coin) >= amt)]
     fn burn_tokens(&mut self, from: AccountID, path: Path, coin: Coin, amt: u32) {
         unimplemented!()
     }
@@ -361,8 +367,8 @@ fn on_acknowledge_packet(
 )]
 #[ensures(
     forall(|c: Coin|
-        (PermAmount::from(bank1.unescrowed_coin_balance(c)) + PermAmount::from(bank2.unescrowed_coin_balance(c)) ==
-        old(PermAmount::from(bank1.unescrowed_coin_balance(c)) + PermAmount::from(bank2.unescrowed_coin_balance(c))))
+        (Int::new(bank1.unescrowed_coin_balance(c) as i64) + Int::new(bank2.unescrowed_coin_balance(c) as i64) ==
+        old(Int::new(bank1.unescrowed_coin_balance(c) as i64) + Int::new(bank2.unescrowed_coin_balance(c) as i64)))
     )
 )]
 fn send_preserves(
