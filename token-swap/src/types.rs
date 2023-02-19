@@ -113,7 +113,7 @@ pub struct Packet {
 }
 
 #[pure]
-pub fn packet_is_source(packet: Packet) -> bool {
+pub fn packet_is_source(packet: &Packet) -> bool {
     packet.data.denom.trace_path.starts_with(packet.source_port, packet.source_channel)
 }
 

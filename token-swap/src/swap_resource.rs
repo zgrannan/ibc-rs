@@ -106,7 +106,7 @@ impl Bank {
 #[requires(is_well_formed(coin.denom.trace_path, ctx, topology))]
 #[requires(transfer_money!(bank.id(), sender, coin))]
 #[ensures(
-    old(!coin.denom.trace_path.starts_with(source_port, source_channel)) 
+    !coin.denom.trace_path.starts_with(source_port, source_channel)
     ==> transfer_money!(
          bank.id(), 
          ctx.escrow_address(source_channel),
@@ -168,11 +168,11 @@ macro_rules! refund_tokens_pre {
 macro_rules! refund_tokens_post {
     ($bank:expr, $packet:expr) => {
         transfer_money!(
-            old($bank.id()), 
-            old($packet.data.sender), 
+            $bank.id(), 
+            $packet.data.sender, 
             PrefixedCoin {
-                denom: old($packet.data.denom),
-                amount: old($packet.data.amount)
+                denom: $packet.data.denom,
+                amount: $packet.data.amount
             }
         )
     }
@@ -180,7 +180,7 @@ macro_rules! refund_tokens_post {
 
 #[requires(refund_tokens_pre!(ctx, bank, packet))]
 #[ensures(refund_tokens_post!(bank, packet))]
-fn refund_tokens(ctx: &Ctx, bank: &mut Bank, packet: Packet) {
+fn refund_tokens(ctx: &Ctx, bank: &mut Bank, packet: &Packet) {
     let FungibleTokenPacketData{ denom, sender, amount, ..} = packet.data;
     if !denom.trace_path.starts_with(packet.source_port, packet.source_channel) {
         bank.transfer_tokens(
@@ -198,17 +198,12 @@ fn refund_tokens(ctx: &Ctx, bank: &mut Bank, packet: Packet) {
 
 #[requires(refund_tokens_pre!(ctx, bank, packet))]
 #[ensures(refund_tokens_post!(bank, packet))]
-fn on_timeout_packet(ctx: &Ctx, bank: &mut Bank, packet: Packet) {
+fn on_timeout_packet(ctx: &Ctx, bank: &mut Bank, packet: &Packet) {
     refund_tokens(ctx, bank, packet);
 }
 
 struct FungibleTokenPacketAcknowledgement {
     success: bool
-}
-
-#[pure]
-fn packet_is_source(packet: Packet) -> bool {
-    packet.data.denom.trace_path.starts_with(packet.source_port, packet.source_channel)
 }
 
 #[requires(packet.data.receiver != ctx.escrow_address(packet.dest_channel))]
@@ -241,10 +236,9 @@ fn packet_is_source(packet: Packet) -> bool {
 #[ensures(
     !packet_is_source(packet) ==>
         is_well_formed(
-            old(
-                packet.data.denom.trace_path.prepend_prefix(
-                    packet.dest_port, 
-                    packet.dest_channel)
+            packet.data.denom.trace_path.prepend_prefix(
+                packet.dest_port, 
+                packet.dest_channel
             ),
             ctx,
             topology)
@@ -252,28 +246,25 @@ fn packet_is_source(packet: Packet) -> bool {
 #[ensures(result.success)]
 #[ensures(
     transfer_money!(
-            old(bank.id()),
-            old(packet.data.receiver),
+        bank.id(),
+        packet.data.receiver,
+        if packet_is_source(packet) {
             PrefixedCoin {
-                denom: PrefixedDenom {
-                    trace_path: if packet_is_source(packet) {
-                        old(packet.data.denom.trace_path.tail())
-                        } else {
-                            old(packet.data.denom.trace_path.prepend_prefix(
-                              packet.dest_port, packet.dest_channel
-                           ))
-                        },
-                    base_denom: packet.data.denom.base_denom
-                },
+                denom: packet.data.denom,
                 amount: packet.data.amount
-            }
-            )
+            }.drop_prefix(packet.source_port, packet.source_channel)
+        } else {
+            PrefixedCoin {
+                denom: packet.data.denom,
+                amount: packet.data.amount
+            }.prepend_prefix(packet.dest_port, packet.dest_channel)
+        }
     )
-]
+)]
 fn on_recv_packet(
     ctx: &Ctx, 
     bank: &mut Bank, 
-    packet: Packet,
+    packet: &Packet,
     topology: &Topology
 ) -> FungibleTokenPacketAcknowledgement {
     let FungibleTokenPacketData{ denom, receiver, amount, ..} = packet.data;
@@ -310,7 +301,7 @@ fn on_acknowledge_packet(
     ctx: &Ctx,
     bank: &mut Bank,
     ack: FungibleTokenPacketAcknowledgement,
-    packet: Packet) {
+    packet: &Packet) {
     if(!ack.success) {
         refund_tokens(ctx, bank, packet);
     }
@@ -372,9 +363,9 @@ fn send_preserves(
         source_channel,
         topology
     );
-    let ack = on_recv_packet(ctx2, bank2, packet, topology);
+    let ack = on_recv_packet(ctx2, bank2, &packet, topology);
     prusti_assert!(ack.success);
-    on_acknowledge_packet(ctx1, bank1, ack, packet);
+    on_acknowledge_packet(ctx1, bank1, ack, &packet);
 }
 
 /*
@@ -439,9 +430,9 @@ fn round_trip(
         topology
     );
 
-    let ack = on_recv_packet(ctx2, bank2, packet, topology);
+    let ack = on_recv_packet(ctx2, bank2, &packet, topology);
     prusti_assert!(ack.success);
-    on_acknowledge_packet(ctx1, bank1, ack, packet);
+    on_acknowledge_packet(ctx1, bank1, ack, &packet);
 
     // Send tokens B --> A
 
@@ -456,9 +447,9 @@ fn round_trip(
         topology
     );
 
-    let ack = on_recv_packet(ctx1, bank1, packet, topology);
+    let ack = on_recv_packet(ctx1, bank1, &packet, topology);
     prusti_assert!(ack.success);
-    on_acknowledge_packet(ctx2, bank2, ack, packet);
+    on_acknowledge_packet(ctx2, bank2, ack, &packet);
 }
 
 #[requires(transfer_money!(bank1.id(), sender, coin))]
@@ -496,7 +487,7 @@ fn timeout(
         topology
     );
 
-    on_timeout_packet(ctx1, bank1, packet);
+    on_timeout_packet(ctx1, bank1, &packet);
 }
 
 // Sanity check: The sender cannot be an escrow account
@@ -538,7 +529,7 @@ fn ack_fail(
         ctx1,
         bank1,
         FungibleTokenPacketAcknowledgement { success: false },
-        packet
+        &packet
     );
 }
 
@@ -552,9 +543,6 @@ fn ack_fail(
 #[requires(!(bank1.id() === bank2.id()))]
 // Assume the sender has sufficient funds to send to receiver
 #[requires(transfer_money!(bank1.id(), sender, coin))]
-
-// Assume the receiver is not the escrow address
-#[requires(receiver != ctx2.escrow_address(dest_channel))]
 
 // Assume that the sender is the sink chain
 #[requires(coin.denom.trace_path.starts_with(source_port, source_channel))]
@@ -621,9 +609,9 @@ fn round_trip_sink(
         topology
     );
 
-    let ack = on_recv_packet(ctx2, bank2, packet, topology);
+    let ack = on_recv_packet(ctx2, bank2, &packet, topology);
     prusti_assert!(ack.success);
-    on_acknowledge_packet(ctx1, bank1, ack, packet);
+    on_acknowledge_packet(ctx1, bank1, ack, &packet);
 
     // Send tokens B --> A
 
@@ -638,6 +626,6 @@ fn round_trip_sink(
         topology
     );
 
-    let ack = on_recv_packet(ctx1, bank1, packet, topology);
-    on_acknowledge_packet(ctx2, bank2, ack, packet);
+    let ack = on_recv_packet(ctx1, bank1, &packet, topology);
+    on_acknowledge_packet(ctx2, bank2, ack, &packet);
 }
