@@ -9,9 +9,10 @@ pub struct AccountID(u32);
 
 #[pure]
 #[trusted]
-pub fn is_escrow_account(acct_id: AccountID) -> bool {
+pub fn is_escrow_account(_: AccountID) -> bool {
     unimplemented!()
 }
+
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct PrefixedCoin {
@@ -22,7 +23,7 @@ pub struct PrefixedCoin {
 impl PrefixedCoin {
     #[pure]
     #[requires(self.denom.trace_path.starts_with(port, channel_end))]
-    pub fn drop_prefix(self, port: Port, channel_end: ChannelEnd) -> PrefixedCoin {
+    pub fn drop_prefix(&self, port: Port, channel_end: ChannelEnd) -> PrefixedCoin {
         PrefixedCoin { 
             denom: PrefixedDenom { 
                 trace_path: self.denom.trace_path.drop_prefix(port, channel_end),
@@ -30,10 +31,9 @@ impl PrefixedCoin {
             },
             amount: self.amount
         }
-
     }
     #[pure]
-    pub fn prepend_prefix(self, port: Port, channel_end: ChannelEnd) -> PrefixedCoin {
+    pub fn prepend_prefix(&self, port: Port, channel_end: ChannelEnd) -> PrefixedCoin {
         PrefixedCoin { 
             denom: PrefixedDenom { 
                 trace_path: self.denom.trace_path.prepend_prefix(port, channel_end),
@@ -41,7 +41,6 @@ impl PrefixedCoin {
             },
             amount: self.amount
         }
-
     }
 }
 

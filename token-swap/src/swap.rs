@@ -4,7 +4,6 @@ use std::path::Prefix;
 use prusti_contracts::*;
 
 use crate::types::*;
-
 struct Bank(u32);
 
 impl Bank {

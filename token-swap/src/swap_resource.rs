@@ -34,7 +34,6 @@ struct BankID(u32);
 #[resource]
 struct Money(BankID, AccountID, PrefixedDenom);
 
-
 #[resource]
 struct UnescrowedBalance(BankID, BaseDenom);
 
@@ -231,17 +230,14 @@ fn packet_is_source(packet: Packet) -> bool {
       packet.data.denom.trace_path.head_port(),
       packet.data.denom.trace_path.head_channel(),
 ))]
-#[requires(packet_is_source(packet) ==> 
-    transfer_money!(
-            bank.id(),
-            ctx.escrow_address(packet.dest_channel), 
-            PrefixedCoin { 
-                denom: PrefixedDenom { 
-                    trace_path: packet.data.denom.trace_path.drop_prefix(packet.source_port, packet.source_channel),
-                    base_denom: packet.data.denom.base_denom
-                },
-                amount: packet.data.amount 
-            }))]
+#[requires(packet_is_source(packet) ==> transfer_money!(
+    bank.id(),
+    ctx.escrow_address(packet.dest_channel), 
+    PrefixedCoin { 
+        denom: packet.data.denom,
+        amount: packet.data.amount
+    }.drop_prefix(packet.source_port, packet.source_channel)
+))]
 #[ensures(
     !packet_is_source(packet) ==>
         is_well_formed(
@@ -267,7 +263,7 @@ fn packet_is_source(packet: Packet) -> bool {
                               packet.dest_port, packet.dest_channel
                            ))
                         },
-                    base_denom: old(packet.data.denom.base_denom)
+                    base_denom: packet.data.denom.base_denom
                 },
                 amount: packet.data.amount
             }
