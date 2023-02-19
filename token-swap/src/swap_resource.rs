@@ -102,15 +102,6 @@ impl Bank {
     }
 }
 
-#[pure]
-fn send_will_transfer(
-    path: Path,
-    source_port: Port,
-    source_channel: ChannelEnd,
-) -> bool {
-    !path.starts_with(source_port, source_channel)
-}
-
 // Sanity check: The sender cannot be an escrow account
 #[requires(!is_escrow_account(sender))]
 #[requires(is_well_formed(coin.denom.trace_path, ctx, topology))]
@@ -118,10 +109,10 @@ fn send_will_transfer(
 #[ensures(
     old(!coin.denom.trace_path.starts_with(source_port, source_channel)) 
     ==> transfer_money!(
-            old(bank.id()), 
-            old(ctx.escrow_address(source_channel)),
-            coin)
-)]
+         bank.id(), 
+         ctx.escrow_address(source_channel),
+         coin
+))]
 #[ensures(
     result == mk_packet(
         ctx,
