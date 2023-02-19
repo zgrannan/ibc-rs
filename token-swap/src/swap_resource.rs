@@ -6,15 +6,15 @@ use crate::types::*;
 
 #[invariant_twostate(self.id() === old(self.id()))]
 #[invariant_twostate(
-    forall(|acct_id: AccountID, path: Path, coin: Coin|
-        holds(Money(self.id(), acct_id, path, coin)) - 
-        old(holds(Money(self.id(), acct_id, path, coin))) ==
-        PermAmount::from(self.balance_of(acct_id, path, coin)) - 
-            PermAmount::from(old(self.balance_of(acct_id, path, coin)))
+    forall(|acct_id: AccountID, denom: PrefixedDenom|
+        holds(Money(self.id(), acct_id, denom)) - 
+        old(holds(Money(self.id(), acct_id, denom))) ==
+        PermAmount::from(self.balance_of(acct_id, denom)) - 
+            PermAmount::from(old(self.balance_of(acct_id, denom)))
     ))
 ]
 #[invariant_twostate(
-    forall(|coin: Coin|
+    forall(|coin: BaseDenom|
         holds(UnescrowedBalance(self.id(), coin)) - 
         old(holds(UnescrowedBalance(self.id(), coin))) ==
         PermAmount::from(self.unescrowed_coin_balance(coin)) - 
@@ -22,9 +22,9 @@ use crate::types::*;
     ))
 ]
 #[invariant_twostate(
-    forall(|acct_id: AccountID, path: Path, coin: Coin|
-        PermAmount::from(self.balance_of(acct_id, path, coin)) >=
-        holds(Money(self.id(), acct_id, path, coin)) 
+    forall(|acct_id: AccountID, denom: PrefixedDenom|
+        PermAmount::from(self.balance_of(acct_id, denom)) >=
+        holds(Money(self.id(), acct_id, denom)) 
     ))]
 struct Bank(u32);
 
@@ -32,11 +32,11 @@ struct Bank(u32);
 struct BankID(u32);
 
 #[resource]
-struct Money(BankID, AccountID, Path, Coin);
+struct Money(BankID, AccountID, PrefixedDenom);
 
 
 #[resource]
-struct UnescrowedBalance(BankID, Coin);
+struct UnescrowedBalance(BankID, BaseDenom);
 
 macro_rules! implies {
      ($lhs:expr => $rhs:expr) => {
@@ -45,9 +45,10 @@ macro_rules! implies {
 }
 
 macro_rules! transfer_money {
-    ($bank_id:expr, $to:expr, $path:expr, $coin:expr, $amt:expr) => {
-    transfers(Money($bank_id, $to, $path, $coin), $amt) && implies!( 
-        !is_escrow_account($to) => transfers(UnescrowedBalance($bank_id, $coin), $amt)
+    ($bank_id:expr, $to:expr, $coin:expr) => {
+    transfers(Money($bank_id, $to, $coin.denom), $coin.amount) && implies!( 
+        !is_escrow_account($to) => 
+            transfers(UnescrowedBalance($bank_id, $coin.denom.base_denom), $coin.amount)
     )}
 }
 
@@ -62,43 +63,41 @@ impl Bank {
 
     #[pure]
     #[trusted]
-    fn unescrowed_coin_balance(&self, coin: Coin) -> u32 {
+    fn unescrowed_coin_balance(&self, coin: BaseDenom) -> Amount {
         unimplemented!()
     }
 
     #[pure]
     #[trusted]
-    fn balance_of(&self, acct_id: AccountID, path: Path, coin: Coin) -> u32 {
+    fn balance_of(&self, acct_id: AccountID, denom: PrefixedDenom) -> Amount {
         unimplemented!()
     }
 
 
     #[requires(from != to)]
-    #[requires(transfer_money!(self.id(), from, path, coin, amt))]
-    #[ensures(transfer_money!(self.id(), to, path, coin, amt))]
+    #[requires(transfer_money!(self.id(), from, coin))]
+    #[ensures(transfer_money!(self.id(), to, coin))]
     fn transfer_tokens(
         &mut self,
         from: AccountID,
         to: AccountID,
-        path: Path,
-        coin: Coin,
-        amt: u32
+        coin: &PrefixedCoin
     ) {
-        self.burn_tokens(from, path, coin, amt);
-        self.mint_tokens(to, path, coin, amt);
+        self.burn_tokens(from, coin);
+        self.mint_tokens(to, coin);
     }
 
 
     #[trusted]
-    #[requires(transfer_money!(self.id(), from, path, coin, amt))]
-    #[requires(self.balance_of(from, path, coin) >= amt)]
-    fn burn_tokens(&mut self, from: AccountID, path: Path, coin: Coin, amt: u32) {
+    #[requires(transfer_money!(self.id(), from, coin))]
+    #[requires(self.balance_of(from, coin.denom) >= coin.amount)]
+    fn burn_tokens(&mut self, from: AccountID, coin: &PrefixedCoin) {
         unimplemented!()
     }
 
     #[trusted]
-    #[ensures(transfer_money!(self.id(), to, path, coin, amt))]
-    fn mint_tokens(&mut self, to: AccountID, path: Path, coin: Coin, amt: u32) {
+    #[ensures(transfer_money!(self.id(), to, coin))]
+    fn mint_tokens(&mut self, to: AccountID, coin: &PrefixedCoin) {
         unimplemented!()
     }
 }
@@ -114,65 +113,48 @@ fn send_will_transfer(
 
 // Sanity check: The sender cannot be an escrow account
 #[requires(!is_escrow_account(sender))]
-#[requires(is_well_formed(path, ctx, topology))]
-#[requires(transfer_money!(bank.id(), sender, path, coin, amount))]
+#[requires(is_well_formed(coin.denom.trace_path, ctx, topology))]
+#[requires(transfer_money!(bank.id(), sender, coin))]
 #[ensures(
-    old(
-        send_will_transfer(
-            path,
-            source_port,
-            source_channel,
-        )
-    ) ==> transfer_money!(
+    old(!coin.denom.trace_path.starts_with(source_port, source_channel)) 
+    ==> transfer_money!(
             old(bank.id()), 
             old(ctx.escrow_address(source_channel)),
-            path,
-            coin,
-            amount)
+            coin)
 )]
 #[ensures(
     result == mk_packet(
         ctx,
         source_port,
         source_channel,
-        FungibleTokenPacketData {path, coin, sender, receiver, amount}
+        FungibleTokenPacketData {denom: coin.denom, sender, receiver, amount: coin.amount}
     )
 )]
 fn send_fungible_tokens(
     ctx: &Ctx,
     bank: &mut Bank,
-    path: Path,
-    coin: Coin,
-    amount: u32,
+    coin: &PrefixedCoin,
     sender: AccountID,
     receiver: AccountID,
     source_port: Port,
     source_channel: ChannelEnd,
     topology: &Topology
 ) -> Packet {
-    if !path.starts_with(source_port, source_channel) {
+    if !coin.denom.trace_path.starts_with(source_port, source_channel) {
         bank.transfer_tokens(
             sender,
             ctx.escrow_address(source_channel),
-            path,
-            coin,
-            amount
+            coin
         );
     } else {
-        bank.burn_tokens(
-            sender,
-            path,
-            coin,
-            amount
-        );
+        bank.burn_tokens(sender, coin);
     };
 
     let data = FungibleTokenPacketData {
-        path,
-        coin,
+        denom: coin.denom,
         sender,
         receiver,
-        amount
+        amount: coin.amount
     };
     mk_packet(ctx, source_port, source_channel, data)
 }
@@ -180,14 +162,15 @@ fn send_fungible_tokens(
 
 macro_rules! refund_tokens_pre {
     ($ctx:expr, $bank:expr, $packet:expr) => { implies!(
-        !$packet.data.path.starts_with($packet.source_port, $packet.source_channel) => 
+        !$packet.data.denom.trace_path.starts_with($packet.source_port, $packet.source_channel) => 
             $ctx.escrow_address($packet.source_channel) != $packet.data.sender &&
             transfer_money!(
                 $bank.id(),
                 $ctx.escrow_address($packet.source_channel),
-                $packet.data.path,
-                $packet.data.coin,
-                $packet.data.amount
+                PrefixedCoin {
+                    denom: $packet.data.denom,
+                    amount: $packet.data.amount
+                }
         )
     )
 }}
@@ -197,9 +180,10 @@ macro_rules! refund_tokens_post {
         transfer_money!(
             old($bank.id()), 
             old($packet.data.sender), 
-            old($packet.data.path), 
-            old($packet.data.coin),
-            old($packet.data.amount)
+            PrefixedCoin {
+                denom: old($packet.data.denom),
+                amount: old($packet.data.amount)
+            }
         )
     }
 }
@@ -207,21 +191,17 @@ macro_rules! refund_tokens_post {
 #[requires(refund_tokens_pre!(ctx, bank, packet))]
 #[ensures(refund_tokens_post!(bank, packet))]
 fn refund_tokens(ctx: &Ctx, bank: &mut Bank, packet: Packet) {
-    let FungibleTokenPacketData{ path, coin, sender, amount, ..} = packet.data;
-    if !path.starts_with(packet.source_port, packet.source_channel) {
+    let FungibleTokenPacketData{ denom, sender, amount, ..} = packet.data;
+    if !denom.trace_path.starts_with(packet.source_port, packet.source_channel) {
         bank.transfer_tokens(
             ctx.escrow_address(packet.source_channel),
             sender,
-            path,
-            coin,
-            amount
+            &PrefixedCoin { denom, amount }
         );
     } else {
         bank.mint_tokens(
             sender,
-            path,
-            coin,
-            amount
+            &PrefixedCoin { denom, amount }
         );
     }
 }
@@ -238,13 +218,13 @@ struct FungibleTokenPacketAcknowledgement {
 
 #[pure]
 fn packet_is_source(packet: Packet) -> bool {
-    packet.data.path.starts_with(packet.source_port, packet.source_channel)
+    packet.data.denom.trace_path.starts_with(packet.source_port, packet.source_channel)
 }
 
 #[requires(packet.data.receiver != ctx.escrow_address(packet.dest_channel))]
 #[requires(
     is_well_formed(
-        packet.data.path, 
+        packet.data.denom.trace_path, 
         topology.ctx_at(
             ctx, 
             packet.dest_port,
@@ -253,25 +233,29 @@ fn packet_is_source(packet: Packet) -> bool {
         topology
     )
 )]
-#[requires(!packet_is_source(packet) && !packet.data.path.is_empty() ==> 
+#[requires(!packet_is_source(packet) && !packet.data.denom.trace_path.is_empty() ==> 
     !ctx.has_channel(
       packet.dest_port,
       packet.dest_channel,
-      packet.data.path.head_port(),
-      packet.data.path.head_channel(),
+      packet.data.denom.trace_path.head_port(),
+      packet.data.denom.trace_path.head_channel(),
 ))]
 #[requires(packet_is_source(packet) ==> 
     transfer_money!(
             bank.id(),
             ctx.escrow_address(packet.dest_channel), 
-            packet.data.path.drop_prefix(packet.source_port, packet.source_channel),
-            packet.data.coin,
-            packet.data.amount))]
+            PrefixedCoin { 
+                denom: PrefixedDenom { 
+                    trace_path: packet.data.denom.trace_path.drop_prefix(packet.source_port, packet.source_channel),
+                    base_denom: packet.data.denom.base_denom
+                },
+                amount: packet.data.amount 
+            }))]
 #[ensures(
     !packet_is_source(packet) ==>
         is_well_formed(
             old(
-                packet.data.path.prepend_prefix(
+                packet.data.denom.trace_path.prepend_prefix(
                     packet.dest_port, 
                     packet.dest_channel)
             ),
@@ -283,17 +267,20 @@ fn packet_is_source(packet: Packet) -> bool {
     transfer_money!(
             old(bank.id()),
             old(packet.data.receiver),
-            if packet_is_source(packet) {
-                old(packet.data.path.tail())
-            } else {
-                old(
-                    packet.data.path.prepend_prefix(
-                        packet.dest_port, packet.dest_channel
-                    )
-                )
-            },
-            old(packet.data.coin), 
-            old(packet.data.amount))
+            PrefixedCoin {
+                denom: PrefixedDenom {
+                    trace_path: if packet_is_source(packet) {
+                        old(packet.data.denom.trace_path.tail())
+                        } else {
+                            old(packet.data.denom.trace_path.prepend_prefix(
+                              packet.dest_port, packet.dest_channel
+                           ))
+                        },
+                    base_denom: old(packet.data.denom.base_denom)
+                },
+                amount: packet.data.amount
+            }
+            )
     )
 ]
 fn on_recv_packet(
@@ -302,22 +289,29 @@ fn on_recv_packet(
     packet: Packet,
     topology: &Topology
 ) -> FungibleTokenPacketAcknowledgement {
-    let FungibleTokenPacketData{ path, coin, receiver, amount, ..} = packet.data;
+    let FungibleTokenPacketData{ denom, receiver, amount, ..} = packet.data;
     if packet_is_source(packet) {
+        let coin = PrefixedCoin {
+            denom: PrefixedDenom {
+                trace_path: denom.trace_path.drop_prefix(packet.source_port, packet.source_channel),
+                base_denom: denom.base_denom
+            },
+            amount
+        };
         bank.transfer_tokens(
             ctx.escrow_address(packet.dest_channel),
             receiver,
-            path.drop_prefix(packet.source_port, packet.source_channel),
-            coin,
-            amount
+            &coin
         );
     } else {
-        bank.mint_tokens(
-            receiver,
-            path.prepend_prefix(packet.dest_port, packet.dest_channel),
-            coin,
+        let coin = PrefixedCoin {
+            denom: PrefixedDenom {
+                trace_path: denom.trace_path.prepend_prefix(packet.dest_port, packet.dest_channel),
+                base_denom: denom.base_denom
+            },
             amount
-        );
+        };
+        bank.mint_tokens(receiver, &coin);
     };
 
     FungibleTokenPacketAcknowledgement { success: true }
@@ -341,35 +335,27 @@ fn on_acknowledge_packet(
  */
 
 #[requires(!(bank1.id() === bank2.id()))]
-#[requires(transfer_money!(bank1.id(), sender, path, coin, amount))]
+#[requires(transfer_money!(bank1.id(), sender, coin))]
 
 // Assume that the sender is the source chain
-#[requires(!path.starts_with(source_port, source_channel))]
+#[requires(!coin.denom.trace_path.starts_with(source_port, source_channel))]
 
 // Neither sender or receiver is escrow
 #[requires(!is_escrow_account(receiver))]
 #[requires(!is_escrow_account(sender))]
 
 #[requires(topology.connects(ctx1, source_port, source_channel, ctx2, dest_port, dest_channel))]
-#[requires(is_well_formed(path, ctx1, topology))]
-#[ensures(transfer_money!(
-        bank1.id(), 
-        ctx1.escrow_address(source_channel), 
-        path, 
-        coin, 
-        amount)
-)]
+#[requires(is_well_formed(coin.denom.trace_path, ctx1, topology))]
+#[ensures(transfer_money!(bank1.id(), ctx1.escrow_address(source_channel), coin))]
 #[ensures(
     transfer_money!(
         bank2.id(), 
         receiver, 
-        path.prepend_prefix(dest_port, dest_channel), 
-        coin,
-        amount
+        coin.prepend_prefix(dest_port, dest_channel) 
     )
 )]
 #[ensures(
-    forall(|c: Coin|
+    forall(|c: BaseDenom|
         (Int::new(bank1.unescrowed_coin_balance(c) as i64) + Int::new(bank2.unescrowed_coin_balance(c) as i64) ==
         old(Int::new(bank1.unescrowed_coin_balance(c) as i64) + Int::new(bank2.unescrowed_coin_balance(c) as i64)))
     )
@@ -379,9 +365,7 @@ fn send_preserves(
     ctx2: &Ctx,
     bank1: &mut Bank,
     bank2: &mut Bank,
-    path: Path,
-    coin: Coin,
-    amount: u32,
+    coin: &PrefixedCoin,
     sender: AccountID,
     receiver: AccountID,
     source_port: Port,
@@ -394,9 +378,7 @@ fn send_preserves(
     let packet = send_fungible_tokens(
         ctx1,
         bank1,
-        path,
         coin,
-        amount,
         sender,
         receiver,
         source_port,
@@ -416,10 +398,10 @@ fn send_preserves(
 
 #[requires(!(bank1.id() === bank2.id()))]
 
-#[requires(transfer_money!(bank1.id(), sender, path, coin, amount))]
+#[requires(transfer_money!(bank1.id(), sender, coin))]
 
 // Assume that the sender is the source chain
-#[requires(!path.starts_with(source_port, source_channel))]
+#[requires(!coin.denom.trace_path.starts_with(source_port, source_channel))]
 
 // Sanity check: The sender cannot be an escrow account
 #[requires(!is_escrow_account(sender))]
@@ -430,27 +412,25 @@ fn send_preserves(
 // Assume the path is well-formed.
 // See the definition of `is_well_formed` for details
 #[requires(topology.connects(ctx1, source_port, source_channel, ctx2, dest_port, dest_channel))]
-#[requires(is_well_formed(path, ctx1, topology))]
+#[requires(is_well_formed(coin.denom.trace_path, ctx1, topology))]
 
-#[ensures(transfer_money!(bank1.id(), sender, path, coin, amount))]
+#[ensures(transfer_money!(bank1.id(), sender, coin))]
 
 // Ensure that the resulting balance of both bank accounts are unchanged after the round-trip
 #[ensures(
-    forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
-        bank1.balance_of(acct_id2, path2, coin2) ==
-           old(bank1).balance_of(acct_id2, path2, coin2)))]
+    forall(|acct_id2: AccountID, denom: PrefixedDenom|
+        bank1.balance_of(acct_id2, denom) ==
+           old(bank1).balance_of(acct_id2, denom)))]
 #[ensures(
-    forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
-        bank2.balance_of(acct_id2, path2, coin2) ==
-           old(bank2).balance_of(acct_id2, path2, coin2)))]
+    forall(|acct_id2: AccountID, denom: PrefixedDenom|
+        bank2.balance_of(acct_id2, denom) ==
+           old(bank2).balance_of(acct_id2, denom)))]
 fn round_trip(
     ctx1: &Ctx,
     ctx2: &Ctx,
     bank1: &mut Bank,
     bank2: &mut Bank,
-    path: Path,
-    coin: Coin,
-    amount: u32,
+    coin: &PrefixedCoin,
     sender: AccountID,
     receiver: AccountID,
     source_port: Port,
@@ -464,9 +444,7 @@ fn round_trip(
     let packet = send_fungible_tokens(
         ctx1,
         bank1,
-        path,
         coin,
-        amount,
         sender,
         receiver,
         source_port,
@@ -483,9 +461,7 @@ fn round_trip(
     let packet = send_fungible_tokens(
         ctx2,
         bank2,
-        path.prepend_prefix(dest_port, dest_channel),
-        coin,
-        amount,
+        &coin.prepend_prefix(dest_port, dest_channel),
         receiver,
         sender,
         dest_port,
@@ -498,23 +474,21 @@ fn round_trip(
     on_acknowledge_packet(ctx2, bank2, ack, packet);
 }
 
-#[requires(transfer_money!(bank1.id(), sender, path, coin, amount))]
-#[requires(!path.starts_with(source_port, source_channel))]
+#[requires(transfer_money!(bank1.id(), sender, coin))]
+#[requires(!coin.denom.trace_path.starts_with(source_port, source_channel))]
 // Sanity check: The sender cannot be an escrow account
 #[requires(!is_escrow_account(sender))]
-#[requires(is_well_formed(path, ctx1, topology))]
+#[requires(is_well_formed(coin.denom.trace_path, ctx1, topology))]
+#[ensures(transfer_money!(bank1.id(), sender, coin))]
 #[ensures(
-    forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
-        bank1.balance_of(acct_id2, path2, coin2) ==
-           old(bank1).balance_of(acct_id2, path2, coin2)))]
-#[ensures(transfer_money!(bank1.id(), sender, path, coin, amount))]
+    forall(|acct_id2: AccountID, denom: PrefixedDenom|
+        bank1.balance_of(acct_id2, denom) ==
+           old(bank1).balance_of(acct_id2, denom)))]
 fn timeout(
     ctx1: &Ctx,
     ctx2: &Ctx,
     bank1: &mut Bank,
-    path: Path,
-    coin: Coin,
-    amount: u32,
+    coin: &PrefixedCoin,
     sender: AccountID,
     receiver: AccountID,
     source_port: Port,
@@ -527,9 +501,7 @@ fn timeout(
     let packet = send_fungible_tokens(
         ctx1,
         bank1,
-        path,
         coin,
-        amount,
         sender,
         receiver,
         source_port,
@@ -542,21 +514,19 @@ fn timeout(
 
 // Sanity check: The sender cannot be an escrow account
 #[requires(!is_escrow_account(sender))]
-#[requires(transfer_money!(bank1.id(), sender, path, coin, amount))]
-#[requires(!path.starts_with(source_port, source_channel))]
-#[requires(is_well_formed(path, ctx1, topology))]
-#[ensures(transfer_money!(bank1.id(), sender, path, coin, amount))]
+#[requires(transfer_money!(bank1.id(), sender, coin))]
+#[requires(!coin.denom.trace_path.starts_with(source_port, source_channel))]
+#[requires(is_well_formed(coin.denom.trace_path, ctx1, topology))]
+#[ensures(transfer_money!(bank1.id(), sender, coin))]
 #[ensures(
-    forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
-        bank1.balance_of(acct_id2, path2, coin2) ==
-           old(bank1).balance_of(acct_id2, path2, coin2)))]
+    forall(|acct_id2: AccountID, denom: PrefixedDenom|
+        bank1.balance_of(acct_id2, denom) ==
+           old(bank1).balance_of(acct_id2, denom)))]
 fn ack_fail(
     ctx1: &Ctx,
     ctx2: &Ctx,
     bank1: &mut Bank,
-    path: Path,
-    coin: Coin,
-    amount: u32,
+    coin: &PrefixedCoin,
     sender: AccountID,
     receiver: AccountID,
     source_port: Port,
@@ -569,9 +539,7 @@ fn ack_fail(
     let packet = send_fungible_tokens(
         ctx1,
         bank1,
-        path,
         coin,
-        amount,
         sender,
         receiver,
         source_port,
@@ -596,26 +564,25 @@ fn ack_fail(
 
 #[requires(!(bank1.id() === bank2.id()))]
 // Assume the sender has sufficient funds to send to receiver
-#[requires(transfer_money!(bank1.id(), sender, path, coin, amount))]
+#[requires(transfer_money!(bank1.id(), sender, coin))]
 
 // Assume the receiver is not the escrow address
 #[requires(receiver != ctx2.escrow_address(dest_channel))]
 
 // Assume that the sender is the sink chain
-#[requires(path.starts_with(source_port, source_channel))]
+#[requires(coin.denom.trace_path.starts_with(source_port, source_channel))]
 
 // Assume the path is well-formed.
 // See the definition of `is_well_formed` for details
 #[requires(topology.connects(ctx1, source_port, source_channel, ctx2, dest_port, dest_channel))]
-#[requires(is_well_formed(path, ctx1, topology))]
+#[requires(is_well_formed(coin.denom.trace_path, ctx1, topology))]
 
 // Assume the escrow has the corresponding locked tokens
 #[requires(transfer_money!(
     bank2.id(),
     ctx2.escrow_address(dest_channel),
-    path.drop_prefix(source_port, source_channel),
-    coin, 
-    amount)
+    coin.drop_prefix(source_port, source_channel)
+    )
 )]
 
 // Sanity check: The sender cannot be an escrow account
@@ -628,27 +595,24 @@ fn ack_fail(
 #[ensures(transfer_money!(
     bank2.id(),
     ctx2.escrow_address(dest_channel),
-    path.drop_prefix(source_port, source_channel),
-    coin, 
-    amount))]
-#[ensures(transfer_money!(bank1.id(), sender, path, coin, amount))]
+    coin.drop_prefix(source_port, source_channel)
+    ))]
+#[ensures(transfer_money!(bank1.id(), sender, coin))]
 // Ensure that the resulting balance of both bank accounts are unchanged after the round-trip
 #[ensures(
-    forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
-        bank1.balance_of(acct_id2, path2, coin2) ==
-           old(bank1).balance_of(acct_id2, path2, coin2)))]
+    forall(|acct_id2: AccountID, denom: PrefixedDenom|
+        bank1.balance_of(acct_id2, denom) ==
+           old(bank1).balance_of(acct_id2, denom)))]
 #[ensures(
-    forall(|acct_id2: AccountID, coin2: Coin, path2: Path|
-        bank2.balance_of(acct_id2, path2, coin2) ==
-           old(bank2).balance_of(acct_id2, path2, coin2)))]
+    forall(|acct_id2: AccountID, denom: PrefixedDenom|
+        bank2.balance_of(acct_id2, denom) ==
+           old(bank2).balance_of(acct_id2, denom)))]
 fn round_trip_sink(
     ctx1: &Ctx,
     ctx2: &Ctx,
     bank1: &mut Bank,
     bank2: &mut Bank,
-    path: Path,
-    coin: Coin,
-    amount: u32,
+    coin: &PrefixedCoin,
     sender: AccountID,
     receiver: AccountID,
     source_port: Port,
@@ -662,9 +626,7 @@ fn round_trip_sink(
     let packet = send_fungible_tokens(
         ctx1,
         bank1,
-        path,
         coin,
-        amount,
         sender,
         receiver,
         source_port,
@@ -681,9 +643,7 @@ fn round_trip_sink(
     let packet = send_fungible_tokens(
         ctx2,
         bank2,
-        path.drop_prefix(packet.source_port, packet.source_channel),
-        coin,
-        amount,
+        &coin.drop_prefix(packet.source_port, packet.source_channel),
         receiver,
         sender,
         dest_port,

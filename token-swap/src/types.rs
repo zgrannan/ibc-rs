@@ -1,6 +1,8 @@
 #![allow(dead_code, unused)]
 use prusti_contracts::*;
 
+pub type Amount = u32;
+
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct AccountID(u32);
@@ -10,6 +12,47 @@ pub struct AccountID(u32);
 pub fn is_escrow_account(acct_id: AccountID) -> bool {
     unimplemented!()
 }
+
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct PrefixedCoin {
+    pub denom: PrefixedDenom,
+    pub amount: Amount
+}
+
+impl PrefixedCoin {
+    #[pure]
+    #[requires(self.denom.trace_path.starts_with(port, channel_end))]
+    pub fn drop_prefix(self, port: Port, channel_end: ChannelEnd) -> PrefixedCoin {
+        PrefixedCoin { 
+            denom: PrefixedDenom { 
+                trace_path: self.denom.trace_path.drop_prefix(port, channel_end),
+                base_denom: self.denom.base_denom
+            },
+            amount: self.amount
+        }
+
+    }
+    #[pure]
+    pub fn prepend_prefix(self, port: Port, channel_end: ChannelEnd) -> PrefixedCoin {
+        PrefixedCoin { 
+            denom: PrefixedDenom { 
+                trace_path: self.denom.trace_path.prepend_prefix(port, channel_end),
+                base_denom: self.denom.base_denom
+            },
+            amount: self.amount
+        }
+
+    }
+}
+
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct PrefixedDenom {
+    pub trace_path: Path,
+    pub base_denom: BaseDenom
+}
+
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct BaseDenom(u32);
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct Coin(u32);
@@ -55,8 +98,7 @@ impl Ctx {
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct FungibleTokenPacketData {
-    pub path: Path,
-    pub coin: Coin,
+    pub denom: PrefixedDenom,
     pub sender: AccountID,
     pub receiver: AccountID,
     pub amount: u32
