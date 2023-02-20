@@ -15,8 +15,8 @@ use crate::types::*;
 ]
 #[invariant_twostate(
     forall(|coin: BaseDenom|
-        holds(UnescrowedBalance(self.id(), coin)) - 
-        old(holds(UnescrowedBalance(self.id(), coin))) ==
+        holds(UnescrowedCoins(self.id(), coin)) - 
+        old(holds(UnescrowedCoins(self.id(), coin))) ==
         PermAmount::from(self.unescrowed_coin_balance(coin)) - 
             PermAmount::from(old(self.unescrowed_coin_balance(coin)))
     ))
@@ -35,20 +35,22 @@ struct BankID(u32);
 struct Money(BankID, AccountID, PrefixedDenom);
 
 #[resource]
-struct UnescrowedBalance(BankID, BaseDenom);
+struct UnescrowedCoins(BankID, BaseDenom);
 
 macro_rules! implies {
-     ($lhs:expr => $rhs:expr) => {
+     ($lhs:expr, $rhs:expr) => {
         if $lhs { $rhs } else { true }
     }
 }
 
 macro_rules! transfer_money {
     ($bank_id:expr, $to:expr, $coin:expr) => {
-    transfers(Money($bank_id, $to, $coin.denom), $coin.amount) && implies!( 
-        !is_escrow_account($to) => 
-            transfers(UnescrowedBalance($bank_id, $coin.denom.base_denom), $coin.amount)
-    )}
+    transfers(Money($bank_id, $to, $coin.denom), $coin.amount) && 
+        implies!( 
+            !is_escrow_account($to),
+            transfers(UnescrowedCoins($bank_id, $coin.denom.base_denom), $coin.amount)
+        )
+    }
 }
 
 
@@ -105,13 +107,8 @@ impl Bank {
 #[requires(!is_escrow_account(sender))]
 #[requires(is_well_formed(coin.denom.trace_path, ctx, topology))]
 #[requires(transfer_money!(bank.id(), sender, coin))]
-#[ensures(
-    !coin.denom.trace_path.starts_with(source_port, source_channel)
-    ==> transfer_money!(
-         bank.id(), 
-         ctx.escrow_address(source_channel),
-         coin
-))]
+#[ensures(!coin.denom.trace_path.starts_with(source_port, source_channel)
+    ==> transfer_money!(bank.id(), ctx.escrow_address(source_channel), coin))]
 #[ensures(
     result == mk_packet(
         ctx,
@@ -152,7 +149,7 @@ fn send_fungible_tokens(
 
 macro_rules! refund_tokens_pre {
     ($ctx:expr, $bank:expr, $packet:expr) => { implies!(
-        !$packet.data.denom.trace_path.starts_with($packet.source_port, $packet.source_channel) => 
+        !$packet.data.denom.trace_path.starts_with($packet.source_port, $packet.source_channel),
             $ctx.escrow_address($packet.source_channel) != $packet.data.sender &&
             transfer_money!(
                 $bank.id(),
@@ -218,14 +215,14 @@ struct FungibleTokenPacketAcknowledgement {
         topology
     )
 )]
-#[requires(!packet_is_source(packet) && !packet.data.denom.trace_path.is_empty() ==> 
+#[requires(!packet.is_source() && !packet.data.denom.trace_path.is_empty() ==> 
     !ctx.has_channel(
       packet.dest_port,
       packet.dest_channel,
       packet.data.denom.trace_path.head_port(),
       packet.data.denom.trace_path.head_channel(),
 ))]
-#[requires(packet_is_source(packet) ==> transfer_money!(
+#[requires(packet.is_source() ==> transfer_money!(
     bank.id(),
     ctx.escrow_address(packet.dest_channel), 
     PrefixedCoin { 
@@ -234,7 +231,7 @@ struct FungibleTokenPacketAcknowledgement {
     }.drop_prefix(packet.source_port, packet.source_channel)
 ))]
 #[ensures(
-    !packet_is_source(packet) ==>
+    !packet.is_source() ==>
         is_well_formed(
             packet.data.denom.trace_path.prepend_prefix(
                 packet.dest_port, 
@@ -248,7 +245,7 @@ struct FungibleTokenPacketAcknowledgement {
     transfer_money!(
         bank.id(),
         packet.data.receiver,
-        if packet_is_source(packet) {
+        if packet.is_source() {
             PrefixedCoin {
                 denom: packet.data.denom,
                 amount: packet.data.amount
@@ -268,27 +265,17 @@ fn on_recv_packet(
     topology: &Topology
 ) -> FungibleTokenPacketAcknowledgement {
     let FungibleTokenPacketData{ denom, receiver, amount, ..} = packet.data;
-    if packet_is_source(packet) {
-        let coin = PrefixedCoin {
-            denom: PrefixedDenom {
-                trace_path: denom.trace_path.drop_prefix(packet.source_port, packet.source_channel),
-                base_denom: denom.base_denom
-            },
-            amount
-        };
+    if packet.is_source() {
+        let coin = PrefixedCoin { denom, amount }
+            .drop_prefix(packet.source_port, packet.source_channel);
         bank.transfer_tokens(
             ctx.escrow_address(packet.dest_channel),
             receiver,
             &coin
         );
     } else {
-        let coin = PrefixedCoin {
-            denom: PrefixedDenom {
-                trace_path: denom.trace_path.prepend_prefix(packet.dest_port, packet.dest_channel),
-                base_denom: denom.base_denom
-            },
-            amount
-        };
+        let coin = PrefixedCoin { denom, amount }
+            .prepend_prefix(packet.dest_port, packet.dest_channel);
         bank.mint_tokens(receiver, &coin);
     };
 

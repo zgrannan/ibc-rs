@@ -112,9 +112,12 @@ pub struct Packet {
     pub data: FungibleTokenPacketData
 }
 
-#[pure]
-pub fn packet_is_source(packet: &Packet) -> bool {
-    packet.data.denom.trace_path.starts_with(packet.source_port, packet.source_channel)
+impl Packet {
+    #[pure]
+    pub fn is_source(&self) -> bool {
+        self.data.denom.trace_path.starts_with(self.source_port, self.source_channel)
+    }
+
 }
 
 #[pure]

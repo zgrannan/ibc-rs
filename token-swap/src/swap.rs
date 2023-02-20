@@ -264,20 +264,17 @@ struct FungibleTokenPacketAcknowledgement {
         topology
     )
 )]
-#[requires(packet_is_source(packet) ==>
+#[requires(packet.is_source() ==>
     bank.transfer_tokens_pre(
         ctx.escrow_address(packet.dest_channel),
         packet.data.receiver,
         &PrefixedCoin {
-            denom: PrefixedDenom {
-                trace_path: packet.data.denom.trace_path.drop_prefix(packet.source_port, packet.source_channel),
-                base_denom: packet.data.denom.base_denom
-            },
+            denom: packet.data.denom,
             amount: packet.data.amount
-        }
+        }.drop_prefix(packet.source_port, packet.source_channel)
     )
 )]
-#[requires(!packet_is_source(packet) && !packet.data.denom.trace_path.is_empty() ==>
+#[requires(!packet.is_source() && !packet.data.denom.trace_path.is_empty() ==>
     !ctx.has_channel(
       packet.dest_port,
       packet.dest_channel,
@@ -286,7 +283,7 @@ struct FungibleTokenPacketAcknowledgement {
 ))]
 #[ensures(result.success)]
 #[ensures(
-    if packet_is_source(packet) {
+    if packet.is_source() {
         bank.transfer_tokens_post(
             old(bank),
             ctx.escrow_address(packet.dest_channel),
@@ -309,7 +306,7 @@ struct FungibleTokenPacketAcknowledgement {
 
 )]
 #[ensures(
-    !packet_is_source(packet) ==>
+    !packet.is_source() ==>
         is_well_formed(
             packet.data.denom.trace_path.prepend_prefix(
                 packet.dest_port, 
@@ -325,30 +322,19 @@ fn on_recv_packet(
     topology: &Topology
 ) -> FungibleTokenPacketAcknowledgement {
     let FungibleTokenPacketData{ denom, receiver, amount, ..} = packet.data;
-    if packet_is_source(packet) {
-        let coin = PrefixedCoin {
-            denom: PrefixedDenom {
-                trace_path: denom.trace_path.drop_prefix(packet.source_port, packet.source_channel),
-                base_denom: denom.base_denom
-            },
-            amount
-        };
+    if packet.is_source() {
+        let coin = PrefixedCoin { denom, amount }
+            .drop_prefix(packet.source_port, packet.source_channel);
         bank.transfer_tokens(
             ctx.escrow_address(packet.dest_channel),
             receiver,
             &coin
         );
     } else {
-        let coin = PrefixedCoin {
-            denom: PrefixedDenom {
-                trace_path: denom.trace_path.prepend_prefix(packet.dest_port, packet.dest_channel),
-                base_denom: denom.base_denom
-            },
-            amount
-        };
+        let coin = PrefixedCoin { denom, amount }
+            .prepend_prefix(packet.dest_port, packet.dest_channel);
         bank.mint_tokens(receiver, &coin);
     };
-
     FungibleTokenPacketAcknowledgement { success: true }
 }
 
