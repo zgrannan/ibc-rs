@@ -5,11 +5,11 @@ pub type Amount = u32;
 
 
 #[derive(Copy, Clone, Eq, PartialEq)]
-pub struct AccountID(u32);
+pub struct AccountId(u32);
 
 #[pure]
 #[trusted]
-pub fn is_escrow_account(_: AccountID) -> bool {
+pub fn is_escrow_account(_: AccountId) -> bool {
     unimplemented!()
 }
 
@@ -90,7 +90,7 @@ impl Ctx {
     #[pure]
     #[trusted]
     #[ensures(is_escrow_account(result))]
-    pub fn escrow_address(&self, channel_end: ChannelEnd) -> AccountID {
+    pub fn escrow_address(&self, channel_end: ChannelEnd) -> AccountId {
         unimplemented!()
     }
 }
@@ -98,8 +98,8 @@ impl Ctx {
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct FungibleTokenPacketData {
     pub denom: PrefixedDenom,
-    pub sender: AccountID,
-    pub receiver: AccountID,
+    pub sender: AccountId,
+    pub receiver: AccountId,
     pub amount: u32
 }
 
@@ -116,6 +116,19 @@ impl Packet {
     #[pure]
     pub fn is_source(&self) -> bool {
         self.data.denom.trace_path.starts_with(self.source_port, self.source_channel)
+    }
+
+    #[pure]
+    pub fn get_recv_coin(&self) -> PrefixedCoin {
+        let coin = PrefixedCoin {
+            denom: self.data.denom,
+            amount: self.data.amount
+        };
+        if self.is_source() {
+            coin.drop_prefix(self.source_port, self.source_channel)
+        } else {
+            coin.prepend_prefix(self.dest_port, self.dest_channel)
+        }
     }
 
 }
@@ -276,4 +289,8 @@ impl PartialEq for Path {
         unimplemented!()
     }
 
+}
+
+pub struct FungibleTokenPacketAcknowledgement {
+    pub success: bool
 }
