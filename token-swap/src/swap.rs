@@ -26,17 +26,16 @@ impl Bank {
             old_bank: &Self,
             from: AccountID,
             to: AccountID,
-            coin: &PrefixedCoin,
+            coin: &PrefixedCoin
         ) -> bool {
-        ((is_escrow_account(to) && !is_escrow_account(from)) ==>
-              self.unescrowed_coin_balance(coin.denom.base_denom) ==
-                old_bank.unescrowed_coin_balance(coin.denom.base_denom) - coin.amount) &&
-        ((!is_escrow_account(to) && is_escrow_account(from)) ==>
-              self.unescrowed_coin_balance(coin.denom.base_denom) ==
-                old_bank.unescrowed_coin_balance(coin.denom.base_denom) + coin.amount) &&
-        ((is_escrow_account(to) == is_escrow_account(from)) ==>
-              self.unescrowed_coin_balance(coin.denom.base_denom) ==
-                old_bank.unescrowed_coin_balance(coin.denom.base_denom)) &&
+            self.unescrowed_coin_balance(coin.denom.base_denom) == 
+                if (is_escrow_account(to) && !is_escrow_account(from)) {
+                    old_bank.unescrowed_coin_balance(coin.denom.base_denom) - coin.amount
+                } else if (!is_escrow_account(to) && is_escrow_account(from)) {
+                    old_bank.unescrowed_coin_balance(coin.denom.base_denom) + coin.amount
+                } else {
+                    old_bank.unescrowed_coin_balance(coin.denom.base_denom)
+                } &&
         forall(|acct_id2: AccountID, denom2: PrefixedDenom|
             self.balance_of(acct_id2, denom2) ==
                 if(acct_id2 == from && coin.denom == denom2) {
@@ -48,8 +47,7 @@ impl Bank {
                 }
         ) && forall(|c: BaseDenom| c != coin.denom.base_denom ==> 
             self.unescrowed_coin_balance(c) == old_bank.unescrowed_coin_balance(c)
-        )
-        }
+        )}
     }
 
     #[pure]
