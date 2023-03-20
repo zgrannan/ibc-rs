@@ -4,9 +4,9 @@ use std::path::Prefix;
 use prusti_contracts::*;
 
 use crate::types::*;
-pub struct Bank(u32);
+pub struct BankKeeper(u32);
 
-impl Bank {
+impl BankKeeper {
 
     #[pure]
     #[trusted]
@@ -173,7 +173,7 @@ impl Bank {
 )]
 pub fn send_fungible_tokens(
     ctx: &Ctx,
-    bank: &mut Bank,
+    bank: &mut BankKeeper,
     coin: &PrefixedCoin,
     sender: AccountId,
     receiver: AccountId,
@@ -204,13 +204,13 @@ pub fn send_fungible_tokens(
 #[requires(refund_tokens_pre(ctx, bank, packet))]
 #[ensures(refund_tokens_post(ctx, bank, old(bank), packet))]
 // PROPSPEC_STOP
-pub fn on_timeout_packet(ctx: &Ctx, bank: &mut Bank, packet: &Packet) {
+pub fn on_timeout_packet(ctx: &Ctx, bank: &mut BankKeeper, packet: &Packet) {
     refund_tokens(ctx, bank, packet);
 }
 
 // PROPSPEC_START
 predicate! {
-    fn refund_tokens_post(ctx: &Ctx, bank: &Bank, old_bank: &Bank, packet: &Packet) -> bool {
+    fn refund_tokens_post(ctx: &Ctx, bank: &BankKeeper, old_bank: &BankKeeper, packet: &Packet) -> bool {
         let coin = &PrefixedCoin { denom: packet.data.denom, amount: packet.data.amount };
         if !packet.data.denom.trace_path.starts_with(packet.source_port, packet.source_channel) {  
             bank.transfer_tokens_post(
@@ -230,7 +230,7 @@ predicate! {
 }
 
 predicate! {
-    fn refund_tokens_pre(ctx: &Ctx, bank: &Bank, packet: &Packet) -> bool {
+    fn refund_tokens_pre(ctx: &Ctx, bank: &BankKeeper, packet: &Packet) -> bool {
         !packet.data.denom.trace_path.starts_with(packet.source_port, packet.source_channel) ==>
         bank.transfer_tokens_pre(
             ctx.escrow_address(packet.source_channel),
@@ -243,7 +243,7 @@ predicate! {
 #[requires(refund_tokens_pre(ctx, bank, packet))]
 #[ensures(refund_tokens_post(ctx, bank, old(bank), packet))]
 // PROPSPEC_STOP
-fn refund_tokens(ctx: &Ctx, bank: &mut Bank, packet: &Packet) {
+fn refund_tokens(ctx: &Ctx, bank: &mut BankKeeper, packet: &Packet) {
     let FungibleTokenPacketData{ denom, sender, amount, ..} = packet.data;
     if !denom.trace_path.starts_with(packet.source_port, packet.source_channel) {
         bank.transfer_tokens(
@@ -311,7 +311,7 @@ fn refund_tokens(ctx: &Ctx, bank: &mut Bank, packet: &Packet) {
 )]
 pub fn on_recv_packet(
     ctx: &Ctx,
-    bank: &mut Bank,
+    bank: &mut BankKeeper,
     packet: &Packet,
     topology: &Topology
 ) -> FungibleTokenPacketAcknowledgement {
@@ -340,7 +340,7 @@ pub fn on_recv_packet(
 // PROPSPEC_STOP
 pub fn on_acknowledge_packet(
     ctx: &Ctx,
-    bank: &mut Bank,
+    bank: &mut BankKeeper,
     ack: FungibleTokenPacketAcknowledgement,
     packet: &Packet) {
     if(!ack.success) {

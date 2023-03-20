@@ -32,8 +32,8 @@ use crate::swap::*;
 fn send_preserves(
     ctx1: &Ctx,
     ctx2: &Ctx,
-    bank1: &mut Bank,
-    bank2: &mut Bank,
+    bank1: &mut BankKeeper,
+    bank2: &mut BankKeeper,
     coin: &PrefixedCoin,
     sender: AccountId,
     receiver: AccountId,
@@ -98,8 +98,8 @@ fn send_preserves(
 fn round_trip(
     ctx1: &Ctx,
     ctx2: &Ctx,
-    bank1: &mut Bank,
-    bank2: &mut Bank,
+    bank1: &mut BankKeeper,
+    bank2: &mut BankKeeper,
     coin: &PrefixedCoin,
     sender: AccountId,
     receiver: AccountId,
@@ -158,7 +158,7 @@ fn round_trip(
 fn timeout(
     ctx1: &Ctx,
     ctx2: &Ctx,
-    bank1: &mut Bank,
+    bank1: &mut BankKeeper,
     coin: &PrefixedCoin,
     sender: AccountId,
     receiver: AccountId,
@@ -193,7 +193,7 @@ fn timeout(
 fn ack_fail(
     ctx1: &Ctx,
     ctx2: &Ctx,
-    bank1: &mut Bank,
+    bank1: &mut BankKeeper,
     coin: &PrefixedCoin,
     sender: AccountId,
     receiver: AccountId,
@@ -271,8 +271,8 @@ fn ack_fail(
 fn round_trip_sink(
     ctx1: &Ctx,
     ctx2: &Ctx,
-    bank1: &mut Bank,
-    bank2: &mut Bank,
+    bank1: &mut BankKeeper,
+    bank2: &mut BankKeeper,
     coin: &PrefixedCoin,
     sender: AccountId,
     receiver: AccountId,
