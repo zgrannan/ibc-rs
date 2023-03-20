@@ -50,7 +50,7 @@ use crate::swap_resource::*;
      ctx2: &Ctx,
      keeper1: &mut NFTKeeper,
      keeper2: &mut NFTKeeper,
-     class_id: &PrefixedClassId,
+     class_id: PrefixedClassId,
      token_id: TokenId,
      sender: AccountId,
      receiver: AccountId,
@@ -84,7 +84,7 @@ use crate::swap_resource::*;
      let packet = send_nft(
          ctx2,
          keeper2,
-         &class_id.prepend_prefix(dest_port, dest_channel),
+         class_id.prepend_prefix(dest_port, dest_channel),
          token_id,
          receiver,
          sender,
