@@ -2,6 +2,7 @@
 use prusti_contracts::*;
 use crate::types::*;
 use crate::swap_resource::*;
+use crate::transfers_token;
 
  /*
  * This method performs a round trip of a token from chain A --> B --> A,
@@ -11,7 +12,7 @@ use crate::swap_resource::*;
 
  #[requires(!(keeper1.id() === keeper2.id()))]
 
- #[requires(transfers(HoldsToken(keeper1.id(), sender, class_id, token_id), 1))]
+ #[requires(transfers_token!(keeper1, sender, class_id, token_id))]
  #[requires(sender == keeper1.get_owner(class_id, token_id))]
  
  // Assume that the sender is the source chain
@@ -28,13 +29,17 @@ use crate::swap_resource::*;
  #[requires(topology.connects(ctx1, source_port, source_channel, ctx2, dest_port, dest_channel))]
  #[requires(is_well_formed(class_id.path, ctx1, topology))]
  
- #[ensures(transfers(HoldsToken(keeper1.id(), sender, class_id, token_id), 1))]
+ #[ensures(transfers_token!(keeper1, sender, class_id, token_id))]
  
  // Ensure that the resulting balance of both keeper accounts are unchanged after the round-trip
  #[ensures(
      forall(|class_id: PrefixedClassId, token_id: TokenId|
          keeper1.get_owner(class_id, token_id) ==
             old(keeper1).get_owner(class_id, token_id)))]
+ #[ensures(
+     forall(|class_id: PrefixedClassId, token_id: TokenId|
+         keeper2.get_owner(class_id, token_id) ==
+            old(keeper2).get_owner(class_id, token_id)))]
 //  #[ensures(
 //      forall(|acct_id2: AccountId, denom: PrefixedDenom|
 //          keeper2.balance_of(acct_id2, denom) ==
@@ -73,11 +78,27 @@ use crate::swap_resource::*;
          source_channel,
          topology
      );
+    prusti_assert!( keeper1.is_owner(
+        ctx1.escrow_address(source_channel), 
+        class_id,
+        token_id)
+    );
 
      prusti_assert!(!packet.is_source());
  
      let ack = on_recv_packet(ctx2, keeper2, &packet, topology);
      on_acknowledge_packet(ctx1, keeper1, ack, &packet);
+
+    prusti_assert!(keeper1.is_owner(
+        ctx1.escrow_address(source_channel), 
+        class_id,
+        token_id)
+    );
+    prusti_assert!(keeper2.is_owner(
+        receiver,
+        packet.get_recv_class_id(),
+        token_id)
+    );
  
      // Send tokens B --> A
  
@@ -93,7 +114,19 @@ use crate::swap_resource::*;
          topology
      );
  
+    prusti_assert!(keeper1.is_owner(
+        ctx1.escrow_address(source_channel), 
+        class_id,
+        token_id)
+    );
      let ack = on_recv_packet(ctx1, keeper1, &packet, topology);
      on_acknowledge_packet(ctx2, keeper2, ack, &packet);
+
+    prusti_assert!(keeper1.is_owner(
+        sender,
+        class_id,
+        token_id)
+    );
+
 }
  
