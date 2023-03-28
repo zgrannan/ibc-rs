@@ -5,9 +5,6 @@ use crate::types::*;
 
 
 #[resource]
-pub struct HoldsToken(pub KeeperId, pub AccountId, pub PrefixedClassId, pub TokenId);
-
-#[resource]
 pub struct Token(pub KeeperId, pub PrefixedClassId, pub TokenId);
 
 #[derive(Copy, Clone)]
@@ -15,34 +12,22 @@ pub struct KeeperId(u32);
 
 #[macro_export]
 macro_rules! transfers_token {
-    ($nft:expr, $acct_id:expr, $class_id:expr, $token_id:expr) => {
-        transfers(HoldsToken($nft.id(),$acct_id, $class_id, $token_id), 1) &&
-            transfers(Token($nft.id(), $class_id, $token_id), 1)
+    ($nft:expr, $class_id:expr, $token_id:expr) => {
+        transfers(Token($nft.id(), $class_id, $token_id), 1)
     }
 }
 
 #[invariant_twostate(
-    forall(
-        |acct_id: AccountId, class_id: PrefixedClassId, token_id: TokenId|
-            holds(HoldsToken(self.id(), acct_id, class_id, token_id)) == PermAmount::from(1) ==>
-               self.is_owner(acct_id, class_id, token_id)
-))]
-#[invariant_twostate(
-    forall(
-        |class_id: PrefixedClassId, token_id: TokenId|
-            old(holds(Token(self.id(), class_id, token_id))) == PermAmount::from(0) ==>
-               self.get_owner(class_id, token_id) ==
-                old(self.get_owner(class_id, token_id))
+    forall( |class_id: PrefixedClassId, token_id: TokenId|
+    ( old(holds(Token(self.id(), class_id, token_id))) == PermAmount::from(0) 
+    &&    holds(Token(self.id(), class_id, token_id)) == PermAmount::from(0)) ==>
+        self.get_owner(class_id, token_id) == old(self.get_owner(class_id, token_id)),
+        triggers = [(self.get_owner(class_id, token_id))]
 ))]
 #[invariant_twostate(self.id() === old(self.id()))]
 pub struct NFTKeeper(u32);
 
 impl NFTKeeper {
-
-    #[pure]
-    pub fn is_owner(&self, acct_id: AccountId, class_id: PrefixedClassId, token_id: TokenId) -> bool {
-        self.get_owner(class_id, token_id) == acct_id
-    }
 
     #[pure]
     #[trusted]
@@ -52,7 +37,7 @@ impl NFTKeeper {
 
     #[pure]
     #[trusted]
-    pub fn get_owner(&self, class_id: PrefixedClassId, token_id: TokenId) -> AccountId {
+    pub fn get_owner(&self, class_id: PrefixedClassId, token_id: TokenId) -> Option<AccountId> {
         unimplemented!()
     }
 
@@ -66,7 +51,9 @@ impl NFTKeeper {
     }
 
     #[trusted]
-    #[ensures(transfers_token!(self, receiver, class_id, token_id))]
+    #[requires(self.get_owner(class_id, token_id) == None)]
+    #[ensures(transfers_token!(self, class_id, token_id))]
+    #[ensures(self.get_owner(class_id, token_id) == Some(receiver))]
     pub fn mint(&mut self,
                 class_id: PrefixedClassId,
                 token_id: TokenId,
@@ -76,8 +63,9 @@ impl NFTKeeper {
         unimplemented!()
     }
 
-    #[requires(transfers_token!(self, self.get_owner(class_id, token_id), class_id, token_id))]
-    #[ensures(transfers_token!(self, receiver, class_id, token_id))]
+    #[requires(transfers_token!(self, class_id, token_id))]
+    #[ensures(transfers_token!(self, class_id, token_id))]
+    #[ensures(self.get_owner(class_id, token_id) == Some(receiver))]
     #[trusted]
     pub fn transfer(&mut self,
                     class_id: PrefixedClassId,
@@ -87,7 +75,8 @@ impl NFTKeeper {
         unimplemented!()
     }
 
-    #[requires(transfers_token!(self, self.get_owner(class_id, token_id), class_id, token_id))]
+    #[requires(transfers_token!(self, class_id, token_id))]
+    #[ensures(self.get_owner(class_id, token_id) == None)]
     #[trusted]
     pub fn burn(&mut self, class_id: PrefixedClassId, token_id: TokenId) {
         unimplemented!()
@@ -121,9 +110,17 @@ fn make_packet_data(nft: &NFTKeeper, class_id: PrefixedClassId, token_id: TokenI
     }
 }
 
-#[requires(transfers_token!(nft, sender, class_id, token_id))]
-#[ensures( old(!class_id.path.starts_with(source_port, source_channel)) ==>
-    transfers_token!(nft, ctx.escrow_address(source_channel), class_id, token_id)
+#[requires(nft.get_owner(class_id, token_id) == Some(sender))]
+#[requires(transfers_token!(nft, class_id, token_id))]
+#[ensures(old(!class_id.path.starts_with(source_port, source_channel)) ==>
+    transfers_token!(nft, class_id, token_id)
+)]
+#[ensures(
+    if old(class_id.path.starts_with(source_port, source_channel)) {
+        nft.get_owner(class_id, token_id) == None
+    } else {
+        nft.get_owner(class_id, token_id) == Some(ctx.escrow_address(source_channel))
+    }
 )]
 #[ensures(
     result == mk_packet(
@@ -144,7 +141,6 @@ pub fn send_nft(
     source_channel: ChannelEnd,
     topology: &Topology
 ) -> Packet {
-    assert!(nft.is_owner(sender, class_id, token_id));
     if !class_id.path.starts_with(source_port, source_channel) {
         nft.transfer(
             class_id,
@@ -168,25 +164,19 @@ macro_rules! implies {
 
 macro_rules! refund_token_pre {
     ($ctx:expr, $nft:expr, $packet:expr) => {
-        implies!(
-            !$packet.data.class_id.path.starts_with($packet.source_port, $packet.source_channel),
-            ($nft.get_owner($packet.data.class_id, $packet.data.token_id) ==
-                $ctx.escrow_address($packet.source_channel))
-            &&
-            transfers_token!(
-                $nft,
-                $ctx.escrow_address($packet.source_channel),
-                $packet.data.class_id,
-                $packet.data.token_id
-            )
-        )
+        if $packet.data.class_id.path.starts_with($packet.source_port, $packet.source_channel) {
+            $nft.get_owner($packet.data.class_id, $packet.data.token_id) == None
+        } else {
+            $nft.get_owner($packet.data.class_id, $packet.data.token_id) ==
+                Some($ctx.escrow_address($packet.source_channel))
+        } && transfers_token!($nft, $packet.data.class_id, $packet.data.token_id)
     }
 }
 
 
 macro_rules! refund_tokens_post {
     ($nft:expr, $packet:expr) => {
-        transfers_token!($nft, $packet.data.sender, $packet.data.class_id, $packet.data.token_id)
+        transfers_token!($nft, $packet.data.class_id, $packet.data.token_id)
     }
 }
 
@@ -219,20 +209,27 @@ pub fn on_timeout_packet(ctx: &Ctx, nft: &mut NFTKeeper, packet: &Packet) {
     refund_token(ctx, nft, packet);
 }
 
-#[requires(packet.is_source() ==> transfers_token!(
-    nft,
-    nft.get_owner(packet.get_recv_class_id(), packet.data.token_id),
-    packet.get_recv_class_id(),
-    packet.data.token_id
-))]
+#[requires(
+    if packet.is_source() {
+        nft.get_owner(packet.get_recv_class_id(), packet.data.token_id) == Some(
+            ctx.escrow_address(packet.dest_channel)
+        ) && transfers_token!( nft, packet.get_recv_class_id(), packet.data.token_id)
+    } else {
+        nft.get_owner(packet.get_recv_class_id(), packet.data.token_id) == None
+    }
+)]
 #[ensures(
     transfers_token!(
         nft,
-        packet.data.receiver,
         packet.get_recv_class_id(),
         packet.data.token_id
     )
 )]
+#[ensures(
+    nft.get_owner(
+        packet.get_recv_class_id(),
+        packet.data.token_id
+    ) == Some(packet.data.receiver))]
 #[ensures(result.success)]
 pub fn on_recv_packet(
     ctx: &Ctx, 
