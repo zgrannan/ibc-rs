@@ -15,13 +15,21 @@ use crate::transfers_token;
  #[requires(transfers_token!(keeper1, class_id, token_id))]
  #[requires(keeper1.get_owner(class_id, token_id) == Some(sender))]
  #[requires(
-    keeper2.get_owner(
-        class_id.prepend_prefix(dest_port, dest_channel), 
-        token_id
-    ) == None) ]
+    if class_id.path.starts_with(source_port, source_channel) {
+        transfers_token!(keeper2, class_id.drop_prefix(source_port, source_channel), token_id) &&
+        keeper2.get_owner(
+            class_id.drop_prefix(source_port, source_channel), 
+            token_id
+        ) == Some(ctx2.escrow_address(dest_channel))
+    } else {
+        keeper2.get_owner(
+            class_id.prepend_prefix(dest_port, dest_channel), 
+            token_id
+        ) == None
+})]
  
  // Assume that the sender is the source chain
- #[requires(!class_id.path.starts_with(source_port, source_channel))]
+ // #[requires(!class_id.path.starts_with(source_port, source_channel))]
  
  // Sanity check: The sender cannot be an escrow account
  #[requires(!is_escrow_account(sender))]
@@ -45,12 +53,6 @@ use crate::transfers_token;
      forall(|class_id: PrefixedClassId, token_id: TokenId|
          keeper2.get_owner(class_id, token_id) ==
             old(keeper2).get_owner(class_id, token_id)))]
-//  #[ensures(
-//      forall(|c: BaseDenom|
-//          (Int::new(keeper1.unescrowed_coin_balance(c) as i64) + Int::new(keeper2.unescrowed_coin_balance(c) as i64) ==
-//          old(Int::new(keeper1.unescrowed_coin_balance(c) as i64) + Int::new(keeper2.unescrowed_coin_balance(c) as i64)))
-//      )
-//  )]
  fn round_trip(
      ctx1: &Ctx,
      ctx2: &Ctx,
@@ -80,12 +82,6 @@ use crate::transfers_token;
          topology
      );
 
-    prusti_assert!(
-        keeper1.get_owner(class_id, token_id) == Some(ctx1.escrow_address(source_channel))
-    );
-
-     prusti_assert!(!packet.is_source());
- 
      let ack = on_recv_packet(ctx2, keeper2, &packet, topology);
      on_acknowledge_packet(ctx1, keeper1, ack, &packet);
 
@@ -94,7 +90,7 @@ use crate::transfers_token;
      let packet = send_nft(
          ctx2,
          keeper2,
-         class_id.prepend_prefix(dest_port, dest_channel),
+         packet.get_recv_class_id(),
          token_id,
          receiver,
          sender,

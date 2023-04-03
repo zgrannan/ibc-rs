@@ -278,6 +278,7 @@ fn refund_tokens(ctx: &Ctx, bank: &mut BankKeeper, packet: &Packet) {
       packet.data.denom.trace_path.head_port(),
       packet.data.denom.trace_path.head_channel(),
 ))]
+// PROPSPEC_START
 #[requires(packet.is_source() ==>
     bank.transfer_tokens_pre(
         ctx.escrow_address(packet.dest_channel),

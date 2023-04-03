@@ -10,11 +10,10 @@ use crate::swap_resource::*;
  * The specification ensures that the total amount of tokens does not change
  */
 
-#[requires(!(bank1.id() === bank2.id()))]
+#[requires(bank1.id() !== bank2.id())]
 #[requires(transfer_money!(bank1.id(), sender, coin))]
-
-// Assume that the sender is the source chain
-#[requires(!coin.denom.trace_path.starts_with(source_port, source_channel))]
+#[requires(coin.denom.trace_path.starts_with(source_port, source_channel) ==>
+    transfer_money!(bank2.id(), ctx2.escrow_address(dest_channel), coin.drop_prefix(source_port, source_channel)))]
 
 // Neither sender or receiver is escrow
 #[requires(!is_escrow_account(receiver))]
@@ -22,12 +21,17 @@ use crate::swap_resource::*;
 
 #[requires(topology.connects(ctx1, source_port, source_channel, ctx2, dest_port, dest_channel))]
 #[requires(is_well_formed(coin.denom.trace_path, ctx1, topology))]
-#[ensures(transfer_money!(bank1.id(), ctx1.escrow_address(source_channel), coin))]
+#[ensures(!coin.denom.trace_path.starts_with(source_port, source_channel) ==>
+    transfer_money!(bank1.id(), ctx1.escrow_address(source_channel), coin))]
 #[ensures(
     transfer_money!(
         bank2.id(), 
         receiver, 
-        coin.prepend_prefix(dest_port, dest_channel) 
+        if coin.denom.trace_path.starts_with(source_port, source_channel) {
+            coin.drop_prefix(source_port, source_channel) 
+        } else {
+            coin.prepend_prefix(dest_port, dest_channel) 
+        }
     )
 )]
 #[ensures(

@@ -21,8 +21,8 @@ macro_rules! transfers_token {
     forall( |class_id: PrefixedClassId, token_id: TokenId|
     ( old(holds(Token(self.id(), class_id, token_id))) == PermAmount::from(0) 
     &&    holds(Token(self.id(), class_id, token_id)) == PermAmount::from(0)) ==>
-        self.get_owner(class_id, token_id) == old(self.get_owner(class_id, token_id)),
-        triggers = [(self.get_owner(class_id, token_id))]
+        self.get_owner(class_id, token_id) == old(self.get_owner(class_id, token_id))
+        // triggers = [(self.get_owner(class_id, token_id))]
 ))]
 #[invariant_twostate(self.id() === old(self.id()))]
 pub struct NFTKeeper(u32);
@@ -63,10 +63,10 @@ impl NFTKeeper {
         unimplemented!()
     }
 
+    #[trusted]
     #[requires(transfers_token!(self, class_id, token_id))]
     #[ensures(transfers_token!(self, class_id, token_id))]
     #[ensures(self.get_owner(class_id, token_id) == Some(receiver))]
-    #[trusted]
     pub fn transfer(&mut self,
                     class_id: PrefixedClassId,
                     token_id: TokenId,
@@ -213,7 +213,7 @@ pub fn on_timeout_packet(ctx: &Ctx, nft: &mut NFTKeeper, packet: &Packet) {
     if packet.is_source() {
         nft.get_owner(packet.get_recv_class_id(), packet.data.token_id) == Some(
             ctx.escrow_address(packet.dest_channel)
-        ) && transfers_token!( nft, packet.get_recv_class_id(), packet.data.token_id)
+        ) && transfers_token!(nft, packet.get_recv_class_id(), packet.data.token_id)
     } else {
         nft.get_owner(packet.get_recv_class_id(), packet.data.token_id) == None
     }

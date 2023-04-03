@@ -3,7 +3,7 @@ use prusti_contracts::*;
 
 use crate::types::*;
 
-// PROPSPEC_START
+// PROPSPEC_START INVARIANT
 #[invariant_twostate(self.id() === old(self.id()))]
 #[invariant_twostate(
     forall(|acct_id: AccountId, denom: PrefixedDenom|
@@ -29,16 +29,18 @@ use crate::types::*;
 // PROPSPEC_STOP
 pub struct BankKeeper(u32);
 
-// PROPSPEC_START
 #[derive(Copy, Clone)]
 pub struct BankID(u32);
 
+// PROPSPEC_START TYPE
 #[resource]
 pub struct Money(pub BankID, pub AccountId, pub PrefixedDenom);
 
 #[resource]
 pub struct UnescrowedCoins(pub BankID, pub BaseDenom);
+// PROPSPEC_STOP TYPE
 
+// PROPSPEC_START RESOURCE_OP
 #[macro_export]
 macro_rules! implies {
      ($lhs:expr, $rhs:expr) => {
@@ -80,8 +82,8 @@ impl BankKeeper {
     }
 
 
-    //PROPSPEC_START
     #[requires(from != to)]
+    //PROPSPEC_START RESOURCE_OP
     #[requires(transfer_money!(self.id(), from, coin))]
     #[ensures(transfer_money!(self.id(), to, coin))]
     //PROPSPEC_STOP
@@ -97,16 +99,15 @@ impl BankKeeper {
 
 
     #[trusted]
-    //PROPSPEC_START
+    //PROPSPEC_START RESOURCE_OP
     #[requires(transfer_money!(self.id(), from, coin))]
-    #[requires(self.balance_of(from, coin.denom) >= coin.amount)]
     //PROPSPEC_STOP
     pub fn burn_tokens(&mut self, from: AccountId, coin: &PrefixedCoin) {
         unimplemented!()
     }
 
     #[trusted]
-    //PROPSPEC_START
+    //PROPSPEC_START RESOURCE_OP
     #[ensures(transfer_money!(self.id(), to, coin))]
     //PROPSPEC_STOP
     pub fn mint_tokens(&mut self, to: AccountId, coin: &PrefixedCoin) {
@@ -117,7 +118,7 @@ impl BankKeeper {
 // Sanity check: The sender cannot be an escrow account
 #[requires(!is_escrow_account(sender))]
 #[requires(is_well_formed(coin.denom.trace_path, ctx, topology))]
-//PROPSPEC_START
+//PROPSPEC_START RESOURCE_OP
 #[requires(transfer_money!(bank.id(), sender, coin))]
 #[ensures(!coin.denom.trace_path.starts_with(source_port, source_channel)
     ==> transfer_money!(bank.id(), ctx.escrow_address(source_channel), coin))]
@@ -160,7 +161,7 @@ pub fn send_fungible_tokens(
 }
 
 
-//PROPSPEC_START
+//PROPSPEC_START RESOURCE_OP
 macro_rules! refund_tokens_pre {
     ($ctx:expr, $bank:expr, $packet:expr) => { implies!(
         !$packet.data.denom.trace_path.starts_with($packet.source_port, $packet.source_channel),
@@ -208,7 +209,7 @@ fn refund_tokens(ctx: &Ctx, bank: &mut BankKeeper, packet: &Packet) {
     }
 }
 
-//PROPSPEC_START
+//PROPSPEC_START RESOURCE_OP
 #[requires(refund_tokens_pre!(ctx, bank, packet))]
 #[ensures(refund_tokens_post!(bank, packet))]
 //PROPSPEC_STOP
@@ -235,7 +236,7 @@ pub fn on_timeout_packet(ctx: &Ctx, bank: &mut BankKeeper, packet: &Packet) {
       packet.data.denom.trace_path.head_port(),
       packet.data.denom.trace_path.head_channel(),
 ))]
-//PROPSPEC_START
+//PROPSPEC_START RESOURCE_OP
 #[requires(packet.is_source() ==> transfer_money!(
     bank.id(),
     ctx.escrow_address(packet.dest_channel), 
@@ -273,7 +274,7 @@ pub fn on_recv_packet(
     FungibleTokenPacketAcknowledgement { success: true }
 }
 
-// PROPSPEC_START
+// PROPSPEC_START RESOURCE_OP
 #[requires(!ack.success ==> refund_tokens_pre!(ctx, bank, packet))]
 #[ensures(!ack.success ==> refund_tokens_post!(bank, packet))]
 // PROPSPEC_STOP
