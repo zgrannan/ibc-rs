@@ -27,10 +27,6 @@ use crate::transfers_token;
             token_id
         ) == None
 })]
- 
- // Assume that the sender is the source chain
- // #[requires(!class_id.path.starts_with(source_port, source_channel))]
- 
  // Sanity check: The sender cannot be an escrow account
  #[requires(!is_escrow_account(sender))]
  // Sanity check: Because this is a round-trip, the receiver cannot be an escrow
