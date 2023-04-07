@@ -4,6 +4,7 @@ use std::path::Prefix;
 use prusti_contracts::*;
 
 use crate::types::*;
+use crate::implies;
 pub struct BankKeeper(u32);
 
 impl BankKeeper {
@@ -29,6 +30,7 @@ impl BankKeeper {
             to: AccountId,
             coin: &PrefixedCoin
         ) -> bool {
+        // SEND_SPEC_EXPR_START
             self.unescrowed_coin_balance(coin.denom.base_denom) == 
                 if (is_escrow_account(to) && !is_escrow_account(from)) {
                     old_bank.unescrowed_coin_balance(coin.denom.base_denom) - coin.amount
@@ -46,10 +48,12 @@ impl BankKeeper {
                 } else {
                     old_bank.balance_of(acct_id2, denom2)
                 }
-        ) && forall(|c: BaseDenom| c != coin.denom.base_denom ==> 
+        ) && forall(|c: BaseDenom| implies!(c != coin.denom.base_denom,
             self.unescrowed_coin_balance(c) == old_bank.unescrowed_coin_balance(c)
-        )}
-    }
+            )
+        )
+        // SEND_SPEC_EXPR_END
+        }}
 
     #[pure]
     pub fn transfer_tokens_pre(
@@ -58,11 +62,15 @@ impl BankKeeper {
         to: AccountId,
         coin: &PrefixedCoin,
     ) -> bool {
+        // SEND_SPEC_EXPR_START
         from != to && self.balance_of(from, coin.denom) >= coin.amount
+        // SEND_SPEC_EXPR_END
     }
 
+    // SEND_SPEC_ANNOTATIONS_START
     #[requires(self.transfer_tokens_pre(from, to, coin))]
     #[ensures(self.transfer_tokens_post(old(self), from, to, coin))]
+    // SEND_SPEC_ANNOTATIONS_END
     // PROPSPEC_STOP
     fn transfer_tokens(
         &mut self,
@@ -74,7 +82,7 @@ impl BankKeeper {
         self.mint_tokens(to, coin);
     }
 
-    // PROPSPEC_START
+    // BURN_SPEC_LINES_START
     predicate! {
         fn burn_tokens_post(
             &self,
@@ -82,6 +90,7 @@ impl BankKeeper {
             acct_id: AccountId,
             coin: &PrefixedCoin
         ) -> bool {
+            // BURN_SPEC_EXPR_START
             if is_escrow_account(acct_id) {
               self.unescrowed_coin_balance(coin.denom.base_denom) ==
                 old_bank.unescrowed_coin_balance(coin.denom.base_denom)
@@ -95,15 +104,18 @@ impl BankKeeper {
                 } else {
                     old_bank.balance_of(acct_id2, denom)
                 }
-            ) && forall(|d: BaseDenom| d != coin.denom.base_denom ==> 
-                self.unescrowed_coin_balance(d) == old_bank.unescrowed_coin_balance(d)
+            ) && forall(|d: BaseDenom| 
+                implies!(d != coin.denom.base_denom, self.unescrowed_coin_balance(d) == old_bank.unescrowed_coin_balance(d))
             )
+            // BURN_SPEC_EXPR_END
         }
     }
 
+    // BURN_SPEC_ANNOTATIONS_START
     #[requires(self.balance_of(to, coin.denom) >= coin.amount)]
     #[ensures(self.burn_tokens_post(old(self), to, coin))]
-    // PROPSPEC_STOP
+    // BURN_SPEC_ANNOTATIONS_END
+    // BURN_SPEC_LINES_END
     #[trusted]
     fn burn_tokens(&mut self, to: AccountId, coin: &PrefixedCoin) {
         unimplemented!()
@@ -117,6 +129,7 @@ impl BankKeeper {
             acct_id: AccountId,
             coin: &PrefixedCoin
         ) -> bool {
+            // MINT_SPEC_EXPR_START
             if is_escrow_account(acct_id) {
               self.unescrowed_coin_balance(coin.denom.base_denom) ==
                 old_bank.unescrowed_coin_balance(coin.denom.base_denom)
@@ -130,13 +143,16 @@ impl BankKeeper {
                 } else {
                     old_bank.balance_of(acct_id2, denom)
                 }
-            ) && forall(|d: BaseDenom| d != coin.denom.base_denom ==> 
-                self.unescrowed_coin_balance(d) == old_bank.unescrowed_coin_balance(d)
+            ) && forall(|d: BaseDenom| implies!(d != coin.denom.base_denom,
+                self.unescrowed_coin_balance(d) == old_bank.unescrowed_coin_balance(d))
             )
+            // MINT_SPEC_EXPR_END
         }
     }
 
+    // MINT_SPEC_ANNOTATIONS_START
     #[ensures(self.mint_tokens_post(old(self), to, coin))]
+    // MINT_SPEC_ANNOTATIONS_END
     // PROPSPEC_STOP
     #[ensures(result)]
     #[trusted]
@@ -149,6 +165,7 @@ impl BankKeeper {
 #[requires(!is_escrow_account(sender))]
 #[requires(is_well_formed(coin.denom.trace_path, ctx, topology))]
 // PROPSPEC_START
+// SEND_FUNGIBLE_TOKENS_SPEC_ANNOTATIONS_START
 #[requires(bank.balance_of(sender, coin.denom) >= coin.amount)]
 #[ensures(
    if !coin.denom.trace_path.starts_with(source_port, source_channel) {
@@ -162,6 +179,7 @@ impl BankKeeper {
         bank.burn_tokens_post(old(bank), sender, coin)
    }
 )]
+// SEND_FUNGIBLE_TOKENS_SPEC_ANNOTATIONS_END
 // PROPSPEC_STOP
 #[ensures(
     result == mk_packet(
@@ -279,13 +297,14 @@ fn refund_tokens(ctx: &Ctx, bank: &mut BankKeeper, packet: &Packet) {
       packet.data.denom.trace_path.head_channel(),
 ))]
 // PROPSPEC_START
-#[requires(packet.is_source() ==>
+// ON_RECV_PACKET_SPEC_ANNOTATIONS_START
+#[requires(implies!(packet.is_source(),
     bank.transfer_tokens_pre(
         ctx.escrow_address(packet.dest_channel),
         packet.data.receiver,
         &packet.get_recv_coin()
     )
-)]
+))]
 #[ensures(
     if packet.is_source() {
         bank.transfer_tokens_post(
@@ -298,6 +317,7 @@ fn refund_tokens(ctx: &Ctx, bank: &mut BankKeeper, packet: &Packet) {
         bank.mint_tokens_post(old(bank), packet.data.receiver, &packet.get_recv_coin())
     }
 )]
+// ON_RECV_PACKET_SPEC_ANNOTATIONS_END
 // PROPSPEC_STOP
 #[ensures(result.success)]
 #[ensures(

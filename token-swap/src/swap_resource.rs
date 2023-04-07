@@ -84,8 +84,10 @@ impl BankKeeper {
 
     #[requires(from != to)]
     //PROPSPEC_START RESOURCE_OP
+    //SEND_RESOURCE_SPEC_START
     #[requires(transfer_money!(self.id(), from, coin))]
     #[ensures(transfer_money!(self.id(), to, coin))]
+    //SEND_RESOURCE_SPEC_END
     //PROPSPEC_STOP
     pub fn transfer_tokens(
         &mut self,
@@ -100,15 +102,19 @@ impl BankKeeper {
 
     #[trusted]
     //PROPSPEC_START RESOURCE_OP
+    //BURN_RESOURCE_SPEC_START
     #[requires(transfer_money!(self.id(), from, coin))]
     //PROPSPEC_STOP
+    //BURN_RESOURCE_SPEC_END
     pub fn burn_tokens(&mut self, from: AccountId, coin: &PrefixedCoin) {
         unimplemented!()
     }
 
     #[trusted]
     //PROPSPEC_START RESOURCE_OP
+    //MINT_RESOURCE_SPEC_START
     #[ensures(transfer_money!(self.id(), to, coin))]
+    //MINT_RESOURCE_SPEC_END
     //PROPSPEC_STOP
     pub fn mint_tokens(&mut self, to: AccountId, coin: &PrefixedCoin) {
         unimplemented!()
@@ -119,9 +125,11 @@ impl BankKeeper {
 #[requires(!is_escrow_account(sender))]
 #[requires(is_well_formed(coin.denom.trace_path, ctx, topology))]
 //PROPSPEC_START RESOURCE_OP
+// SEND_FUNGIBLE_TOKENS_RESOURCE_SPEC_START
 #[requires(transfer_money!(bank.id(), sender, coin))]
-#[ensures(!coin.denom.trace_path.starts_with(source_port, source_channel)
-    ==> transfer_money!(bank.id(), ctx.escrow_address(source_channel), coin))]
+#[ensures(implies!(!coin.denom.trace_path.starts_with(source_port, source_channel), 
+    transfer_money!(bank.id(), ctx.escrow_address(source_channel), coin)))]
+// SEND_FUNGIBLE_TOKENS_RESOURCE_SPEC_END
 //PROPSPEC_STOP
 #[ensures(
     result == mk_packet(
@@ -237,12 +245,14 @@ pub fn on_timeout_packet(ctx: &Ctx, bank: &mut BankKeeper, packet: &Packet) {
       packet.data.denom.trace_path.head_channel(),
 ))]
 //PROPSPEC_START RESOURCE_OP
-#[requires(packet.is_source() ==> transfer_money!(
+// ON_RECV_PACKET_RESOURCE_SPEC_START
+#[requires(implies!(packet.is_source(), transfer_money!(
     bank.id(),
     ctx.escrow_address(packet.dest_channel), 
     packet.get_recv_coin()
-))]
+)))]
 #[ensures(transfer_money!(bank.id(), packet.data.receiver, packet.get_recv_coin()))]
+// ON_RECV_PACKET_RESOURCE_SPEC_END
 //PROPSPEC_STOP
 #[ensures(
     !packet.is_source() ==>
