@@ -21,7 +21,7 @@ use crate::types::*;
             PermAmount::from(old(self.unescrowed_coin_balance(coin)))
     ))
 ]
-#[invariant_twostate(
+#[invariant(
     forall(|acct_id: AccountId, denom: PrefixedDenom|
         PermAmount::from(self.balance_of(acct_id, denom)) >=
         holds(Money(self.id(), acct_id, denom)) 

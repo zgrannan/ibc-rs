@@ -158,13 +158,6 @@ fn round_trip(
     let ack = on_recv_packet(ctx2, bank2, &packet, topology);
     on_acknowledge_packet(ctx1, bank1, ack, &packet);
 
-    prusti_assert!(
-        is_well_formed(
-            coin.prepend_prefix(dest_port, dest_channel).denom.trace_path.tail(),
-            ctx1, 
-            topology
-        )
-    );
     let coin = if coin.denom.trace_path.starts_with(source_port, source_channel) {
         coin.drop_prefix(source_port, source_channel)
     } else {

@@ -21,7 +21,7 @@ impl BankKeeper {
         unimplemented!()
     }
 
-    // PROPSPEC_START
+    // SEND_SPEC_LINES_START
     predicate! {
         pub fn transfer_tokens_post(
             &self,
@@ -66,12 +66,12 @@ impl BankKeeper {
         from != to && self.balance_of(from, coin.denom) >= coin.amount
         // SEND_SPEC_EXPR_END
     }
+    // SEND_SPEC_LINES_END
 
     // SEND_SPEC_ANNOTATIONS_START
     #[requires(self.transfer_tokens_pre(from, to, coin))]
     #[ensures(self.transfer_tokens_post(old(self), from, to, coin))]
     // SEND_SPEC_ANNOTATIONS_END
-    // PROPSPEC_STOP
     fn transfer_tokens(
         &mut self,
         from: AccountId,
@@ -110,18 +110,18 @@ impl BankKeeper {
             // BURN_SPEC_EXPR_END
         }
     }
+    // BURN_SPEC_LINES_END
 
     // BURN_SPEC_ANNOTATIONS_START
     #[requires(self.balance_of(to, coin.denom) >= coin.amount)]
     #[ensures(self.burn_tokens_post(old(self), to, coin))]
     // BURN_SPEC_ANNOTATIONS_END
-    // BURN_SPEC_LINES_END
     #[trusted]
     fn burn_tokens(&mut self, to: AccountId, coin: &PrefixedCoin) {
         unimplemented!()
     }
 
-    // PROPSPEC_START
+    // MINT_SPEC_LINES_START
     predicate! {
         fn mint_tokens_post(
             &self,
@@ -149,6 +149,7 @@ impl BankKeeper {
             // MINT_SPEC_EXPR_END
         }
     }
+    // MINT_SPEC_LINES_END
 
     // MINT_SPEC_ANNOTATIONS_START
     #[ensures(self.mint_tokens_post(old(self), to, coin))]
