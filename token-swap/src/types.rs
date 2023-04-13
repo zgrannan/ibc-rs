@@ -1,8 +1,19 @@
 #![allow(dead_code, unused)]
 use prusti_contracts::*;
 
-pub type Amount = u32;
+/* 
+ * This macro is used in specifications instead of Prusti's ==> syntax, for 2 reasons
+ * 1. The program used to calculate syntactic complexity only supports Rust syntax for AST
+ * 2. ==> cannot be used in macros, which are used in the resource specifications
+ */
+#[macro_export]
+macro_rules! implies {
+     ($lhs:expr, $rhs:expr) => {
+        if $lhs { $rhs } else { true }
+    }
+}
 
+pub type Amount = u32;
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct AccountId(u32);

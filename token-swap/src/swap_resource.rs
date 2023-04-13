@@ -33,28 +33,22 @@ pub struct BankKeeper(u32);
 pub struct BankID(u32);
 
 // PROPSPEC_START TYPE
-#[resource]
+#[resource_kind]
 pub struct Money(pub BankID, pub AccountId, pub PrefixedDenom);
 
-#[resource]
+#[resource_kind]
 pub struct UnescrowedCoins(pub BankID, pub BaseDenom);
 // PROPSPEC_STOP TYPE
 
 // PROPSPEC_START RESOURCE_OP
-#[macro_export]
-macro_rules! implies {
-     ($lhs:expr, $rhs:expr) => {
-        if $lhs { $rhs } else { true }
-    }
-}
 
 #[macro_export]
 macro_rules! transfer_money {
     ($bank_id:expr, $to:expr, $coin:expr) => {
-    transfers(Money($bank_id, $to, $coin.denom), $coin.amount) && 
+    resource(Money($bank_id, $to, $coin.denom), $coin.amount) && 
         implies!( 
             !is_escrow_account($to),
-            transfers(UnescrowedCoins($bank_id, $coin.denom.base_denom), $coin.amount)
+            resource(UnescrowedCoins($bank_id, $coin.denom.base_denom), $coin.amount)
         )
     }
 }
