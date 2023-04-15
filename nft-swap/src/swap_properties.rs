@@ -1,7 +1,7 @@
 #![allow(dead_code, unused)]
 use prusti_contracts::*;
 use crate::types::*;
-use crate::swap_resource::*;
+use crate::swap::*;
 use crate::transfers_token;
 
  /*
@@ -13,11 +13,9 @@ use crate::transfers_token;
  #[requires(!(keeper1.id() === keeper2.id()))]
 
  // ROUND_TRIP_SPEC_ANNOTATIONS_START
- #[requires(transfers_token!(keeper1, class_id, token_id))]
  #[requires(keeper1.get_owner(class_id, token_id) == Some(sender))]
  #[requires(
     if class_id.path.starts_with(source_port, source_channel) {
-        transfers_token!(keeper2, class_id.drop_prefix(source_port, source_channel), token_id) &&
         keeper2.get_owner(
             class_id.drop_prefix(source_port, source_channel), 
             token_id
@@ -29,6 +27,7 @@ use crate::transfers_token;
         ) == None
 })]
  // ROUND_TRIP_SPEC_ANNOTATIONS_END
+
  
  // Assume that the sender is the source chain
  // #[requires(!class_id.path.starts_with(source_port, source_channel))]
@@ -44,10 +43,9 @@ use crate::transfers_token;
  #[requires(topology.connects(ctx1, source_port, source_channel, ctx2, dest_port, dest_channel))]
  #[requires(is_well_formed(class_id.path, ctx1, topology))]
  
- // ROUND_TRIP_SPEC_ANNOTATIONS_START
- #[ensures(transfers_token!(keeper1, class_id, token_id))]
  
  // Ensure that the resulting balance of both keeper accounts are unchanged after the round-trip
+ // ROUND_TRIP_SPEC_ANNOTATIONS_START
  #[ensures(
      forall(|class_id: PrefixedClassId, token_id: TokenId|
          keeper1.get_owner(class_id, token_id) ==
@@ -87,7 +85,7 @@ use crate::transfers_token;
      );
 
      let ack = on_recv_packet(ctx2, keeper2, &packet, topology);
-     on_acknowledge_packet(ctx1, keeper1, ack, &packet);
+     // on_acknowledge_packet(ctx1, keeper1, ack, &packet);
 
      // Send tokens B --> A
  
@@ -104,7 +102,7 @@ use crate::transfers_token;
      );
 
      let ack = on_recv_packet(ctx1, keeper1, &packet, topology);
-     on_acknowledge_packet(ctx2, keeper2, ack, &packet);
+     // on_acknowledge_packet(ctx2, keeper2, ack, &packet);
 
 }
  

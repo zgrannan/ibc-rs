@@ -2,9 +2,10 @@
 use prusti_contracts::*;
 
 use crate::types::*;
+use crate::implies;
 
-// PROPSPEC_START INVARIANT
 #[invariant_twostate(self.id() === old(self.id()))]
+// INVARIANTS_RESOURCE_SPEC_START
 #[invariant_twostate(
     forall(|acct_id: AccountId, denom: PrefixedDenom|
         holds(Money(self.id(), acct_id, denom)) - 
@@ -26,7 +27,7 @@ use crate::types::*;
         PermAmount::from(self.balance_of(acct_id, denom)) >=
         holds(Money(self.id(), acct_id, denom)) 
     ))]
-// PROPSPEC_STOP
+// INVARIANTS_RESOURCE_SPEC_END
 pub struct BankKeeper(u32);
 
 #[derive(Copy, Clone)]
@@ -45,11 +46,13 @@ pub struct UnescrowedCoins(pub BankID, pub BaseDenom);
 #[macro_export]
 macro_rules! transfer_money {
     ($bank_id:expr, $to:expr, $coin:expr) => {
+    // MACRO_RESOURCE_SPEC_EXPR_START
     resource(Money($bank_id, $to, $coin.denom), $coin.amount) && 
         implies!( 
             !is_escrow_account($to),
             resource(UnescrowedCoins($bank_id, $coin.denom.base_denom), $coin.amount)
         )
+    // MACRO_RESOURCE_SPEC_EXPR_END
     }
 }
 //PROPSPEC_STOP

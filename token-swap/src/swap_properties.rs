@@ -33,10 +33,10 @@ use crate::implies;
 // SEND_PRESERVES_SPEC_ANNOTATIONS_START
 #[ensures(
     forall(|c: BaseDenom|
-        (Int::new(bank1.unescrowed_coin_balance(c) as i64) + Int::new(bank2.unescrowed_coin_balance(c) as i64) ==
-        old(Int::new(bank1.unescrowed_coin_balance(c) as i64) + Int::new(bank2.unescrowed_coin_balance(c) as i64)))
+        bank1.unescrowed_coin_balance(c) + bank2.unescrowed_coin_balance(c) ==
+        old(bank1.unescrowed_coin_balance(c)) + old(bank2.unescrowed_coin_balance(c)))
     )
-)]
+]
 // SEND_PRESERVES_SPEC_ANNOTATIONS_END
 fn send_preserves(
     ctx1: &Ctx,
