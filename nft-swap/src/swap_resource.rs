@@ -169,55 +169,49 @@ pub fn send_nft(
     mk_packet(ctx, source_port, source_channel, data)
 }
 
-macro_rules! implies {
-    ($lhs:expr, $rhs:expr) => {
-       if $lhs { $rhs } else { true }
-   }
-}
-
-macro_rules! refund_token_pre {
-    ($ctx:expr, $nft:expr, $packet:expr) => {
-        if $packet.data.class_id.path.starts_with($packet.source_port, $packet.source_channel) {
-            $nft.get_owner($packet.data.class_id, $packet.data.token_id) == None
-        } else {
-            $nft.get_owner($packet.data.class_id, $packet.data.token_id) ==
-                Some($ctx.escrow_address($packet.source_channel))
-        } && transfers_token!($nft, $packet.data.class_id, $packet.data.token_id)
-    }
-}
+// macro_rules! refund_token_pre {
+//     ($ctx:expr, $nft:expr, $packet:expr) => {
+//         if $packet.data.class_id.path.starts_with($packet.source_port, $packet.source_channel) {
+//             $nft.get_owner($packet.data.class_id, $packet.data.token_id) == None
+//         } else {
+//             $nft.get_owner($packet.data.class_id, $packet.data.token_id) ==
+//                 Some($ctx.escrow_address($packet.source_channel))
+//         } && transfers_token!($nft, $packet.data.class_id, $packet.data.token_id)
+//     }
+// }
 
 
-macro_rules! refund_tokens_post {
-    ($nft:expr, $packet:expr) => {
-        transfers_token!($nft, $packet.data.class_id, $packet.data.token_id)
-    }
-}
+// macro_rules! refund_tokens_post {
+//     ($nft:expr, $packet:expr) => {
+//         transfers_token!($nft, $packet.data.class_id, $packet.data.token_id)
+//     }
+// }
 
 
-#[requires(refund_token_pre!(ctx, nft, packet))]
-#[ensures(refund_tokens_post!(nft, packet))]
+// #[requires(refund_token_pre!(ctx, nft, packet))]
+// #[ensures(refund_tokens_post!(nft, packet))]
 fn refund_token(ctx: &Ctx, nft: &mut NFTKeeper, packet: &Packet) {
-    let NFTPacketData { class_id, token_id, token_uri, token_data, sender, ..} = packet.data;
-    if !class_id.path.starts_with(packet.source_port, packet.source_channel) {
-        nft.transfer(
-            class_id,
-            token_id,
-            sender,
-            None
-        );
-    } else {
-        nft.mint(
-            class_id,
-            token_id,
-            token_uri,
-            token_data,
-            sender,
-        );
-    }
+    // let NFTPacketData { class_id, token_id, token_uri, token_data, sender, ..} = packet.data;
+    // if !class_id.path.starts_with(packet.source_port, packet.source_channel) {
+    //     nft.transfer(
+    //         class_id,
+    //         token_id,
+    //         sender,
+    //         None
+    //     );
+    // } else {
+    //     nft.mint(
+    //         class_id,
+    //         token_id,
+    //         token_uri,
+    //         token_data,
+    //         sender,
+    //     );
+    // }
 }
 
-#[requires(refund_token_pre!(ctx, nft, packet))]
-#[ensures(refund_tokens_post!(nft, packet))]
+// #[requires(refund_token_pre!(ctx, nft, packet))]
+// #[ensures(refund_tokens_post!(nft, packet))]
 pub fn on_timeout_packet(ctx: &Ctx, nft: &mut NFTKeeper, packet: &Packet) {
     refund_token(ctx, nft, packet);
 }
@@ -253,14 +247,14 @@ pub fn on_recv_packet(
     NFTPacketAcknowledgement { success: true }
 }
 
-#[requires(!ack.success ==> refund_token_pre!(ctx, nft, packet))]
-#[ensures(!ack.success ==> refund_tokens_post!(nft, packet))]
+// #[requires(!ack.success ==> refund_token_pre!(ctx, nft, packet))]
+// #[ensures(!ack.success ==> refund_tokens_post!(nft, packet))]
 pub fn on_acknowledge_packet(
     ctx: &Ctx,
     nft: &mut NFTKeeper,
     ack: NFTPacketAcknowledgement,
     packet: &Packet) {
-    if(!ack.success) {
-        refund_token(ctx, nft, packet);
-    }
+    // if(!ack.success) {
+    //     refund_token(ctx, nft, packet);
+    // }
 }

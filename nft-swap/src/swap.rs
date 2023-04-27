@@ -172,12 +172,6 @@ pub fn send_nft(
     mk_packet(ctx, source_port, source_channel, data)
 }
 
-macro_rules! implies {
-    ($lhs:expr, $rhs:expr) => {
-       if $lhs { $rhs } else { true }
-   }
-}
-
 fn refund_token(ctx: &Ctx, nft: &mut NFTKeeper, packet: &Packet) {
     // let NFTPacketData { class_id, token_id, token_uri, token_data, sender, ..} = packet.data;
     // if !class_id.path.starts_with(packet.source_port, packet.source_channel) {

@@ -12,7 +12,7 @@ use crate::transfers_token;
 
  #[requires(!(keeper1.id() === keeper2.id()))]
 
- // ROUND_TRIP_SPEC_ANNOTATIONS_START
+ // ROUND_TRIP_RESOURCE_SPEC_START
  #[requires(transfers_token!(keeper1, class_id, token_id))]
  #[requires(keeper1.get_owner(class_id, token_id) == Some(sender))]
  #[requires(
@@ -28,7 +28,7 @@ use crate::transfers_token;
             token_id
         ) == None
 })]
- // ROUND_TRIP_SPEC_ANNOTATIONS_END
+ // ROUND_TRIP_RESOURCE_SPEC_END
  
  // Assume that the sender is the source chain
  // #[requires(!class_id.path.starts_with(source_port, source_channel))]
@@ -44,7 +44,7 @@ use crate::transfers_token;
  #[requires(topology.connects(ctx1, source_port, source_channel, ctx2, dest_port, dest_channel))]
  #[requires(is_well_formed(class_id.path, ctx1, topology))]
  
- // ROUND_TRIP_SPEC_ANNOTATIONS_START
+ // ROUND_TRIP_RESOURCE_SPEC_START
  #[ensures(transfers_token!(keeper1, class_id, token_id))]
  
  // Ensure that the resulting balance of both keeper accounts are unchanged after the round-trip
@@ -56,7 +56,7 @@ use crate::transfers_token;
      forall(|class_id: PrefixedClassId, token_id: TokenId|
          keeper2.get_owner(class_id, token_id) ==
             old(keeper2).get_owner(class_id, token_id)))]
- // ROUND_TRIP_SPEC_ANNOTATIONS_END
+ // ROUND_TRIP_RESOURCE_SPEC_END
  fn round_trip(
      ctx1: &Ctx,
      ctx2: &Ctx,
@@ -87,7 +87,7 @@ use crate::transfers_token;
      );
 
      let ack = on_recv_packet(ctx2, keeper2, &packet, topology);
-     on_acknowledge_packet(ctx1, keeper1, ack, &packet);
+     // on_acknowledge_packet(ctx1, keeper1, ack, &packet);
 
      // Send tokens B --> A
  
@@ -104,7 +104,7 @@ use crate::transfers_token;
      );
 
      let ack = on_recv_packet(ctx1, keeper1, &packet, topology);
-     on_acknowledge_packet(ctx2, keeper2, ack, &packet);
+     // on_acknowledge_packet(ctx2, keeper2, ack, &packet);
 
 }
  

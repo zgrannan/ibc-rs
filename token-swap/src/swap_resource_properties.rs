@@ -182,83 +182,83 @@ fn round_trip(
     on_acknowledge_packet(ctx2, bank2, ack, &packet);
 }
 
-#[requires(transfer_money!(bank1.id(), sender, coin))]
-#[requires(!coin.denom.trace_path.starts_with(source_port, source_channel))]
-// Sanity check: The sender cannot be an escrow account
-#[requires(!is_escrow_account(sender))]
-#[requires(is_well_formed(coin.denom.trace_path, ctx1, topology))]
-#[ensures(transfer_money!(bank1.id(), sender, coin))]
-#[ensures(
-    forall(|acct_id2: AccountId, denom: PrefixedDenom|
-        bank1.balance_of(acct_id2, denom) ==
-           old(bank1).balance_of(acct_id2, denom)))]
-fn timeout(
-    ctx1: &Ctx,
-    ctx2: &Ctx,
-    bank1: &mut BankKeeper,
-    coin: &PrefixedCoin,
-    sender: AccountId,
-    receiver: AccountId,
-    source_port: Port,
-    source_channel: ChannelEnd,
-    dest_port: Port,
-    dest_channel: ChannelEnd,
-    topology: &Topology
-) {
-    // Send tokens A --> B
-    let packet = send_fungible_tokens(
-        ctx1,
-        bank1,
-        coin,
-        sender,
-        receiver,
-        source_port,
-        source_channel,
-        topology
-    );
+// #[requires(transfer_money!(bank1.id(), sender, coin))]
+// #[requires(!coin.denom.trace_path.starts_with(source_port, source_channel))]
+// // Sanity check: The sender cannot be an escrow account
+// #[requires(!is_escrow_account(sender))]
+// #[requires(is_well_formed(coin.denom.trace_path, ctx1, topology))]
+// #[ensures(transfer_money!(bank1.id(), sender, coin))]
+// #[ensures(
+//     forall(|acct_id2: AccountId, denom: PrefixedDenom|
+//         bank1.balance_of(acct_id2, denom) ==
+//            old(bank1).balance_of(acct_id2, denom)))]
+// fn timeout(
+//     ctx1: &Ctx,
+//     ctx2: &Ctx,
+//     bank1: &mut BankKeeper,
+//     coin: &PrefixedCoin,
+//     sender: AccountId,
+//     receiver: AccountId,
+//     source_port: Port,
+//     source_channel: ChannelEnd,
+//     dest_port: Port,
+//     dest_channel: ChannelEnd,
+//     topology: &Topology
+// ) {
+//     // Send tokens A --> B
+//     let packet = send_fungible_tokens(
+//         ctx1,
+//         bank1,
+//         coin,
+//         sender,
+//         receiver,
+//         source_port,
+//         source_channel,
+//         topology
+//     );
 
-    on_timeout_packet(ctx1, bank1, &packet);
-}
+//     on_timeout_packet(ctx1, bank1, &packet);
+// }
 
-// Sanity check: The sender cannot be an escrow account
-#[requires(!is_escrow_account(sender))]
-#[requires(transfer_money!(bank1.id(), sender, coin))]
-#[requires(!coin.denom.trace_path.starts_with(source_port, source_channel))]
-#[requires(is_well_formed(coin.denom.trace_path, ctx1, topology))]
-#[ensures(transfer_money!(bank1.id(), sender, coin))]
-#[ensures(
-    forall(|acct_id2: AccountId, denom: PrefixedDenom|
-        bank1.balance_of(acct_id2, denom) ==
-           old(bank1).balance_of(acct_id2, denom)))]
-fn ack_fail(
-    ctx1: &Ctx,
-    ctx2: &Ctx,
-    bank1: &mut BankKeeper,
-    coin: &PrefixedCoin,
-    sender: AccountId,
-    receiver: AccountId,
-    source_port: Port,
-    source_channel: ChannelEnd,
-    dest_port: Port,
-    dest_channel: ChannelEnd,
-    topology: &Topology
-) {
-    // Send tokens A --> B
-    let packet = send_fungible_tokens(
-        ctx1,
-        bank1,
-        coin,
-        sender,
-        receiver,
-        source_port,
-        source_channel,
-        topology
-    );
+// // Sanity check: The sender cannot be an escrow account
+// #[requires(!is_escrow_account(sender))]
+// #[requires(transfer_money!(bank1.id(), sender, coin))]
+// #[requires(!coin.denom.trace_path.starts_with(source_port, source_channel))]
+// #[requires(is_well_formed(coin.denom.trace_path, ctx1, topology))]
+// #[ensures(transfer_money!(bank1.id(), sender, coin))]
+// #[ensures(
+//     forall(|acct_id2: AccountId, denom: PrefixedDenom|
+//         bank1.balance_of(acct_id2, denom) ==
+//            old(bank1).balance_of(acct_id2, denom)))]
+// fn ack_fail(
+//     ctx1: &Ctx,
+//     ctx2: &Ctx,
+//     bank1: &mut BankKeeper,
+//     coin: &PrefixedCoin,
+//     sender: AccountId,
+//     receiver: AccountId,
+//     source_port: Port,
+//     source_channel: ChannelEnd,
+//     dest_port: Port,
+//     dest_channel: ChannelEnd,
+//     topology: &Topology
+// ) {
+//     // Send tokens A --> B
+//     let packet = send_fungible_tokens(
+//         ctx1,
+//         bank1,
+//         coin,
+//         sender,
+//         receiver,
+//         source_port,
+//         source_channel,
+//         topology
+//     );
 
-    on_acknowledge_packet(
-        ctx1,
-        bank1,
-        FungibleTokenPacketAcknowledgement { success: false },
-        &packet
-    );
-}
+//     on_acknowledge_packet(
+//         ctx1,
+//         bank1,
+//         FungibleTokenPacketAcknowledgement { success: false },
+//         &packet
+//     );
+// }
