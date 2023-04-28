@@ -28,18 +28,6 @@ pub fn is_escrow_account(_: AccountId) -> bool {
     unimplemented!()
 }
 
-/* 
- * This macro is used in specifications instead of Prusti's ==> syntax, for 2 reasons
- * 1. The program used to calculate syntactic complexity only supports Rust syntax for AST
- * 2. ==> cannot be used in macros, which are used in the resource specifications
- */
-#[macro_export]
-macro_rules! implies {
-     ($lhs:expr, $rhs:expr) => {
-        if $lhs { $rhs } else { true }
-    }
-}
-
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct PrefixedClassId {
@@ -71,6 +59,78 @@ pub struct ChannelEnd(u32);
 pub struct Port(u32);
 
 pub struct Ctx(u32);
+
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct TokenIdVec(u32);
+
+impl TokenIdVec {
+
+    #[pure]
+    #[trusted]
+    pub fn len(&self) -> usize {
+        unimplemented!()
+    }
+
+    #[pure]
+    #[trusted]
+    #[requires(i < self.len())]
+    pub fn get(&self, i: usize) -> TokenId {
+        unimplemented!()
+    }
+
+}
+
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct TokenUriVec(u32);
+
+impl TokenUriVec {
+
+    #[pure]
+    #[trusted]
+    pub fn new() -> TokenUriVec {
+        unimplemented!()
+    }
+
+    #[pure]
+    #[trusted]
+    pub fn len(&self) -> usize {
+        unimplemented!()
+    }
+
+    #[pure]
+    #[trusted]
+    #[requires(i < self.len())]
+    pub fn get(&self, i: usize) -> TokenUri {
+        unimplemented!()
+    }
+
+}
+
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct TokenDataVec(u32);
+
+impl TokenDataVec {
+
+    #[pure]
+    #[trusted]
+    pub fn new() -> TokenDataVec {
+        unimplemented!()
+    }
+
+    #[pure]
+    #[trusted]
+    pub fn len(&self) -> usize {
+        unimplemented!()
+    }
+
+    #[pure]
+    #[trusted]
+    #[requires(i < self.len())]
+    pub fn get(&self, i: usize) -> TokenData {
+        unimplemented!()
+    }
+
+}
 
 
 impl Ctx {
@@ -122,9 +182,9 @@ pub struct NFTPacketData {
     pub class_id: PrefixedClassId,
     pub class_uri: ClassUri,
     pub class_data: ClassData,
-    pub token_id: TokenId,
-    pub token_data: TokenData,
-    pub token_uri: TokenUri,
+    pub token_ids: TokenIdVec,
+    pub token_data: TokenDataVec,
+    pub token_uris: TokenUriVec,
     pub sender: AccountId,
     pub receiver: AccountId,
 }
