@@ -140,27 +140,27 @@ fn make_packet_data(nft: &NFTKeeper, class_id: PrefixedClassId, token_ids: Token
         transfers_token!(nft, class_id, token_ids.get(i)))
 )]
 // It's a transfer to escrow locally, retain permission
-// #[ensures(old(!class_id.path.starts_with(source_port, source_channel)) ==>
-//     forall(|i : usize| i < token_ids.len() ==>
-//         transfers_token!(nft, class_id, token_ids.get(i)))
-// )]
-// #[ensures(
-//     forall(|i : usize| i < token_ids.len() ==>
-//         if old(class_id.path.starts_with(source_port, source_channel)) {
-//             nft.get_owner(class_id, token_ids.get(i)) == None
-//         } else {
-//             nft.get_owner(class_id, token_ids.get(i)) == Some(ctx.escrow_address(source_channel))
-//         }
-//     )
-// )]
-// #[ensures(
-//     result == mk_packet(
-//         ctx,
-//         source_port,
-//         source_channel,
-//         make_packet_data(nft, class_id, token_ids, sender, receiver)
-//     )
-// )]
+#[ensures(old(!class_id.path.starts_with(source_port, source_channel)) ==>
+    forall(|i : usize| i < token_ids.len() ==>
+        transfers_token!(nft, class_id, token_ids.get(i)))
+)]
+#[ensures(
+    forall(|i : usize| i < token_ids.len() ==>
+        if old(class_id.path.starts_with(source_port, source_channel)) {
+            nft.get_owner(class_id, token_ids.get(i)) == None
+        } else {
+            nft.get_owner(class_id, token_ids.get(i)) == Some(ctx.escrow_address(source_channel))
+        }
+    )
+)]
+#[ensures(
+    result == mk_packet(
+        ctx,
+        source_port,
+        source_channel,
+        make_packet_data(nft, class_id, token_ids, sender, receiver)
+    )
+)]
 pub fn send_nft(
     ctx: &Ctx,
     nft: &mut NFTKeeper,
@@ -181,20 +181,32 @@ pub fn send_nft(
         body_invariant!(nft.id() === old(nft.id()));
         body_invariant!(i <= token_ids.len());
         body_invariant!(
-            forall(|j: usize| j >= i && j < token_ids.len() ==>
-                transfers_token!(nft, class_id, token_ids.get(j)))
+            if !class_id.path.starts_with(source_port, source_channel) {
+                forall(|j: usize| j < token_ids.len() ==>
+                    transfers_token!(nft, class_id, token_ids.get(j)))
+            } else {
+                forall(|j: usize| j >= i && j < token_ids.len() ==>
+                    transfers_token!(nft, class_id, token_ids.get(j)))
+            }
         );
+        body_invariant!(forall(|j : usize| j < i ==>
+            if old(class_id.path.starts_with(source_port, source_channel)) {
+                nft.get_owner(class_id, token_ids.get(j)) == None
+            } else {
+                nft.get_owner(class_id, token_ids.get(j)) == Some(ctx.escrow_address(source_channel))
+            }
+        ));
         let token_id = token_ids.get(i);
-        // if !class_id.path.starts_with(source_port, source_channel) {
-        //     nft.transfer(
-        //         class_id,
-        //         token_id,
-        //         ctx.escrow_address(source_channel),
-        //         None
-        //     );
-        // } else {
+        if !class_id.path.starts_with(source_port, source_channel) {
+            nft.transfer(
+                class_id,
+                token_id,
+                ctx.escrow_address(source_channel),
+                None
+            );
+        } else {
             nft.burn(class_id, token_id);
-        // };
+        };
         i = i + 1;
     }
 
