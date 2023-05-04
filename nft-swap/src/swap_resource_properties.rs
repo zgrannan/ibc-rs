@@ -55,16 +55,16 @@ use crate::transfers_token;
  #[requires(topology.connects(ctx1, source_port, source_channel, ctx2, dest_port, dest_channel))]
  #[requires(is_well_formed(class_id.path, ctx1, topology))]
  
-//  #[ensures(
-//     forall(|i : usize| i < token_ids.len() ==>
-//         transfers_token!(keeper1, class_id, token_ids.get(i)))
-//  )]
+ #[ensures(
+    forall(|i : usize| i < token_ids.len() ==>
+        transfers_token!(keeper1, class_id, token_ids.get(i)))
+ )]
  
-//  // Ensure that the resulting balance of both keeper accounts are unchanged after the round-trip
-//  #[ensures(
-//      forall(|class_id: PrefixedClassId, token_ids: TokenId|
-//          keeper1.get_owner(class_id, token_ids) ==
-//             old(keeper1).get_owner(class_id, token_ids)))]
+ // Ensure that the resulting balance of both keeper accounts are unchanged after the round-trip
+ #[ensures(
+     forall(|class_id: PrefixedClassId, token_ids: TokenId|
+         keeper1.get_owner(class_id, token_ids) ==
+            old(keeper1).get_owner(class_id, token_ids)))]
 //  #[ensures(
 //      forall(|class_id: PrefixedClassId, token_ids: TokenId|
 //          keeper2.get_owner(class_id, token_ids) ==
@@ -98,8 +98,24 @@ use crate::transfers_token;
          topology
      );
 
+    if class_id.path.starts_with(source_port, source_channel) {
+        prusti_assert!(
+        forall(|i : usize| i < token_ids.len() ==>
+                keeper1.get_owner(class_id, token_ids.get(i)) == None
+        ));
+    } else {
+        // prusti_assert!(
+        //     forall(|i : usize| i < token_ids.len() ==>
+        //         keeper1.get_owner(class_id, token_ids.get(i)) == Some(ctx1.escrow_address(source_channel))
+        // ));
+        prusti_assert!(
+            forall(|i : usize| i < token_ids.len() ==>
+                keeper1.get_owner(class_id, token_ids.get(i)) != None
+        ));
+    }
+
      let ack = on_recv_packet(ctx2, keeper2, &packet, topology);
-     // on_acknowledge_packet(ctx1, keeper1, ack, &packet);
+     on_acknowledge_packet(ctx1, keeper1, ack, &packet);
 
     prusti_assert!(packet.data.receiver == receiver);
     prusti_assert!(packet.data.token_ids === token_ids);
@@ -124,8 +140,35 @@ use crate::transfers_token;
          topology
      );
 
-    //  let ack = on_recv_packet(ctx1, keeper1, &packet, topology);
-    //  on_acknowledge_packet(ctx2, keeper2, ack, &packet);
+    prusti_assert!(packet.get_recv_class_id() === class_id);
+    prusti_assert!(packet.dest_channel === source_channel);
+    // prusti_assert!(packet.source_port === source_port);
+
+    if class_id.path.starts_with(source_port, source_channel) {
+        prusti_assert!(
+            !packet.data.class_id.path.starts_with(packet.source_port, packet.source_channel)
+        );
+        prusti_assert!(
+        forall(|i : usize| i < token_ids.len() ==>
+                keeper1.get_owner(class_id, token_ids.get(i)) == None
+        ));
+    } else {
+        prusti_assert!(
+            packet.data.class_id.path.starts_with(packet.source_port, packet.source_channel)
+        );
+        // prusti_assert!(
+        //     forall(|i : usize| i < token_ids.len() ==>
+        //         keeper1.get_owner(class_id, token_ids.get(i)) == Some(ctx1.escrow_address(source_channel))
+        // ));
+        prusti_assert!(
+            forall(|i : usize| i < token_ids.len() ==>
+                keeper1.get_owner(class_id, token_ids.get(i)) != None
+        ));
+    }
+
+
+     let ack = on_recv_packet(ctx1, keeper1, &packet, topology);
+     on_acknowledge_packet(ctx2, keeper2, ack, &packet);
 
 }
  

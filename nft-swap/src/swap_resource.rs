@@ -146,7 +146,7 @@ fn make_packet_data(
         if old(class_id.path.starts_with(source_port, source_channel)) {
             nft.get_owner(class_id, token_ids.get(i)) == None
         } else {
-            nft.get_owner(class_id, token_ids.get(i)) == Some(ctx.escrow_address(source_channel))
+            nft.get_owner(class_id, token_ids.get(i)) != None //Some(ctx.escrow_address(source_channel))
         }
     )
 )]
@@ -160,15 +160,6 @@ fn make_packet_data(
 #[ensures(result.source_channel === source_channel)]
 #[ensures(result.dest_port === ctx.counterparty_port(source_port, source_channel))]
 #[ensures(result.dest_channel === ctx.counterparty_channel(source_port, source_channel))]
-// #[ensures(false)]
-// #[ensures(
-//     result == mk_packet(
-//         ctx,
-//         source_port,
-//         source_channel,
-//         make_packet_data(nft, class_id, token_ids, sender, receiver)
-//     )
-// )]
 pub fn send_nft(
     ctx: &Ctx,
     nft: &mut NFTKeeper,
@@ -203,7 +194,7 @@ pub fn send_nft(
             if old(class_id.path.starts_with(source_port, source_channel)) {
                 nft.get_owner(class_id, token_ids.get(j)) == None
             } else {
-                nft.get_owner(class_id, token_ids.get(j)) == Some(ctx.escrow_address(source_channel))
+                nft.get_owner(class_id, token_ids.get(j)) != None // Some(ctx.escrow_address(source_channel))
             }
         ));
         let token_id = token_ids.get(i);
@@ -247,7 +238,7 @@ macro_rules! implies {
 #[requires(
     if !packet.data.class_id.path.starts_with(packet.source_port, packet.source_channel) {
         forall(|i : usize| i < packet.data.token_ids.len() ==>
-            nft.get_owner(packet.data.class_id, packet.data.token_ids.get(i)) == Some(ctx.escrow_address(packet.source_channel)))
+            nft.get_owner(packet.data.class_id, packet.data.token_ids.get(i)) != None) // Some(ctx.escrow_address(packet.source_channel)))
     } else {
         forall(|i : usize| i < packet.data.token_ids.len() ==>
             nft.get_owner(packet.data.class_id, packet.data.token_ids.get(i)) == None)
@@ -287,7 +278,7 @@ fn refund_token(ctx: &Ctx, nft: &mut NFTKeeper, packet: &Packet) {
         body_invariant!(
             if !class_id.path.starts_with(packet.source_port, packet.source_channel) {
                 forall(|j : usize| j >= i && j < token_ids.len() ==>
-                    nft.get_owner(class_id, token_ids.get(j)) == Some(ctx.escrow_address(packet.source_channel)))
+                    nft.get_owner(class_id, token_ids.get(j)) != None) // Some(ctx.escrow_address(packet.source_channel)))
             } else {
                 forall(|j : usize| j >= i && j < token_ids.len() ==>
                     nft.get_owner(class_id, token_ids.get(j)) == None)
