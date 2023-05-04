@@ -103,14 +103,22 @@ impl NFTKeeper {
 
 
 #[pure]
-fn make_packet_data(nft: &NFTKeeper, class_id: PrefixedClassId, token_ids: TokenIdVec, sender: AccountId, receiver: AccountId) -> NFTPacketData {
+fn make_packet_data(
+    nft: &NFTKeeper, 
+    class_id: PrefixedClassId, 
+    token_ids: TokenIdVec, 
+    token_uris: TokenUriVec, 
+    token_data: TokenDataVec, 
+    sender: AccountId, 
+    receiver: AccountId
+) -> NFTPacketData {
     NFTPacketData {
         class_id,
         class_data: nft.get_class(class_id).data,
         class_uri: nft.get_class(class_id).uri,
         token_ids,
-        token_data: TokenDataVec::new(),
-        token_uris: TokenUriVec::new(),
+        token_data,
+        token_uris,
         sender,
         receiver
     }
@@ -142,14 +150,25 @@ fn make_packet_data(nft: &NFTKeeper, class_id: PrefixedClassId, token_ids: Token
         }
     )
 )]
-#[ensures(
-    result == mk_packet(
-        ctx,
-        source_port,
-        source_channel,
-        make_packet_data(nft, class_id, token_ids, sender, receiver)
-    )
-)]
+#[ensures(result.data.token_ids.len() == result.data.token_uris.len())]
+#[ensures(result.data.token_ids.len() == result.data.token_data.len())]
+#[ensures(result.data.token_ids === token_ids)]
+#[ensures(result.data.class_id === class_id)]
+#[ensures(result.data.sender === sender)]
+#[ensures(result.data.receiver === receiver)]
+#[ensures(result.source_port === source_port)]
+#[ensures(result.source_channel === source_channel)]
+#[ensures(result.dest_port === ctx.counterparty_port(source_port, source_channel))]
+#[ensures(result.dest_channel === ctx.counterparty_channel(source_port, source_channel))]
+// #[ensures(false)]
+// #[ensures(
+//     result == mk_packet(
+//         ctx,
+//         source_port,
+//         source_channel,
+//         make_packet_data(nft, class_id, token_ids, sender, receiver)
+//     )
+// )]
 pub fn send_nft(
     ctx: &Ctx,
     nft: &mut NFTKeeper,
@@ -162,6 +181,8 @@ pub fn send_nft(
     topology: &Topology
 ) -> Packet {
     let mut i = 0;
+    let mut token_uris = TokenUriVec::new();
+    let mut token_data = TokenDataVec::new();
     while i < token_ids.len() {
         body_invariant!(forall( |class_id: PrefixedClassId, token_id: TokenId|
         ( old(holds(Token(nft.id(), class_id, token_id))) == PermAmount::from(0) 
@@ -196,10 +217,13 @@ pub fn send_nft(
         } else {
             nft.burn(class_id, token_id);
         };
-        i = i + 1;
+        let token = nft.get_nft(class_id, token_id);
+        token_uris.push(token.uri);
+        token_data.push(token.data);
+        i += 1;
     }
 
-    let data = make_packet_data(nft, class_id, token_ids, sender, receiver);
+    let data = make_packet_data(nft, class_id, token_ids, token_uris, token_data, sender, receiver);
     mk_packet(ctx, source_port, source_channel, data)
 }
 
@@ -310,15 +334,14 @@ pub fn on_timeout_packet(ctx: &Ctx, nft: &mut NFTKeeper, packet: &Packet) {
         )
     )
 )]
-// PROBLEM BELOW
 #[requires(
     if packet.data.class_id.path.starts_with(packet.source_port, packet.source_channel) {
         forall(|i : usize| i < packet.data.token_ids.len() ==>
             nft.get_owner(
-                PrefixedClassId {
-                    base: packet.data.class_id.base,
-                    path: packet.data.class_id.path.drop_prefix(packet.source_port, packet.source_channel)
-                },
+                packet.data.class_id.drop_prefix(
+                    packet.source_port, 
+                    packet.source_channel
+                ),
                 packet.data.token_ids.get(i)
             ) != None) // TODO: Is the escrow address
     } else {
@@ -333,22 +356,22 @@ pub fn on_timeout_packet(ctx: &Ctx, nft: &mut NFTKeeper, packet: &Packet) {
     }
 )]
 #[ensures(
-    forall(|i : usize| i < packet.data.token_ids.len() ==>
+    forall(|i : usize| i < old(packet.data).token_ids.len() ==>
         transfers_token!(
             nft,
-            packet.get_recv_class_id(),
-            packet.data.token_ids.get(i)
+            old(packet.get_recv_class_id()),
+            old(packet.data).token_ids.get(i)
         )
     )
 )]
-// #[ensures(
-//     forall(|i : usize| i < packet.data.token_ids.len() ==>
-//         nft.get_owner(
-//             packet.get_recv_class_id(),
-//             packet.data.token_ids.get(i)
-//         ) == Some(packet.data.receiver))
-// )]
-// #[ensures(result.success)]
+#[ensures(
+    forall(|i : usize| i < old(packet.data.token_ids.len()) ==>
+        nft.get_owner(
+            old(packet.get_recv_class_id()),
+            packet.data.token_ids.get(i)
+        ) === Some(packet.data.receiver))
+)]
+#[ensures(result.success)]
 pub fn on_recv_packet(
     ctx: &Ctx, 
     nft: &mut NFTKeeper,

@@ -60,34 +60,24 @@ pub struct Port(u32);
 
 pub struct Ctx(u32);
 
-#[derive(Copy, Clone, Eq, PartialEq)]
-pub struct TokenIdVec(u32);
-
-impl TokenIdVec {
-
-    #[pure]
-    #[trusted]
-    pub fn len(&self) -> usize {
-        unimplemented!()
-    }
-
-    #[pure]
-    #[trusted]
-    #[requires(i < self.len())]
-    pub fn get(&self, i: usize) -> TokenId {
-        unimplemented!()
-    }
-
+macro_rules! add_attrs {
+    ($(#[$attr:meta])* $item:item) => {
+        $(#[$attr])*
+        $item
+    };
 }
 
-#[derive(Copy, Clone, Eq, PartialEq)]
-pub struct TokenUriVec(u32);
 
-impl TokenUriVec {
+
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct PureVec<T>(T);
+
+impl <T: Copy> PureVec<T> {
 
     #[pure]
     #[trusted]
-    pub fn new() -> TokenUriVec {
+    #[ensures(result.len() == 0)]
+    pub fn new() -> PureVec<T> {
         unimplemented!()
     }
 
@@ -97,53 +87,36 @@ impl TokenUriVec {
         unimplemented!()
     }
 
-    #[pure]
+    #[ensures(self.len() == old(self.len()) + 1)]
     #[trusted]
-    #[requires(i < self.len())]
-    pub fn get(&self, i: usize) -> TokenUri {
-        unimplemented!()
-    }
-
-}
-
-#[derive(Copy, Clone, Eq, PartialEq)]
-pub struct TokenDataVec(u32);
-
-impl TokenDataVec {
-
-    #[pure]
-    #[trusted]
-    pub fn new() -> TokenDataVec {
-        unimplemented!()
-    }
-
-    #[pure]
-    #[trusted]
-    pub fn len(&self) -> usize {
+    pub fn push(&self, value: T) {
         unimplemented!()
     }
 
     #[pure]
     #[trusted]
     #[requires(i < self.len())]
-    pub fn get(&self, i: usize) -> TokenData {
+    pub fn get(&self, i: usize) -> T {
         unimplemented!()
     }
 
 }
 
+pub type TokenIdVec = PureVec<TokenId>;
+pub type TokenUriVec = PureVec<TokenUri>;
+pub type TokenDataVec = PureVec<TokenData>;
 
 impl Ctx {
 
     #[pure]
     #[trusted]
-    fn counterparty_port(&self, source_port: Port, source_channel: ChannelEnd) -> Port {
+    pub fn counterparty_port(&self, source_port: Port, source_channel: ChannelEnd) -> Port {
         unimplemented!()
     }
 
     #[pure]
     #[trusted]
-    fn counterparty_channel(&self, source_port: Port, source_channel: ChannelEnd) -> ChannelEnd {
+    pub fn counterparty_channel(&self, source_port: Port, source_channel: ChannelEnd) -> ChannelEnd {
         unimplemented!()
     }
 
@@ -376,4 +349,16 @@ impl PartialEq for Path {
 #[derive(Clone, Copy)]
 pub struct NFTPacketAcknowledgement {
     pub success: bool
+}
+
+#[extern_spec]
+impl <T> Option<T> {
+
+    #[pure]
+    fn contains<U>(&self, value: &U) -> bool 
+        where U: PartialEq<T>;
+
+    #[requires(matches!(self, Some(_)))]
+    #[pure]
+    fn unwrap(self) -> T;
 }
