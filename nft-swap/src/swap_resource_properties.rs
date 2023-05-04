@@ -27,7 +27,8 @@ use crate::transfers_token;
 #[requires(
     if class_id.path.starts_with(source_port, source_channel) {
         forall(|i : usize| i < token_ids.len() ==>
-            /* transfers_token!(keeper2, class_id.drop_prefix(source_port, source_channel), token_ids.get(i)) && */
+            transfers_token!(keeper2, class_id.drop_prefix(source_port, source_channel), token_ids.get(i))) &&
+        forall(|i : usize| i < token_ids.len() ==>
             keeper2.get_owner(
                 class_id.drop_prefix(source_port, source_channel), 
                 token_ids.get(i)

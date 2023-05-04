@@ -360,7 +360,7 @@ pub fn on_timeout_packet(ctx: &Ctx, nft: &mut NFTKeeper, packet: &Packet) {
         transfers_token!(
             nft,
             old(packet.get_recv_class_id()),
-            old(packet.data).token_ids.get(i)
+            packet.data.token_ids.get(i)
         )
     )
 )]
