@@ -146,7 +146,7 @@ fn make_packet_data(
         if old(class_id.path.starts_with(source_port, source_channel)) {
             nft.get_owner(class_id, token_ids.get(i)) == None
         } else {
-            nft.get_owner(class_id, token_ids.get(i)) != None //Some(ctx.escrow_address(source_channel))
+            nft.get_owner(class_id, token_ids.get(i)) == Some(ctx.escrow_address(source_channel))
         }
     )
 )]
@@ -194,7 +194,7 @@ pub fn send_nft(
             if old(class_id.path.starts_with(source_port, source_channel)) {
                 nft.get_owner(class_id, token_ids.get(j)) == None
             } else {
-                nft.get_owner(class_id, token_ids.get(j)) != None // Some(ctx.escrow_address(source_channel))
+                nft.get_owner(class_id, token_ids.get(j)) == Some(ctx.escrow_address(source_channel))
             }
         ));
         let token_id = token_ids.get(i);
@@ -334,7 +334,7 @@ pub fn on_timeout_packet(ctx: &Ctx, nft: &mut NFTKeeper, packet: &Packet) {
                     packet.source_channel
                 ),
                 packet.data.token_ids.get(i)
-            ) != None) // TODO: Is the escrow address
+            ) == Some(ctx.escrow_address(packet.dest_channel))) 
     } else {
         forall(|i : usize| i < packet.data.token_ids.len() ==>
             nft.get_owner(
@@ -392,15 +392,7 @@ pub fn on_recv_packet(
                     transfers_token!(nft, packet.get_recv_class_id(), token_ids.get(j)))
             }
         );
-        body_invariant!(
-            if packet.data.class_id.path.starts_with(packet.source_port, packet.source_channel) {
-                forall(|j : usize| j >= i && j < token_ids.len() ==>
-                    nft.get_owner(packet.get_recv_class_id(), token_ids.get(j)) != None)
-            } else {
-                forall(|j : usize| j >= i && j < token_ids.len() ==>
-                    nft.get_owner(packet.get_recv_class_id(), token_ids.get(j)) == None)
-            }
-        );
+
         if packet.data.class_id.path.starts_with(packet.source_port, packet.source_channel) {
             nft.transfer(packet.get_recv_class_id(), token_ids.get(i), receiver, Some(token_data.get(i)));
         } else {

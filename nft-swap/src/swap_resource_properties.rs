@@ -32,7 +32,7 @@ use crate::transfers_token;
             keeper2.get_owner(
                 class_id.drop_prefix(source_port, source_channel), 
                 token_ids.get(i)
-            ) != None)
+            ) == Some(ctx2.escrow_address(dest_channel)))
     } else {
         forall(|i : usize| i < token_ids.len() ==>
             keeper2.get_owner(
@@ -65,10 +65,10 @@ use crate::transfers_token;
      forall(|class_id: PrefixedClassId, token_ids: TokenId|
          keeper1.get_owner(class_id, token_ids) ==
             old(keeper1).get_owner(class_id, token_ids)))]
-//  #[ensures(
-//      forall(|class_id: PrefixedClassId, token_ids: TokenId|
-//          keeper2.get_owner(class_id, token_ids) ==
-//             old(keeper2).get_owner(class_id, token_ids)))]
+ #[ensures(
+     forall(|class_id: PrefixedClassId, token_ids: TokenId|
+         keeper2.get_owner(class_id, token_ids) ==
+            old(keeper2).get_owner(class_id, token_ids)))]
  fn round_trip(
      ctx1: &Ctx,
      ctx2: &Ctx,
@@ -104,13 +104,9 @@ use crate::transfers_token;
                 keeper1.get_owner(class_id, token_ids.get(i)) == None
         ));
     } else {
-        // prusti_assert!(
-        //     forall(|i : usize| i < token_ids.len() ==>
-        //         keeper1.get_owner(class_id, token_ids.get(i)) == Some(ctx1.escrow_address(source_channel))
-        // ));
         prusti_assert!(
             forall(|i : usize| i < token_ids.len() ==>
-                keeper1.get_owner(class_id, token_ids.get(i)) != None
+                keeper1.get_owner(class_id, token_ids.get(i)) == Some(ctx1.escrow_address(source_channel))
         ));
     }
 
@@ -156,13 +152,9 @@ use crate::transfers_token;
         prusti_assert!(
             packet.data.class_id.path.starts_with(packet.source_port, packet.source_channel)
         );
-        // prusti_assert!(
-        //     forall(|i : usize| i < token_ids.len() ==>
-        //         keeper1.get_owner(class_id, token_ids.get(i)) == Some(ctx1.escrow_address(source_channel))
-        // ));
         prusti_assert!(
             forall(|i : usize| i < token_ids.len() ==>
-                keeper1.get_owner(class_id, token_ids.get(i)) != None
+                keeper1.get_owner(class_id, token_ids.get(i)) == Some(ctx1.escrow_address(source_channel))
         ));
     }
 
