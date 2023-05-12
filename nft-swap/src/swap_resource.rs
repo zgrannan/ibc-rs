@@ -175,11 +175,6 @@ pub fn send_nft(
     let mut token_uris = TokenUriVec::new();
     let mut token_data = TokenDataVec::new();
     while i < token_ids.len() {
-        body_invariant!(forall( |class_id: PrefixedClassId, token_id: TokenId|
-        ( old(holds(Token(nft.id(), class_id, token_id))) == PermAmount::from(0) 
-        &&    holds(Token(nft.id(), class_id, token_id)) == PermAmount::from(0)) ==>
-            nft.get_owner(class_id, token_id) == old(nft.get_owner(class_id, token_id))));
-        body_invariant!(nft.id() === old(nft.id()));
         body_invariant!(i < token_ids.len());
         body_invariant!(
             if !class_id.path.starts_with(source_port, source_channel) {
@@ -257,11 +252,6 @@ fn refund_token(ctx: &Ctx, nft: &mut NFTKeeper, packet: &Packet) {
     let mut i = 0;
     while i < token_ids.len() {
         body_invariant!(i <= token_ids.len());
-        body_invariant!(nft.id() === old(nft.id()));
-        body_invariant!(forall( |class_id: PrefixedClassId, token_id: TokenId|
-        ( old(holds(Token(nft.id(), class_id, token_id))) == PermAmount::from(0) 
-        &&    holds(Token(nft.id(), class_id, token_id)) == PermAmount::from(0)) ==>
-            nft.get_owner(class_id, token_id) == old(nft.get_owner(class_id, token_id))));
         body_invariant!(
             forall(|j: usize| j < i ==>
                 nft.get_owner(class_id, token_ids.get(j)) == Some(packet.data.sender))
@@ -374,11 +364,6 @@ pub fn on_recv_packet(
     let mut i = 0;
     while i < token_ids.len() {
         body_invariant!(i <= token_ids.len());
-        body_invariant!(nft.id() === old(nft.id()));
-        body_invariant!(forall( |class_id: PrefixedClassId, token_id: TokenId|
-        ( old(holds(Token(nft.id(), class_id, token_id))) == PermAmount::from(0) 
-        &&    holds(Token(nft.id(), class_id, token_id)) == PermAmount::from(0)) ==>
-            nft.get_owner(class_id, token_id) == old(nft.get_owner(class_id, token_id))));
         body_invariant!(
             forall(|j: usize| j < i ==>
                 nft.get_owner(packet.get_recv_class_id(), token_ids.get(j)) == Some(receiver))
