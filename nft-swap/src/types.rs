@@ -350,15 +350,3 @@ impl PartialEq for Path {
 pub struct NFTPacketAcknowledgement {
     pub success: bool
 }
-
-#[extern_spec]
-impl <T> Option<T> {
-
-    #[pure]
-    fn contains<U>(&self, value: &U) -> bool 
-        where U: PartialEq<T>;
-
-    #[requires(matches!(self, Some(_)))]
-    #[pure]
-    fn unwrap(self) -> T;
-}
