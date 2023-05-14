@@ -11,7 +11,7 @@ pub struct Token(pub KeeperId, pub PrefixedClassId, pub TokenId);
 pub struct KeeperId(u32);
 
 #[macro_export]
-macro_rules! transfers_token {
+macro_rules! token_permission {
     ($nft:expr, $class_id:expr, $token_id:expr) => {
         resource(Token($nft.id(), $class_id, $token_id), 1)
     }
@@ -58,7 +58,7 @@ impl NFTKeeper {
 
     #[trusted]
     #[requires(self.get_owner(class_id, token_id) == None)]
-    #[ensures(transfers_token!(self, class_id, token_id))]
+    #[ensures(token_permission!(self, class_id, token_id))]
     #[ensures(self.get_owner(class_id, token_id) == Some(receiver))]
     pub fn mint(&mut self,
                 class_id: PrefixedClassId,
@@ -70,8 +70,8 @@ impl NFTKeeper {
     }
 
     #[trusted]
-    #[requires(transfers_token!(self, class_id, token_id))]
-    #[ensures(transfers_token!(self, class_id, token_id))]
+    #[requires(token_permission!(self, class_id, token_id))]
+    #[ensures(token_permission!(self, class_id, token_id))]
     #[ensures(self.get_owner(class_id, token_id) == Some(receiver))]
     pub fn transfer(&mut self,
                     class_id: PrefixedClassId,
@@ -81,7 +81,7 @@ impl NFTKeeper {
         unimplemented!()
     }
 
-    #[requires(transfers_token!(self, class_id, token_id))]
+    #[requires(token_permission!(self, class_id, token_id))]
     #[ensures(self.get_owner(class_id, token_id) == None)]
     #[trusted]
     pub fn burn(&mut self, class_id: PrefixedClassId, token_id: TokenId) {
@@ -134,12 +134,12 @@ fn make_packet_data(
 ))]
 #[requires(
     forall(|i : usize| i < token_ids.len() ==>
-        transfers_token!(nft, class_id, token_ids.get(i)))
+        token_permission!(nft, class_id, token_ids.get(i)))
 )]
 // It's a transfer to escrow locally, retain permission
 #[ensures(old(!class_id.path.starts_with(source_port, source_channel)) ==>
     forall(|i : usize| i < token_ids.len() ==>
-        transfers_token!(nft, class_id, token_ids.get(i)))
+        token_permission!(nft, class_id, token_ids.get(i)))
 )]
 #[ensures(
     forall(|i : usize| i < token_ids.len() ==>
@@ -179,10 +179,10 @@ pub fn send_nft(
         body_invariant!(
             if !class_id.path.starts_with(source_port, source_channel) {
                 forall(|j: usize| j < token_ids.len() ==>
-                    transfers_token!(nft, class_id, token_ids.get(j)))
+                    token_permission!(nft, class_id, token_ids.get(j)))
             } else {
                 forall(|j: usize| j >= i && j < token_ids.len() ==>
-                    transfers_token!(nft, class_id, token_ids.get(j)))
+                    token_permission!(nft, class_id, token_ids.get(j)))
             }
         );
         body_invariant!(forall(|j : usize| j < i ==>
@@ -228,7 +228,7 @@ macro_rules! implies {
 #[requires(
     !packet.data.class_id.path.starts_with(packet.source_port, packet.source_channel) ==>
     forall(|i : usize| i < packet.data.token_ids.len() ==>
-        transfers_token!(nft, packet.data.class_id, packet.data.token_ids.get(i)))
+        token_permission!(nft, packet.data.class_id, packet.data.token_ids.get(i)))
 )]
 #[requires(
     if !packet.data.class_id.path.starts_with(packet.source_port, packet.source_channel) {
@@ -245,7 +245,7 @@ macro_rules! implies {
 )]
 #[ensures(
     forall(|i : usize| i < packet.data.token_ids.len() ==>
-        transfers_token!(nft, packet.data.class_id, packet.data.token_ids.get(i)))
+        token_permission!(nft, packet.data.class_id, packet.data.token_ids.get(i)))
 )]
 fn refund_token(ctx: &Ctx, nft: &mut NFTKeeper, packet: &Packet) {
     let NFTPacketData { class_id, token_ids, token_uris, token_data, sender, ..} = packet.data;
@@ -259,10 +259,10 @@ fn refund_token(ctx: &Ctx, nft: &mut NFTKeeper, packet: &Packet) {
         body_invariant!(
             if !class_id.path.starts_with(packet.source_port, packet.source_channel) {
                 forall(|j: usize| j < token_ids.len() ==>
-                    transfers_token!(nft, class_id, token_ids.get(j)))
+                    token_permission!(nft, class_id, token_ids.get(j)))
             } else {
                 forall(|j: usize| j < i ==>
-                    transfers_token!(nft, class_id, token_ids.get(j)))
+                    token_permission!(nft, class_id, token_ids.get(j)))
             }
         );
         body_invariant!(
@@ -308,7 +308,7 @@ pub fn on_timeout_packet(ctx: &Ctx, nft: &mut NFTKeeper, packet: &Packet) {
 #[requires(
     packet.data.class_id.path.starts_with(packet.source_port, packet.source_channel) ==>
     forall(|i : usize| i < packet.data.token_ids.len() ==>
-        transfers_token!(
+        token_permission!(
             nft, 
             packet.data.class_id.drop_prefix(packet.source_port, packet.source_channel),
             packet.data.token_ids.get(i)
@@ -338,7 +338,7 @@ pub fn on_timeout_packet(ctx: &Ctx, nft: &mut NFTKeeper, packet: &Packet) {
 )]
 #[ensures(
     forall(|i : usize| i < old(packet.data).token_ids.len() ==>
-        transfers_token!(
+        token_permission!(
             nft,
             old(packet.get_recv_class_id()),
             packet.data.token_ids.get(i)
@@ -371,10 +371,10 @@ pub fn on_recv_packet(
         body_invariant!(
             if packet.is_source() {
                 forall(|j: usize| j < token_ids.len() ==>
-                    transfers_token!(nft, packet.get_recv_class_id(), token_ids.get(j)))
+                    token_permission!(nft, packet.get_recv_class_id(), token_ids.get(j)))
             } else {
                 forall(|j: usize| j < i ==>
-                    transfers_token!(nft, packet.get_recv_class_id(), token_ids.get(j)))
+                    token_permission!(nft, packet.get_recv_class_id(), token_ids.get(j)))
             }
         );
 

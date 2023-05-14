@@ -2,7 +2,7 @@
 use prusti_contracts::*;
 use crate::types::*;
 use crate::swap_resource::*;
-use crate::transfers_token;
+use crate::token_permission;
 
  /*
  * This method performs a round trip of a token from chain A --> B --> A,
@@ -22,12 +22,12 @@ use crate::transfers_token;
 ))]
 #[requires(
     forall(|i : usize| i < token_ids.len() ==>
-        transfers_token!(keeper1, class_id, token_ids.get(i)))
+        token_permission!(keeper1, class_id, token_ids.get(i)))
 )]
 #[requires(
     if class_id.path.starts_with(source_port, source_channel) {
         forall(|i : usize| i < token_ids.len() ==>
-            transfers_token!(keeper2, class_id.drop_prefix(source_port, source_channel), token_ids.get(i))) &&
+            token_permission!(keeper2, class_id.drop_prefix(source_port, source_channel), token_ids.get(i))) &&
         forall(|i : usize| i < token_ids.len() ==>
             keeper2.get_owner(
                 class_id.drop_prefix(source_port, source_channel), 
@@ -57,7 +57,7 @@ use crate::transfers_token;
  
  #[ensures(
     forall(|i : usize| i < token_ids.len() ==>
-        transfers_token!(keeper1, class_id, token_ids.get(i)))
+        token_permission!(keeper1, class_id, token_ids.get(i)))
  )]
  
  // Ensure that the resulting balance of both keeper accounts are unchanged after the round-trip
