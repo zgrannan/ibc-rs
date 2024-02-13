@@ -2,6 +2,7 @@
 use prusti_contracts::*;
 use crate::types::*;
 use crate::swap::*;
+#[cfg(feature="resource")]
 use crate::token_permission;
 
  /*
@@ -85,11 +86,11 @@ use crate::token_permission;
     forall(|i : usize| i < token_ids.len() ==>
         token_permission!(keeper1, class_id, token_ids.get(i)))
     ))]
- fn round_trip(
+ fn round_trip<T: NFTKeeper>(
      ctx1: &Ctx,
      ctx2: &Ctx,
-     keeper1: &mut NFTKeeper,
-     keeper2: &mut NFTKeeper,
+     keeper1: &mut T,
+     keeper2: &mut T,
      class_id: PrefixedClassId,
      token_ids: TokenIdVec,
      sender: AccountId,

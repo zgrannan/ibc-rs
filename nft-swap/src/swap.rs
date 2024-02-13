@@ -32,19 +32,17 @@ pub struct KeeperId(u32);
         // triggers = [(self.get_owner(class_id, token_id))]
 )))]
 #[cfg_attr(feature="resource", invariant_twostate(self.id() === old(self.id())))]
-pub struct NFTKeeper(u32);
-
-impl NFTKeeper {
+pub trait NFTKeeper {
 
     #[pure]
     #[trusted]
-    pub fn id(&self) -> KeeperId {
+    fn id(&self) -> KeeperId {
         unimplemented!()
     }
 
     #[pure]
     #[trusted]
-    pub fn get_owner(&self, class_id: PrefixedClassId, token_id: TokenId) -> Option<AccountId> {
+    fn get_owner(&self, class_id: PrefixedClassId, token_id: TokenId) -> Option<AccountId> {
         unimplemented!()
     }
 
@@ -53,7 +51,7 @@ impl NFTKeeper {
             (old(self.get_owner(class_id, token_id)) == self.get_owner(class_id, token_id))
     )))]
     #[trusted]
-    pub fn create_or_update_class(
+    fn create_or_update_class(
         &mut self,
         class_id: PrefixedClassId,
         class_uri: ClassUri,
@@ -73,7 +71,7 @@ impl NFTKeeper {
                 self.get_owner(class_id2, token_id2) == old(self.get_owner(class_id2, token_id2))
             }
     )))]
-    pub fn mint(&mut self,
+    fn mint(&mut self,
                 class_id: PrefixedClassId,
                 token_id: TokenId,
                 token_uri: TokenUri,
@@ -94,7 +92,7 @@ impl NFTKeeper {
                 self.get_owner(class_id2, token_id2) == old(self.get_owner(class_id2, token_id2))
             }
     )))]
-    pub fn transfer(&mut self,
+    fn transfer(&mut self,
                     class_id: PrefixedClassId,
                     token_id: TokenId,
                     receiver: AccountId,
@@ -113,27 +111,27 @@ impl NFTKeeper {
             }
     )))]
     #[trusted]
-    pub fn burn(&mut self, class_id: PrefixedClassId, token_id: TokenId) {
+    fn burn(&mut self, class_id: PrefixedClassId, token_id: TokenId) {
         unimplemented!()
     }
 
     #[pure]
     #[trusted]
-    pub fn get_nft(&self, class_id: PrefixedClassId, token_id: TokenId) -> NFT {
+    fn get_nft(&self, class_id: PrefixedClassId, token_id: TokenId) -> NFT {
         unimplemented!()
     }
 
     #[pure]
     #[trusted]
-    pub fn get_class(&self, class_id: PrefixedClassId) -> Class {
+    fn get_class(&self, class_id: PrefixedClassId) -> Class {
         unimplemented!()
     }
 }
 
 
 #[pure]
-fn make_packet_data(
-    nft: &NFTKeeper,
+fn make_packet_data<T: NFTKeeper>(
+    nft: &T,
     class_id: PrefixedClassId,
     token_ids: TokenIdVec,
     token_uris: TokenUriVec,
@@ -196,9 +194,9 @@ fn make_packet_data(
 #[ensures(result.source_channel === source_channel)]
 #[ensures(result.dest_port === ctx.counterparty_port(source_port, source_channel))]
 #[ensures(result.dest_channel === ctx.counterparty_channel(source_port, source_channel))]
-pub fn send_nft(
+pub fn send_nft<T: NFTKeeper>(
     ctx: &Ctx,
-    nft: &mut NFTKeeper,
+    nft: &mut T,
     class_id: PrefixedClassId,
     token_ids: TokenIdVec,
     sender: AccountId,
@@ -251,11 +249,11 @@ pub fn send_nft(
 }
 
 // I suppose we don't care
-fn refund_token(ctx: &Ctx, nft: &mut NFTKeeper, packet: &Packet) {
+fn refund_token<T: NFTKeeper>(ctx: &Ctx, nft: &mut T, packet: &Packet) {
 }
 
 // I supose we don't care
-pub fn on_timeout_packet(ctx: &Ctx, nft: &mut NFTKeeper, packet: &Packet) {
+fn on_timeout_packet<T: NFTKeeper>(ctx: &Ctx, nft: &mut T, packet: &Packet) {
     refund_token(ctx, nft, packet);
 }
 
@@ -320,9 +318,9 @@ pub fn on_timeout_packet(ctx: &Ctx, nft: &mut NFTKeeper, packet: &Packet) {
             nft.get_owner(class_id2, token_id2) == old(nft.get_owner(class_id2, token_id2))
 )))]
 #[ensures(result.success)]
-pub fn on_recv_packet(
+pub fn on_recv_packet<T: NFTKeeper>(
     ctx: &Ctx,
-    nft: &mut NFTKeeper,
+    nft: &mut T,
     packet: &Packet,
     topology: &Topology
 ) -> NFTPacketAcknowledgement {
@@ -374,9 +372,9 @@ pub fn on_recv_packet(
     forall(|class_id: PrefixedClassId, token_id: TokenId|
         (old(nft.get_owner(class_id, token_id)) == nft.get_owner(class_id, token_id))
 ))]
-pub fn on_acknowledge_packet(
+pub fn on_acknowledge_packet<T: NFTKeeper>(
     ctx: &Ctx,
-    nft: &mut NFTKeeper,
+    nft: &mut T,
     ack: NFTPacketAcknowledgement,
     packet: &Packet) {
     // if(!ack.success) {
