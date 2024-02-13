@@ -9,3 +9,7 @@ edition = "2021"
 
 [dependencies]
 prusti-contracts = { path = "/Users/zgrannan/prusti-dev/prusti-contracts/prusti-contracts" }
+
+[features]
+default = ["resource"]
+resource = []

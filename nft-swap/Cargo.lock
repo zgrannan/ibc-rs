@@ -4,14 +4,14 @@ version = 3
 
 [[package]]
 name = "prusti-contracts"
-version = "0.1.6"
+version = "0.2.0"
 dependencies = [
  "prusti-contracts-proc-macros",
 ]
 
 [[package]]
 name = "prusti-contracts-proc-macros"
-version = "0.1.6"
+version = "0.2.0"
 
 [[package]]
 name = "token-swap"
