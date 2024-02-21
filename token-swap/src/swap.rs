@@ -3,12 +3,11 @@ use std::path::Prefix;
 
 use prusti_contracts::*;
 
-use crate::types::*;
 use crate::implies;
+use crate::types::*;
 pub struct BankKeeper(u32);
 
 impl BankKeeper {
-
     #[pure]
     #[trusted]
     pub fn unescrowed_coin_balance(&self, coin: BaseDenom) -> Amount {
@@ -21,7 +20,7 @@ impl BankKeeper {
         unimplemented!()
     }
 
-    // SEND_SPEC_LINES_START
+    // SEND_SPEC_START
     predicate! {
         pub fn transfer_tokens_post(
             &self,
@@ -30,8 +29,7 @@ impl BankKeeper {
             to: AccountId,
             coin: &PrefixedCoin
         ) -> bool {
-        // SEND_SPEC_EXPR_START
-            self.unescrowed_coin_balance(coin.denom.base_denom) == 
+            self.unescrowed_coin_balance(coin.denom.base_denom) ==
                 if (is_escrow_account(to) && !is_escrow_account(from)) {
                     old_bank.unescrowed_coin_balance(coin.denom.base_denom) - coin.amount
                 } else if (!is_escrow_account(to) && is_escrow_account(from)) {
@@ -39,50 +37,40 @@ impl BankKeeper {
                 } else {
                     old_bank.unescrowed_coin_balance(coin.denom.base_denom)
                 } &&
-        forall(|acct_id2: AccountId, denom2: PrefixedDenom|
-            self.balance_of(acct_id2, denom2) ==
-                if(acct_id2 == from && coin.denom == denom2) {
-                    old_bank.balance_of(from, coin.denom) - coin.amount
-                } else if (acct_id2 == to && coin.denom == denom2){
-                    old_bank.balance_of(to, coin.denom) + coin.amount
-                } else {
-                    old_bank.balance_of(acct_id2, denom2)
-                }
-        ) && forall(|c: BaseDenom| implies!(c != coin.denom.base_denom,
-            self.unescrowed_coin_balance(c) == old_bank.unescrowed_coin_balance(c)
+            forall(|acct_id2: AccountId, denom2: PrefixedDenom|
+                self.balance_of(acct_id2, denom2) ==
+                    if(acct_id2 == from && coin.denom == denom2) {
+                        old_bank.balance_of(from, coin.denom) - coin.amount
+                    } else if (acct_id2 == to && coin.denom == denom2){
+                        old_bank.balance_of(to, coin.denom) + coin.amount
+                    } else {
+                        old_bank.balance_of(acct_id2, denom2)
+                    }
+            ) && forall(|c: BaseDenom| implies!(c != coin.denom.base_denom,
+                self.unescrowed_coin_balance(c) == old_bank.unescrowed_coin_balance(c)
+                )
             )
-        )
-        // SEND_SPEC_EXPR_END
-        }}
+        }
+    }
+    // SEND_SPEC_END
 
     #[pure]
-    pub fn transfer_tokens_pre(
-        &self,
-        from: AccountId,
-        to: AccountId,
-        coin: &PrefixedCoin,
-    ) -> bool {
-        // SEND_SPEC_EXPR_START
+    // SEND_SPEC_START
+    pub fn transfer_tokens_pre(&self, from: AccountId, to: AccountId, coin: &PrefixedCoin) -> bool {
         from != to && self.balance_of(from, coin.denom) >= coin.amount
-        // SEND_SPEC_EXPR_END
     }
-    // SEND_SPEC_LINES_END
+    // SEND_SPEC_END
 
-    // SEND_SPEC_ANNOTATIONS_START
+    // SEND_SPEC_START
     #[requires(self.transfer_tokens_pre(from, to, coin))]
     #[ensures(self.transfer_tokens_post(old(self), from, to, coin))]
-    // SEND_SPEC_ANNOTATIONS_END
-    fn transfer_tokens(
-        &mut self,
-        from: AccountId,
-        to: AccountId,
-        coin: &PrefixedCoin
-    ) {
+    // SEND_SPEC_END
+    fn transfer_tokens(&mut self, from: AccountId, to: AccountId, coin: &PrefixedCoin) {
         self.burn_tokens(from, coin);
         self.mint_tokens(to, coin);
     }
 
-    // BURN_SPEC_LINES_START
+    // BURN_SPEC_START
     predicate! {
         fn burn_tokens_post(
             &self,
@@ -90,7 +78,6 @@ impl BankKeeper {
             acct_id: AccountId,
             coin: &PrefixedCoin
         ) -> bool {
-            // BURN_SPEC_EXPR_START
             if is_escrow_account(acct_id) {
               self.unescrowed_coin_balance(coin.denom.base_denom) ==
                 old_bank.unescrowed_coin_balance(coin.denom.base_denom)
@@ -104,24 +91,23 @@ impl BankKeeper {
                 } else {
                     old_bank.balance_of(acct_id2, denom)
                 }
-            ) && forall(|d: BaseDenom| 
+            ) && forall(|d: BaseDenom|
                 implies!(d != coin.denom.base_denom, self.unescrowed_coin_balance(d) == old_bank.unescrowed_coin_balance(d))
             )
-            // BURN_SPEC_EXPR_END
         }
     }
-    // BURN_SPEC_LINES_END
+    // BURN_SPEC_END
 
-    // BURN_SPEC_ANNOTATIONS_START
+    // BURN_SPEC_START
     #[requires(self.balance_of(to, coin.denom) >= coin.amount)]
     #[ensures(self.burn_tokens_post(old(self), to, coin))]
-    // BURN_SPEC_ANNOTATIONS_END
+    // BURN_SPEC_END
     #[trusted]
     fn burn_tokens(&mut self, to: AccountId, coin: &PrefixedCoin) {
         unimplemented!()
     }
 
-    // MINT_SPEC_LINES_START
+    // MINT_SPEC_START
     predicate! {
         fn mint_tokens_post(
             &self,
@@ -129,7 +115,6 @@ impl BankKeeper {
             acct_id: AccountId,
             coin: &PrefixedCoin
         ) -> bool {
-            // MINT_SPEC_EXPR_START
             if is_escrow_account(acct_id) {
               self.unescrowed_coin_balance(coin.denom.base_denom) ==
                 old_bank.unescrowed_coin_balance(coin.denom.base_denom)
@@ -146,15 +131,13 @@ impl BankKeeper {
             ) && forall(|d: BaseDenom| implies!(d != coin.denom.base_denom,
                 self.unescrowed_coin_balance(d) == old_bank.unescrowed_coin_balance(d))
             )
-            // MINT_SPEC_EXPR_END
         }
     }
-    // MINT_SPEC_LINES_END
+    // MINT_SPEC_END
 
-    // MINT_SPEC_ANNOTATIONS_START
+    // MINT_SPEC_START
     #[ensures(self.mint_tokens_post(old(self), to, coin))]
-    // MINT_SPEC_ANNOTATIONS_END
-    // PROPSPEC_STOP
+    // MINT_SPEC_END
     #[ensures(result)]
     #[trusted]
     fn mint_tokens(&mut self, to: AccountId, coin: &PrefixedCoin) -> bool {
@@ -166,7 +149,7 @@ impl BankKeeper {
 #[requires(!is_escrow_account(sender))]
 #[requires(is_well_formed(coin.denom.trace_path, ctx, topology))]
 // PROPSPEC_START
-// SEND_FUNGIBLE_TOKENS_SPEC_ANNOTATIONS_START
+// SEND_FUNGIBLE_TOKENS_SPEC_START
 #[requires(bank.balance_of(sender, coin.denom) >= coin.amount)]
 #[ensures(
    if !coin.denom.trace_path.starts_with(source_port, source_channel) {
@@ -180,7 +163,7 @@ impl BankKeeper {
         bank.burn_tokens_post(old(bank), sender, coin)
    }
 )]
-// SEND_FUNGIBLE_TOKENS_SPEC_ANNOTATIONS_END
+// SEND_FUNGIBLE_TOKENS_SPEC_END
 // PROPSPEC_STOP
 #[ensures(
     result == mk_packet(
@@ -198,14 +181,14 @@ pub fn send_fungible_tokens(
     receiver: AccountId,
     source_port: Port,
     source_channel: ChannelEnd,
-    topology: &Topology
+    topology: &Topology,
 ) -> Packet {
-    if !coin.denom.trace_path.starts_with(source_port, source_channel) {
-        bank.transfer_tokens(
-            sender,
-            ctx.escrow_address(source_channel),
-            coin
-        );
+    if !coin
+        .denom
+        .trace_path
+        .starts_with(source_port, source_channel)
+    {
+        bank.transfer_tokens(sender, ctx.escrow_address(source_channel), coin);
     } else {
         bank.burn_tokens(sender, coin);
     };
@@ -214,7 +197,7 @@ pub fn send_fungible_tokens(
         denom: coin.denom,
         sender,
         receiver,
-        amount: coin.amount
+        amount: coin.amount,
     };
     mk_packet(ctx, source_port, source_channel, data)
 }
@@ -231,13 +214,13 @@ pub fn on_timeout_packet(ctx: &Ctx, bank: &mut BankKeeper, packet: &Packet) {
 predicate! {
     fn refund_tokens_post(ctx: &Ctx, bank: &BankKeeper, old_bank: &BankKeeper, packet: &Packet) -> bool {
         let coin = &PrefixedCoin { denom: packet.data.denom, amount: packet.data.amount };
-        if !packet.data.denom.trace_path.starts_with(packet.source_port, packet.source_channel) {  
+        if !packet.data.denom.trace_path.starts_with(packet.source_port, packet.source_channel) {
             bank.transfer_tokens_post(
                 old_bank,
                 ctx.escrow_address(packet.source_channel),
                 packet.data.sender,
                 coin
-            ) 
+            )
         } else {
             bank.mint_tokens_post(
                 old_bank,
@@ -263,21 +246,25 @@ predicate! {
 #[ensures(refund_tokens_post(ctx, bank, old(bank), packet))]
 // PROPSPEC_STOP
 fn refund_tokens(ctx: &Ctx, bank: &mut BankKeeper, packet: &Packet) {
-    let FungibleTokenPacketData{ denom, sender, amount, ..} = packet.data;
-    if !denom.trace_path.starts_with(packet.source_port, packet.source_channel) {
+    let FungibleTokenPacketData {
+        denom,
+        sender,
+        amount,
+        ..
+    } = packet.data;
+    if !denom
+        .trace_path
+        .starts_with(packet.source_port, packet.source_channel)
+    {
         bank.transfer_tokens(
             ctx.escrow_address(packet.source_channel),
             sender,
-            &PrefixedCoin { denom, amount }
+            &PrefixedCoin { denom, amount },
         );
     } else {
-        bank.mint_tokens(
-            sender,
-            &PrefixedCoin { denom, amount }
-        );
+        bank.mint_tokens(sender, &PrefixedCoin { denom, amount });
     }
 }
-
 
 #[requires(
     is_well_formed(
@@ -298,7 +285,7 @@ fn refund_tokens(ctx: &Ctx, bank: &mut BankKeeper, packet: &Packet) {
       packet.data.denom.trace_path.head_channel(),
 ))]
 // PROPSPEC_START
-// ON_RECV_PACKET_SPEC_ANNOTATIONS_START
+// ON_RECV_PACKET_SPEC_START
 #[requires(implies!(packet.is_source(),
     bank.transfer_tokens_pre(
         ctx.escrow_address(packet.dest_channel),
@@ -318,14 +305,14 @@ fn refund_tokens(ctx: &Ctx, bank: &mut BankKeeper, packet: &Packet) {
         bank.mint_tokens_post(old(bank), packet.data.receiver, &packet.get_recv_coin())
     }
 )]
-// ON_RECV_PACKET_SPEC_ANNOTATIONS_END
+// ON_RECV_PACKET_SPEC_END
 // PROPSPEC_STOP
 #[ensures(result.success)]
 #[ensures(
     !packet.is_source() ==>
         is_well_formed(
             packet.data.denom.trace_path.prepend_prefix(
-                packet.dest_port, 
+                packet.dest_port,
                 packet.dest_channel
             ),
             ctx,
@@ -335,14 +322,14 @@ pub fn on_recv_packet(
     ctx: &Ctx,
     bank: &mut BankKeeper,
     packet: &Packet,
-    topology: &Topology
+    topology: &Topology,
 ) -> FungibleTokenPacketAcknowledgement {
     let coin = packet.get_recv_coin();
     if packet.is_source() {
         bank.transfer_tokens(
             ctx.escrow_address(packet.dest_channel),
             packet.data.receiver,
-            &coin
+            &coin,
         );
     } else {
         bank.mint_tokens(packet.data.receiver, &coin);
@@ -364,8 +351,9 @@ pub fn on_acknowledge_packet(
     ctx: &Ctx,
     bank: &mut BankKeeper,
     ack: FungibleTokenPacketAcknowledgement,
-    packet: &Packet) {
-    if(!ack.success) {
+    packet: &Packet,
+) {
+    if (!ack.success) {
         refund_tokens(ctx, bank, packet);
     }
 }

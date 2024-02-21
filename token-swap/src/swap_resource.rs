@@ -8,24 +8,24 @@ use crate::implies;
 // INVARIANTS_RESOURCE_SPEC_START
 #[invariant_twostate(
     forall(|acct_id: AccountId, denom: PrefixedDenom|
-        holds(Money(self.id(), acct_id, denom)) - 
+        holds(Money(self.id(), acct_id, denom)) -
         old(holds(Money(self.id(), acct_id, denom))) ==
-        PermAmount::from(self.balance_of(acct_id, denom)) - 
+        PermAmount::from(self.balance_of(acct_id, denom)) -
             PermAmount::from(old(self.balance_of(acct_id, denom)))
     ))
 ]
 #[invariant_twostate(
     forall(|coin: BaseDenom|
-        holds(UnescrowedCoins(self.id(), coin)) - 
+        holds(UnescrowedCoins(self.id(), coin)) -
         old(holds(UnescrowedCoins(self.id(), coin))) ==
-        PermAmount::from(self.unescrowed_coin_balance(coin)) - 
+        PermAmount::from(self.unescrowed_coin_balance(coin)) -
             PermAmount::from(old(self.unescrowed_coin_balance(coin)))
     ))
 ]
 #[invariant(
     forall(|acct_id: AccountId, denom: PrefixedDenom|
         PermAmount::from(self.balance_of(acct_id, denom)) >=
-        holds(Money(self.id(), acct_id, denom)) 
+        holds(Money(self.id(), acct_id, denom))
     ))]
 // INVARIANTS_RESOURCE_SPEC_END
 pub struct BankKeeper(u32);
@@ -46,13 +46,13 @@ pub struct UnescrowedCoins(pub BankID, pub BaseDenom);
 #[macro_export]
 macro_rules! transfer_money {
     ($bank_id:expr, $to:expr, $coin:expr) => {
-    // MACRO_RESOURCE_SPEC_EXPR_START
-    resource(Money($bank_id, $to, $coin.denom), $coin.amount) && 
-        implies!( 
+    // MACRO_RESOURCE_SPEC_START
+    resource(Money($bank_id, $to, $coin.denom), $coin.amount) &&
+        implies!(
             !is_escrow_account($to),
             resource(UnescrowedCoins($bank_id, $coin.denom.base_denom), $coin.amount)
         )
-    // MACRO_RESOURCE_SPEC_EXPR_END
+    // MACRO_RESOURCE_SPEC_END
     }
 }
 //PROPSPEC_STOP
@@ -124,7 +124,7 @@ impl BankKeeper {
 //PROPSPEC_START RESOURCE_OP
 // SEND_FUNGIBLE_TOKENS_RESOURCE_SPEC_START
 #[requires(transfer_money!(bank.id(), sender, coin))]
-#[ensures(implies!(!coin.denom.trace_path.starts_with(source_port, source_channel), 
+#[ensures(implies!(!coin.denom.trace_path.starts_with(source_port, source_channel),
     transfer_money!(bank.id(), ctx.escrow_address(source_channel), coin)))]
 // SEND_FUNGIBLE_TOKENS_RESOURCE_SPEC_END
 //PROPSPEC_STOP
@@ -185,8 +185,8 @@ macro_rules! refund_tokens_pre {
 macro_rules! refund_tokens_post {
     ($bank:expr, $packet:expr) => {
         transfer_money!(
-            $bank.id(), 
-            $packet.data.sender, 
+            $bank.id(),
+            $packet.data.sender,
             PrefixedCoin {
                 denom: $packet.data.denom,
                 amount: $packet.data.amount
@@ -225,16 +225,16 @@ pub fn on_timeout_packet(ctx: &Ctx, bank: &mut BankKeeper, packet: &Packet) {
 #[requires(packet.data.receiver != ctx.escrow_address(packet.dest_channel))]
 #[requires(
     is_well_formed(
-        packet.data.denom.trace_path, 
+        packet.data.denom.trace_path,
         topology.ctx_at(
-            ctx, 
+            ctx,
             packet.dest_port,
             packet.dest_channel
         ),
         topology
     )
 )]
-#[requires(!packet.is_source() && !packet.data.denom.trace_path.is_empty() ==> 
+#[requires(!packet.is_source() && !packet.data.denom.trace_path.is_empty() ==>
     !ctx.has_channel(
       packet.dest_port,
       packet.dest_channel,
@@ -245,7 +245,7 @@ pub fn on_timeout_packet(ctx: &Ctx, bank: &mut BankKeeper, packet: &Packet) {
 // ON_RECV_PACKET_RESOURCE_SPEC_START
 #[requires(implies!(packet.is_source(), transfer_money!(
     bank.id(),
-    ctx.escrow_address(packet.dest_channel), 
+    ctx.escrow_address(packet.dest_channel),
     packet.get_recv_coin()
 )))]
 #[ensures(transfer_money!(bank.id(), packet.data.receiver, packet.get_recv_coin()))]
@@ -263,8 +263,8 @@ pub fn on_timeout_packet(ctx: &Ctx, bank: &mut BankKeeper, packet: &Packet) {
 )]
 #[ensures(result.success)]
 pub fn on_recv_packet(
-    ctx: &Ctx, 
-    bank: &mut BankKeeper, 
+    ctx: &Ctx,
+    bank: &mut BankKeeper,
     packet: &Packet,
     topology: &Topology
 ) -> FungibleTokenPacketAcknowledgement {

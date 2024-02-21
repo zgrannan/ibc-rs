@@ -3,37 +3,51 @@ use prusti_contracts::*;
 
 use crate::types::*;
 
-#[cfg(feature="resource")]
-#[resource_kind]
-pub struct Token(pub KeeperId, pub PrefixedClassId, pub TokenId);
-
-#[cfg(feature="resource")]
+/*
+ * This macro is used in specifications instead of Prusti's ==> syntax, because
+ * The program used to calculate syntactic complexity only supports Rust syntax for AST
+ */
 #[macro_export]
-macro_rules! token_permission {
-    ($nft:expr, $class_id:expr, $token_id:expr) => {
-        resource(Token($nft.id(), $class_id, $token_id), 1)
-    }
-}
-
 macro_rules! implies {
     ($lhs:expr, $rhs:expr) => {
-        if $lhs { $rhs } else { true }
+        if $lhs {
+            $rhs
+        } else {
+            true
+        }
     };
 }
 
-#[derive(Copy, Clone)]
+#[cfg(feature = "resource")]
+#[resource_kind]
+pub struct Token(pub KeeperId, pub PrefixedClassId, pub TokenId);
+
+#[cfg(feature = "resource")]
+#[macro_export]
+// MACRO_RESOURCE_SPEC_START
+macro_rules! token_permission {
+    ($nft:expr, $class_id:expr, $token_id:expr) => {
+        resource(Token($nft.id(), $class_id, $token_id), 1)
+    };
+}
+// MACRO_RESOURCE_SPEC_END
+
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub struct KeeperId(u32);
 
-#[cfg_attr(feature="resource", invariant_twostate(
-    forall( |class_id: PrefixedClassId, token_id: TokenId|
-    ( old(holds(Token(self.id(), class_id, token_id))) == PermAmount::from(0)
-    &&    holds(Token(self.id(), class_id, token_id)) == PermAmount::from(0)) ==>
+// INVARIANTS_RESOURCE_SPEC_START
+#[cfg_attr(
+    feature="resource",
+    invariant_twostate(
+        (forall( |class_id: PrefixedClassId, token_id: TokenId|
+            implies!( old(holds(Token(self.id(), class_id, token_id))) == PermAmount::from(0)
+                &&    holds(Token(self.id(), class_id, token_id)) == PermAmount::from(0),
         self.get_owner(class_id, token_id) == old(self.get_owner(class_id, token_id))
         // triggers = [(self.get_owner(class_id, token_id))]
-)))]
-#[cfg_attr(feature="resource", invariant_twostate(self.id() === old(self.id())))]
+)))))]
+#[cfg_attr(feature="resource", invariant_twostate(self.id() == old(self.id())))]
+// INVARIANTS_RESOURCE_SPEC_END
 pub trait NFTKeeper {
-
     #[pure]
     #[trusted]
     fn id(&self) -> KeeperId {
@@ -46,23 +60,31 @@ pub trait NFTKeeper {
         unimplemented!()
     }
 
+    // CREATE_OR_UPDATE_CLASS_SPEC_START
     #[cfg_attr(not(feature="resource"), ensures(
         forall(|class_id: PrefixedClassId, token_id: TokenId|
             (old(self.get_owner(class_id, token_id)) == self.get_owner(class_id, token_id))
     )))]
+    // CREATE_OR_UPDATE_CLASS_SPEC_END
     #[trusted]
     fn create_or_update_class(
         &mut self,
         class_id: PrefixedClassId,
         class_uri: ClassUri,
-        class_data: ClassData) {
+        class_data: ClassData,
+    ) {
         unimplemented!()
     }
 
     #[trusted]
+    // MINT_COMMON_SPEC_START
     #[requires(self.get_owner(class_id, token_id) == None)]
+    // MINT_COMMON_SPEC_END
+    // MINT_RESOURCE_SPEC_START
     #[cfg_attr(feature="resource", ensures(token_permission!(self, class_id, token_id)))]
     #[cfg_attr(feature="resource", ensures(self.get_owner(class_id, token_id) == Some(receiver)))]
+    // MINT_RESOURCE_SPEC_END
+    // MINT_SPEC_START
     #[cfg_attr(not(feature="resource"), ensures(
         forall(|class_id2: PrefixedClassId, token_id2: TokenId|
             if (class_id2 == class_id && token_id2 == token_id) {
@@ -71,19 +93,23 @@ pub trait NFTKeeper {
                 self.get_owner(class_id2, token_id2) == old(self.get_owner(class_id2, token_id2))
             }
     )))]
-    fn mint(&mut self,
-                class_id: PrefixedClassId,
-                token_id: TokenId,
-                token_uri: TokenUri,
-                token_data: TokenData,
-                receiver: AccountId) {
-        unimplemented!()
-    }
+    // MINT_SPEC_END
+    fn mint(
+        &mut self,
+        class_id: PrefixedClassId,
+        token_id: TokenId,
+        token_uri: TokenUri,
+        token_data: TokenData,
+        receiver: AccountId,
+    );
 
     #[trusted]
+    // TRANSFER_RESOURCE_SPEC_START
     #[cfg_attr(feature="resource", requires(token_permission!(self, class_id, token_id)))]
     #[cfg_attr(feature="resource", ensures(token_permission!(self, class_id, token_id)))]
     #[cfg_attr(feature="resource", ensures(self.get_owner(class_id, token_id) == Some(receiver)))]
+    // TRANSFER_RESOURCE_SPEC_END
+    // TRANSFER_SPEC_START
     #[cfg_attr(not(feature="resource"), ensures(
         forall(|class_id2: PrefixedClassId, token_id2: TokenId|
             if (class_id2 == class_id && token_id2 == token_id) {
@@ -92,16 +118,20 @@ pub trait NFTKeeper {
                 self.get_owner(class_id2, token_id2) == old(self.get_owner(class_id2, token_id2))
             }
     )))]
-    fn transfer(&mut self,
-                    class_id: PrefixedClassId,
-                    token_id: TokenId,
-                    receiver: AccountId,
-                    token_data: Option<TokenData>) {
-        unimplemented!()
-    }
+    // TRANSFER_SPEC_END
+    fn transfer(
+        &mut self,
+        class_id: PrefixedClassId,
+        token_id: TokenId,
+        receiver: AccountId,
+        token_data: Option<TokenData>,
+    );
 
+    // BURN_RESOURCE_SPEC_START
     #[cfg_attr(feature="resource", requires(token_permission!(self, class_id, token_id)))]
     #[cfg_attr(feature="resource", ensures(self.get_owner(class_id, token_id) == None))]
+    // BURN_RESOURCE_SPEC_END
+    // BURN_SPEC_START
     #[cfg_attr(not(feature="resource"), ensures(
         forall(|class_id2: PrefixedClassId, token_id2: TokenId|
             if (class_id2 == class_id && token_id2 == token_id) {
@@ -110,6 +140,7 @@ pub trait NFTKeeper {
                 self.get_owner(class_id2, token_id2) == old(self.get_owner(class_id2, token_id2))
             }
     )))]
+    // BURN_SPEC_END
     #[trusted]
     fn burn(&mut self, class_id: PrefixedClassId, token_id: TokenId) {
         unimplemented!()
@@ -128,7 +159,6 @@ pub trait NFTKeeper {
     }
 }
 
-
 #[pure]
 fn make_packet_data<T: NFTKeeper>(
     nft: &T,
@@ -137,7 +167,7 @@ fn make_packet_data<T: NFTKeeper>(
     token_uris: TokenUriVec,
     token_data: TokenDataVec,
     sender: AccountId,
-    receiver: AccountId
+    receiver: AccountId,
 ) -> NFTPacketData {
     NFTPacketData {
         class_id,
@@ -147,43 +177,52 @@ fn make_packet_data<T: NFTKeeper>(
         token_data,
         token_uris,
         sender,
-        receiver
+        receiver,
     }
 }
 
+// SEND_NFT_COMMON_SPEC_START
 #[requires(
-    forall(|i : usize| i < token_ids.len() ==>
-        nft.get_owner(class_id, token_ids.get(i)) == Some(sender)
+    forall(|i : usize| implies!(i < token_ids.len(),
+        nft.get_owner(class_id, token_ids.get(i)) == Some(sender))
 ))]
 #[requires(
-    forall(|i : usize, j: usize| i < token_ids.len() && j < i ==>
-        token_ids.get(i) != token_ids.get(j)
+    forall(|i : usize, j: usize| implies!(i < token_ids.len() && j < i,
+        token_ids.get(i) != token_ids.get(j))
 ))]
+// SEND_NFT_COMMON_SPEC_END
 #[cfg_attr(feature="resource", requires(
-    forall(|i : usize| i < token_ids.len() ==>
-        token_permission!(nft, class_id, token_ids.get(i)))
+    forall(|i : usize| implies!(i < token_ids.len(),
+        token_permission!(nft, class_id, token_ids.get(i))))
 ))]
 // It's a transfer to escrow locally, retain permission
-#[cfg_attr(feature="resource", ensures(old(!class_id.path.starts_with(source_port, source_channel)) ==>
-    forall(|i : usize| i < token_ids.len() ==>
-        token_permission!(nft, class_id, token_ids.get(i)))
+// SEND_NFT_RESOURCE_SPEC_START
+#[cfg_attr(feature="resource", ensures(
+    implies!(old(!class_id.path.starts_with(source_port, source_channel)),
+    forall(|i : usize| implies!(i < token_ids.len(),
+        token_permission!(nft, class_id, token_ids.get(i)))))
 ))]
+// SEND_NFT_RESOURCE_SPEC_END
+// SEND_NFT_COMMON_SPEC_START
 #[ensures(
-    forall(|i : usize| i < token_ids.len() ==>
+    forall(|i : usize| implies!(i < token_ids.len(),
         if old(class_id.path.starts_with(source_port, source_channel)) {
             nft.get_owner(class_id, token_ids.get(i)) == None
         } else {
             nft.get_owner(class_id, token_ids.get(i)) == Some(ctx.escrow_address(source_channel))
         }
     )
-)]
+))]
+// SEND_NFT_COMMON_SPEC_END
+// SEND_NFT_SPEC_START
 #[cfg_attr(not(feature="resource"), ensures(
     forall(|class_id2: PrefixedClassId, token_id2: TokenId|
-        (class_id2 != class_id || forall(
-            |i: usize| i < token_ids.len() ==> token_ids.get(i) != token_id2
-        )) ==>
-            nft.get_owner(class_id2, token_id2) == old(nft.get_owner(class_id2, token_id2))
+        implies!((class_id2 != class_id || forall(
+            |i: usize| implies!(i < token_ids.len(), token_ids.get(i) != token_id2)
+        )),
+            nft.get_owner(class_id2, token_id2) == old(nft.get_owner(class_id2, token_id2)))
 )))]
+// SEND_NFT_SPEC_END
 #[ensures(result.data.token_ids.len() == result.data.token_uris.len())]
 #[ensures(result.data.token_ids.len() == result.data.token_data.len())]
 #[ensures(result.data.token_ids === token_ids)]
@@ -203,38 +242,45 @@ pub fn send_nft<T: NFTKeeper>(
     receiver: AccountId,
     source_port: Port,
     source_channel: ChannelEnd,
-    topology: &Topology
+    topology: &Topology,
 ) -> Packet {
     let mut i = 0;
     let mut token_uris = TokenUriVec::new();
     let mut token_data = TokenDataVec::new();
     while i < token_ids.len() {
         body_invariant!(i < token_ids.len());
-        #[cfg(feature="resource")]
-        body_invariant!(
-            if !class_id.path.starts_with(source_port, source_channel) {
-                forall(|j: usize| j < token_ids.len() ==>
-                    token_permission!(nft, class_id, token_ids.get(j)))
-            } else {
-                forall(|j: usize| j >= i && j < token_ids.len() ==>
-                    token_permission!(nft, class_id, token_ids.get(j)))
-            }
-        );
-        body_invariant!(forall(|j : usize| j < i ==>
+        #[cfg(feature = "resource")]
+        // SEND_NFT_RESOURCE_SPEC_START
+        body_invariant!(if !class_id.path.starts_with(source_port, source_channel) {
+            forall(|j: usize| {
+                implies!(
+                    j < token_ids.len(),
+                    token_permission!(nft, class_id, token_ids.get(j))
+                )
+            })
+        } else {
+            forall(|j: usize| {
+                implies!(
+                    j >= i && j < token_ids.len(),
+                    token_permission!(nft, class_id, token_ids.get(j))
+                )
+            })
+        });
+        // SEND_NFT_RESOURCE_SPEC_END
+        // SEND_NFT_COMMON_SPEC_START
+        body_invariant!(forall(|j: usize| implies!(
+            j < i,
             if old(class_id.path.starts_with(source_port, source_channel)) {
                 nft.get_owner(class_id, token_ids.get(j)) == None
             } else {
-                nft.get_owner(class_id, token_ids.get(j)) == Some(ctx.escrow_address(source_channel))
+                nft.get_owner(class_id, token_ids.get(j))
+                    == Some(ctx.escrow_address(source_channel))
             }
-        ));
+        )));
+        // SEND_NFT_COMMON_SPEC_END
         let token_id = token_ids.get(i);
         if !class_id.path.starts_with(source_port, source_channel) {
-            nft.transfer(
-                class_id,
-                token_id,
-                ctx.escrow_address(source_channel),
-                None
-            );
+            nft.transfer(class_id, token_id, ctx.escrow_address(source_channel), None);
         } else {
             nft.burn(class_id, token_id);
         };
@@ -244,124 +290,165 @@ pub fn send_nft<T: NFTKeeper>(
         i += 1;
     }
 
-    let data = make_packet_data(nft, class_id, token_ids, token_uris, token_data, sender, receiver);
+    let data = make_packet_data(
+        nft, class_id, token_ids, token_uris, token_data, sender, receiver,
+    );
     mk_packet(ctx, source_port, source_channel, data)
 }
 
 // I suppose we don't care
-fn refund_token<T: NFTKeeper>(ctx: &Ctx, nft: &mut T, packet: &Packet) {
-}
+fn refund_token<T: NFTKeeper>(ctx: &Ctx, nft: &mut T, packet: &Packet) {}
 
 // I supose we don't care
 fn on_timeout_packet<T: NFTKeeper>(ctx: &Ctx, nft: &mut T, packet: &Packet) {
     refund_token(ctx, nft, packet);
 }
 
+// ON_RECV_PACKET_COMMON_SPEC_START
 #[requires(
-    forall(|i : usize, j: usize| i < packet.data.token_ids.len() && j < i ==>
-        packet.data.token_ids.get(i) != packet.data.token_ids.get(j)
+    forall(|i : usize, j: usize| implies!(i < packet.data.token_ids.len() && j < i,
+        packet.data.token_ids.get(i) != packet.data.token_ids.get(j))
 ))]
 #[requires(packet.data.token_ids.len() == packet.data.token_uris.len())]
 #[requires(packet.data.token_ids.len() == packet.data.token_data.len())]
-#[cfg_attr(feature="resource", requires(
-    packet.data.class_id.path.starts_with(packet.source_port, packet.source_channel) ==>
-    forall(|i : usize| i < packet.data.token_ids.len() ==>
-        token_permission!(
-            nft,
-            packet.data.class_id.drop_prefix(packet.source_port, packet.source_channel),
-            packet.data.token_ids.get(i)
-        )
-    )
-))]
 #[requires(
     if packet.data.class_id.path.starts_with(packet.source_port, packet.source_channel) {
-        forall(|i : usize| i < packet.data.token_ids.len() ==>
+        forall(|i : usize| implies!(i < packet.data.token_ids.len(),
             nft.get_owner(
                 packet.data.class_id.drop_prefix(
                     packet.source_port,
                     packet.source_channel
                 ),
                 packet.data.token_ids.get(i)
-            ) == Some(ctx.escrow_address(packet.dest_channel)))
+            ) == Some(ctx.escrow_address(packet.dest_channel))))
     } else {
-        forall(|i : usize| i < packet.data.token_ids.len() ==>
+        forall(|i : usize| implies!(i < packet.data.token_ids.len(),
             nft.get_owner(
                 packet.data.class_id.prepend_prefix(
                     packet.dest_port,
                     packet.dest_channel
                 ),
                 packet.data.token_ids.get(i)
-            ) == None)
+            ) == None))
     }
 )]
+// ON_RECV_PACKET_COMMON_SPEC_END
+// ON_RECV_PACKET_RESOURCE_SPEC_START
+#[cfg_attr(feature="resource", requires(
+    implies!(packet.data.class_id.path.starts_with(packet.source_port, packet.source_channel)
+    , forall(|i : usize| implies!(i < packet.data.token_ids.len(),
+        token_permission!(
+            nft,
+            packet.data.class_id.drop_prefix(packet.source_port, packet.source_channel),
+            packet.data.token_ids.get(i)
+        ))
+    )
+)))]
 #[cfg_attr(feature="resource", ensures(
-    forall(|i : usize| i < old(packet.data).token_ids.len() ==>
+    forall(|i : usize| implies!(i < old(packet.data).token_ids.len(),
         token_permission!(
             nft,
             old(packet.get_recv_class_id()),
             packet.data.token_ids.get(i)
         )
     )
-))]
+)))]
+// ON_RECV_PACKET_RESOURCE_SPEC_END
+// ON_RECV_PACKET_COMMON_SPEC_START
 #[ensures(
-    forall(|i : usize| i < old(packet.data.token_ids.len()) ==>
+    forall(|i : usize| implies!(i < old(packet.data.token_ids.len()),
         nft.get_owner(
             old(packet.get_recv_class_id()),
             packet.data.token_ids.get(i)
-        ) === Some(packet.data.receiver))
-)]
+        ) == Some(packet.data.receiver))
+))]
+#[ensures(result.success)]
+// ON_RECV_PACKET_COMMON_SPEC_END
+// ON_RECV_PACKET_SPEC_START
 #[cfg_attr(not(feature="resource"), ensures(
     forall(|class_id2: PrefixedClassId, token_id2: TokenId|
-        (class_id2 != old(packet.get_recv_class_id()) || forall(
-            |i: usize| i < packet.data.token_ids.len() ==> packet.data.token_ids.get(i) != token_id2
-        )) ==>
-            nft.get_owner(class_id2, token_id2) == old(nft.get_owner(class_id2, token_id2))
+        implies!(class_id2 != old(packet.get_recv_class_id()) || forall(
+            |i: usize| implies!(i < packet.data.token_ids.len(), packet.data.token_ids.get(i) != token_id2)
+        ), nft.get_owner(class_id2, token_id2) == old(nft.get_owner(class_id2, token_id2)))
 )))]
-#[ensures(result.success)]
+// ON_RECV_PACKET_SPEC_END
 pub fn on_recv_packet<T: NFTKeeper>(
     ctx: &Ctx,
     nft: &mut T,
     packet: &Packet,
-    topology: &Topology
+    topology: &Topology,
 ) -> NFTPacketAcknowledgement {
     // let class_id = packet.get_recv_class_id();
-    let NFTPacketData { class_uri, class_data, token_ids, receiver, token_data, token_uris, .. } = packet.data;
+    let NFTPacketData {
+        class_uri,
+        class_data,
+        token_ids,
+        receiver,
+        token_data,
+        token_uris,
+        ..
+    } = packet.data;
     let mut i = 0;
     while i < token_ids.len() {
+        // ON_RECV_PACKET_COMMON_SPEC_START
         body_invariant!(i <= token_ids.len());
-        body_invariant!(
-            forall(|j: usize| j < i ==>
-                nft.get_owner(packet.get_recv_class_id(), token_ids.get(j)) == Some(receiver))
-        );
-        body_invariant!(
-            forall(|j: usize|
-                j >= i && j < token_ids.len() && !packet.is_source() ==>
-                nft.get_owner(packet.get_recv_class_id(), token_ids.get(j)) == None)
-        );
-        #[cfg(feature="resource")]
-        body_invariant!(
-            if packet.is_source() {
-                forall(|j: usize| j < token_ids.len() ==>
-                    token_permission!(nft, packet.get_recv_class_id(), token_ids.get(j)))
-            } else {
-                forall(|j: usize| j < i ==>
-                    token_permission!(nft, packet.get_recv_class_id(), token_ids.get(j)))
-            }
-        );
-        #[cfg(not(feature="resource"))]
-        body_invariant!(
-        forall(|class_id2: PrefixedClassId, token_id2: TokenId|
-            (class_id2 != old(packet.get_recv_class_id()) || forall(
-                |i: usize| i < token_ids.len() ==> token_ids.get(i) != token_id2
-            )) ==>
+        body_invariant!(forall(|j: usize| implies!(
+            j < i,
+            nft.get_owner(packet.get_recv_class_id(), token_ids.get(j)) == Some(receiver)
+        )));
+        body_invariant!(forall(|j: usize| implies!(
+            j >= i && j < token_ids.len() && !packet.is_source(),
+            nft.get_owner(packet.get_recv_class_id(), token_ids.get(j)) == None
+        )));
+        // ON_RECV_PACKET_COMMON_SPEC_END
+        // ON_RECV_PACKET_RESOURCE_SPEC_START
+        #[cfg(feature = "resource")]
+        body_invariant!(if packet.is_source() {
+            forall(|j: usize| {
+                implies!(
+                    j < token_ids.len(),
+                    token_permission!(nft, packet.get_recv_class_id(), token_ids.get(j))
+                )
+            })
+        } else {
+            forall(|j: usize| {
+                implies!(
+                    j < i,
+                    token_permission!(nft, packet.get_recv_class_id(), token_ids.get(j))
+                )
+            })
+        });
+        // ON_RECV_PACKET_RESOURCE_SPEC_END
+        // ON_RECV_PACKET_SPEC_START
+        #[cfg(not(feature = "resource"))]
+        body_invariant!(forall(
+            |class_id2: PrefixedClassId, token_id2: TokenId| implies!(
+                class_id2 != old(packet.get_recv_class_id())
+                    || forall(|i: usize| implies!(
+                        i < token_ids.len(),
+                        token_ids.get(i) != token_id2
+                    )),
                 nft.get_owner(class_id2, token_id2) == old(nft.get_owner(class_id2, token_id2))
+            )
         ));
+        // ON_RECV_PACKET_SPEC_END
 
         if packet.is_source() {
-            nft.transfer(packet.get_recv_class_id(), token_ids.get(i), receiver, Some(token_data.get(i)));
+            nft.transfer(
+                packet.get_recv_class_id(),
+                token_ids.get(i),
+                receiver,
+                Some(token_data.get(i)),
+            );
         } else {
             nft.create_or_update_class(packet.get_recv_class_id(), class_uri, class_data);
-            nft.mint(packet.get_recv_class_id(), token_ids.get(i), token_uris.get(i), token_data.get(i), receiver);
+            nft.mint(
+                packet.get_recv_class_id(),
+                token_ids.get(i),
+                token_uris.get(i),
+                token_data.get(i),
+                receiver,
+            );
         };
         i += 1;
     }
@@ -376,7 +463,8 @@ pub fn on_acknowledge_packet<T: NFTKeeper>(
     ctx: &Ctx,
     nft: &mut T,
     ack: NFTPacketAcknowledgement,
-    packet: &Packet) {
+    packet: &Packet,
+) {
     // if(!ack.success) {
     //     refund_token(ctx, nft, packet);
     // }
