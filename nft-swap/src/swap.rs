@@ -20,7 +20,9 @@ macro_rules! implies {
 
 #[cfg(feature = "resource")]
 #[resource_kind]
+// RKIND_RESOURCE_SPEC_START
 pub struct Token(pub KeeperId, pub PrefixedClassId, pub TokenId);
+// RKIND_RESOURCE_SPEC_END
 
 #[cfg(feature = "resource")]
 #[macro_export]
@@ -191,12 +193,12 @@ fn make_packet_data<T: NFTKeeper>(
         token_ids.get(i) != token_ids.get(j))
 ))]
 // SEND_NFT_COMMON_SPEC_END
+// SEND_NFT_RESOURCE_SPEC_START
 #[cfg_attr(feature="resource", requires(
     forall(|i : usize| implies!(i < token_ids.len(),
         token_permission!(nft, class_id, token_ids.get(i))))
 ))]
 // It's a transfer to escrow locally, retain permission
-// SEND_NFT_RESOURCE_SPEC_START
 #[cfg_attr(feature="resource", ensures(
     implies!(old(!class_id.path.starts_with(source_port, source_channel)),
     forall(|i : usize| implies!(i < token_ids.len(),

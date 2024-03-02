@@ -79,16 +79,16 @@ use prusti_contracts::*;
 #[requires(topology.connects(ctx1, source_port, source_channel, ctx2, dest_port, dest_channel))]
 #[requires(is_well_formed(class_id.path, ctx1, topology))]
 // Ensure that the resulting balance of both keeper accounts are unchanged after the round-trip
-// ROUND_TRIP_COMMON_SPEC_START
-#[ensures(
+// ROUND_TRIP_SPEC_START
+#[cfg_attr(not(feature="resource"), ensures(
      forall(|class_id: PrefixedClassId, token_ids: TokenId|
          keeper1.get_owner(class_id, token_ids) ==
-            old(keeper1).get_owner(class_id, token_ids)))]
-#[ensures(
+            old(keeper1).get_owner(class_id, token_ids))))]
+#[cfg_attr(not(feature="resource"), ensures(
      forall(|class_id: PrefixedClassId, token_ids: TokenId|
          keeper2.get_owner(class_id, token_ids) ==
-            old(keeper2).get_owner(class_id, token_ids)))]
-// ROUND_TRIP_COMMON_SPEC_END
+            old(keeper2).get_owner(class_id, token_ids))))]
+// ROUND_TRIP_SPEC_END
 // ROUND_TRIP_RESOURCE_SPEC_START
 #[cfg_attr(feature="resource", ensures(
     forall(|i : usize| implies!(i < token_ids.len(),
